@@ -6,7 +6,15 @@ Example:
 """
 from pathlib import Path
 from datetime import datetime, timezone
-import argparse, yaml
+import argparse
+
+try:
+    import yaml
+except ModuleNotFoundError:
+    print("Missing dependency: PyYAML. Install it first, then re-run this command:")
+    print("  pip install -r requirements.txt")
+    print("(or: pip install PyYAML jsonschema)")
+    raise SystemExit(1)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("gate", choices=["G0","G1","G2","G3","G4"])

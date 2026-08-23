@@ -5,7 +5,15 @@ Usage: python scripts/ai-team/check_done.py WU-001
 This intentionally errs on the side of NOT DONE when evidence is ambiguous.
 """
 from pathlib import Path
-import sys, yaml
+import sys
+
+try:
+    import yaml
+except ModuleNotFoundError:
+    print("Missing dependency: PyYAML. Install it first, then re-run this command:")
+    print("  pip install -r requirements.txt")
+    print("(or: pip install PyYAML jsonschema)")
+    raise SystemExit(1)
 
 if len(sys.argv) != 2:
     print("Usage: check_done.py WU-ID")

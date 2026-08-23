@@ -48,6 +48,23 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
     written in that file, without guessing.
 - Cursor, with your target project opened as a **trusted workspace** (see
   step 3 below).
+- Two Python packages: PyYAML and jsonschema. Install them once, from
+  inside the cloned framework folder, before running `install.py`:
+
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+  If `pip` isn't found, try `pip3` (same reasoning as `python`/`python3`
+  above). On some Linux distributions, `pip` may refuse a global install
+  with an "externally-managed-environment" error — in that case, either
+  add `--user` (`pip install --user -r requirements.txt`) or create a
+  virtual environment first: `python -m venv .venv`, then activate it
+  (`source .venv/bin/activate` on macOS/Linux, `.venv\Scripts\activate` on
+  Windows) before installing. Every script in this framework
+  (`install.py`, `validate.py`, `status.py`, ...) checks for these
+  packages itself and tells you to run this command if either is missing,
+  instead of failing with a raw Python error.
 
 ## Quickstart
 

@@ -46,6 +46,24 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
     à Python 3 sur ta machine.
 - Cursor, avec ton projet cible ouvert en tant que **workspace de confiance**
   (« trusted workspace », voir l'étape 3 ci-dessous).
+- Deux paquets Python : PyYAML et jsonschema. Installe-les une fois, depuis
+  l'intérieur du dossier framework cloné, avant de lancer `install.py` :
+
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+  Si `pip` n'est pas trouvé, essaie `pip3` (même logique que
+  `python`/`python3` ci-dessus). Sur certaines distributions Linux, `pip`
+  peut refuser une installation globale avec une erreur
+  « externally-managed-environment » — dans ce cas, ajoute `--user`
+  (`pip install --user -r requirements.txt`) ou crée d'abord un
+  environnement virtuel : `python -m venv .venv`, puis active-le
+  (`source .venv/bin/activate` sur macOS/Linux, `.venv\Scripts\activate`
+  sur Windows) avant d'installer. Chaque script de ce framework
+  (`install.py`, `validate.py`, `status.py`, ...) vérifie lui-même la
+  présence de ces paquets et t'indique de lancer cette commande s'il en
+  manque un, plutôt que d'échouer avec une erreur Python brute.
 
 ## Quickstart
 

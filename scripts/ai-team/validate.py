@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import sys
-import yaml
 import json
-from jsonschema import Draft202012Validator
+
+try:
+    import yaml
+    from jsonschema import Draft202012Validator
+except ModuleNotFoundError:
+    print("Missing dependency: PyYAML and/or jsonschema. Install them first, then re-run this command:")
+    print("  pip install -r requirements.txt")
+    print("(or: pip install PyYAML jsonschema)")
+    raise SystemExit(1)
 
 ROOT = Path(__file__).resolve().parents[2]
 AI = ROOT / ".ai-team"

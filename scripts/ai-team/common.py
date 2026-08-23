@@ -1,6 +1,13 @@
 from pathlib import Path
 import json
-import yaml
+
+try:
+    import yaml
+except ModuleNotFoundError:
+    print("Missing dependency: PyYAML. Install it first, then re-run this command:")
+    print("  pip install -r requirements.txt")
+    print("(or: pip install PyYAML jsonschema)")
+    raise SystemExit(1)
 
 ROOT = Path(__file__).resolve().parents[2]
 AI = ROOT / ".ai-team"
