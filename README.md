@@ -2,9 +2,9 @@
 
 *[Lire en français](README.fr.md)*
 
-A GitHub-ready framework for running a **human-governed, multi-agent software development team in Cursor**.
+This framework turns Cursor into a small, governed team of AI agents. Specialized subagents — developer, reviewer, security reviewer, auditor — work on narrowly scoped tasks under rules that live in version-controlled files in your repository, not in one giant prompt nobody re-reads.
 
-This repository materializes an AI engineering organization as version-controlled policy, roles, Work Units, project state, evidence, review, audit, permissions, and human gates.
+Nothing is marked done without evidence: tests actually executed, a review completed, an independent audit where risk requires it. Product decisions and production releases stay with a human, at explicit approval points ("gates") the AI cannot skip.
 
 ## Core operating principle
 

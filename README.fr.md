@@ -2,9 +2,35 @@
 
 *[Read in English](README.md)*
 
-Un framework prêt à mettre sur GitHub pour intégrer dans un projet une **équipe d'agents IA gouvernée par l'humain avec Cursor**.
+Ce framework transforme Cursor en une petite équipe d'agents IA gouvernée. Des subagents spécialisés — développeur, reviewer, security reviewer, auditeur — travaillent sur des tâches bien délimitées, selon des règles versionnées dans les fichiers du dépôt, pas dans un unique prompt géant que personne ne relit.
 
-L'idée n'est pas de fournir un gros prompt. Le dépôt matérialise l'organisation sous forme de fichiers versionnés : Constitution d'ingénierie, rôles, staffing, permissions, Work Units, Project State, preuves, review, audit indépendant et gates humaines.
+Rien n'est marqué terminé sans preuve : tests réellement exécutés, review effectuée, audit indépendant quand le risque l'exige. Les décisions produit et les mises en production restent entre les mains d'un humain, à des points de validation explicites (les « gates ») que l'IA ne peut pas contourner.
+
+## Principe de fonctionnement
+
+Le framework sépare :
+
+1. **Matière humaine de construction** — ce qui doit être construit : intention produit, périmètre, règles métier, exigences, architecture, contraintes, critères d'acceptation.
+2. **Constitution d'ingénierie** — comment l'organisation IA a le droit de fonctionner : autorité, décomposition, contexte, staffing, permissions, tests, review, audit, release et gates humaines.
+3. **État d'exécution** — le modèle runtime dérivé et inspectable : Project State, Work Units, dépendances, preuves, findings, décisions, release candidates et résultats de recette.
+
+L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer. Elle ne peut **jamais inventer silencieusement une décision produit manquante, ni modifier sa propre Constitution**.
+
+## Ce qui est déjà implémenté dans ce dépôt
+
+- Project Rules Cursor dans `.cursor/rules/`
+- Subagents Cursor personnalisés dans `.cursor/agents/`
+- Agent Skills Cursor dans `.cursor/skills/`
+- Hooks de projet Cursor dans `.cursor/hooks.json`
+- Règles d'exécution Cursor par dépôt dans `.cursor/permissions.json`
+- Règles Bugbot Cursor dans `.cursor/BUGBOT.md`
+- Constitution d'ingénierie dans `.ai-team/constitution/`
+- JSON Schemas pour tous les objets d'état dans `.ai-team/schemas/`
+- Templates prêts à l'emploi dans `.ai-team/templates/`
+- Dossiers runtime pour Work Units, décisions, preuves, findings, audit, release et recette
+- Outillage de validation et de statut dans `scripts/ai-team/`
+- Installeur multiplateforme dans `tools/install.py`
+- Un exemple de référence optionnel, non installé, dans `examples/project-a/`
 
 ## Quickstart
 
@@ -18,8 +44,7 @@ python tools/install.py \
 ```
 
 `install.py` n'écrase jamais un fichier déjà présent dans la cible (sauf
-`--force`), et ne copie jamais
-`examples/`.
+`--force`), et ne copie jamais `examples/`.
 
 ### 2. Remplir ce que toi seul sais
 
@@ -108,6 +133,50 @@ jamais installée, rien à nettoyer.
 - Recette finale : gate humaine G4
 
 Ce sont des defaults d'implémentation, pas des vérités universelles. Change-les dans la Constitution et versionne le changement.
+
+## Déroulé runtime
+
+```text
+Matière produit humaine + Constitution d'ingénierie
+                    |
+                    v
+               Readiness G0
+                    |
+                    v
+              Project Compiler
+                    |
+                    v
+      Project State + Work Units + plan
+                    |
+                    v
+           Approbation humaine G1
+                    |
+                    v
+               Orchestrateur
+        +-----------+-----------+
+        |           |           |
+     Developer      QA       Reviewer
+        |           |           |
+        +-----------+-----------+
+                    |
+                    v
+             Audit indépendant
+                    |
+                    v
+          Release Candidate / G3
+                    |
+                    v
+            Recette humaine G4
+                    |
+                    v
+                   Done
+```
+
+## Note de sécurité importante
+
+Les règles Cursor, les prompts, les hooks et `permissions.json` sont des **contrôles de gouvernance, pas une frontière de sécurité complète**. Garde la protection de branche, les checks CI requis, la protection des environnements, les secrets, les credentials de déploiement, CODEOWNERS et l'IAM production en dehors du modèle, et fais-les respecter par ton hébergeur Git / CI / infrastructure cloud.
+
+Voir `docs/SECURITY_MODEL.md`.
 
 ## Pour aller plus loin
 
