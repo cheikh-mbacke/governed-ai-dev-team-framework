@@ -15,3 +15,13 @@ requirements:
   attach_events_to_project_state_objects: true
   important_decisions_must_not_exist_only_in_chat: true
   batch_nonurgent_human_decisions_when_possible: true
+  never_stop_silently: >
+    Before any agent (orchestrator or subagent) stops without having
+    completed its assigned step - whether due to an error, a missing
+    tool, an ambiguity, or genuinely waiting on something - it must write
+    a BLOCKER or CLARIFICATION_REQUEST event to .ai-team/events/ (see
+    templates/event.yaml) with requires_human set appropriately, before
+    stopping. A silent stop with no recorded reason is itself a defect in
+    the run, not just an inconvenience: it leaves the human with nothing
+    to act on except guessing and restarting. See
+    scripts/ai-team/diagnose.py for what a human should check first.

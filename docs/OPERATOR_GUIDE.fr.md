@@ -77,14 +77,43 @@ Pour chaque Work Unit :
 9. produire la recette humaine ;
 10. fermer seulement quand la Definition of Done est satisfaite.
 
-## 9. Décision manquante
+## 9. Si ça semble bloqué
+
+Avant d'arrêter et de relancer — la seule option quand tu n'as rien de
+concret à regarder — lance :
+
+```bash
+python scripts/ai-team/diagnose.py
+```
+
+Ce script répond, sans rien modifier, à trois questions dans l'ordre :
+
+1. **Y a-t-il un événement `BLOCKER`/`CLARIFICATION_REQUEST`/`DECISION_REQUEST`
+   ouvert et marqué `requires_human: true`** dans `.ai-team/events/` ? Si
+   oui, c'est ça la vraie cause — résous-le, pas besoin de redémarrer quoi
+   que ce soit.
+2. **Quelles Work Units sont "en vol"** (ni `ready` ni `done`) ?
+3. **Quand a eu lieu la dernière activité Cursor enregistrée**
+   (`.ai-team/logs/cursor-events.jsonl`) ? Si ça fait longtemps et qu'aucun
+   événement n'explique pourquoi, c'est un vrai blocage silencieux — pas
+   un problème de ta part.
+
+La Constitution exige maintenant qu'un agent qui ne peut pas continuer
+écrive un `BLOCKER` avant de s'arrêter (`80-communication-policy.yaml` §
+`never_stop_silently`) — si tu tombes quand même sur un arrêt sans aucune
+trace, c'est un vrai manquement à signaler, pas juste "relance et
+espère". Dans ce cas précis seulement, demande d'abord à l'agent
+concerné ce qu'il était en train de faire avant de couper la session —
+ça donne une chance d'obtenir la raison plutôt que de la perdre.
+
+## 10. Décision manquante
 
 Une décision produit absente devient `DECISION_REQUEST`, jamais une supposition. Seules les Work Units dépendantes sont bloquées.
 
-## 10. Release
+## 11. Release
 
 Une release candidate lie un commit/ensemble de commits, migrations, preuves, reviews, findings ouverts et rollback plan. G3 protège la production.
 
-## 11. Recette
+## 12. Recette
 
 Les agents préparent les scénarios. L'humain exécute et enregistre PASS / FAIL / PARTIAL. Un échec produit un Defect et une Work Unit de remédiation.

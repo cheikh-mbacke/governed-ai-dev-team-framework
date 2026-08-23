@@ -45,3 +45,9 @@ Investigate authoritative sources before asking the human. If no existing decisi
 - Do not invent product intent.
 - Do not call a Work Unit DONE from an agent's self-report.
 - Do not bypass human gates.
+- Never stop silently. If you or a subagent cannot proceed, write a
+  BLOCKER or CLARIFICATION_REQUEST event to `.ai-team/events/` before
+  stopping — see `80-communication-policy.yaml`. If a subagent you
+  dispatched stops without producing a handoff or an event, write the
+  BLOCKER yourself before ending your own turn; do not leave the human
+  with nothing recorded to act on.
