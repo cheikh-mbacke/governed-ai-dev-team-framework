@@ -18,7 +18,7 @@ except ModuleNotFoundError:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("gate", choices=["G0","G1","G2","G3","G4"])
-parser.add_argument("status", choices=["approved","rejected","changes_requested","passed","failed","partial","not_required"])
+parser.add_argument("status", choices=["approved","rejected","changes_requested","passed","failed","partial","partially_accepted","not_required","accepted","remediation_required"])
 parser.add_argument("--by", required=True)
 parser.add_argument("--note", default="")
 args = parser.parse_args()
@@ -35,7 +35,7 @@ if args.gate == "G1" and args.status == "approved":
     state["phase"] = "execution"
 elif args.gate == "G0" and args.status in ("rejected", "failed", "changes_requested"):
     state["phase"] = "readiness_blocked"
-elif args.gate == "G4" and args.status in ("approved", "passed"):
+elif args.gate == "G4" and args.status in ("approved", "passed", "accepted"):
     state["phase"] = "completed"
 
 state["last_updated"] = now
