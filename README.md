@@ -37,27 +37,42 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
 - **Python 3.10 or later**, available on your PATH.
 - Before installing, run `python --version`. If that command isn't found, try `python3 --version` instead.
   - If only `python3` works on your machine — common on macOS and on Linux
-    distributions that don't ship a bare `python` — replace `python` with
-    `python3` in every command shown in this guide, **and** in
-    `.cursor/hooks.json`: Cursor runs the `command` string of every hook
-    directly on your operating system's shell, using the exact interpreter
-    name written there, so the hooks need whichever name actually resolves
-    to Python 3 on your machine.
+    distributions that don't ship a bare `python` — you need to replace
+    `python` with `python3` in two different places: (a) in every command
+    from this guide that you type yourself into a terminal, and (b) inside
+    the installed project's `.cursor/hooks.json` file — open it and replace
+    every `"command": "python ...` with `"command": "python3 ...`. The
+    second replacement matters because you're not the one running those
+    commands: Cursor is, automatically, behind the scenes, every time it
+    runs a shell command or starts an agent — and it uses the exact word
+    written in that file, without guessing.
 - Cursor, with your target project opened as a **trusted workspace** (see
   step 3 below).
 
 ## Quickstart
 
-### 1. Install into your project
+### 1. Get the framework and install it into your project
 
-Clone this framework anywhere, then run the installer once against your
-target repository. Replace `/path/to/your/project`, `your-project-id` and
+Clone this repository once, anywhere on your machine — it's the source of
+the defaults you're about to install, not something you work inside:
+
+```bash
+git clone https://github.com/cheikh-mbacke/governed-ai-dev-team-framework.git
+cd governed-ai-dev-team-framework
+```
+
+Then run the installer **from inside this cloned folder** — `tools/install.py`
+is a path relative to it, not to your project or to wherever your terminal
+happens to be. Replace `/path/to/your/project`, `your-project-id` and
 `"Your Project Name"` below with your own project's actual path, id and
 name — these are not values to leave as-is:
 
 ```bash
 python tools/install.py --target /path/to/your/project --project-id your-project-id --project-name "Your Project Name"
 ```
+
+(Running this from somewhere else instead? Give the full path to the
+script, e.g. `python ~/governed-ai-dev-team-framework/tools/install.py ...`.)
 
 This is written as one line on purpose so it can be pasted into any shell
 unmodified. If you split it across multiple lines yourself, note that the
@@ -73,6 +88,14 @@ Two files under `.ai-team/` are genuinely empty and need real values before
 you compile anything. Everything else in the Constitution is already a
 working default — you don't need to have read any external design document
 to understand what goes in these two.
+
+You can fill them by hand using the guidance below, or — once the project
+is open in Cursor (step 3) — invoke `/propose-profile`: it inspects your
+repository and `docs/product/` for concrete signals already present (a
+`package.json` script, a `Cargo.toml`, files you've dropped in the
+category folders below) and proposes values for both files. It never
+writes anything until you confirm, and it never guesses who your human
+approvers are — it always asks that directly.
 
 **`.ai-team/project-profile.yaml`** — open it and replace the placeholder
 values. A commented example is at the top of the file; concretely, a filled
@@ -108,17 +131,23 @@ human_authorities:
   these people whenever it needs to ask a human for a decision.
 
 **`.ai-team/sources/source-registry.yaml`** — one entry per document that
-actually defines what you're building (requirements, specs, business
-rules...). A commented example is at the top of the file; concretely, if
-you drop a file at `docs/product/requirements.md`, register it like this:
+actually defines what you're building. The installer already created seven
+category subfolders under `docs/product/` for you —
+`vision-and-scope/`, `users-and-rules/`, `requirements/`,
+`acceptance-criteria/`, `architecture-and-constraints/`,
+`security-and-compliance/`, `references/` — each with a one-line README
+explaining what goes there (see `docs/product/README.md`). Using them is
+optional; a single flat file works just as well. A commented example is at
+the top of the registry file; concretely, if you drop a file at
+`docs/product/requirements/requirements.md`, register it like this:
 
 ```yaml
 sources:
   - id: requirements-v1
     type: human_construction_material
-    path: docs/product/requirements.md
+    path: docs/product/requirements/requirements.md
     authority: human
-    scope: project
+    scope: requirements
     version: "1.0"
     status: active
     owner: product
@@ -134,19 +163,33 @@ Then check what, if anything, is still missing:
 python scripts/ai-team/validate.py
 ```
 
-This only ever reports on the two files above (and, later, on the Work
-Units you create) — it does not ask you to touch the Constitution defaults.
+Concretely, this checks these two files against what the framework needs
+and prints one warning line per missing piece — for example
+`WARN Project command 'build' is not configured` if `commands.build` is
+still `null`, or `WARN No authoritative product sources are registered` if
+the registry is still empty. Fix what it flags, run it again, and repeat
+until there are no more warnings about these two files. (It will also start
+reporting on Work Units once you create some in step 4 below — that's
+expected and doesn't mean anything is wrong with your setup now.) It never
+asks you to edit anything under `.ai-team/constitution/` — those files are
+already complete.
 
 ### 3. Open the project in Cursor
 
-Open the installed project (not this framework repo) in Cursor, and make
-sure the workspace is trusted. Cursor discovers `.cursor/rules/`,
-`.cursor/agents/`, `.cursor/skills/` and `.cursor/hooks.json` on workspace
-open; if a `/`-command you expect doesn't show up, restart Cursor once.
+Open **your project's folder** — the one you installed into at step 1, not
+the framework repo you cloned — in Cursor (File → Open Folder). On first
+open, Cursor usually shows a prompt asking whether you trust the folder's
+authors ("Trust this folder" / trusted workspace); accept it — this is what
+lets Cursor read the `.cursor/` files just installed (rules, agents,
+skills, hooks) and turn them on. If a `/`-command you expect (like
+`/compile-project`) doesn't show up when you type `/` in the chat, close
+and reopen Cursor once — that's usually enough to force it to
+re-discover them.
 
 ### 4. Compile the project
 
-In the Cursor Agent, explicitly invoke the Skill — it is deliberately not
+In any regular Cursor Agent chat session — there's nothing special to
+select first — explicitly invoke the Skill. It is deliberately not
 auto-triggered, so opening Cursor never silently starts the team:
 
 ```text
@@ -167,6 +210,13 @@ and a staffing proposal. No product code is touched.
 python scripts/ai-team/status.py
 ```
 
+This prints a short, human-readable summary of what `/compile-project` just
+produced: the current phase, the status of each gate (G0 through G4), how
+many Work Units exist and their status, and any open decisions or defects.
+It's a shortcut so you don't have to open every file under
+`.ai-team/state/` and `.ai-team/work-units/` by hand — you're welcome to
+read those directly instead if you prefer.
+
 Read the proposed Work Units and staffing. When you're satisfied:
 
 ```bash
@@ -175,13 +225,25 @@ python scripts/ai-team/record_gate.py G1 approved --by YOUR_NAME --note "Executi
 
 ### 6. Start the orchestrator
 
+In the Cursor Agent, type:
+
 ```text
 /orchestrator
 ```
 
-Use it as a Custom Mode to keep it active for the session. It activates
-specialist subagents only for Work Units that are ready, within the WIP
-limits below — never all of them at once.
+This runs one coordination pass: it looks at the Work Units you just
+approved, starts the specialist subagents (developer, QA, reviewer...) for
+whichever ones are ready, and stops. To keep it running for the rest of the
+session instead of retyping `/orchestrator` after every step, use Cursor's
+Custom Mode: open the chat's mode selector, create or select a Custom Mode
+based on the `orchestrator` Skill, and chat in that mode — it keeps the
+orchestrator's instructions active throughout.
+
+Either way, it never starts every Work Unit and every subagent at once. It
+respects the WIP (work-in-progress) limits below — by default, at most 3
+Work Units active and at most 2 developer subagents writing code at the
+same time — so if you approved 5 Work Units, only 2 or 3 start immediately
+and the rest begin automatically as earlier ones finish or free up a slot.
 
 Looking for a concrete, already-compiled Work Unit to see the expected shape
 before you run your own? See `examples/project-a/` — read-only reference,

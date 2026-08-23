@@ -49,16 +49,28 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
 
 ## Quickstart
 
-### 1. Installer dans ton projet
+### 1. Récupérer le framework et l'installer dans ton projet
 
-Clone ce framework où tu veux, puis lance l'installeur une fois contre ton
-dépôt cible. Remplace `/chemin/vers/ton/projet`, `ton-id-de-projet` et
-`"Nom De Ton Projet"` ci-dessous par les vraies valeurs de ton projet — ce
-ne sont pas des valeurs à garder telles quelles :
+Clone ce dépôt une fois, où tu veux sur ta machine — c'est la source des
+defaults que tu vas installer, pas un endroit où tu vas travailler :
+
+```bash
+git clone https://github.com/cheikh-mbacke/governed-ai-dev-team-framework.git
+cd governed-ai-dev-team-framework
+```
+
+Puis lance l'installeur **depuis l'intérieur de ce dossier cloné** —
+`tools/install.py` est un chemin relatif à ce dossier, pas à ton projet ni
+à l'endroit où se trouve ton terminal. Remplace `/chemin/vers/ton/projet`,
+`ton-id-de-projet` et `"Nom De Ton Projet"` ci-dessous par les vraies
+valeurs de ton projet — ce ne sont pas des valeurs à garder telles quelles :
 
 ```bash
 python tools/install.py --target /chemin/vers/ton/projet --project-id ton-id-de-projet --project-name "Nom De Ton Projet"
 ```
+
+(Tu préfères lancer ça depuis ailleurs ? Donne le chemin complet vers le
+script, par ex. `python ~/governed-ai-dev-team-framework/tools/install.py ...`.)
 
 Cette commande est volontairement écrite sur une seule ligne pour pouvoir
 être collée telle quelle dans n'importe quel shell. Si tu la répartis
@@ -76,6 +88,15 @@ vraies valeurs avant de compiler quoi que ce soit. Tout le reste de la
 Constitution est déjà un default fonctionnel — tu n'as besoin d'avoir lu
 aucun document de conception externe pour comprendre ce qui va dans ces
 deux fichiers.
+
+Tu peux les remplir à la main avec le guide ci-dessous, ou — une fois le
+projet ouvert dans Cursor (étape 3) — invoquer `/propose-profile` : il
+inspecte ton dépôt et `docs/product/` à la recherche de signaux concrets
+déjà présents (un script dans `package.json`, un `Cargo.toml`, des fichiers
+que tu as déposés dans les dossiers de catégorie ci-dessous) et propose des
+valeurs pour les deux fichiers. Il n'écrit jamais rien avant que tu
+confirmes, et ne devine jamais qui sont tes approbateurs humains — il te le
+demande toujours directement.
 
 **`.ai-team/project-profile.yaml`** — ouvre-le et remplace les valeurs
 placeholder. Un exemple commenté est en haut du fichier ; concrètement, un
@@ -112,17 +133,24 @@ human_authorities:
   besoin de demander une décision à un humain.
 
 **`.ai-team/sources/source-registry.yaml`** — une entrée par document qui
-définit réellement ce que tu construis (exigences, specs, règles métier...).
-Un exemple commenté est en haut du fichier ; concrètement, si tu déposes un
-fichier à `docs/product/requirements.md`, enregistre-le ainsi :
+définit réellement ce que tu construis. L'installeur a déjà créé sept
+sous-dossiers de catégorie sous `docs/product/` pour toi —
+`vision-and-scope/`, `users-and-rules/`, `requirements/`,
+`acceptance-criteria/`, `architecture-and-constraints/`,
+`security-and-compliance/`, `references/` — chacun avec un README d'une
+ligne expliquant ce qui va où (voir `docs/product/README.md`). Les utiliser
+est optionnel ; un simple fichier à plat fonctionne tout aussi bien. Un
+exemple commenté est en haut du fichier de registre ; concrètement, si tu
+déposes un fichier à `docs/product/requirements/requirements.md`,
+enregistre-le ainsi :
 
 ```yaml
 sources:
   - id: requirements-v1
     type: human_construction_material
-    path: docs/product/requirements.md
+    path: docs/product/requirements/requirements.md
     authority: human
-    scope: project
+    scope: requirements
     version: "1.0"
     status: active
     owner: product
@@ -138,20 +166,35 @@ Puis vérifie ce qu'il reste, s'il reste quelque chose, à compléter :
 python scripts/ai-team/validate.py
 ```
 
-Ce script ne signale que ces deux fichiers (et, plus tard, les Work Units
-que tu crées) — il ne te demande jamais de toucher aux defaults de la
-Constitution.
+Concrètement, ce script vérifie ces deux fichiers par rapport à ce dont le
+framework a besoin, et affiche une ligne d'avertissement par élément
+manquant — par exemple `WARN Project command 'build' is not configured` si
+`commands.build` est encore à `null`, ou `WARN No authoritative product
+sources are registered` si le registre est encore vide. Corrige ce qui est
+signalé, relance la commande, et répète jusqu'à ce qu'il n'y ait plus
+d'avertissement concernant ces deux fichiers. (Il commencera aussi à faire
+des rapports sur les Work Units une fois que tu en auras créé à l'étape 4
+ci-dessous — c'est normal et ça ne veut pas dire qu'il y a un problème
+avec ta configuration actuelle.) Il ne te demande jamais de modifier quoi
+que ce soit sous `.ai-team/constitution/` — ces fichiers sont déjà complets.
 
 ### 3. Ouvrir le projet dans Cursor
 
-Ouvre le projet installé (pas ce dépôt framework) dans Cursor, en faisant
-confiance au workspace. Cursor découvre `.cursor/rules/`, `.cursor/agents/`,
-`.cursor/skills/` et `.cursor/hooks.json` à l'ouverture ; si une commande
-`/` attendue n'apparaît pas, redémarre Cursor une fois.
+Ouvre **le dossier de ton projet** — celui dans lequel tu as installé le
+framework à l'étape 1, pas le dépôt framework que tu as cloné — dans
+Cursor (File → Open Folder). À la première ouverture, Cursor affiche
+généralement une invite demandant si tu fais confiance aux auteurs du
+dossier (« Trust this folder » / workspace de confiance) ; accepte-la —
+c'est ce qui permet à Cursor de lire les fichiers `.cursor/` qu'on vient
+d'installer (règles, agents, skills, hooks) et de les activer. Si une
+commande `/` attendue (comme `/compile-project`) n'apparaît pas quand tu
+tapes `/` dans le chat, ferme et rouvre Cursor une fois — ça suffit
+généralement à forcer la redécouverte.
 
 ### 4. Compiler le projet
 
-Dans l'agent Cursor, invoque explicitement le Skill — il n'est
+Dans n'importe quelle session de chat Cursor Agent normale — rien de
+spécial à sélectionner avant — invoque explicitement le Skill. Il n'est
 volontairement pas auto-déclenché, donc ouvrir Cursor ne lance jamais
 l'équipe silencieusement :
 
@@ -174,6 +217,13 @@ contexte et proposition de staffing. Aucun code produit n'est touché.
 python scripts/ai-team/status.py
 ```
 
+Ce script affiche un résumé lisible de ce que `/compile-project` vient de
+produire : la phase actuelle, le statut de chaque gate (G0 à G4), combien
+de Work Units existent et leur statut, et les décisions ou defects encore
+ouverts. C'est un raccourci pour ne pas avoir à ouvrir chaque fichier sous
+`.ai-team/state/` et `.ai-team/work-units/` à la main — tu peux tout aussi
+bien les lire directement si tu préfères.
+
 Relis les Work Units et le staffing proposés. Une fois satisfait :
 
 ```bash
@@ -182,13 +232,28 @@ python scripts/ai-team/record_gate.py G1 approved --by TON_NOM --note "Plan d'ex
 
 ### 6. Démarrer l'orchestrateur
 
+Dans l'agent Cursor, tape :
+
 ```text
 /orchestrator
 ```
 
-Utilise-le comme Custom Mode pour le garder actif pendant la session. Il
-n'active les subagents spécialisés que pour les Work Units prêtes, dans les
-limites WIP ci-dessous — jamais tous en même temps.
+Ça exécute une passe de coordination : il regarde les Work Units que tu
+viens d'approuver, démarre les subagents spécialisés (developer, QA,
+reviewer...) pour celles qui sont prêtes, puis s'arrête. Pour le garder
+actif pendant tout le reste de la session au lieu de retaper
+`/orchestrator` après chaque étape, utilise le Custom Mode de Cursor :
+ouvre le sélecteur de mode du chat, crée ou choisis un Custom Mode basé sur
+le Skill `orchestrator`, et discute dans ce mode — il garde les
+instructions de l'orchestrateur actives en continu.
+
+Dans les deux cas, il ne démarre jamais toutes les Work Units et tous les
+subagents en même temps. Il respecte les limites WIP (work-in-progress)
+ci-dessous — par défaut, au maximum 3 Work Units actives et au maximum 2
+subagents Developer écrivant du code simultanément — donc si tu as
+approuvé 5 Work Units, seules 2 ou 3 démarrent immédiatement et les autres
+démarrent automatiquement au fur et à mesure que les premières se
+terminent ou libèrent une place.
 
 Envie de voir à quoi ressemble une Work Unit déjà compilée avant de lancer
 la tienne ? Regarde `examples/project-a/` — référence en lecture seule,
