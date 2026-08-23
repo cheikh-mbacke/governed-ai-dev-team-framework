@@ -37,13 +37,44 @@ for item in copy_items:
             shutil.copy2(src, dst)
 
 profile_path = target / ".ai-team" / "project-profile.yaml"
-profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
-profile["project"]["id"] = args.project_id
-profile["project"]["name"] = args.project_name
-profile["project"]["repository_kind"] = "existing_or_greenfield_project"
-profile["setup_status"]["template"] = False
-profile["setup_status"]["note"] = "Complete commands, paths and human authorities before production use."
-profile_path.write_text(yaml.safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8")
+profile_text = profile_path.read_text(encoding="utf-8")
+
+# Rewrite specific known lines in place with plain text substitution rather
+# than a full yaml.safe_load/safe_dump round trip: PyYAML's dumper silently
+# drops all comments, which would strip the guidance example shipped at the
+# top of this file. Each substitution is applied only if the exact shipped
+# default line is still present and unique, so a hand-edited file is never
+# corrupted by a partial or ambiguous match.
+substitutions = [
+    ("  id: framework-template", f"  id: {args.project_id}"),
+    ("  name: Governed AI Development Team Framework", f"  name: {args.project_name}"),
+    ("  repository_kind: framework_template", "  repository_kind: existing_or_greenfield_project"),
+    ("  template: true", "  template: false"),
+    (
+        '  note: "The installer rewrites project.id, project.name and template=false. '
+        'Fill repository-specific commands, paths and human authorities before production use."',
+        '  note: "Complete commands, paths and human authorities before production use."',
+    ),
+]
+
+if all(profile_text.count(old) == 1 for old, _ in substitutions):
+    for old, new in substitutions:
+        profile_text = profile_text.replace(old, new, 1)
+    profile_path.write_text(profile_text, encoding="utf-8")
+else:
+    # Fallback for a project-profile.yaml that no longer matches the shipped
+    # defaults exactly (e.g. re-running install against an already-edited
+    # file): fall back to a structural rewrite. This still updates the
+    # required fields correctly, but any comments in the file are lost.
+    profile = yaml.safe_load(profile_text)
+    profile["project"]["id"] = args.project_id
+    profile["project"]["name"] = args.project_name
+    profile["project"]["repository_kind"] = "existing_or_greenfield_project"
+    profile["setup_status"]["template"] = False
+    profile["setup_status"]["note"] = "Complete commands, paths and human authorities before production use."
+    profile_path.write_text(yaml.safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    print("NOTE: project-profile.yaml did not match the shipped template exactly; "
+          "rewrote it structurally (comments, if any, were not preserved).")
 
 state_path = target / ".ai-team" / "state" / "project-state.yaml"
 state = yaml.safe_load(state_path.read_text(encoding="utf-8"))

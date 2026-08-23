@@ -1,3 +1,35 @@
+# This file is filled in once, right after installation, before the first
+# /compile-project. Nothing below is example content to delete — every field
+# left null/empty/unspecified is read literally by the orchestrator and the
+# validate.py script, and stays flagged until you fill it.
+#
+# Example of a filled-in profile (Node/TypeScript project):
+#
+# project:
+#   id: checkout-service
+#   name: Checkout Service
+#   repository_kind: existing
+#   primary_language: typescript
+#   package_manager: pnpm
+# paths:
+#   product_docs: docs/product
+#   source_roots: [src]
+#   test_roots: [tests]
+#   config_roots: [config]
+# commands:
+#   setup: "pnpm install"
+#   build: "pnpm build"
+#   lint: "pnpm lint"
+#   typecheck: "pnpm typecheck"
+#   unit_test: "pnpm test:unit"
+#   integration_test: "pnpm test:integration"
+#   e2e_test: "pnpm test:e2e"
+# human_authorities:
+#   product: alice
+#   engineering_constitution: alice
+#   production_release: bob
+#   final_acceptance: alice
+
 project:
   id: framework-template
   name: Governed AI Development Team Framework
