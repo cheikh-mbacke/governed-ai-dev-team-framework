@@ -80,6 +80,11 @@ runtime_environments:
 release:
   protected_branch: main
   production_requires_g3: true
+  # If true, agents push their own working branch to the "origin" remote
+  # after finishing a Work Unit — never the protected_branch above, and
+  # only if "origin" is actually configured. Off by default: nothing
+  # pushes anywhere until you opt in and set up a remote yourself.
+  auto_push_working_branches: false
 
 human_authorities:
   product: unspecified

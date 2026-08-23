@@ -43,6 +43,9 @@
     "subagentStop": [
       {
         "command": "python .cursor/hooks/audit_event.py"
+      },
+      {
+        "command": "python .cursor/hooks/backup_push.py"
       }
     ],
     "stop": [
