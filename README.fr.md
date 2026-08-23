@@ -1,5 +1,7 @@
 # Framework d'équipe IA de développement gouvernée
 
+*[Read in English](README.md)*
+
 Un framework prêt à mettre sur GitHub pour intégrer dans un projet une **équipe d'agents IA gouvernée par l'humain avec Cursor**.
 
 L'idée n'est pas de fournir un gros prompt. Le dépôt matérialise l'organisation sous forme de fichiers versionnés : Constitution d'ingénierie, rôles, staffing, permissions, Work Units, Project State, preuves, review, audit indépendant et gates humaines.

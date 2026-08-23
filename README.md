@@ -1,5 +1,7 @@
 # Governed AI Development Team Framework
 
+*[Lire en français](README.fr.md)*
+
 A GitHub-ready framework for running a **human-governed, multi-agent software development team in Cursor**.
 
 This repository materializes an AI engineering organization as version-controlled policy, roles, Work Units, project state, evidence, review, audit, permissions, and human gates.
