@@ -73,15 +73,38 @@ if args.gate == "G4" and args.work_unit:
         "not_required": "accepted",
     }
     human_acceptance_value = outcome_map.get(args.status, args.status)
+    wu_dir = AI / "work-units"
+
+    def find_work_unit_path(wu_dir: Path, wu_id: str):
+        exact = wu_dir / f"{wu_id}.yaml"
+        if exact.exists():
+            return exact, None
+        prefix_matches = sorted(wu_dir.glob(f"{wu_id}-*.yaml"))
+        if len(prefix_matches) == 1:
+            return prefix_matches[0], None
+        if len(prefix_matches) > 1:
+            return None, f"multiple files match '{wu_id}-*.yaml': {[p.name for p in prefix_matches]}"
+        for p in sorted(wu_dir.glob("*.yaml")):
+            try:
+                data = yaml.safe_load(p.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if isinstance(data, dict) and data.get("id") == wu_id:
+                return p, None
+        return None, None
+
     for wu_id in [w.strip() for w in args.work_unit.split(",") if w.strip()]:
-        wu_path = AI / "work-units" / f"{wu_id}.yaml"
-        if not wu_path.exists():
-            print(f"  WARN: {wu_id}.yaml not found under .ai-team/work-units/ - skipped, nothing updated for it")
+        wu_path, ambiguity = find_work_unit_path(wu_dir, wu_id)
+        if ambiguity:
+            print(f"  WARN: {ambiguity} - skipped, nothing updated for it")
+            continue
+        if wu_path is None:
+            print(f"  WARN: no file found for Work Unit id '{wu_id}' under .ai-team/work-units/ - skipped, nothing updated for it")
             continue
         wu = yaml.safe_load(wu_path.read_text(encoding="utf-8")) or {}
         wu.setdefault("outcomes", {})["human_acceptance"] = human_acceptance_value
         wu_path.write_text(yaml.safe_dump(wu, sort_keys=False, allow_unicode=True), encoding="utf-8")
-        print(f"  Updated {wu_id}.yaml: outcomes.human_acceptance = {human_acceptance_value}")
+        print(f"  Updated {wu_path.name}: outcomes.human_acceptance = {human_acceptance_value}")
     print("  Run python scripts/ai-team/check_done.py <WU-ID> to confirm each Work Unit's overall Definition of Done.")
 elif args.gate == "G4" and not args.work_unit:
     print("  NOTE: no --work-unit given. This recorded the gate at the project level only -")

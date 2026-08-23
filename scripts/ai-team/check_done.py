@@ -22,8 +22,36 @@ if len(sys.argv) != 2:
 ROOT = Path(__file__).resolve().parents[2]
 AI = ROOT / ".ai-team"
 wu_id = sys.argv[1]
-path = AI / "work-units" / f"{wu_id}.yaml"
-if not path.exists():
+wu_dir = AI / "work-units"
+
+
+def find_work_unit_path(wu_dir: Path, wu_id: str):
+    """Work Units are commonly named WU-XXX-description.yaml, not just
+    WU-XXX.yaml - try the exact name first, then a WU-XXX-*.yaml prefix
+    match, then fall back to reading each file's own id: field."""
+    exact = wu_dir / f"{wu_id}.yaml"
+    if exact.exists():
+        return exact, None
+    prefix_matches = sorted(wu_dir.glob(f"{wu_id}-*.yaml"))
+    if len(prefix_matches) == 1:
+        return prefix_matches[0], None
+    if len(prefix_matches) > 1:
+        return None, f"multiple files match '{wu_id}-*.yaml': {[p.name for p in prefix_matches]}"
+    for p in sorted(wu_dir.glob("*.yaml")):
+        try:
+            data = yaml.safe_load(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if isinstance(data, dict) and data.get("id") == wu_id:
+            return p, None
+    return None, None
+
+
+path, ambiguity = find_work_unit_path(wu_dir, wu_id)
+if ambiguity:
+    print(f"Work Unit id '{wu_id}' is ambiguous: {ambiguity}")
+    raise SystemExit(2)
+if path is None:
     print(f"Work Unit not found: {wu_id}")
     raise SystemExit(2)
 wu = yaml.safe_load(path.read_text(encoding="utf-8"))
