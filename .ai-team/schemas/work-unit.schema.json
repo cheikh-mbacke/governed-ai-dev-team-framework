@@ -161,6 +161,9 @@
         "security_review": {
           "type": "boolean"
         },
+        "accessibility_check": {
+          "type": "boolean"
+        },
         "audit": {
           "type": "boolean"
         },

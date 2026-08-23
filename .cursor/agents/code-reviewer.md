@@ -16,6 +16,9 @@ Check:
 - concurrency/data consistency where relevant;
 - test adequacy and gaps;
 - risk-specific concerns.
+- for Work Units where zone.area is frontend, fullstack, or mobile: usability
+  (`.ai-team/constitution/35-ui-ux-strategy.yaml`, section 5) and whether the
+  required states (section 6) were actually verified, not just the happy path.
 
 Return exactly one disposition: APPROVE, REJECT, or NEEDS_DECISION, plus structured findings with severity and evidence.
 

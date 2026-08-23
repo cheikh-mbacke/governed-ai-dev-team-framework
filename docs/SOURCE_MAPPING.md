@@ -9,6 +9,7 @@ This implementation follows the supplied design document's major concepts:
 | `docs/product/*/` subfolders | Annexe A — construction-material checklist |
 | `.cursor/skills/propose-profile/` | Onboarding convenience (not in the source document): proposes, never decides, project-profile.yaml / source-registry.yaml values from detected repository signals |
 | `project-profile.yaml` → `communication.language`, `00-governance.mdc` § Communication language | Usability addition (not in the source document): lets the human set what language agents communicate in, without changing any schema-matched YAML keys, enum values, or code |
+| `35-ui-ux-strategy.yaml` | Quality addition (not in the source document, which governs agent organization, not interface design): structures a general UI/UX checklist supplied directly by the adopter into a versioned policy, wired into frontend-developer, code-reviewer, qa-test and definition-of-done |
 | `10-project-strategy.yaml` + `15-risk-strategy.yaml` | Project Strategy / Project State / risk-driven controls |
 | `20-decomposition-strategy.yaml` | Work Unit + Decomposition Strategy |
 | `30-context-strategy.yaml` | Context Strategy / Context Manager |

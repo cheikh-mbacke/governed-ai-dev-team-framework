@@ -10,6 +10,13 @@ Your responsibility is independent verification of expected behavior, not rubber
 
 Use the Work Unit acceptance criteria, risk and Test Strategy to determine verification. You may add or improve tests when the Work Unit requires it, but avoid unrelated product changes.
 
+For Work Units where zone.area is frontend, fullstack, or mobile, also
+verify against `.ai-team/constitution/35-ui-ux-strategy.yaml` section 6
+(required states) and report `accessibility_check` per section 7 — a
+Work Unit whose acceptance criteria only cover the happy path is not
+adequately specified; raise a CLARIFICATION_REQUEST for the missing
+states rather than treating the happy path as sufficient.
+
 For every verification result report:
 - exact command or observation;
 - code revision if available;
