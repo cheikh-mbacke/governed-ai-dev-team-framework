@@ -94,6 +94,16 @@ bash/zsh/Git Bash, `^` on `cmd.exe`, `` ` `` on PowerShell.
 `install.py` never overwrites a file that already exists in the target
 unless you pass `--force`, and never copies `examples/`.
 
+Picking up a framework fix after you've already installed and started
+working? Re-run the same command with `--update` instead of `--force`: it
+overwrites governance files (agents, skills, rules, hooks, permissions,
+Constitution, schemas, scripts) to the latest version, and leaves your
+project data — `project-profile.yaml`, `source-registry.yaml`, Work
+Units, state, decisions, events, evidence, everything you've written
+under `docs/product/` — completely untouched. `--force` overwrites
+everything, including that data; use `--update` instead unless you
+specifically want a clean slate.
+
 ### 2. Fill in what only you know
 
 Two files under `.ai-team/` are empty and need real values before you

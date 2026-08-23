@@ -95,6 +95,16 @@ Bash, `^` sur `cmd.exe`, `` ` `` sur PowerShell.
 `install.py` n'écrase jamais un fichier déjà présent dans la cible (sauf
 `--force`), et ne copie jamais `examples/`.
 
+Tu veux récupérer une correction du framework après avoir déjà installé
+et commencé à travailler ? Relance la même commande avec `--update` au
+lieu de `--force` : ça écrase les fichiers de gouvernance (agents,
+skills, règles, hooks, permissions, Constitution, schémas, scripts) avec
+la dernière version, et laisse tes données de projet totalement
+intactes — `project-profile.yaml`, `source-registry.yaml`, Work Units,
+état, décisions, événements, preuves, tout ce que tu as écrit sous
+`docs/product/`. `--force` écrase tout, y compris ces données ; utilise
+`--update` sauf si tu veux vraiment repartir de zéro.
+
 ### 2. Remplir ce que toi seul sais
 
 Deux fichiers sous `.ai-team/` sont vides et ont besoin de vraies valeurs

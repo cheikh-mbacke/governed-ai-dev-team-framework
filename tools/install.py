@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 import shutil
 import sys
+import fnmatch
 
 try:
     import yaml
@@ -17,18 +18,96 @@ parser.add_argument("--target", required=True)
 parser.add_argument("--project-id", required=True)
 parser.add_argument("--project-name", required=True)
 parser.add_argument("--force", action="store_true")
+parser.add_argument("--update", action="store_true",
+    help="Overwrite framework/governance files (agents, skills, rules, hooks, permissions, "
+         "constitution, schemas, scripts) with the latest version from this clone, without "
+         "touching project data (project-profile.yaml, source-registry.yaml, Work Units, "
+         "state, decisions, events, evidence, findings, audits, releases, acceptance, logs, "
+         "or any product document you've written under docs/product/). Use this to pick up "
+         "framework fixes on a project you already installed into.")
 args = parser.parse_args()
 
-source_root = Path(__file__).resolve().parents[1]
+if args.update and args.force:
+    print("--update and --force are mutually exclusive: --force overwrites everything "
+          "including your project data, --update is specifically designed not to. Pick one.")
+    raise SystemExit(2)
+
 target = Path(args.target).expanduser().resolve()
+
+if args.update and not (target / ".ai-team" / "project-profile.yaml").exists():
+    print(f"--update expects an already-installed project at {target}, but "
+          "no .ai-team/project-profile.yaml was found there. Run a normal install "
+          "first (no --update), then use --update for subsequent framework updates.")
+    raise SystemExit(2)
+
+source_root = Path(__file__).resolve().parents[1]
 target.mkdir(parents=True, exist_ok=True)
 
+# Paths (relative to the project root) that belong to YOUR project, never the
+# framework - --update must never overwrite these even though they live
+# under directories (.ai-team/, docs/product/) that otherwise get refreshed.
+# Patterns are matched with fnmatch against the path relative to target.
+PROJECT_OWNED_PATTERNS = [
+    ".ai-team/project-profile.yaml",
+    ".ai-team/sources/source-registry.yaml",
+    ".ai-team/work-units/*",
+    ".ai-team/state/*",
+    ".ai-team/decisions/*",
+    ".ai-team/events/*",
+    ".ai-team/evidence/*",
+    ".ai-team/findings/*",
+    ".ai-team/audits/*",
+    ".ai-team/releases/*",
+    ".ai-team/acceptance/*",
+    ".ai-team/context-packages/*",
+    ".ai-team/logs/*",
+    ".ai-team/project-profile.yaml.bak",
+]
+
+
+def is_project_owned(rel_posix):
+    for pattern in PROJECT_OWNED_PATTERNS:
+        if fnmatch.fnmatch(rel_posix, pattern):
+            return True
+    return False
+
+
+def is_docs_product_readme(rel_posix):
+    # docs/product/README.md and docs/product/<category>/README.md are
+    # framework-authored stubs (safe to refresh). Any other file under
+    # docs/product/ is the human's own product material - never touched
+    # by --update, even though it lives in a directory that otherwise gets
+    # refreshed.
+    return rel_posix == "docs/product/README.md" or (
+        rel_posix.startswith("docs/product/") and rel_posix.endswith("/README.md")
+        and rel_posix.count("/") == 3
+    )
+
+
 copy_items = [".cursor", ".ai-team", "scripts", "docs/product", "AGENTS.md", "requirements.txt"]
+updated_files = []
+skipped_project_data = []
 for item in copy_items:
     src = source_root / item
     dst = target / item
     if src.is_dir():
-        if dst.exists() and not args.force:
+        if args.update and dst.exists():
+            for p in src.rglob("*"):
+                if p.is_dir():
+                    continue
+                rel = p.relative_to(source_root)
+                rel_posix = rel.as_posix()
+                out = target / rel
+                if item == "docs/product" and not is_docs_product_readme(rel_posix):
+                    continue  # human's own product material - never touched
+                if is_project_owned(rel_posix):
+                    if out.exists():
+                        skipped_project_data.append(rel_posix)
+                    continue
+                out.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(p, out)
+                updated_files.append(rel_posix)
+        elif dst.exists() and not args.force:
             # Merge without overwriting existing files.
             for p in src.rglob("*"):
                 rel = p.relative_to(src)
@@ -41,8 +120,21 @@ for item in copy_items:
         else:
             shutil.copytree(src, dst, dirs_exist_ok=True)
     else:
-        if not dst.exists() or args.force:
+        if args.update or not dst.exists() or args.force:
+            dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
+            if args.update:
+                updated_files.append(item)
+
+if args.update:
+    print(f"Updated {len(updated_files)} framework file(s) in {target} to the latest version.")
+    print("Project data left untouched (project-profile.yaml, source-registry.yaml, Work Units,")
+    print("state, decisions, events, evidence, findings, audits, releases, acceptance, logs,")
+    print("and every file you've written under docs/product/ other than the category READMEs).")
+    if skipped_project_data:
+        print(f"({len(skipped_project_data)} project-data path(s) correctly left alone.)")
+    print("\nRun scripts/ai-team/validate.py to confirm nothing broke.")
+    raise SystemExit(0)
 
 profile_path = target / ".ai-team" / "project-profile.yaml"
 profile_text = profile_path.read_text(encoding="utf-8")
