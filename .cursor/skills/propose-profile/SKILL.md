@@ -42,6 +42,11 @@ invention.
 inferred from the repository; always ask the human directly for these four
 names (or leave them `unspecified` if the human doesn't answer yet).
 
+`communication.language` is never inferred either — a repository's code
+comments or README language is not a reliable signal of what the human
+wants to be addressed in. Ask directly; default to `english` only if the
+human has no preference.
+
 ## Part 2 — `.ai-team/sources/source-registry.yaml`
 
 List every file under `docs/product/` (including its subfolders, if the

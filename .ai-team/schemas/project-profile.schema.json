@@ -36,6 +36,15 @@
         }
       }
     },
+    "communication": {
+      "type": "object",
+      "properties": {
+        "language": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "paths": {
       "type": "object"
     },

@@ -116,6 +116,8 @@ looks like this:
 project:
   id: checkout-service
   name: Checkout Service
+communication:
+  language: english
 paths:
   source_roots: [src]
   test_roots: [tests]
@@ -130,6 +132,13 @@ human_authorities:
   final_acceptance: alice
 ```
 
+- `communication.language` is the language agents use when talking to you
+  and when writing human-facing text (Work Unit titles, questions,
+  explanations) — a language name or code, e.g. `français`, `español`,
+  `fr`. It's free text, not an enum: nothing else in this framework
+  changes language regardless of this setting — YAML keys, enum values
+  like `status: ready`, file paths, commands and code always stay as
+  defined.
 - `commands` are the exact shell commands the developer subagents run to
   build, lint and test your project. No build step? Leave it `null`.
 - `human_authorities` aren't roles for the AI — they're the real names of

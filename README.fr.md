@@ -117,6 +117,8 @@ profil rempli ressemble à ceci :
 project:
   id: checkout-service
   name: Checkout Service
+communication:
+  language: français
 paths:
   source_roots: [src]
   test_roots: [tests]
@@ -131,6 +133,13 @@ human_authorities:
   final_acceptance: alice
 ```
 
+- `communication.language` est la langue dans laquelle les agents te
+  parlent et rédigent le texte destiné à un humain (titres de Work Units,
+  questions, explications) — un nom de langue ou un code, ex. `français`,
+  `español`, `en`. C'est du texte libre, pas un enum : rien d'autre dans
+  ce framework ne change de langue selon ce réglage — clés YAML, valeurs
+  d'enum comme `status: ready`, chemins de fichiers, commandes et code
+  restent toujours tels que définis.
 - `commands` sont les commandes shell exactes que les subagents Developer
   exécutent pour builder, linter et tester ton projet. Pas d'étape de
   build ? Laisse `null`.

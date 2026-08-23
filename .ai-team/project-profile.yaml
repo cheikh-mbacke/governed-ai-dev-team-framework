@@ -29,6 +29,8 @@
 #   engineering_constitution: alice
 #   production_release: bob
 #   final_acceptance: alice
+# communication:
+#   language: français
 
 project:
   id: framework-template
@@ -36,6 +38,16 @@ project:
   repository_kind: framework_template
   primary_language: unknown
   package_manager: unknown
+
+communication:
+  # Free text: a language name ("français", "español", "日本語") or an
+  # ISO code ("fr", "es", "ja"). Applies to how agents talk to you and to
+  # human-facing prose they write (Work Unit titles/objectives, questions,
+  # explanations). It never changes YAML keys, enum values (e.g.
+  # `status: ready`), file paths, commands, or code — those stay in their
+  # defined form so the schemas and scripts in this framework keep working
+  # regardless of this setting.
+  language: english
 
 autonomy:
   level: 2
