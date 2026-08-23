@@ -15,7 +15,7 @@ source_root = Path(__file__).resolve().parents[1]
 target = Path(args.target).expanduser().resolve()
 target.mkdir(parents=True, exist_ok=True)
 
-copy_items = [".cursor", ".ai-team", "scripts", "AGENTS.md"]
+copy_items = [".cursor", ".ai-team", "scripts", "docs/product", "AGENTS.md"]
 for item in copy_items:
     src = source_root / item
     dst = target / item
@@ -80,46 +80,6 @@ state_path = target / ".ai-team" / "state" / "project-state.yaml"
 state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
 state["project_id"] = args.project_id
 state_path.write_text(yaml.safe_dump(state, sort_keys=False, allow_unicode=True), encoding="utf-8")
-
-product_docs = target / "docs" / "product"
-product_docs.mkdir(parents=True, exist_ok=True)
-readme = product_docs / "README.md"
-if not readme.exists():
-    readme.write_text(
-        "# Human product material\n\n"
-        "Put your authoritative product documents under the subfolders below "
-        "(or register files from their actual location in "
-        "`.ai-team/sources/source-registry.yaml` — nothing has to physically "
-        "live here). The subfolders are an optional organizational aid, not a "
-        "required format: use as many or as few as your project needs, and "
-        "put more than one topic in a single file if that's simpler for you. "
-        "They mirror the construction-material checklist in the framework's "
-        "base design document (see `docs/SOURCE_MAPPING.md`).\n\n"
-        "- `vision-and-scope/` — what result you're after, and what's explicitly out of scope.\n"
-        "- `users-and-rules/` — who uses the system, their journeys, and the business rules/invariants that govern behavior.\n"
-        "- `requirements/` — functional and non-functional requirements, and any specification detail needed to avoid ambiguity.\n"
-        "- `acceptance-criteria/` — the observable results that make a piece of work count as done.\n"
-        "- `architecture-and-constraints/` — architecture, interface contracts, and imposed technical constraints (stack, versions, environments).\n"
-        "- `security-and-compliance/` — access control, data, secrets, audit and regulatory requirements.\n"
-        "- `references/` — reference data, examples, mockups or expected proof artifacts.\n",
-        encoding="utf-8",
-    )
-
-product_doc_subfolders = {
-    "vision-and-scope": "Vision and measurable objectives; what's included and explicitly excluded.",
-    "users-and-rules": "Actors, user journeys; business rules, invariants, decisions and exceptions.",
-    "requirements": "Functional and non-functional requirements; specification detail that removes ambiguity.",
-    "acceptance-criteria": "Observable results that let you consider a piece of work done.",
-    "architecture-and-constraints": "Architecture, interface contracts; imposed technologies, versions, environments.",
-    "security-and-compliance": "Access control, data, secrets, audit and regulatory requirements.",
-    "references": "Reference data, examples, mockups, or proof artifacts that reduce ambiguity.",
-}
-for folder_name, prompt in product_doc_subfolders.items():
-    folder_path = product_docs / folder_name
-    folder_path.mkdir(parents=True, exist_ok=True)
-    stub = folder_path / "README.md"
-    if not stub.exists():
-        stub.write_text(f"# {folder_name.replace('-', ' ').title()}\n\n{prompt}\n", encoding="utf-8")
 
 print(f"Installed governed AI team framework into {target}")
 print("Next:")

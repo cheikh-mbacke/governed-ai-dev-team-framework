@@ -53,53 +53,64 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
 
 ### 1. Get the framework and install it into your project
 
-Clone this repository once, anywhere on your machine — it's the source of
-the defaults you're about to install, not something you work inside:
-
 ```bash
 git clone https://github.com/cheikh-mbacke/governed-ai-dev-team-framework.git
 cd governed-ai-dev-team-framework
 ```
 
-Then run the installer **from inside this cloned folder** — `tools/install.py`
+Run the installer **from inside this cloned folder** — `tools/install.py`
 is a path relative to it, not to your project or to wherever your terminal
 happens to be. Replace `/path/to/your/project`, `your-project-id` and
-`"Your Project Name"` below with your own project's actual path, id and
-name — these are not values to leave as-is:
+`"Your Project Name"` below with your own project's actual values:
 
 ```bash
 python tools/install.py --target /path/to/your/project --project-id your-project-id --project-name "Your Project Name"
 ```
 
-(Running this from somewhere else instead? Give the full path to the
-script, e.g. `python ~/governed-ai-dev-team-framework/tools/install.py ...`.)
+Running from somewhere else instead? Give the full path to the script,
+e.g. `python ~/governed-ai-dev-team-framework/tools/install.py ...`.
 
-This is written as one line on purpose so it can be pasted into any shell
-unmodified. If you split it across multiple lines yourself, note that the
-line-continuation character differs by shell: `\` on bash/zsh/Git Bash,
-`^` on Windows `cmd.exe`, `` ` `` on PowerShell.
+One line on purpose, so it pastes cleanly into any shell. If you split it
+yourself, the line-continuation character differs by shell: `\` on
+bash/zsh/Git Bash, `^` on `cmd.exe`, `` ` `` on PowerShell.
 
 `install.py` never overwrites a file that already exists in the target
-unless you pass `--force`, and it never copies `examples/`.
+unless you pass `--force`, and never copies `examples/`.
 
 ### 2. Fill in what only you know
 
-Two files under `.ai-team/` are genuinely empty and need real values before
-you compile anything. Everything else in the Constitution is already a
-working default — you don't need to have read any external design document
-to understand what goes in these two.
+Two files under `.ai-team/` are empty and need real values before you
+compile anything. Everything else in the Constitution is already ready to
+use — no external design document required to understand these two.
 
-You can fill them by hand using the guidance below, or — once the project
-is open in Cursor (step 3) — invoke `/propose-profile`: it inspects your
-repository and `docs/product/` for concrete signals already present (a
-`package.json` script, a `Cargo.toml`, files you've dropped in the
-category folders below) and proposes values for both files. It never
-writes anything until you confirm, and it never guesses who your human
-approvers are — it always asks that directly.
+**`.ai-team/sources/source-registry.yaml`** — one entry per document that
+defines what you're building. The installer already created seven category
+subfolders under `docs/product/` — `vision-and-scope/`, `users-and-rules/`,
+`requirements/`, `acceptance-criteria/`, `architecture-and-constraints/`,
+`security-and-compliance/`, `references/` — each with a short README (see
+`docs/product/README.md`). Using them is optional; one flat file works
+just as well. A commented example is at the top of the registry file;
+concretely, dropping a file at `docs/product/requirements/requirements.md`
+gets registered like this:
+
+```yaml
+sources:
+  - id: requirements-v1
+    type: human_construction_material
+    path: docs/product/requirements/requirements.md
+    authority: human
+    scope: requirements
+    version: "1.0"
+    status: active
+    owner: product
+```
+
+An unregistered document is invisible to the framework: agents only treat
+as authoritative the sources explicitly listed here.
 
 **`.ai-team/project-profile.yaml`** — open it and replace the placeholder
-values. A commented example is at the top of the file; concretely, a filled
-profile looks like this:
+values. A commented example is at the top; concretely, a filled profile
+looks like this:
 
 ```yaml
 project:
@@ -119,59 +130,34 @@ human_authorities:
   final_acceptance: alice
 ```
 
-- `commands` are the exact shell commands the AI developer subagents will
-  run to build, lint and test your project. If your project has no build
-  step, leave that entry as `null` — it's fine.
-- `human_authorities` are not roles for the AI to fill; they are the real
-  names of the people who have final say at each of the framework's human
-  gates (see "Runtime flow" below): who can change product scope, who can
-  change the Engineering Constitution itself, who can authorize a
-  production release, and who signs off on final acceptance. On a small
-  project this can be the same name four times. The framework will name
-  these people whenever it needs to ask a human for a decision.
+- `commands` are the exact shell commands the developer subagents run to
+  build, lint and test your project. No build step? Leave it `null`.
+- `human_authorities` aren't roles for the AI — they're the real names of
+  the people with final say at each human gate (see "Runtime flow" below):
+  who can change product scope, who can change the Constitution itself,
+  who authorizes a production release, who signs off on final acceptance.
+  The same name four times is fine on a small project. The framework names
+  these people whenever it needs a human decision.
 
-**`.ai-team/sources/source-registry.yaml`** — one entry per document that
-actually defines what you're building. The installer already created seven
-category subfolders under `docs/product/` for you —
-`vision-and-scope/`, `users-and-rules/`, `requirements/`,
-`acceptance-criteria/`, `architecture-and-constraints/`,
-`security-and-compliance/`, `references/` — each with a one-line README
-explaining what goes there (see `docs/product/README.md`). Using them is
-optional; a single flat file works just as well. A commented example is at
-the top of the registry file; concretely, if you drop a file at
-`docs/product/requirements/requirements.md`, register it like this:
+Rather not fill these by hand? Once the project is open in Cursor (step 3),
+invoke `/propose-profile` instead: it inspects your repository and
+`docs/product/` for concrete signals already there — a `package.json`
+script, a `Cargo.toml`, files you've dropped in the category folders — and
+proposes values for both files above. It never writes anything until you
+confirm, and never guesses your human approvers; it always asks directly.
 
-```yaml
-sources:
-  - id: requirements-v1
-    type: human_construction_material
-    path: docs/product/requirements/requirements.md
-    authority: human
-    scope: requirements
-    version: "1.0"
-    status: active
-    owner: product
-```
-
-Any product document you don't register here is invisible to the
-framework: the AI agents only treat as authoritative the sources explicitly
-listed.
-
-Then check what, if anything, is still missing:
+Then check what's still missing:
 
 ```bash
 python scripts/ai-team/validate.py
 ```
 
-Concretely, this checks these two files against what the framework needs
-and prints one warning line per missing piece — for example
-`WARN Project command 'build' is not configured` if `commands.build` is
-still `null`, or `WARN No authoritative product sources are registered` if
-the registry is still empty. Fix what it flags, run it again, and repeat
-until there are no more warnings about these two files. (It will also start
-reporting on Work Units once you create some in step 4 below — that's
-expected and doesn't mean anything is wrong with your setup now.) It never
-asks you to edit anything under `.ai-team/constitution/` — those files are
+It checks these two files and prints one warning per gap — for example
+`WARN Project command 'build' is not configured`, or
+`WARN No authoritative product sources are registered`. Fix, rerun, repeat
+until both are warning-free. (It starts reporting on Work Units too once
+you create some in step 4 below — expected, not a problem with your
+setup.) It never asks you to touch `.ai-team/constitution/` — that's
 already complete.
 
 ### 3. Open the project in Cursor

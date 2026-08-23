@@ -51,52 +51,63 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
 
 ### 1. Récupérer le framework et l'installer dans ton projet
 
-Clone ce dépôt une fois, où tu veux sur ta machine — c'est la source des
-defaults que tu vas installer, pas un endroit où tu vas travailler :
-
 ```bash
 git clone https://github.com/cheikh-mbacke/governed-ai-dev-team-framework.git
 cd governed-ai-dev-team-framework
 ```
 
-Puis lance l'installeur **depuis l'intérieur de ce dossier cloné** —
+Lance l'installeur **depuis l'intérieur de ce dossier cloné** —
 `tools/install.py` est un chemin relatif à ce dossier, pas à ton projet ni
 à l'endroit où se trouve ton terminal. Remplace `/chemin/vers/ton/projet`,
-`ton-id-de-projet` et `"Nom De Ton Projet"` ci-dessous par les vraies
-valeurs de ton projet — ce ne sont pas des valeurs à garder telles quelles :
+`ton-id-de-projet` et `"Nom De Ton Projet"` ci-dessous par tes vraies
+valeurs :
 
 ```bash
 python tools/install.py --target /chemin/vers/ton/projet --project-id ton-id-de-projet --project-name "Nom De Ton Projet"
 ```
 
-(Tu préfères lancer ça depuis ailleurs ? Donne le chemin complet vers le
-script, par ex. `python ~/governed-ai-dev-team-framework/tools/install.py ...`.)
+Tu préfères lancer ça depuis ailleurs ? Donne le chemin complet vers le
+script, par ex. `python ~/governed-ai-dev-team-framework/tools/install.py ...`.
 
-Cette commande est volontairement écrite sur une seule ligne pour pouvoir
-être collée telle quelle dans n'importe quel shell. Si tu la répartis
-toi-même sur plusieurs lignes, note que le caractère de continuation de
-ligne diffère selon le shell : `\` sur bash/zsh/Git Bash, `^` sur
-`cmd.exe` (Windows), `` ` `` sur PowerShell.
+Écrite sur une seule ligne exprès, pour être collée telle quelle dans
+n'importe quel shell. Si tu la répartis toi-même sur plusieurs lignes, le
+caractère de continuation diffère selon le shell : `\` sur bash/zsh/Git
+Bash, `^` sur `cmd.exe`, `` ` `` sur PowerShell.
 
 `install.py` n'écrase jamais un fichier déjà présent dans la cible (sauf
 `--force`), et ne copie jamais `examples/`.
 
 ### 2. Remplir ce que toi seul sais
 
-Deux fichiers sous `.ai-team/` sont réellement vides et ont besoin de
-vraies valeurs avant de compiler quoi que ce soit. Tout le reste de la
-Constitution est déjà un default fonctionnel — tu n'as besoin d'avoir lu
-aucun document de conception externe pour comprendre ce qui va dans ces
-deux fichiers.
+Deux fichiers sous `.ai-team/` sont vides et ont besoin de vraies valeurs
+avant de compiler quoi que ce soit. Tout le reste de la Constitution est
+déjà prêt à l'emploi — pas besoin d'avoir lu de document de conception
+externe pour comprendre ce qui va dans ces deux fichiers.
 
-Tu peux les remplir à la main avec le guide ci-dessous, ou — une fois le
-projet ouvert dans Cursor (étape 3) — invoquer `/propose-profile` : il
-inspecte ton dépôt et `docs/product/` à la recherche de signaux concrets
-déjà présents (un script dans `package.json`, un `Cargo.toml`, des fichiers
-que tu as déposés dans les dossiers de catégorie ci-dessous) et propose des
-valeurs pour les deux fichiers. Il n'écrit jamais rien avant que tu
-confirmes, et ne devine jamais qui sont tes approbateurs humains — il te le
-demande toujours directement.
+**`.ai-team/sources/source-registry.yaml`** — une entrée par document qui
+définit ce que tu construis. L'installeur a déjà créé sept sous-dossiers
+de catégorie sous `docs/product/` — `vision-and-scope/`, `users-and-rules/`,
+`requirements/`, `acceptance-criteria/`, `architecture-and-constraints/`,
+`security-and-compliance/`, `references/` — chacun avec un court README
+(voir `docs/product/README.md`). Les utiliser est optionnel ; un simple
+fichier à plat fonctionne tout aussi bien. Un exemple commenté est en haut
+du fichier de registre ; concrètement, déposer un fichier à
+`docs/product/requirements/requirements.md` s'enregistre ainsi :
+
+```yaml
+sources:
+  - id: requirements-v1
+    type: human_construction_material
+    path: docs/product/requirements/requirements.md
+    authority: human
+    scope: requirements
+    version: "1.0"
+    status: active
+    owner: product
+```
+
+Un document non enregistré est invisible pour le framework : les agents ne
+traitent comme autoritatives que les sources explicitement listées ici.
 
 **`.ai-team/project-profile.yaml`** — ouvre-le et remplace les valeurs
 placeholder. Un exemple commenté est en haut du fichier ; concrètement, un
@@ -121,62 +132,38 @@ human_authorities:
 ```
 
 - `commands` sont les commandes shell exactes que les subagents Developer
-  vont exécuter pour builder, linter et tester ton projet. Si ton projet
-  n'a pas d'étape de build, laisse cette entrée à `null` — c'est normal.
-- `human_authorities` ne sont pas des rôles à remplir pour l'IA ; ce sont
-  les vrais noms des personnes qui ont le dernier mot à chacune des gates
-  humaines du framework (voir « Déroulé runtime » ci-dessous) : qui peut
-  changer le périmètre produit, qui peut changer la Constitution
-  d'ingénierie elle-même, qui peut autoriser une release en production, et
-  qui signe la recette finale. Sur un petit projet, ça peut être le même
-  nom quatre fois. Le framework citera ces personnes chaque fois qu'il a
-  besoin de demander une décision à un humain.
+  exécutent pour builder, linter et tester ton projet. Pas d'étape de
+  build ? Laisse `null`.
+- `human_authorities` ne sont pas des rôles pour l'IA — ce sont les vrais
+  noms des personnes qui ont le dernier mot à chaque gate humaine (voir
+  « Déroulé runtime » ci-dessous) : qui peut changer le périmètre produit,
+  qui peut changer la Constitution elle-même, qui autorise une release en
+  production, qui signe la recette finale. Le même nom quatre fois, c'est
+  très bien sur un petit projet. Le framework cite ces personnes chaque
+  fois qu'il a besoin d'une décision humaine.
 
-**`.ai-team/sources/source-registry.yaml`** — une entrée par document qui
-définit réellement ce que tu construis. L'installeur a déjà créé sept
-sous-dossiers de catégorie sous `docs/product/` pour toi —
-`vision-and-scope/`, `users-and-rules/`, `requirements/`,
-`acceptance-criteria/`, `architecture-and-constraints/`,
-`security-and-compliance/`, `references/` — chacun avec un README d'une
-ligne expliquant ce qui va où (voir `docs/product/README.md`). Les utiliser
-est optionnel ; un simple fichier à plat fonctionne tout aussi bien. Un
-exemple commenté est en haut du fichier de registre ; concrètement, si tu
-déposes un fichier à `docs/product/requirements/requirements.md`,
-enregistre-le ainsi :
+Tu préfères ne pas les remplir à la main ? Une fois le projet ouvert dans
+Cursor (étape 3), invoque `/propose-profile` à la place : il inspecte ton
+dépôt et `docs/product/` à la recherche de signaux concrets déjà présents
+— un script dans `package.json`, un `Cargo.toml`, des fichiers déposés
+dans les dossiers de catégorie — et propose des valeurs pour les deux
+fichiers ci-dessus. Il n'écrit jamais rien avant que tu confirmes, et ne
+devine jamais tes approbateurs humains ; il te le demande toujours
+directement.
 
-```yaml
-sources:
-  - id: requirements-v1
-    type: human_construction_material
-    path: docs/product/requirements/requirements.md
-    authority: human
-    scope: requirements
-    version: "1.0"
-    status: active
-    owner: product
-```
-
-Tout document produit que tu n'enregistres pas ici est invisible pour le
-framework : les agents IA ne traitent comme autoritatives que les sources
-explicitement listées.
-
-Puis vérifie ce qu'il reste, s'il reste quelque chose, à compléter :
+Puis vérifie ce qu'il reste à compléter :
 
 ```bash
 python scripts/ai-team/validate.py
 ```
 
-Concrètement, ce script vérifie ces deux fichiers par rapport à ce dont le
-framework a besoin, et affiche une ligne d'avertissement par élément
-manquant — par exemple `WARN Project command 'build' is not configured` si
-`commands.build` est encore à `null`, ou `WARN No authoritative product
-sources are registered` si le registre est encore vide. Corrige ce qui est
-signalé, relance la commande, et répète jusqu'à ce qu'il n'y ait plus
-d'avertissement concernant ces deux fichiers. (Il commencera aussi à faire
-des rapports sur les Work Units une fois que tu en auras créé à l'étape 4
-ci-dessous — c'est normal et ça ne veut pas dire qu'il y a un problème
-avec ta configuration actuelle.) Il ne te demande jamais de modifier quoi
-que ce soit sous `.ai-team/constitution/` — ces fichiers sont déjà complets.
+Il vérifie ces deux fichiers et affiche un avertissement par manque — par
+exemple `WARN Project command 'build' is not configured`, ou
+`WARN No authoritative product sources are registered`. Corrige, relance,
+répète jusqu'à ce que les deux soient sans avertissement. (Il commence
+aussi à faire des rapports sur les Work Units une fois que tu en crées à
+l'étape 4 — normal, pas un problème avec ta configuration.) Il ne te
+demande jamais de toucher `.ai-team/constitution/` — c'est déjà complet.
 
 ### 3. Ouvrir le projet dans Cursor
 
@@ -274,7 +261,7 @@ Ce dépôt fournit un **profil de référence assumé** :
 - Release production : gate humaine G3
 - Recette finale : gate humaine G4
 
-Ce sont des defaults d'implémentation, pas des vérités universelles. Change-les dans la Constitution et versionne le changement.
+Ce sont des réglages par défaut, pas des vérités universelles. Change-les dans la Constitution et versionne le changement.
 
 ## Déroulé runtime
 
