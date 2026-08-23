@@ -73,8 +73,14 @@ else:
     profile["setup_status"]["template"] = False
     profile["setup_status"]["note"] = "Complete commands, paths and human authorities before production use."
     profile_path.write_text(yaml.safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8")
-    print("NOTE: project-profile.yaml did not match the shipped template exactly; "
-          "rewrote it structurally (comments, if any, were not preserved).")
+    print("NOTE: .ai-team/project-profile.yaml already existed and didn't match "
+          "the shipped template exactly (common if you're re-running install.py "
+          "against a target you already installed into, or already edited by "
+          "hand). project.id, project.name and setup_status were still updated "
+          "correctly; only the commented example at the top of the file, if it "
+          "was still there, was not preserved. Nothing to fix unless you want "
+          "that comment back, in which case remove the target and reinstall "
+          "into a fresh directory.")
 
 state_path = target / ".ai-team" / "state" / "project-state.yaml"
 state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
