@@ -4,13 +4,6 @@ Ce guide détaille chaque étape. Pour le chemin rapide, voir le Quickstart de
 `README.fr.md` — les deux se correspondent, ce guide donne juste plus de
 contexte sur chaque étape.
 
-## 0. Rappel : defaults vs exemples
-
-`.cursor/` et `.ai-team/constitution/` sont des defaults prêts à l'emploi,
-pas des exemples à effacer — voir `README.fr.md` pour le détail. Seuls
-`.ai-team/project-profile.yaml` et `.ai-team/sources/source-registry.yaml`
-sont vides et à remplir.
-
 ## 1. Installer le framework
 
 Utiliser `tools/install.py`. Le framework est copié dans le repo projet sans supposer la stack technique. Le dossier `examples/` du framework n'est jamais copié.

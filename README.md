@@ -16,31 +16,6 @@ The framework separates:
 
 The AI team may analyze, propose, implement, test, review, and audit. It may **not silently invent missing product decisions or change its own Constitution**.
 
-## Defaults vs. examples — read this first
-
-This repository ships two different kinds of content, and the installer treats
-them differently on purpose:
-
-- **Defaults** — `.cursor/` and `.ai-team/constitution/`, `.ai-team/schemas/`,
-  `.ai-team/templates/`, `scripts/`, `AGENTS.md`. These are not placeholders.
-  They are a working, opinionated reference configuration (roles, staffing
-  thresholds, permissions, gates, Definition of Ready/Done) derived directly
-  from the framework's base design document. `install.py` **copies these into
-  your project**. You can start compiling and running Work Units against them
-  as-is; edit them in place, directly in your project, whenever you want to
-  diverge — there is nothing to delete first.
-- **Examples** — `examples/project-a/`. This is a static illustration of what
-  a finished Work Unit and its Context Package look like, kept in the
-  framework repository only. `install.py` **never copies it** into your
-  project. Your installed project starts clean: no sample Work Unit, no
-  sample source registry entry to remove.
-
-Only two files are genuinely empty and need your input before the first
-`/compile-project`: `.ai-team/project-profile.yaml` (your project's real
-commands, paths and human approvers) and `.ai-team/sources/source-registry.yaml`
-(pointers to your actual product documents). Both ship with a commented-out
-example of the expected shape, not with fake data to clean up.
-
 ## What is already implemented in this repository
 
 - Cursor Project Rules in `.cursor/rules/`
@@ -49,7 +24,7 @@ example of the expected shape, not with fake data to clean up.
 - Cursor project hooks in `.cursor/hooks.json`
 - Cursor per-repository execution guidance in `.cursor/permissions.json`
 - Cursor Bugbot rules in `.cursor/BUGBOT.md`
-- Engineering Constitution in `.ai-team/constitution/` (a working default, see above)
+- Engineering Constitution in `.ai-team/constitution/`
 - JSON Schemas for all core state objects in `.ai-team/schemas/`
 - Ready-to-use templates in `.ai-team/templates/`
 - Runtime directories for Work Units, decisions, evidence, findings, audit, release and acceptance
@@ -70,9 +45,8 @@ python tools/install.py \
   --project-name "Project A"
 ```
 
-`install.py` copies only the defaults listed above; it never overwrites a
-file that already exists in the target unless you pass `--force`, and it
-never copies `examples/`.
+`install.py` never overwrites a file that already exists in the target
+unless you pass `--force`, and it never copies `examples/`.
 
 ### 2. Fill in what only you know
 

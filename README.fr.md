@@ -6,30 +6,6 @@ Un framework prêt à mettre sur GitHub pour intégrer dans un projet une **équ
 
 L'idée n'est pas de fournir un gros prompt. Le dépôt matérialise l'organisation sous forme de fichiers versionnés : Constitution d'ingénierie, rôles, staffing, permissions, Work Units, Project State, preuves, review, audit indépendant et gates humaines.
 
-## Defaults vs exemples — à lire en premier
-
-Ce dépôt contient deux types de contenu, traités différemment par l'installeur :
-
-- **Defaults** — `.cursor/` et `.ai-team/constitution/`, `.ai-team/schemas/`,
-  `.ai-team/templates/`, `scripts/`, `AGENTS.md`. Ce ne sont pas des
-  placeholders : c'est une configuration de référence assumée (rôles, seuils
-  de staffing, permissions, gates, Definition of Ready/Done) issue directement
-  du document de cadrage de base. `install.py` **copie ces fichiers dans ton
-  projet**. Tu peux compiler et lancer des Work Units directement dessus ;
-  modifie-les sur place quand tu veux t'en écarter — rien à supprimer avant.
-- **Exemples** — `examples/project-a/`. C'est une illustration statique d'une
-  Work Unit terminée et de son Context Package, gardée uniquement dans le
-  dépôt du framework. `install.py` **ne la copie jamais** dans ton projet.
-  Ton projet installé démarre propre : aucune Work Unit d'exemple, aucune
-  entrée d'exemple dans le registre de sources à supprimer.
-
-Seuls deux fichiers sont réellement vides et demandent ton intervention avant
-le premier `/compile-project` : `.ai-team/project-profile.yaml` (tes vraies
-commandes, chemins et autorités humaines) et
-`.ai-team/sources/source-registry.yaml` (pointeurs vers tes vrais documents
-produit). Les deux contiennent un exemple en commentaire montrant le format
-attendu, pas de fausses données à nettoyer.
-
 ## Quickstart
 
 ### 1. Installer dans ton projet
@@ -41,8 +17,8 @@ python tools/install.py \
   --project-name "Projet A"
 ```
 
-`install.py` ne copie que les defaults listés ci-dessus, n'écrase jamais un
-fichier déjà présent dans la cible (sauf `--force`), et ne copie jamais
+`install.py` n'écrase jamais un fichier déjà présent dans la cible (sauf
+`--force`), et ne copie jamais
 `examples/`.
 
 ### 2. Remplir ce que toi seul sais
