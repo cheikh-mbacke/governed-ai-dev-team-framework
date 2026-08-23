@@ -79,8 +79,20 @@ Pour chaque Work Unit :
 
 ## 9. Si ça semble bloqué
 
-Avant d'arrêter et de relancer — la seule option quand tu n'as rien de
-concret à regarder — lance :
+**D'abord, avant tout script** : remonte dans le chat Cursor et cherche un
+bouton "Run"/"Approve" en attente d'un clic. C'est la cause la plus
+fréquente et la plus invisible — une commande qui n'était pas
+auto-approuvée (démarrer le serveur local, lancer Playwright, installer
+une dépendance) suspend l'agent *avant* qu'il ait la main pour écrire
+quoi que ce soit. Rien de ce que ce framework enregistre ne peut détecter
+cet état, parce qu'aucun événement n'est écrit tant que la commande n'a
+pas été exécutée. Si tu retombes souvent sur ce cas précis pour un type
+de commande donné, ajoute une règle correspondante dans
+`.cursor/permissions.json` → `autoRun.allow_instructions` plutôt que de
+cliquer "Approve" à chaque fois.
+
+Si ce n'est pas ça, avant d'arrêter et de relancer — la seule option
+quand tu n'as rien de concret à regarder — lance :
 
 ```bash
 python scripts/ai-team/diagnose.py

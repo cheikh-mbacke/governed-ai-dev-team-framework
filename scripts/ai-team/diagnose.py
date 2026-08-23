@@ -28,6 +28,12 @@ def load_yaml(p):
 
 print("Governed AI Team diagnosis")
 print("=" * 26)
+print()
+print("Before anything below: scroll up in the Cursor chat and check for a")
+print("pending command-approval prompt (a 'Run' / 'Approve' button waiting")
+print("for a click). This script cannot see that state - Cursor suspends the")
+print("agent before it can write anything this script could read. It is the")
+print("single most common invisible-stall cause; check it first.")
 
 # 1. Anything explicitly waiting on a human?
 open_human_events = []
