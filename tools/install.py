@@ -23,7 +23,7 @@ source_root = Path(__file__).resolve().parents[1]
 target = Path(args.target).expanduser().resolve()
 target.mkdir(parents=True, exist_ok=True)
 
-copy_items = [".cursor", ".ai-team", "scripts", "docs/product", "AGENTS.md"]
+copy_items = [".cursor", ".ai-team", "scripts", "docs/product", "AGENTS.md", "requirements.txt"]
 for item in copy_items:
     src = source_root / item
     dst = target / item
