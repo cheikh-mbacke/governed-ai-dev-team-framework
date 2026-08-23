@@ -17,6 +17,7 @@ This implementation follows the supplied design document's major concepts:
 | `80-communication-policy.yaml` | Structured messages |
 | `40-test-strategy.yaml` | Test Strategy / evidence |
 | `.cursor/agents/code-reviewer.md` | Review |
+| `.cursor/BUGBOT.md` | Agent Review / Bugbot layer (pull-request-level review) |
 | `.cursor/agents/auditor.md` + `50-audit-strategy.yaml` | Independent audit |
 | `definition-of-done.yaml` | Definition of Done |
 | `90-gates-and-autonomy.yaml` | G0-G4 + autonomy levels |

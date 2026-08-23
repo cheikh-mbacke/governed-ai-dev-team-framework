@@ -63,6 +63,39 @@
       "type": "string",
       "minLength": 1
     },
+    "zone": {
+      "type": "object",
+      "required": [
+        "area"
+      ],
+      "properties": {
+        "area": {
+          "type": "string",
+          "enum": [
+            "frontend",
+            "backend",
+            "fullstack",
+            "mobile",
+            "infra",
+            "data",
+            "unknown"
+          ]
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "applicable_rules_requirements": {
       "type": "array",
       "items": {
@@ -105,7 +138,37 @@
       }
     },
     "required_verification": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "unit_tests": {
+          "type": "boolean"
+        },
+        "integration_tests": {
+          "type": "boolean"
+        },
+        "contract_tests": {
+          "type": "boolean"
+        },
+        "e2e": {
+          "type": "boolean"
+        },
+        "qa": {
+          "type": "boolean"
+        },
+        "review": {
+          "type": "boolean"
+        },
+        "security_review": {
+          "type": "boolean"
+        },
+        "audit": {
+          "type": "boolean"
+        },
+        "human_acceptance": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     },
     "context_package_ref": {
       "type": [
@@ -136,7 +199,54 @@
       "type": "array"
     },
     "outcomes": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "review_status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "rejected",
+            "changes_requested"
+          ]
+        },
+        "audit_status": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "pending",
+            "passed",
+            "failed"
+          ]
+        },
+        "human_acceptance": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "passed",
+            "accepted",
+            "partially_accepted",
+            "rejected",
+            "remediation_required"
+          ]
+        },
+        "critical_open_items": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defects": {
+          "type": "array"
+        },
+        "audit_findings": {
+          "type": "array"
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true

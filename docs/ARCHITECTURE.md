@@ -59,3 +59,32 @@ CANCELLED
 ```
 
 Each transition is allowed only if its policy preconditions are satisfied.
+
+## 4. Review pipeline
+
+Review is layered rather than a single pass, so the diff's author is never its own
+final judge:
+
+```text
+Developer
+    |
+    v
+QA / Test Agent            (.cursor/agents/qa-test.md)
+    |
+    v
+Code Reviewer subagent     (.cursor/agents/code-reviewer.md, readonly)
+    |
+    v
+Agent Review / Bugbot      (.cursor/BUGBOT.md, runs on the pull request)
+    |
+    v
+Independent Auditor        (.cursor/agents/auditor.md, readonly, when risk requires it)
+```
+
+The Code Reviewer subagent evaluates the diff inside a Cursor session, with the
+Work Unit and Context Package available. Bugbot evaluates the same change again as
+a pull request, without that session's context, using the plain-language rules in
+`.cursor/BUGBOT.md`. The two are deliberately redundant: each layer can catch what
+the other's vantage point misses. A Bugbot finding is handled the same way as any
+other review finding — recorded as an event on the Work Unit, not silently patched.
+
