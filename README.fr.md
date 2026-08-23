@@ -32,49 +32,122 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
 - Installeur multiplateforme dans `tools/install.py`
 - Un exemple de référence optionnel, non installé, dans `examples/project-a/`
 
+## Prérequis
+
+- **Python 3.10 ou supérieur**, disponible dans ton PATH.
+- Avant d'installer, lance `python --version`. Si cette commande n'est pas trouvée, essaie `python3 --version` à la place.
+  - Si seule `python3` fonctionne sur ta machine — cas fréquent sur macOS
+    et sur les distributions Linux qui ne fournissent pas de commande
+    `python` nue — remplace `python` par `python3` dans toutes les
+    commandes de ce guide, **et** dans `.cursor/hooks.json` : Cursor exécute
+    la chaîne `command` de chaque hook directement dans le shell de ton
+    système d'exploitation, avec le nom d'interpréteur exact écrit
+    là-dedans, donc les hooks ont besoin de celui qui correspond réellement
+    à Python 3 sur ta machine.
+- Cursor, avec ton projet cible ouvert en tant que **workspace de confiance**
+  (« trusted workspace », voir l'étape 3 ci-dessous).
+
 ## Quickstart
 
 ### 1. Installer dans ton projet
 
+Clone ce framework où tu veux, puis lance l'installeur une fois contre ton
+dépôt cible. Remplace `/chemin/vers/ton/projet`, `ton-id-de-projet` et
+`"Nom De Ton Projet"` ci-dessous par les vraies valeurs de ton projet — ce
+ne sont pas des valeurs à garder telles quelles :
+
 ```bash
-python tools/install.py \
-  --target /chemin/vers/projet-a \
-  --project-id projet-a \
-  --project-name "Projet A"
+python tools/install.py --target /chemin/vers/ton/projet --project-id ton-id-de-projet --project-name "Nom De Ton Projet"
 ```
+
+Cette commande est volontairement écrite sur une seule ligne pour pouvoir
+être collée telle quelle dans n'importe quel shell. Si tu la répartis
+toi-même sur plusieurs lignes, note que le caractère de continuation de
+ligne diffère selon le shell : `\` sur bash/zsh/Git Bash, `^` sur
+`cmd.exe` (Windows), `` ` `` sur PowerShell.
 
 `install.py` n'écrase jamais un fichier déjà présent dans la cible (sauf
 `--force`), et ne copie jamais `examples/`.
 
 ### 2. Remplir ce que toi seul sais
 
-Deux fichiers sous `.ai-team/` ont besoin de vraies valeurs avant de
-compiler — tout le reste est déjà utilisable tel quel :
+Deux fichiers sous `.ai-team/` sont réellement vides et ont besoin de
+vraies valeurs avant de compiler quoi que ce soit. Tout le reste de la
+Constitution est déjà un default fonctionnel — tu n'as besoin d'avoir lu
+aucun document de conception externe pour comprendre ce qui va dans ces
+deux fichiers.
 
-- **`.ai-team/project-profile.yaml`** — tes vraies commandes build/lint/test,
-  chemins source/tests, et qui détient l'autorité produit / Constitution /
-  release / recette sur ce projet. Un exemple commenté est en haut du
-  fichier.
-- **`.ai-team/sources/source-registry.yaml`** — une entrée par document
-  produit autoritatif que tu vas déposer sous `docs/product/`. Même
-  logique : exemple commenté en haut du fichier.
+**`.ai-team/project-profile.yaml`** — ouvre-le et remplace les valeurs
+placeholder. Un exemple commenté est en haut du fichier ; concrètement, un
+profil rempli ressemble à ceci :
 
-Puis vérifie ce qu'il reste à compléter :
+```yaml
+project:
+  id: checkout-service
+  name: Checkout Service
+paths:
+  source_roots: [src]
+  test_roots: [tests]
+commands:
+  build: "npm run build"
+  lint: "npm run lint"
+  unit_test: "npm test"
+human_authorities:
+  product: alice
+  engineering_constitution: alice
+  production_release: bob
+  final_acceptance: alice
+```
+
+- `commands` sont les commandes shell exactes que les subagents Developer
+  vont exécuter pour builder, linter et tester ton projet. Si ton projet
+  n'a pas d'étape de build, laisse cette entrée à `null` — c'est normal.
+- `human_authorities` ne sont pas des rôles à remplir pour l'IA ; ce sont
+  les vrais noms des personnes qui ont le dernier mot à chacune des gates
+  humaines du framework (voir « Déroulé runtime » ci-dessous) : qui peut
+  changer le périmètre produit, qui peut changer la Constitution
+  d'ingénierie elle-même, qui peut autoriser une release en production, et
+  qui signe la recette finale. Sur un petit projet, ça peut être le même
+  nom quatre fois. Le framework citera ces personnes chaque fois qu'il a
+  besoin de demander une décision à un humain.
+
+**`.ai-team/sources/source-registry.yaml`** — une entrée par document qui
+définit réellement ce que tu construis (exigences, specs, règles métier...).
+Un exemple commenté est en haut du fichier ; concrètement, si tu déposes un
+fichier à `docs/product/requirements.md`, enregistre-le ainsi :
+
+```yaml
+sources:
+  - id: requirements-v1
+    type: human_construction_material
+    path: docs/product/requirements.md
+    authority: human
+    scope: project
+    version: "1.0"
+    status: active
+    owner: product
+```
+
+Tout document produit que tu n'enregistres pas ici est invisible pour le
+framework : les agents IA ne traitent comme autoritatives que les sources
+explicitement listées.
+
+Puis vérifie ce qu'il reste, s'il reste quelque chose, à compléter :
 
 ```bash
 python scripts/ai-team/validate.py
 ```
 
-Ce script ne signale que ces deux fichiers (et les Work Units créées
-ensuite) — il ne te demande jamais de toucher aux defaults de la
+Ce script ne signale que ces deux fichiers (et, plus tard, les Work Units
+que tu crées) — il ne te demande jamais de toucher aux defaults de la
 Constitution.
 
 ### 3. Ouvrir le projet dans Cursor
 
 Ouvre le projet installé (pas ce dépôt framework) dans Cursor, en faisant
-confiance au workspace ("trust workspace"). Cursor découvre `.cursor/rules/`,
-`.cursor/agents/`, `.cursor/skills/` et `.cursor/hooks.json` à l'ouverture ;
-si une commande `/` attendue n'apparaît pas, redémarre Cursor une fois.
+confiance au workspace. Cursor découvre `.cursor/rules/`, `.cursor/agents/`,
+`.cursor/skills/` et `.cursor/hooks.json` à l'ouverture ; si une commande
+`/` attendue n'apparaît pas, redémarre Cursor une fois.
 
 ### 4. Compiler le projet
 
@@ -115,7 +188,7 @@ python scripts/ai-team/record_gate.py G1 approved --by TON_NOM --note "Plan d'ex
 
 Utilise-le comme Custom Mode pour le garder actif pendant la session. Il
 n'active les subagents spécialisés que pour les Work Units prêtes, dans les
-limites WIP par défaut — jamais tous en même temps.
+limites WIP ci-dessous — jamais tous en même temps.
 
 Envie de voir à quoi ressemble une Work Unit déjà compilée avant de lancer
 la tienne ? Regarde `examples/project-a/` — référence en lecture seule,
@@ -123,12 +196,16 @@ jamais installée, rien à nettoyer.
 
 ## Profil par défaut recommandé
 
+Ce dépôt fournit un **profil de référence assumé** :
+
 - Autonomie : niveau 2 — équipe semi-autonome
 - Work Units actives max : 3
 - Workers écrivant du code en parallèle max : 2
 - Work Units risque élevé/critique simultanées max : 1
 - Un writer principal par Work Unit
-- Reviewer, Security Reviewer, Auditor : lecture seule
+- Reviewer : lecture seule
+- Security reviewer : lecture seule
+- Auditor : lecture seule et indépendant de la remédiation
 - Release production : gate humaine G3
 - Recette finale : gate humaine G4
 
@@ -175,6 +252,13 @@ Matière produit humaine + Constitution d'ingénierie
 ## Note de sécurité importante
 
 Les règles Cursor, les prompts, les hooks et `permissions.json` sont des **contrôles de gouvernance, pas une frontière de sécurité complète**. Garde la protection de branche, les checks CI requis, la protection des environnements, les secrets, les credentials de déploiement, CODEOWNERS et l'IAM production en dehors du modèle, et fais-les respecter par ton hébergeur Git / CI / infrastructure cloud.
+
+Si Cursor arrête soudainement de pouvoir exécuter *n'importe quelle*
+commande shell juste après l'ouverture du projet, vérifie d'abord la
+section Prérequis ci-dessus : le hook `beforeShellExecution` échoue en
+mode fermé par conception (voir `.cursor/hooks.json`), donc un interpréteur
+Python qui ne correspond pas exactement au nom de commande écrit là-dedans
+bloque les commandes au lieu de simplement ignorer le contrôle.
 
 Voir `docs/SECURITY_MODEL.md`.
 

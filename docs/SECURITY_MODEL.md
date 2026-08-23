@@ -38,3 +38,15 @@ The hooks and permissions guidance require human approval for or block:
 - production deployment commands.
 
 Adapt these patterns to your actual stack.
+
+## Troubleshooting: a fail-closed hook has no effect if it can't run
+
+`.cursor/hooks.json` sets `failClosed: true` on `guard_shell.py`, so the
+default is to deny a shell command if the hook itself errors out — this is
+intentional and correct: a broken hook must not silently stop protecting
+you. The practical consequence is that every entry in `.cursor/hooks.json`
+invokes `python` literally; if that exact command name isn't on PATH on
+your machine (common on macOS and some Linux distributions, which may only
+have `python3`), Cursor will be unable to run *any* shell command in this
+project, not just the ones the hook is meant to block. See the
+Requirements section in `README.md` for how to check and fix this.

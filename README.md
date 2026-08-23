@@ -32,34 +32,101 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
 - Cross-platform installer in `tools/install.py`
 - An optional, non-installed reference example in `examples/project-a/`
 
+## Requirements
+
+- **Python 3.10 or later**, available on your PATH.
+- Before installing, run `python --version`. If that command isn't found, try `python3 --version` instead.
+  - If only `python3` works on your machine — common on macOS and on Linux
+    distributions that don't ship a bare `python` — replace `python` with
+    `python3` in every command shown in this guide, **and** in
+    `.cursor/hooks.json`: Cursor runs the `command` string of every hook
+    directly on your operating system's shell, using the exact interpreter
+    name written there, so the hooks need whichever name actually resolves
+    to Python 3 on your machine.
+- Cursor, with your target project opened as a **trusted workspace** (see
+  step 3 below).
+
 ## Quickstart
 
 ### 1. Install into your project
 
-Clone this framework anywhere, then run it against your target repository:
+Clone this framework anywhere, then run the installer once against your
+target repository. Replace `/path/to/your/project`, `your-project-id` and
+`"Your Project Name"` below with your own project's actual path, id and
+name — these are not values to leave as-is:
 
 ```bash
-python tools/install.py \
-  --target /path/to/your/project \
-  --project-id project-a \
-  --project-name "Project A"
+python tools/install.py --target /path/to/your/project --project-id your-project-id --project-name "Your Project Name"
 ```
+
+This is written as one line on purpose so it can be pasted into any shell
+unmodified. If you split it across multiple lines yourself, note that the
+line-continuation character differs by shell: `\` on bash/zsh/Git Bash,
+`^` on Windows `cmd.exe`, `` ` `` on PowerShell.
 
 `install.py` never overwrites a file that already exists in the target
 unless you pass `--force`, and it never copies `examples/`.
 
 ### 2. Fill in what only you know
 
-Two files, both under `.ai-team/`, need real values before you compile
-anything — everything else is already usable as shipped:
+Two files under `.ai-team/` are genuinely empty and need real values before
+you compile anything. Everything else in the Constitution is already a
+working default — you don't need to have read any external design document
+to understand what goes in these two.
 
-- **`.ai-team/project-profile.yaml`** — your real build/lint/test commands,
-  source/test paths, and who holds product / Constitution / release /
-  acceptance authority on this project. Open the file: a commented example
-  is right at the top.
-- **`.ai-team/sources/source-registry.yaml`** — one entry per authoritative
-  product document you're about to drop under `docs/product/`. Same pattern:
-  a commented example is at the top of the file.
+**`.ai-team/project-profile.yaml`** — open it and replace the placeholder
+values. A commented example is at the top of the file; concretely, a filled
+profile looks like this:
+
+```yaml
+project:
+  id: checkout-service
+  name: Checkout Service
+paths:
+  source_roots: [src]
+  test_roots: [tests]
+commands:
+  build: "npm run build"
+  lint: "npm run lint"
+  unit_test: "npm test"
+human_authorities:
+  product: alice
+  engineering_constitution: alice
+  production_release: bob
+  final_acceptance: alice
+```
+
+- `commands` are the exact shell commands the AI developer subagents will
+  run to build, lint and test your project. If your project has no build
+  step, leave that entry as `null` — it's fine.
+- `human_authorities` are not roles for the AI to fill; they are the real
+  names of the people who have final say at each of the framework's human
+  gates (see "Runtime flow" below): who can change product scope, who can
+  change the Engineering Constitution itself, who can authorize a
+  production release, and who signs off on final acceptance. On a small
+  project this can be the same name four times. The framework will name
+  these people whenever it needs to ask a human for a decision.
+
+**`.ai-team/sources/source-registry.yaml`** — one entry per document that
+actually defines what you're building (requirements, specs, business
+rules...). A commented example is at the top of the file; concretely, if
+you drop a file at `docs/product/requirements.md`, register it like this:
+
+```yaml
+sources:
+  - id: requirements-v1
+    type: human_construction_material
+    path: docs/product/requirements.md
+    authority: human
+    scope: project
+    version: "1.0"
+    status: active
+    owner: product
+```
+
+Any product document you don't register here is invisible to the
+framework: the AI agents only treat as authoritative the sources explicitly
+listed.
 
 Then check what, if anything, is still missing:
 
@@ -67,8 +134,8 @@ Then check what, if anything, is still missing:
 python scripts/ai-team/validate.py
 ```
 
-This only ever reports on the two files above (and on the Work Units you'll
-create later) — it does not ask you to touch the Constitution defaults.
+This only ever reports on the two files above (and, later, on the Work
+Units you create) — it does not ask you to touch the Constitution defaults.
 
 ### 3. Open the project in Cursor
 
@@ -178,6 +245,13 @@ Human product material + Engineering Constitution
 ## Important security note
 
 Cursor rules, prompts, hooks, and `permissions.json` are **governance controls, not a complete security boundary**. Keep branch protection, CI checks, environment protection, secrets, deployment credentials, CODEOWNERS, and production IAM outside the model and enforce them in Git hosting / CI / cloud infrastructure.
+
+If Cursor suddenly stops being able to run *any* shell command right after
+you open the project, check the Requirements section above first: the
+`beforeShellExecution` hook fails closed by design (see
+`.cursor/hooks.json`), so a Python interpreter that doesn't match the exact
+command name written there blocks commands instead of silently skipping
+the check.
 
 See `docs/SECURITY_MODEL.md`.
 
