@@ -4,6 +4,21 @@ skill_statuses:
   approved: "May be used by explicitly authorized roles/resources."
   restricted: "Requires a condition, environment restriction or human approval."
   unknown: "May be proposed but not used before approval."
+third_party_orchestration_skills:
+  rule: >
+    A third-party Skill or subagent that provides its own task
+    orchestration, autonomous subagent dispatch, or worktree/branch
+    management is unknown by default and requires G2 approval before
+    installation, not just before use — it competes with the
+    Orchestrator's Control Plane authority (see .cursor/skills/orchestrator/)
+    rather than extending a role's capability within it.
+  does_not_apply_to: >
+    Third-party Skills that perform a bounded analytical or testing task
+    on request (e.g. static analysis, spec-to-code compliance, browser
+    testing) and do not decide when they run or claim authority over
+    Work Unit completion. These may be approved directly for the relevant
+    read-only role (security-reviewer, auditor, qa-test) under the normal
+    skill_statuses process above.
 roles:
   product-analyst:
     allow: [read_authoritative_sources, read_repository, propose_requirements, propose_acceptance, emit_questions]

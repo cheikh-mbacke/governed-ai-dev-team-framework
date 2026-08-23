@@ -17,5 +17,9 @@ Always preserve these invariants:
 - No product development starts before G1 is approved, except when explicitly executing a previously approved Work Unit.
 - No production release bypasses G3.
 - Final acceptance is human at G4 under the reference profile.
+- A third-party Skill or subagent that provides its own task orchestration,
+  autonomous subagent dispatch, or worktree/branch management competes with
+  the Orchestrator's Control Plane authority and must not be added without
+  explicit G2 approval, regardless of how useful it is otherwise.
 
 Read the specific policy files needed for the task rather than copying the whole Constitution into chat.

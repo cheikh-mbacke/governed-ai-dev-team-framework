@@ -4,3 +4,5 @@
 /.cursor/permissions.json @YOUR-SECURITY-OWNERS
 /.cursor/hooks.json @YOUR-SECURITY-OWNERS
 /.cursor/hooks/ @YOUR-SECURITY-OWNERS
+/.cursor/skills/ @YOUR-HUMAN-GOVERNANCE-OWNERS
+/.cursor/agents/ @YOUR-HUMAN-GOVERNANCE-OWNERS

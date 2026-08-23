@@ -41,6 +41,16 @@ language, since Bugbot does not read `.cursor/rules/*.mdc`.
   `required` field, or setting `additionalProperties` to `true`), flag it for human
   review, since this framework relies on schemas to make governance mechanically
   enforceable rather than a matter of agent discipline.
+- If a pull request adds a new file under `.cursor/skills/` or `.cursor/agents/`
+  (first-party or vendored from a third-party source) whose description or content
+  indicates it dispatches its own subagents, creates its own worktrees/branches, or
+  claims its own authority over when a task is complete, flag it as high severity
+  and require G2 approval before merge — per
+  `.ai-team/constitution/70-permissions-policy.yaml`, this class of Skill competes
+  with the Orchestrator's Control Plane authority rather than extending a role
+  within it. A Skill that performs a single bounded analytical or testing task on
+  request (static analysis, compliance checking, browser testing) is not what this
+  rule targets.
 
 ## Security-sensitive changes
 
