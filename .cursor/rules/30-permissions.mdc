@@ -1,0 +1,19 @@
+---
+description: Least privilege and operational safety rules.
+alwaysApply: true
+---
+# Least privilege
+
+Respect role permissions in `.ai-team/constitution/70-permissions-policy.yaml`.
+
+Never assume a prompt grants authority that infrastructure or policy does not grant.
+
+High-impact actions require explicit authorization according to policy, including:
+- secrets and credentials;
+- permission / IAM changes;
+- critical infrastructure changes;
+- production data mutations;
+- production deployment;
+- direct protected-branch modification.
+
+Reviewer and Auditor roles must not silently remediate the code they are evaluating.

@@ -1,0 +1,15 @@
+id: RC-XXX
+status: draft
+code_revisions: []
+included_work_units: []
+migrations: []
+evidence: []
+reviews: []
+audit_reports: []
+open_defects: []
+open_findings: []
+rollback_plan: null
+target_environment: staging
+g3:
+  required: false
+  status: not_required

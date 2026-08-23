@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProjectProfile",
+  "type": "object",
+  "required": [
+    "project",
+    "autonomy",
+    "paths",
+    "commands",
+    "runtime_environments",
+    "release",
+    "human_authorities",
+    "setup_status"
+  ],
+  "properties": {
+    "project": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "repository_kind"
+      ]
+    },
+    "autonomy": {
+      "type": "object",
+      "required": [
+        "level"
+      ],
+      "properties": {
+        "level": {
+          "enum": [
+            1,
+            2,
+            3
+          ]
+        }
+      }
+    },
+    "paths": {
+      "type": "object"
+    },
+    "commands": {
+      "type": "object"
+    },
+    "runtime_environments": {
+      "type": "object"
+    },
+    "release": {
+      "type": "object"
+    },
+    "human_authorities": {
+      "type": "object"
+    },
+    "setup_status": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

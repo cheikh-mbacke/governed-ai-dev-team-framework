@@ -1,0 +1,11 @@
+id: CTX-WU-XXX
+work_unit: WU-XXX
+role: backend-developer
+assembled_at: null
+items: []
+# item fields:
+# - level: L0_constitution | L1_project | L2_relevant_zone | L3_work_unit
+#   source: path/or/id
+#   provenance: authoritative | derived | observed
+#   reason: why this item is needed
+open_context_requests: []

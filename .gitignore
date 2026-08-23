@@ -1,0 +1,13 @@
+# AI-team ephemeral/runtime scratch
+.ai-team/logs/*.jsonl
+.ai-team/tmp/
+.ai-team/cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS/editor
+.DS_Store
+Thumbs.db

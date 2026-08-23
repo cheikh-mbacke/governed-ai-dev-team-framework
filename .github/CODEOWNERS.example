@@ -1,0 +1,6 @@
+# Rename to CODEOWNERS and replace handles for your organization.
+# Protected governance files should require human ownership.
+/.ai-team/constitution/ @YOUR-HUMAN-GOVERNANCE-OWNERS
+/.cursor/permissions.json @YOUR-SECURITY-OWNERS
+/.cursor/hooks.json @YOUR-SECURITY-OWNERS
+/.cursor/hooks/ @YOUR-SECURITY-OWNERS

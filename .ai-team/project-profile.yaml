@@ -1,0 +1,48 @@
+project:
+  id: framework-template
+  name: Governed AI Development Team Framework
+  repository_kind: framework_template
+  primary_language: unknown
+  package_manager: unknown
+
+autonomy:
+  level: 2
+
+paths:
+  product_docs: docs/product
+  source_roots: []
+  test_roots: []
+  config_roots: []
+
+commands:
+  setup: null
+  build: null
+  lint: null
+  typecheck: null
+  unit_test: null
+  integration_test: null
+  e2e_test: null
+
+runtime_environments:
+  development:
+    protected: false
+  test:
+    protected: false
+  staging:
+    protected: true
+  production:
+    protected: true
+
+release:
+  protected_branch: main
+  production_requires_g3: true
+
+human_authorities:
+  product: unspecified
+  engineering_constitution: unspecified
+  production_release: unspecified
+  final_acceptance: unspecified
+
+setup_status:
+  template: true
+  note: "The installer rewrites project.id, project.name and template=false. Fill repository-specific commands, paths and human authorities before production use."

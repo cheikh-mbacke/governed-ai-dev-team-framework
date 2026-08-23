@@ -1,0 +1,26 @@
+{
+  "terminalAllowlist": [
+    "git status",
+    "git diff",
+    "git log",
+    "git show",
+    "git branch",
+    "python scripts/ai-team/validate.py",
+    "python scripts/ai-team/status.py"
+  ],
+  "autoRun": {
+    "allow_instructions": [
+      "Allow read-only repository inspection commands.",
+      "Allow project-local unit, integration, lint, typecheck, formatting, and build commands when they do not target production or mutate protected infrastructure.",
+      "Allow the framework validation and status scripts under scripts/ai-team/."
+    ],
+    "block_instructions": [
+      "Require explicit approval for any command that pushes directly to main, master, trunk, or another protected branch.",
+      "Require explicit approval for destructive Git history operations such as force push, reset --hard, or deleting protected branches.",
+      "Require explicit approval for production deployments or commands targeting a production environment.",
+      "Require explicit approval for production database writes, destructive migrations, or data deletion.",
+      "Require explicit approval for Kubernetes, Terraform, cloud, IAM, permission, secret, or credential mutations.",
+      "Require explicit approval for destructive filesystem commands such as recursive deletion outside build/temp directories."
+    ]
+  }
+}

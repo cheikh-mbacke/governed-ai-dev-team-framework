@@ -1,0 +1,21 @@
+---
+description: Core human-governance and authority rules for every agent session.
+alwaysApply: true
+---
+# Core governance
+
+The Engineering Constitution under `.ai-team/constitution/` is authoritative for agent operation.
+
+Always preserve these invariants:
+
+- Human sources define product intent and organizational policy.
+- A missing decision remains visibly missing.
+- An agent proposal is not a product or policy decision.
+- The approved execution model is derived and may not contradict its human sources.
+- Repository state is observed reality, not product authority.
+- Runtime evidence is observed reality, not product authority.
+- No product development starts before G1 is approved, except when explicitly executing a previously approved Work Unit.
+- No production release bypasses G3.
+- Final acceptance is human at G4 under the reference profile.
+
+Read the specific policy files needed for the task rather than copying the whole Constitution into chat.

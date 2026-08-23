@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AuditFinding",
+  "type": "object",
+  "required": [
+    "id",
+    "severity",
+    "classification",
+    "claim",
+    "evidence",
+    "limitations",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "classification": {
+      "enum": [
+        "expected_and_observed",
+        "expected_but_not_demonstrated",
+        "observed_but_not_specified",
+        "contradiction",
+        "unknown"
+      ]
+    },
+    "claim": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array"
+    },
+    "limitations": {
+      "type": "array"
+    },
+    "remediation_required": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "open",
+        "accepted_risk",
+        "remediation_planned",
+        "closed"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

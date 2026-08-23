@@ -1,0 +1,21 @@
+project_id: framework-template
+constitution_version: "1.0.0"
+phase: not_compiled
+gates:
+  G0: {status: not_evaluated}
+  G1: {status: not_approved}
+  G2: {status: not_required}
+  G3: {status: not_required}
+  G4: {status: not_required}
+milestones: []
+increments: []
+releases: []
+work_units: {}
+dependency_edges: []
+critical_path: []
+open_decisions: []
+open_blockers: []
+open_defects: []
+open_findings: []
+active_workers: []
+last_updated: null

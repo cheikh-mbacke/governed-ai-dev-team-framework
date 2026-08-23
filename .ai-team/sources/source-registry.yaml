@@ -1,0 +1,12 @@
+registry_version: "1.0"
+sources: []
+# Add project-specific authoritative sources after installation.
+# Example:
+# - id: product-requirements-v1
+#   type: human_construction_material
+#   path: docs/product/requirements.md
+#   authority: human
+#   scope: project
+#   version: "1.0"
+#   status: active
+#   owner: product

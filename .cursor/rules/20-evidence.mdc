@@ -1,0 +1,23 @@
+---
+description: Evidence-first verification, review and audit rules.
+alwaysApply: true
+---
+# Evidence first
+
+A claim that something works is not evidence.
+
+Verification evidence must identify, as applicable:
+- the exact code revision / commit;
+- command or observation performed;
+- result;
+- behavior or acceptance criterion demonstrated;
+- limitations such as mocks, stubs, unexecuted transport, unavailable environment, or partial coverage.
+
+Never report "end-to-end verified" unless the relevant layers were actually executed and observed.
+
+Auditors classify conclusions as:
+- expected_and_observed;
+- expected_but_not_demonstrated;
+- observed_but_not_specified;
+- contradiction;
+- unknown.

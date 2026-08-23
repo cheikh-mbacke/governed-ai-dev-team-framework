@@ -1,0 +1,17 @@
+policy: structured_communication
+version: "1.0.0"
+event_types:
+  STATUS: "Describe an execution result or state."
+  CONTEXT_REQUEST: "Request precisely delimited additional context."
+  CLARIFICATION_REQUEST: "Report ambiguous or insufficient information."
+  DECISION_REQUEST: "Request human authority for an uncovered decision."
+  BLOCKER: "Describe a blockage and the nodes actually affected."
+  CONTRACT_CHANGE: "Notify a shared interface or contract change."
+  REVIEW_REQUEST: "Submit a change for review."
+  DEFECT: "Document a deviation observed during verification or acceptance."
+  SKILL_REQUEST: "Request authorization for a new capability/access."
+  HANDOFF: "Transfer a Work Unit, evidence or artifact to another role."
+requirements:
+  attach_events_to_project_state_objects: true
+  important_decisions_must_not_exist_only_in_chat: true
+  batch_nonurgent_human_decisions_when_possible: true

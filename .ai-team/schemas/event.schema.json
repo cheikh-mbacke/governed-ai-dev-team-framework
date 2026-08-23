@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StructuredEvent",
+  "type": "object",
+  "required": [
+    "id",
+    "type",
+    "summary",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "type": {
+      "enum": [
+        "STATUS",
+        "CONTEXT_REQUEST",
+        "CLARIFICATION_REQUEST",
+        "DECISION_REQUEST",
+        "BLOCKER",
+        "CONTRACT_CHANGE",
+        "REVIEW_REQUEST",
+        "DEFECT",
+        "SKILL_REQUEST",
+        "HANDOFF"
+      ]
+    },
+    "work_unit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    },
+    "affected_nodes": {
+      "type": "array"
+    },
+    "requires_human": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
