@@ -21,6 +21,12 @@ production-facing release.
       `.cursor/permissions.json` (role permissions, blocked command classes).
 - [ ] Review `.cursor/BUGBOT.md` if your stack needs stack-specific review
       rules in addition to the governance rules already there.
+- [ ] If the project has a UI: fetch `webapp-testing`'s scripts/examples
+      (`npx skills add https://github.com/anthropics/skills --skill webapp-testing`)
+      and install Playwright (`pip install playwright && playwright install chromium`).
+      Without this, `.ai-team/constitution/35-ui-ux-strategy.yaml` sections 6
+      and 7 can't be verified with real evidence — see
+      `.cursor/skills/webapp-testing/SKILL.md`.
 
 **Must configure outside Cursor — no framework file can enforce these:**
 - [ ] Protected branch / required CI checks.

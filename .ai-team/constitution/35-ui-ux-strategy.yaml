@@ -98,8 +98,11 @@ principle: >
     required_verification.accessibility_check (see work-unit.schema.json)
     should be true for any Work Unit in applies_to.work_unit_zones unless
     the risk/staffing policy explicitly waives it for that Work Unit's
-    risk class. Prefer a real tool run (e.g. an automated accessibility
-    audit) over a manual checklist as evidence when one is available.
+    risk class. Prefer a real tool run over a manual checklist as
+    evidence when one is available — .cursor/skills/webapp-testing/
+    (screenshots, DOM inspection) is the concrete evidence source this
+    framework wires in for sections 6 and 7; see frontend-developer.md,
+    qa-test.md and code-reviewer.md.
 
 8_responsive_and_devices:
   requirements:

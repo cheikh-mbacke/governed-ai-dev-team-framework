@@ -15,7 +15,11 @@ verify against `.ai-team/constitution/35-ui-ux-strategy.yaml` section 6
 (required states) and report `accessibility_check` per section 7 — a
 Work Unit whose acceptance criteria only cover the happy path is not
 adequately specified; raise a CLARIFICATION_REQUEST for the missing
-states rather than treating the happy path as sufficient.
+states rather than treating the happy path as sufficient. Use
+`.cursor/skills/webapp-testing/SKILL.md` to actually observe each
+required state (screenshot or DOM inspection) rather than trusting the
+developer's own screenshot alone — independent verification means
+independently produced evidence.
 
 For every verification result report:
 - exact command or observation;
