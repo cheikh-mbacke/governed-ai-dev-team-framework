@@ -82,7 +82,7 @@ if args.gate == "G4" and args.work_unit:
         wu.setdefault("outcomes", {})["human_acceptance"] = human_acceptance_value
         wu_path.write_text(yaml.safe_dump(wu, sort_keys=False, allow_unicode=True), encoding="utf-8")
         print(f"  Updated {wu_id}.yaml: outcomes.human_acceptance = {human_acceptance_value}")
-    print("  Run scripts/ai-team/check_done.py <WU-ID> to confirm each Work Unit's overall Definition of Done.")
+    print("  Run python scripts/ai-team/check_done.py <WU-ID> to confirm each Work Unit's overall Definition of Done.")
 elif args.gate == "G4" and not args.work_unit:
     print("  NOTE: no --work-unit given. This recorded the gate at the project level only -")
     print("  it did NOT mark any specific Work Unit's human_acceptance. If a Work Unit needs")

@@ -133,7 +133,7 @@ if args.update:
     print("and every file you've written under docs/product/ other than the category READMEs).")
     if skipped_project_data:
         print(f"({len(skipped_project_data)} project-data path(s) correctly left alone.)")
-    print("\nRun scripts/ai-team/validate.py to confirm nothing broke.")
+    print("\nRun python scripts/ai-team/validate.py to confirm nothing broke.")
     raise SystemExit(0)
 
 profile_path = target / ".ai-team" / "project-profile.yaml"
