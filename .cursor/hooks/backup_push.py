@@ -62,9 +62,14 @@ try:
         allow()
     current_branch = branch.stdout.strip()
 
-    if not current_branch or current_branch == protected_branch or current_branch == "HEAD":
-        # Refuse to push the protected branch, and refuse a detached HEAD
-        # (nothing meaningful to name as a backup branch).
+    # Defense in depth: don't rely solely on protected_branch being
+    # configured correctly. "main" and "master" are refused unconditionally,
+    # since almost every git repository's trunk uses one of these two names
+    # regardless of what this project's config happens to say - a
+    # misconfigured protected_branch must not silently turn into permission
+    # to push the real trunk.
+    always_refused = {"main", "master", protected_branch}
+    if not current_branch or current_branch in always_refused or current_branch == "HEAD":
         allow()
 
     run(["git", "push", "origin", current_branch])

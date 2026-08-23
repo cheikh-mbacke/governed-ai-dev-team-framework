@@ -2,6 +2,7 @@
 from pathlib import Path
 import sys
 import json
+import subprocess
 
 try:
     import yaml
@@ -47,6 +48,24 @@ if (AI / "project-profile.yaml").exists():
     for k, v in auth.items():
         if v in (None, "unspecified", ""):
             warnings.append(f"Human authority '{k}' is unspecified")
+
+    protected_branch = profile.get("release", {}).get("protected_branch")
+    if protected_branch and (ROOT / ".git").exists():
+        try:
+            existing_branches = subprocess.run(
+                ["git", "branch", "--list", "--format=%(refname:short)"],
+                cwd=ROOT, capture_output=True, text=True, timeout=10,
+            ).stdout.split()
+            if existing_branches and protected_branch not in existing_branches:
+                warnings.append(
+                    f"release.protected_branch is '{protected_branch}' but no such git "
+                    f"branch exists here (found: {', '.join(existing_branches)}). Branch "
+                    "protection in hooks and CI can only recognize a branch it can name "
+                    "correctly - fix one side to match the other (see README.md 'Important "
+                    "security note')."
+                )
+        except Exception:
+            pass  # Best-effort check; never fail validate.py over git introspection.
 
 if (AI / "sources" / "source-registry.yaml").exists():
     reg = load_yaml(AI / "sources" / "source-registry.yaml") or {}
