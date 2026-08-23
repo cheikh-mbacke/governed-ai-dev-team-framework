@@ -109,7 +109,10 @@ for p in sorted((AI / "evidence").glob("*.yaml")):
 for p in sorted((AI / "findings").glob("*.yaml")):
     validate_instance(p, "finding.schema.json")
 for p in sorted((AI / "decisions").glob("*.yaml")):
-    validate_instance(p, "decision.schema.json")
+    if p.name.startswith("gate-"):
+        validate_instance(p, "gate-decision.schema.json")
+    else:
+        validate_instance(p, "decision.schema.json")
 for p in sorted((AI / "context-packages").glob("*.yaml")):
     validate_instance(p, "context-package.schema.json")
 for p in sorted((AI / "acceptance").glob("*.yaml")):

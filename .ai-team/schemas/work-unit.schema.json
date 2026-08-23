@@ -99,14 +99,30 @@
     "applicable_rules_requirements": {
       "type": "array",
       "items": {
-        "type": "string"
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "additionalProperties": { "type": "string" }
+          }
+        ]
       }
     },
     "acceptance_criteria": {
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "string"
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "additionalProperties": { "type": "string" }
+          }
+        ]
       }
     },
     "dependencies": {
@@ -229,6 +245,7 @@
           ],
           "enum": [
             null,
+            "pending",
             "passed",
             "accepted",
             "partially_accepted",

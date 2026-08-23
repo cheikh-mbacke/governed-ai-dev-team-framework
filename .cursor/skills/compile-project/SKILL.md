@@ -43,3 +43,18 @@ Read:
 - staffing proposal;
 - unresolved decisions;
 - G1 decision package.
+
+## YAML authoring
+
+Every string value you write into a Work Unit (acceptance criteria,
+applicable rules/requirements, expected behavior, etc.) that itself
+contains a colon-space (`: `) or a curly brace (`{`/`}`) — for example
+quoting an API path like `POST /api/tasks — create from { "title": "..." }`,
+or describing a state like `when marked completed: true` — must be quoted
+as a whole string (`"..."`) or written to avoid the ambiguous character
+entirely. An unquoted colon or brace inside what looks like a plain YAML
+scalar is parsed as the start of a nested mapping or flow object, and
+breaks the file. Prefer writing such items as `{category}: {description}`
+key-value structures where that's genuinely the intent (accepted by the
+schema), or as a single fully-quoted string otherwise — never leave a
+mid-sentence `:` or `{`/`}` unquoted.

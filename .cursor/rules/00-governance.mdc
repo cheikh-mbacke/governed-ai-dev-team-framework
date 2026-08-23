@@ -21,6 +21,9 @@ Always preserve these invariants:
   autonomous subagent dispatch, or worktree/branch management competes with
   the Orchestrator's Control Plane authority and must not be added without
   explicit G2 approval, regardless of how useful it is otherwise.
+- When writing a YAML string value that contains a colon-space (`: `) or a
+  curly brace, quote the whole string — an unquoted one breaks the file by
+  looking like a nested mapping to the YAML parser.
 
 Read the specific policy files needed for the task rather than copying the whole Constitution into chat.
 
