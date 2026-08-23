@@ -65,6 +65,13 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
   (`install.py`, `validate.py`, `status.py`, ...) checks for these
   packages itself and tells you to run this command if either is missing,
   instead of failing with a raw Python error.
+- **Always type `python` (or `python3`) before a script's path** —
+  `python scripts/ai-team/validate.py`, never just
+  `scripts/ai-team/validate.py`. On Windows especially, typing a bare
+  `.py` path can silently open the file in your editor instead of running
+  it (Windows resolves `.py` through its own file association, which may
+  well be Cursor itself), printing editor startup logs instead of a
+  Python error — confusing if you don't know that's what happened.
 
 ## Quickstart
 

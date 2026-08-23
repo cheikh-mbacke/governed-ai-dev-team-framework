@@ -64,6 +64,14 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
   (`install.py`, `validate.py`, `status.py`, ...) vérifie lui-même la
   présence de ces paquets et t'indique de lancer cette commande s'il en
   manque un, plutôt que d'échouer avec une erreur Python brute.
+- **Tape toujours `python` (ou `python3`) avant le chemin d'un script** —
+  `python scripts/ai-team/validate.py`, jamais juste
+  `scripts/ai-team/validate.py`. Sur Windows en particulier, taper un
+  chemin `.py` nu peut silencieusement ouvrir le fichier dans ton éditeur
+  au lieu de l'exécuter (Windows résout `.py` via son association de
+  fichiers, qui peut très bien être Cursor lui-même), affichant des logs
+  de démarrage d'éditeur au lieu d'une erreur Python — déroutant si tu ne
+  sais pas que c'est ce qui vient de se passer.
 
 ## Quickstart
 
