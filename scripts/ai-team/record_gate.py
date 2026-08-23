@@ -103,8 +103,27 @@ if args.gate == "G4" and args.work_unit:
             continue
         wu = yaml.safe_load(wu_path.read_text(encoding="utf-8")) or {}
         wu.setdefault("outcomes", {})["human_acceptance"] = human_acceptance_value
+
+        # Recording G4 resolves any critical_open_items that were only ever
+        # tracking "waiting for human acceptance/G4" - leaving them in place
+        # would otherwise block DONE forever on a note this same command just
+        # resolved. Only items clearly about human acceptance/G4 are removed;
+        # anything else (a real defect, an audit finding) is left untouched -
+        # this command isn't authority to resolve those.
+        import re
+        remaining, cleared = [], []
+        for item in wu["outcomes"].get("critical_open_items") or []:
+            text = str(item).lower()
+            if "human_acceptance" in text or "human acceptance" in text or re.search(r"\bg4\b", text):
+                cleared.append(item)
+            else:
+                remaining.append(item)
+        wu["outcomes"]["critical_open_items"] = remaining
+
         wu_path.write_text(yaml.safe_dump(wu, sort_keys=False, allow_unicode=True), encoding="utf-8")
         print(f"  Updated {wu_path.name}: outcomes.human_acceptance = {human_acceptance_value}")
+        if cleared:
+            print(f"  Cleared {len(cleared)} critical_open_items resolved by this G4 decision: {cleared}")
     print("  Run python scripts/ai-team/check_done.py <WU-ID> to confirm each Work Unit's overall Definition of Done.")
 elif args.gate == "G4" and not args.work_unit:
     print("  NOTE: no --work-unit given. This recorded the gate at the project level only -")
