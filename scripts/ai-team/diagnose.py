@@ -108,7 +108,7 @@ if open_human_events:
 elif in_flight:
     print("Next step: nothing is explicitly asking for you, but Work Units are mid-flight.")
     print("If Cursor's own UI shows a subagent stalled with no recent hook activity above,")
-    print("that's a real stall with no recorded reason. See docs/OPERATOR_GUIDE.fr.md")
-    print("(section 'Si ca semble bloque') before stopping/restarting.")
+    print("that's a real stall with no recorded reason. See docs/OPERATOR_GUIDE.md")
+    print("(section 'If it looks stuck') before stopping/restarting.")
 else:
     print("Nothing appears in flight or waiting on you.")

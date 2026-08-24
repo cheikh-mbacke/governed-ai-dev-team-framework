@@ -1,5 +1,7 @@
 # Guide opérateur
 
+*[Read in English](OPERATOR_GUIDE.md)*
+
 Ce guide détaille chaque étape. Pour le chemin rapide, voir le Quickstart de
 `README.fr.md` — les deux se correspondent, ce guide donne juste plus de
 contexte sur chaque étape.

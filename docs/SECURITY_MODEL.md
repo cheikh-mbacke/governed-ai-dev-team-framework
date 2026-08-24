@@ -26,16 +26,39 @@ Use your Git / CI / cloud platform to enforce:
 
 ## Default blocked command classes
 
-The hooks and permissions guidance require human approval for or block:
+Two different mechanisms are involved here, with two different strengths
+of guarantee. Do not treat them as equivalent.
+
+**Mechanically blocked** — matched by regex in `.cursor/hooks/guard_shell.py`
+and denied *before execution*, regardless of what the agent intends
+(`failClosed: true`, see "Troubleshooting" below):
 
 - direct pushes to `main`, `master`, `trunk`;
-- destructive Git history changes;
-- destructive filesystem commands;
-- production database mutations;
-- production Kubernetes / Terraform / cloud mutations;
+- force push and `git reset --hard`;
+- `rm -rf /` (and equivalents matching that exact pattern);
+- `kubectl apply/delete/patch/replace/scale/rollout`;
+- `terraform apply/destroy`;
+- commands combining "prod"/"production" with deploy/migrate/delete/drop/truncate;
+- `DROP DATABASE`, `DROP TABLE`, `TRUNCATE TABLE`.
+
+**Behavioral guidance only** — listed in `.cursor/permissions.json` →
+`autoRun.block_instructions` as plain-language instructions the agent is
+expected to follow, but *not* matched by any hook pattern. Nothing stops
+the agent mechanically if it disregards this guidance:
+
 - secret and credential manipulation;
 - permission/IAM changes;
-- production deployment commands.
+- other destructive filesystem commands beyond the exact `rm -rf /` pattern above;
+- adding a new dependency not already declared in the project manifest;
+- starting a server bound to a non-local interface.
+
+If your threat model requires secrets, IAM and credential changes to be
+mechanically unblockable rather than merely discouraged, add matching
+patterns to `guard_shell.py` yourself, or — better — enforce this outside
+the model entirely (see "Controls that must remain external" above):
+Cursor rules, hooks and `permissions.json` are governance controls, not a
+complete security boundary, and this is exactly the kind of gap that
+external enforcement is meant to close.
 
 Adapt these patterns to your actual stack.
 

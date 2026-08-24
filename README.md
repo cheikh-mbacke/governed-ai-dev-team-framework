@@ -349,7 +349,7 @@ See `docs/SECURITY_MODEL.md`.
 ## Going further
 
 - Full checklist before running on a real project: `docs/ADOPTER_CHECKLIST.md`.
-- Step-by-step operator reference (also available in French): `docs/OPERATOR_GUIDE.fr.md`.
+- Step-by-step operator reference (also available in French): `docs/OPERATOR_GUIDE.md`.
 - Architecture, state machine and review pipeline: `docs/ARCHITECTURE.md`.
 - What Cursor governance controls do and don't cover: `docs/SECURITY_MODEL.md`.
 - Where each part of this repository maps back to the base design document: `docs/SOURCE_MAPPING.md`.

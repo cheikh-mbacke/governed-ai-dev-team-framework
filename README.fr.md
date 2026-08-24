@@ -362,7 +362,7 @@ Voir `docs/SECURITY_MODEL.md`.
 ## Pour aller plus loin
 
 - Checklist complète avant un vrai projet : `docs/ADOPTER_CHECKLIST.md`.
-- Guide opérateur pas à pas (en français) : `docs/OPERATOR_GUIDE.fr.md`.
+- Guide opérateur pas à pas (aussi disponible en anglais) : `docs/OPERATOR_GUIDE.fr.md`.
 - Architecture, machine à états et pipeline de review : `docs/ARCHITECTURE.md`.
 - Ce que couvrent (et ne couvrent pas) les contrôles Cursor : `docs/SECURITY_MODEL.md`.
 - Correspondance entre ce dépôt et le document de cadrage de base : `docs/SOURCE_MAPPING.md`.
