@@ -54,12 +54,18 @@ projet `.cursor/cli.json`. Le mode d'approbation et les notifications sont des
 réglages globaux : configure-les avec `/config` ou dans
 `~/.cursor/cli-config.json`, jamais dans le fichier projet.
 
-Pour le smoke test initial, sélectionne **Allowlist** et active les
-notifications dans `/config`. Après validation du routage des demandes de
-subagent, utilise **Auto-review** au quotidien avec `/auto-review` : les
-permissions explicites et le sandbox réduisent les interruptions, tandis que
-les opérations ambiguës peuvent toujours demander une approbation. Ne choisis
-pas Run Everything pour l'Orchestrateur gouverné.
+Pour le smoke test initial, sélectionne **Allowlist** dans `/config`. Active
+les notifications si la plateforme les prend en charge ; sur certaines builds
+Windows de Cursor CLI elles sont `unsupported` — ce n'est pas un échec du
+smoke test. Après validation du routage des demandes de subagent, utilise
+**Auto-review** au quotidien avec `/auto-review` : les permissions explicites
+et le sandbox réduisent les interruptions, tandis que les opérations ambiguës
+peuvent toujours demander une approbation. Ne choisis pas Run Everything pour
+l'Orchestrateur gouverné.
+
+Le fichier projet `.cursor/cli.json` ne peut contenir que `permissions.allow`
+/ `permissions.deny`. L'absence de `approvalMode` ou `notifications` dans ce
+fichier est attendue et ne doit pas être classée comme un échec.
 
 Le fichier projet livré préautorise seulement :
 
@@ -132,30 +138,89 @@ l'humain, pas absorbée dans un simple message de chat.
 
 ## 5. Smoke test obligatoire des autorisations de subagent
 
-Exécute ce test sur une branche de test et avec une Work Unit jetable :
+Ce smoke test valide le **routage Allowlist CLI** d'un subagent vers le
+terminal parent. Ce n'est pas un cycle produit avec Work Unit.
 
-1. vérifie que `agent --version` fonctionne ;
-2. lance `agent --workspace "$PWD"` ;
-3. ouvre `/config`, sélectionne Allowlist et active les notifications ;
-4. vérifie que `.cursor/cli.json` existe et que `Shell(whoami)` n'est pas
-   préautorisé ;
-5. invoque `/orchestrator` avec une Work Unit READY sans modification produit ;
-6. demande au subagent d'exécuter exactement la commande inoffensive `whoami` ;
-7. vérifie que la demande apparaît dans le terminal parent et que la
-   notification est visible ;
-8. refuse une première fois et vérifie qu'un `BLOCKER` ou une
-   `CLARIFICATION_REQUEST` est écrit avant l'arrêt ;
-9. recommence, autorise la commande et vérifie que le subagent reprend puis
-   produit son handoff ;
-10. vérifie que `.ai-team/logs/cursor-events.jsonl` contient
-   `subagentStart`, `beforeShellExecution`, `afterShellExecution` et
-   `subagentStop` ;
-11. lance `python scripts/ai-team/diagnose.py` et confirme l'absence de blocage
-   silencieux.
+### Où l'exécuter
 
-Ne passe pas à plusieurs Work Units ou writers concurrents tant que ces onze
-points ne sont pas tous observés sur la version de Cursor CLI réellement
-utilisée.
+- Uniquement avec le Cursor CLI interactif : `agent --workspace "$PWD"`.
+- **Ne pas** le lancer depuis le chat Agent de l'IU Cursor (outils Task /
+  subagent IDE). Les permissions UI (`.cursor/permissions.json`) peuvent
+  exécuter `whoami` sans invite Allowlist CLI ; un succès dans l'IDE ne
+  valide **pas** ce parcours.
+
+### Prérequis d'environnement (d'abord)
+
+Sépare les échecs d'environnement des échecs Allowlist. Avant de lancer
+`agent` :
+
+```bash
+python3 --version
+python3 .cursor/hooks/guard_shell.py <<< '{"command":"whoami"}'
+```
+
+Attendu : `{"permission": "allow"}`. Si tu vois `python3: command not found`
+ou une erreur de hook fail-closed (`exit 127`), corrige l'interpréteur
+d'abord — les hooks de `.cursor/hooks.json` invoquent littéralement
+`python3`. Sous Windows natif, si seul `python` est dans le PATH, remplace
+temporairement `python3` par `python` dans `.cursor/hooks.json`, ou installe
+un shim `python3`.
+
+### Choix de plateforme / subagent
+
+| Objectif | Subagent | Notes |
+| --- | --- | --- |
+| Invite Allowlist / refus / autoriser une fois | `auth-smoke` | `readonly: false` ; Windows natif et WSL/Linux |
+| Parcours sandbox `workspace_readonly` | `architect` | `readonly: true` ; sous Windows natif le sandbox peut être indisponible et bloque **avant** l'Allowlist — utiliser WSL/Linux pour ce contrôle |
+
+Ne pas affaiblir `architect` pour faire passer le smoke Allowlist.
+
+### Procédure
+
+1. Vérifie `agent --version`.
+2. Depuis la racine du projet, lance `agent --workspace "$PWD"`.
+3. Ouvre `/config`, mode **Allowlist**. Confirme que `Shell(whoami)` n'est
+   **pas** dans l'allowlist globale ni projet. Les notifications peuvent être
+   `unsupported` sur certaines builds Windows — à ignorer pour le verdict.
+4. Confirme que `.cursor/cli.json` projet a `permissions.allow` /
+   `permissions.deny`, **sans** `approvalMode` / `notifications`, et sans
+   `Shell(whoami)`.
+5. Mémorise la fin actuelle de `.ai-team/logs/cursor-events.jsonl` s'il
+   existe.
+6. Demande à l'agent CLI de lancer **`auth-smoke` en foreground** avec cette
+   mission seule : exécuter exactement `whoami` ; rapporter stdout ou un
+   refus d'autorisation ; ne pas éditer de fichiers ; ne pas substituer
+   une autre commande.
+7. Confirme une invite dans le terminal parent (`Not in allowlist: whoami`
+   ou équivalent). **Skip / refuse** une fois (`n` ou Esc). N'ajoute pas
+   `Shell(whoami)` à l'allowlist ; ne choisis pas Run Everything.
+8. Colle le **même** prompt. Quand l'invite revient, choisis **Run once**
+   (`y`). Confirme la sortie de `whoami` et un handoff normal du subagent.
+9. Examine uniquement les nouvelles lignes de
+   `.ai-team/logs/cursor-events.jsonl` pour `subagentStart`,
+   `beforeShellExecution`, `afterShellExecution` (tentative autorisée) et
+   `subagentStop`. Un `afterShellExecution` n'est pas exigé pour la
+   tentative refusée.
+10. Lance `git status --short`. Aucun changement inattendu hors le journal
+    ignoré.
+11. Lance `python3 scripts/ai-team/diagnose.py` et confirme l'absence de
+    blocage silencieux.
+
+### Ordre de diagnostic
+
+1. `python3` peut-il exécuter le hook fail-closed ?
+2. L'invite Allowlist est-elle visible dans le terminal parent **CLI** ?
+3. Seulement ensuite : Skip → même prompt → Run once → vérifier les hooks.
+
+Une erreur de hook fail-closed ou un sandbox manquant est un échec
+**d'environnement**, pas un verdict Allowlist.
+
+N'augmente pas le WIP / les writers concurrents tant que ce smoke test n'a
+pas réussi sur la version de Cursor CLI réellement utilisée.
+
+Contrôle optionnel ensuite : sous WSL/Linux, répéter une tentative shell
+avec `architect` pour confirmer `workspace_readonly` sur cet hôte. Cela ne
+remplace pas le smoke Allowlist avec `auth-smoke`.
 
 ## 6. Alterner entre IU et CLI
 

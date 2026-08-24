@@ -35,7 +35,8 @@ Dans le terminal, lancer `agent --workspace "$PWD"` depuis la racine du projet.
 Les deux modes découvrent `.cursor/rules/`, `.cursor/agents/`,
 `.cursor/skills/` et `.cursor/hooks.json`, et partagent `.ai-team/`. Ne pas les
 laisser écrire en même temps dans le même checkout. Voir
-`TERMINAL_GUIDE.fr.md` pour la configuration et le smoke test CLI.
+`TERMINAL_GUIDE.fr.md` pour la configuration et le smoke test CLI Allowlist
+(via `auth-smoke`, pas le chat Agent de l'IU).
 
 ## 5. Compiler avant de développer
 

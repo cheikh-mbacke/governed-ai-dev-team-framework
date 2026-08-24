@@ -76,8 +76,10 @@ Adapt these patterns to your actual stack.
 default is to deny a shell command if the hook itself errors out — this is
 intentional and correct: a broken hook must not silently stop protecting
 you. The practical consequence is that every entry in `.cursor/hooks.json`
-invokes `python` literally; if that exact command name isn't on PATH on
-your machine (common on macOS and some Linux distributions, which may only
-have `python3`), Cursor will be unable to run *any* shell command in this
-project, not just the ones the hook is meant to block. See the
-Requirements section in `README.md` for how to check and fix this.
+invokes `python3` literally; if that exact command name isn't on PATH on
+your machine (common on some Windows setups that only ship `python`), Cursor
+will be unable to run *any* shell command in this project, not just the ones
+the hook is meant to block. See the Requirements section in `README.md` for
+how to check and fix this. Do not confuse a missing interpreter with an
+Allowlist denial — fix the hook runner first, then run the CLI smoke test in
+`docs/TERMINAL_GUIDE.md`.

@@ -20,9 +20,19 @@ production-facing release.
 - [ ] Review `.ai-team/constitution/70-permissions-policy.yaml` and both
       `.cursor/permissions.json` and `.cursor/cli.json` (role permissions,
       UI/CLI allowlists and blocked command classes).
-- [ ] If using Cursor CLI, complete the subagent approval smoke test in
-      `docs/TERMINAL_GUIDE.md` with one active Work Unit and one writer before
-      increasing WIP limits.
+- [ ] Confirm `python3` can run project hooks before any CLI smoke test:
+      `python3 .cursor/hooks/guard_shell.py` with stdin
+      `{"command":"whoami"}` must print `{"permission": "allow"}`. If not,
+      fix PATH / install Python 3.10+ (or on Windows-only hosts where solely
+      `python` exists, align `.cursor/hooks.json` command names). A broken
+      fail-closed hook blocks every shell command and is not an Allowlist
+      result.
+- [ ] If using Cursor CLI, complete the subagent Allowlist smoke test in
+      `docs/TERMINAL_GUIDE.md` section 5 **from the `agent` CLI terminal**
+      (not the UI Agent chat), using `auth-smoke` for deny → allow-once.
+      Keep `architect` readonly; use WSL/Linux if you also need to validate
+      `workspace_readonly`. Do this with one active writer before increasing
+      WIP limits.
 - [ ] Review `.cursor/BUGBOT.md` if your stack needs stack-specific review
       rules in addition to the governance rules already there.
 - [ ] If the project has a UI: fetch `webapp-testing`'s scripts/examples

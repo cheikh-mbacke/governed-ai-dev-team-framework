@@ -10,10 +10,25 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-try:
-    payload = json.load(sys.stdin)
-except Exception:
-    payload = {"raw": sys.stdin.read()}
+
+def _read_payload():
+    """Read stdin once, then parse.
+
+    Calling ``json.load(sys.stdin)`` and, on failure, ``sys.stdin.read()`` leaves
+    an empty ``raw`` because the failed parse already consumed the stream. That
+    shows up as ``event: {raw: ""}`` in the log and hides hook types.
+    """
+    raw_bytes = sys.stdin.buffer.read()
+    raw = raw_bytes.decode("utf-8-sig", errors="replace")
+    if not raw.strip():
+        return {"raw": raw}
+    try:
+        return json.loads(raw)
+    except Exception:
+        return {"raw": raw}
+
+
+payload = _read_payload()
 
 root = Path(os.environ.get("CURSOR_PROJECT_DIR", ".")).resolve()
 log_dir = root / ".ai-team" / "logs"

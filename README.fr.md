@@ -35,16 +35,19 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
 
 ## Prérequis
 
-- **Python 3.10 ou supérieur**, disponible dans ton PATH.
-- Avant d'installer, lance `python --version`. Si cette commande n'est pas trouvée, essaie `python3 --version` à la place.
-  - Si seule `python3` fonctionne sur ta machine — cas fréquent sur macOS
-    et sur les distributions Linux qui ne fournissent pas de commande
-    `python` nue — remplace `python` par `python3` dans toutes les
-    commandes de ce guide, **et** dans `.cursor/hooks.json` : Cursor exécute
-    la chaîne `command` de chaque hook directement dans le shell de ton
-    système d'exploitation, avec le nom d'interpréteur exact écrit
-    là-dedans, donc les hooks ont besoin de celui qui correspond réellement
-    à Python 3 sur ta machine.
+- **Python 3.10 ou supérieur**, disponible dans ton PATH sous `python3`
+  (préféré) et/ou `python`.
+- Avant d'installer, lance `python3 --version`. Si cette commande n'est pas
+  trouvée, essaie `python --version` à la place.
+  - Les hooks du projet dans `.cursor/hooks.json` invoquent littéralement
+    **`python3`**. Sur macOS et la plupart des installs Linux/WSL, c'est le
+    bon défaut. Si ta machine ne fournit que `python` (fréquent sur certains
+    setups Windows), ouvre `.cursor/hooks.json` après l'install et remplace
+    chaque `"command": "python3 ...` par `"command": "python ...`. Cursor
+    exécute ces chaînes telles quelles et bloquera en fail-closed toute
+    commande shell si le nom est absent du PATH.
+  - Pour les commandes que tu tapes toi-même dans ce guide, utilise
+    `python3` ou `python` selon ce qui fonctionne sur ton PATH.
 - Cursor, utilisé soit dans l'IU avec le projet cible ouvert comme **workspace
   de confiance**, soit via le Cursor CLI interactif `agent` (voir l'étape 3).
 - Deux paquets Python : PyYAML et jsonschema. Installe-les une fois, depuis
@@ -363,7 +366,8 @@ commande shell juste après l'ouverture du projet, vérifie d'abord la
 section Prérequis ci-dessus : le hook `beforeShellExecution` échoue en
 mode fermé par conception (voir `.cursor/hooks.json`), donc un interpréteur
 Python qui ne correspond pas exactement au nom de commande écrit là-dedans
-bloque les commandes au lieu de simplement ignorer le contrôle.
+(`python3` par défaut) bloque les commandes au lieu de simplement ignorer
+le contrôle.
 
 Voir `docs/SECURITY_MODEL.md`.
 

@@ -43,7 +43,7 @@ run `agent --workspace "$PWD"` from the project root. Both modes discover
 `.cursor/rules/`, `.cursor/agents/`, `.cursor/skills/` and
 `.cursor/hooks.json`, and share `.ai-team/`. Do not let them write to the same
 checkout concurrently. See `TERMINAL_GUIDE.md` for CLI configuration and its
-smoke test.
+smoke test (CLI Allowlist via `auth-smoke`, not the UI Agent chat).
 
 ## 5. Compile before implementing
 

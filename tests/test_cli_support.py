@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -41,6 +42,12 @@ class CursorCliConfigurationTests(unittest.TestCase):
             if agent_path.name in readonly_roles:
                 self.assertIn("readonly: true", text, agent_path.name)
 
+    def test_auth_smoke_agent_is_non_readonly_for_windows_allowlist_smoke(self):
+        text = (CURSOR / "agents" / "auth-smoke.md").read_text(encoding="utf-8")
+        self.assertIn("name: auth-smoke", text)
+        self.assertIn("readonly: false", text)
+        self.assertNotIn("readonly: true", text)
+
     def test_hooks_cover_shell_and_subagent_lifecycle(self):
         hooks = json.loads((CURSOR / "hooks.json").read_text(encoding="utf-8"))["hooks"]
         for hook_name in [
@@ -51,6 +58,69 @@ class CursorCliConfigurationTests(unittest.TestCase):
         ]:
             self.assertIn(hook_name, hooks)
             self.assertTrue(hooks[hook_name])
+
+    def test_hooks_invoke_python3_by_default(self):
+        """WSL/Linux often lack a bare `python`; shipped hooks must use python3."""
+        hooks_text = (CURSOR / "hooks.json").read_text(encoding="utf-8")
+        self.assertNotIn('"command": "python ', hooks_text)
+        self.assertIn('"command": "python3 ', hooks_text)
+
+
+class AuditEventTests(unittest.TestCase):
+    def run_audit(self, stdin_data, env=None):
+        merged = os.environ.copy()
+        if env:
+            merged.update(env)
+        if isinstance(stdin_data, str):
+            stdin_data = stdin_data.encode("utf-8")
+        return subprocess.run(
+            [sys.executable, str(CURSOR / "hooks" / "audit_event.py")],
+            input=stdin_data,
+            capture_output=True,
+            cwd=ROOT,
+            env=merged,
+            timeout=10,
+        )
+
+    def test_valid_json_payload_is_logged_intact(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = self.run_audit(
+                json.dumps(
+                    {
+                        "hook_event_name": "beforeShellExecution",
+                        "command": "whoami",
+                    }
+                ),
+                env={"CURSOR_PROJECT_DIR": temp_dir},
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout.decode("utf-8"))["permission"], "allow")
+            log_path = Path(temp_dir) / ".ai-team" / "logs" / "cursor-events.jsonl"
+            record = json.loads(log_path.read_text(encoding="utf-8").strip())
+            self.assertEqual(record["event"]["hook_event_name"], "beforeShellExecution")
+            self.assertEqual(record["event"]["command"], "whoami")
+
+    def test_bom_prefixed_json_is_parsed(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload = ("\ufeff" + json.dumps({"hook_event_name": "subagentStart"})).encode(
+                "utf-8"
+            )
+            result = self.run_audit(payload, env={"CURSOR_PROJECT_DIR": temp_dir})
+            self.assertEqual(result.returncode, 0, result.stderr)
+            log_path = Path(temp_dir) / ".ai-team" / "logs" / "cursor-events.jsonl"
+            record = json.loads(log_path.read_text(encoding="utf-8").strip())
+            self.assertEqual(record["event"]["hook_event_name"], "subagentStart")
+
+    def test_invalid_json_preserves_raw_instead_of_empty_string(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = self.run_audit(
+                "not-json-but-should-be-kept",
+                env={"CURSOR_PROJECT_DIR": temp_dir},
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            log_path = Path(temp_dir) / ".ai-team" / "logs" / "cursor-events.jsonl"
+            record = json.loads(log_path.read_text(encoding="utf-8").strip())
+            self.assertEqual(record["event"]["raw"], "not-json-but-should-be-kept")
 
 
 class GuardShellTests(unittest.TestCase):
@@ -194,7 +264,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                 [sys.executable, "scripts/ai-team/validate.py"], cwd=target
             )
             self.assertEqual(validate.returncode, 1)
-            self.assertIn("Invalid JSON .cursor/cli.json", validate.stdout)
+            self.assertIn("Invalid JSON .cursor", validate.stdout)
 
 
 if __name__ == "__main__":

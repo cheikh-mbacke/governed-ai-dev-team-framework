@@ -3,54 +3,54 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "python .cursor/hooks/session_init.py"
+        "command": "python3 .cursor/hooks/session_init.py"
       }
     ],
     "beforeShellExecution": [
       {
-        "command": "python .cursor/hooks/audit_event.py"
+        "command": "python3 .cursor/hooks/audit_event.py"
       },
       {
-        "command": "python .cursor/hooks/guard_shell.py",
+        "command": "python3 .cursor/hooks/guard_shell.py",
         "failClosed": true
       }
     ],
     "afterShellExecution": [
       {
-        "command": "python .cursor/hooks/audit_event.py"
+        "command": "python3 .cursor/hooks/audit_event.py"
       }
     ],
     "beforeMCPExecution": [
       {
-        "command": "python .cursor/hooks/audit_event.py"
+        "command": "python3 .cursor/hooks/audit_event.py"
       }
     ],
     "afterMCPExecution": [
       {
-        "command": "python .cursor/hooks/audit_event.py"
+        "command": "python3 .cursor/hooks/audit_event.py"
       }
     ],
     "afterFileEdit": [
       {
-        "command": "python .cursor/hooks/audit_event.py"
+        "command": "python3 .cursor/hooks/audit_event.py"
       }
     ],
     "subagentStart": [
       {
-        "command": "python .cursor/hooks/audit_event.py"
+        "command": "python3 .cursor/hooks/audit_event.py"
       }
     ],
     "subagentStop": [
       {
-        "command": "python .cursor/hooks/audit_event.py"
+        "command": "python3 .cursor/hooks/audit_event.py"
       },
       {
-        "command": "python .cursor/hooks/backup_push.py"
+        "command": "python3 .cursor/hooks/backup_push.py"
       }
     ],
     "stop": [
       {
-        "command": "python .cursor/hooks/audit_event.py"
+        "command": "python3 .cursor/hooks/audit_event.py"
       }
     ]
   }

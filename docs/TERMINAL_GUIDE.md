@@ -51,11 +51,17 @@ file `.cursor/cli.json`. Approval mode and notifications are global settings:
 configure them with `/config` or in `~/.cursor/cli-config.json`, never in the
 project file.
 
-For the initial smoke test, select **Allowlist** and enable notifications in
-`/config`. After subagent approval routing is validated, use **Auto-review**
-for daily work with `/auto-review`: explicit permissions and sandboxing reduce
+For the initial smoke test, select **Allowlist** in `/config`. Enable
+notifications when the platform supports them; on some Windows Cursor CLI
+builds notifications are `unsupported` — that is not a smoke-test failure.
+After subagent approval routing is validated, use **Auto-review** for daily
+work with `/auto-review`: explicit permissions and sandboxing reduce
 interruptions while ambiguous operations may still request approval. Do not
 use Run Everything for the governed Orchestrator.
+
+Project `.cursor/cli.json` may only contain `permissions.allow` /
+`permissions.deny`. Absence of `approvalMode` or `notifications` in that file
+is expected and must not be treated as a failure.
 
 The shipped project file pre-authorizes repository reads except common
 secrets, project writes except governance control files, read-only Git
@@ -121,28 +127,83 @@ You may invoke the Skill as a persistent Custom Mode from the `/` menu with
 
 ## 5. Required subagent approval smoke test
 
-Run this on a test branch with a disposable Work Unit:
+This smoke test validates **CLI Allowlist routing** from a subagent to the
+parent terminal. It is not a product Work Unit cycle.
 
-1. verify that `agent --version` works;
-2. start `agent --workspace "$PWD"`;
-3. open `/config`, select Allowlist, and enable notifications;
-4. verify that `.cursor/cli.json` exists and does not pre-authorize
-   `Shell(whoami)`;
-5. invoke `/orchestrator` with a READY Work Unit that needs no product edit;
-6. ask the subagent to run exactly the harmless command `whoami`;
-7. verify that the request appears in the parent terminal and a notification is
-   visible;
-8. deny it once and verify that a `BLOCKER` or `CLARIFICATION_REQUEST` is
-   written before stopping;
-9. retry, approve it, and verify that the subagent resumes and produces a
-   handoff;
-10. verify `.ai-team/logs/cursor-events.jsonl` contains `subagentStart`,
-   `beforeShellExecution`, `afterShellExecution`, and `subagentStop`;
-11. run `python scripts/ai-team/diagnose.py` and confirm there is no silent
+### Where to run it
+
+- Run it **only** with interactive Cursor CLI: `agent --workspace "$PWD"`.
+- Do **not** run it from the Cursor UI Agent chat (Task / IDE subagent tools).
+  UI permissions (`.cursor/permissions.json`) can execute `whoami` without the
+  CLI Allowlist prompt, so a successful IDE run does **not** validate this path.
+
+### Environment prerequisites (do these first)
+
+Separate environment failures from Allowlist failures. Before starting `agent`:
+
+```bash
+python3 --version
+python3 .cursor/hooks/guard_shell.py <<< '{"command":"whoami"}'
+```
+
+Expect `{"permission": "allow"}`. If you see `python3: command not found` or a
+fail-closed hook error (`exit 127`), fix the interpreter first — hooks in
+`.cursor/hooks.json` invoke `python3` literally. On Windows native, if only
+`python` exists on PATH, temporarily replace `python3` with `python` in
+`.cursor/hooks.json`, or install a `python3` shim.
+
+### Platform choice for the subagent
+
+| Goal | Subagent | Notes |
+| --- | --- | --- |
+| Allowlist prompt / deny / allow-once | `auth-smoke` | `readonly: false`; works on Windows native and WSL/Linux |
+| `workspace_readonly` sandbox path | `architect` | `readonly: true`; on Windows native the sandbox may be unavailable and blocks **before** Allowlist — use WSL/Linux for that check |
+
+Do not weaken `architect` to pass the Allowlist smoke test.
+
+### Procedure
+
+1. Verify `agent --version`.
+2. From the project root, start `agent --workspace "$PWD"`.
+3. Open `/config`, set approval mode to **Allowlist**. Confirm
+   `Shell(whoami)` is **not** in the global or project allowlist. Notifications
+   may be `unsupported` on some Windows builds — ignore that for pass/fail.
+4. Confirm project `.cursor/cli.json` has `permissions.allow` /
+   `permissions.deny`, does **not** contain `approvalMode` /
+   `notifications`, and does not allow `Shell(whoami)`.
+5. Note the current end of `.ai-team/logs/cursor-events.jsonl` (if present).
+6. Ask the CLI agent to launch **`auth-smoke` in the foreground** with this
+   mission only: run exactly `whoami`; report stdout or an authorization
+   refusal; do not edit files; do not substitute another command.
+7. Confirm a parent-terminal prompt appears (`Not in allowlist: whoami` or
+   equivalent). **Skip / deny** once (`n` or Esc). Do not add `Shell(whoami)`
+   to the allowlist; do not choose Run Everything.
+8. Paste the **same** prompt again. When the prompt reappears, choose
+   **Run once** (`y`). Confirm `whoami` stdout and a normal subagent handoff.
+9. Inspect only new lines in `.ai-team/logs/cursor-events.jsonl` for
+   `subagentStart`, `beforeShellExecution`, `afterShellExecution` (for the
+   allowed attempt), and `subagentStop`. An `afterShellExecution` is not
+   required for the denied attempt.
+10. Run `git status --short`. No unexpected repo changes beyond the ignored
+    log file.
+11. Run `python3 scripts/ai-team/diagnose.py` and confirm there is no silent
     stall.
 
-Do not enable concurrent Work Units or writers until all eleven observations
-pass with the actual Cursor CLI version in use.
+### Diagnostic order
+
+1. Can `python3` run the fail-closed hook?
+2. Is the Allowlist prompt visible in the **CLI** parent terminal?
+3. Only then: Skip → same prompt → Run once → check hooks.
+
+A fail-closed hook error or a missing sandbox is an **environment** failure,
+not an Allowlist pass or fail.
+
+Do not raise WIP / concurrent writers until this smoke test passes on the
+Cursor CLI version you actually use.
+
+Optional later check: under WSL/Linux, repeat a shell attempt with
+`architect` to confirm `workspace_readonly` works on that host. That does not
+replace the `auth-smoke` Allowlist smoke test.
 
 ## 6. Switch between UI and CLI
 

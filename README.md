@@ -35,18 +35,19 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
 
 ## Requirements
 
-- **Python 3.10 or later**, available on your PATH.
-- Before installing, run `python --version`. If that command isn't found, try `python3 --version` instead.
-  - If only `python3` works on your machine — common on macOS and on Linux
-    distributions that don't ship a bare `python` — you need to replace
-    `python` with `python3` in two different places: (a) in every command
-    from this guide that you type yourself into a terminal, and (b) inside
-    the installed project's `.cursor/hooks.json` file — open it and replace
-    every `"command": "python ...` with `"command": "python3 ...`. The
-    second replacement matters because you're not the one running those
-    commands: Cursor is, automatically, behind the scenes, every time it
-    runs a shell command or starts an agent — and it uses the exact word
-    written in that file, without guessing.
+- **Python 3.10 or later**, available on your PATH as `python3` (preferred)
+  and/or `python`.
+- Before installing, run `python3 --version`. If that command isn't found,
+  try `python --version` instead.
+  - Project hooks in `.cursor/hooks.json` invoke **`python3`** literally.
+    On macOS and most Linux/WSL installs that is the correct default. If
+    your machine only provides `python` (common on some Windows setups),
+    open `.cursor/hooks.json` after install and replace every
+    `"command": "python3 ...` with `"command": "python ...`. Cursor runs
+    those strings as-is and will fail closed on shell commands if the
+    name is missing from PATH.
+  - For commands you type yourself in this guide, use whichever of
+    `python3` / `python` works on your PATH.
 - Cursor, either with the target project opened as a **trusted workspace** in
   the UI or through the interactive `agent` Cursor CLI (see step 3).
 - Two Python packages: PyYAML and jsonschema. Install them once, from
@@ -350,8 +351,8 @@ If Cursor suddenly stops being able to run *any* shell command right after
 you open the project, check the Requirements section above first: the
 `beforeShellExecution` hook fails closed by design (see
 `.cursor/hooks.json`), so a Python interpreter that doesn't match the exact
-command name written there blocks commands instead of silently skipping
-the check.
+command name written there (`python3` by default) blocks commands instead of
+silently skipping the check.
 
 See `docs/SECURITY_MODEL.md`.
 

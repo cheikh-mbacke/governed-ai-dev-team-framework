@@ -7,8 +7,11 @@ import json
 import re
 import sys
 
+# Read stdin once (utf-8-sig strips a BOM). Do not json.load then re-read:
+# a failed parse consumes the stream and yields an empty payload.
 try:
-    payload = json.load(sys.stdin)
+    raw = sys.stdin.buffer.read().decode("utf-8-sig", errors="replace")
+    payload = json.loads(raw) if raw.strip() else {}
 except Exception:
     print(json.dumps({"permission": "allow"}))
     raise SystemExit(0)
