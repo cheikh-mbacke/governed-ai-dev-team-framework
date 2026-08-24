@@ -1,7 +1,7 @@
 [project]
 name = "governed-ai-dev-team-framework"
 version = "0.1.0"
-description = "Human-governed multi-agent software development framework for Cursor"
+description = "Human-governed multi-agent software development framework for Cursor UI and CLI"
 requires-python = ">=3.10"
 dependencies = [
   "PyYAML>=6.0",

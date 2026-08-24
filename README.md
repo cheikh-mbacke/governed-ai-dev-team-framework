@@ -23,6 +23,7 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
 - Cursor Agent Skills in `.cursor/skills/`
 - Cursor project hooks in `.cursor/hooks.json`
 - Cursor per-repository execution guidance in `.cursor/permissions.json`
+- Cursor CLI per-repository permissions in `.cursor/cli.json`
 - Cursor Bugbot rules in `.cursor/BUGBOT.md`
 - Engineering Constitution in `.ai-team/constitution/`
 - JSON Schemas for all core state objects in `.ai-team/schemas/`
@@ -46,8 +47,8 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
     commands: Cursor is, automatically, behind the scenes, every time it
     runs a shell command or starts an agent — and it uses the exact word
     written in that file, without guessing.
-- Cursor, with your target project opened as a **trusted workspace** (see
-  step 3 below).
+- Cursor, either with the target project opened as a **trusted workspace** in
+  the UI or through the interactive `agent` Cursor CLI (see step 3).
 - Two Python packages: PyYAML and jsonschema. Install them once, from
   inside the cloned framework folder, before running `install.py`:
 
@@ -203,21 +204,29 @@ you create some in step 4 below — expected, not a problem with your
 setup.) It never asks you to touch `.ai-team/constitution/` — that's
 already complete.
 
-### 3. Open the project in Cursor
+### 3. Choose Cursor UI or Cursor CLI
 
-Open **your project's folder** — the one you installed into at step 1, not
-the framework repo you cloned — in Cursor (File → Open Folder). On first
-open, Cursor usually shows a prompt asking whether you trust the folder's
-authors ("Trust this folder" / trusted workspace); accept it — this is what
-lets Cursor read the `.cursor/` files just installed (rules, agents,
-skills, hooks) and turn them on. If a `/`-command you expect (like
-`/compile-project`) doesn't show up when you type `/` in the chat, close
-and reopen Cursor once — that's usually enough to force it to
-re-discover them.
+In the UI, open **your project's folder** — the one you installed into at step
+1, not the framework repository — and trust the workspace. If a `/` command
+does not appear, close and reopen Cursor to force rules, agents, Skills and
+hooks to be rediscovered.
+
+In a terminal, start the interactive agent from that same project:
+
+```bash
+cd /path/to/your/project
+agent --workspace "$PWD"
+```
+
+Both modes share the same governed state. Do not let them write to the same
+checkout concurrently. The UI keeps its execution guidance in
+`.cursor/permissions.json`; the CLI uses `.cursor/cli.json`. See
+`docs/TERMINAL_GUIDE.md` for the conservative initial profile, subagent
+approval smoke test and safe switching procedure.
 
 ### 4. Compile the project
 
-In any regular Cursor Agent chat session — there's nothing special to
+In any regular Cursor Agent session, UI or CLI — there is nothing special to
 select first — explicitly invoke the Skill. It is deliberately not
 auto-triggered, so opening Cursor never silently starts the team:
 
@@ -254,7 +263,7 @@ python scripts/ai-team/record_gate.py G1 approved --by YOUR_NAME --note "Executi
 
 ### 6. Start the orchestrator
 
-In the Cursor Agent, type:
+In the Cursor Agent, UI or CLI, type:
 
 ```text
 /orchestrator
@@ -350,9 +359,17 @@ See `docs/SECURITY_MODEL.md`.
 
 - Full checklist before running on a real project: `docs/ADOPTER_CHECKLIST.md`.
 - Step-by-step operator reference (also available in French): `docs/OPERATOR_GUIDE.md`.
+- Combined Cursor UI and CLI operation: `docs/TERMINAL_GUIDE.md`.
 - Architecture, state machine and review pipeline: `docs/ARCHITECTURE.md`.
 - What Cursor governance controls do and don't cover: `docs/SECURITY_MODEL.md`.
 - Where each part of this repository maps back to the base design document: `docs/SOURCE_MAPPING.md`.
+
+To verify the framework itself after a change:
+
+```bash
+python -m unittest discover -s tests -v
+python scripts/ai-team/validate.py
+```
 
 ## License
 

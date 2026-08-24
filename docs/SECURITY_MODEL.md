@@ -6,6 +6,7 @@
 - Cursor project rules;
 - Cursor hooks that log activity and block obvious hazardous commands;
 - Cursor `permissions.json` guidance for Auto-review / allowlists;
+- Cursor CLI `.cursor/cli.json` allow/deny tokens and interactive approval mode;
 - branch and release policy encoded in the Constitution.
 
 ## Controls that must remain external
@@ -41,7 +42,7 @@ and denied *before execution*, regardless of what the agent intends
 - commands combining "prod"/"production" with deploy/migrate/delete/drop/truncate;
 - `DROP DATABASE`, `DROP TABLE`, `TRUNCATE TABLE`.
 
-**Behavioral guidance only** — listed in `.cursor/permissions.json` →
+**Behavioral guidance only in the UI** — listed in `.cursor/permissions.json` →
 `autoRun.block_instructions` as plain-language instructions the agent is
 expected to follow, but *not* matched by any hook pattern. Nothing stops
 the agent mechanically if it disregards this guidance:
@@ -56,9 +57,16 @@ If your threat model requires secrets, IAM and credential changes to be
 mechanically unblockable rather than merely discouraged, add matching
 patterns to `guard_shell.py` yourself, or — better — enforce this outside
 the model entirely (see "Controls that must remain external" above):
-Cursor rules, hooks and `permissions.json` are governance controls, not a
-complete security boundary, and this is exactly the kind of gap that
+Cursor rules, hooks, `permissions.json` and `cli.json` are governance controls,
+not a complete security boundary, and this is exactly the kind of gap that
 external enforcement is meant to close.
+
+For Cursor CLI, `.cursor/cli.json` adds mechanical `deny` tokens for the
+framework's sensitive files and several hazardous command patterns. A CLI
+`deny` is a hard refusal; an operation absent from both `allow` and `deny`
+instead reaches the interactive approval flow. The shared `guard_shell.py`
+hook remains defense in depth for both interfaces. Keep both permission files:
+they serve different clients.
 
 Adapt these patterns to your actual stack.
 

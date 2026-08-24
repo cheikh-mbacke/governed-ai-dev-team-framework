@@ -37,14 +37,17 @@ is already a working default.
 
 ## 4. Open the project in Cursor
 
-Open the **installed project** (not this framework repo) in Cursor and
-trust the workspace. If a `/` command doesn't appear right away, restart
-Cursor once — that's what triggers discovery of `.cursor/rules/`,
-`.cursor/agents/`, `.cursor/skills/` and `.cursor/hooks.json`.
+Use either Cursor UI or the interactive Cursor CLI on the **installed project**
+(not this framework repository). Trust the workspace in the UI; in a terminal,
+run `agent --workspace "$PWD"` from the project root. Both modes discover
+`.cursor/rules/`, `.cursor/agents/`, `.cursor/skills/` and
+`.cursor/hooks.json`, and share `.ai-team/`. Do not let them write to the same
+checkout concurrently. See `TERMINAL_GUIDE.md` for CLI configuration and its
+smoke test.
 
 ## 5. Compile before implementing
 
-In Cursor, explicitly invoke the Skill (it is not auto-triggered):
+In Cursor UI or CLI, explicitly invoke the Skill (it is not auto-triggered):
 
 ```text
 /compile-project
@@ -95,15 +98,17 @@ For each Work Unit:
 
 ## 9. If it looks stuck
 
-**First, before any script**: scroll up in the Cursor chat and check for
-a pending "Run"/"Approve" button waiting for a click. This is the most
+**First, before any script**: in the UI, scroll up and check for a pending
+"Run"/"Approve" button; in the CLI, check the parent terminal for a pending
+approval request. This is the most
 common and most invisible cause — a command that wasn't auto-approved
 (starting the local server, running Playwright, installing a dependency)
 suspends the agent *before* it can write anything at all. Nothing this
 framework records can detect this state, because no event is written
 until the command has actually run. If you keep hitting this for a given
 command type, add a matching rule under `.cursor/permissions.json` →
-`autoRun.allow_instructions` instead of clicking "Approve" every time.
+`autoRun.allow_instructions` for the UI, or an exact permission token in
+`.cursor/cli.json` for the CLI, instead of approving it every time.
 
 If that's not it, before stopping and restarting — the only option when
 you have nothing concrete to look at — run:

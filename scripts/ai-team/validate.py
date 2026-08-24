@@ -24,6 +24,9 @@ required = [
     AI / "constitution" / "constitution.yaml",
     AI / "sources" / "source-registry.yaml",
     AI / "state" / "project-state.yaml",
+    ROOT / ".cursor" / "hooks.json",
+    ROOT / ".cursor" / "permissions.json",
+    ROOT / ".cursor" / "cli.json",
 ]
 for p in required:
     if not p.exists():
@@ -36,6 +39,46 @@ def load_yaml(p):
     except Exception as e:
         errors.append(f"Invalid YAML {p.relative_to(ROOT)}: {e}")
         return None
+
+
+def load_json(p):
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception as e:
+        errors.append(f"Invalid JSON {p.relative_to(ROOT)}: {e}")
+        return None
+
+
+cursor_dir = ROOT / ".cursor"
+for cursor_json_name in ["hooks.json", "permissions.json"]:
+    cursor_json_path = cursor_dir / cursor_json_name
+    if cursor_json_path.exists():
+        load_json(cursor_json_path)
+
+cli_config_path = cursor_dir / "cli.json"
+if cli_config_path.exists():
+    cli_config = load_json(cli_config_path)
+    if cli_config is not None:
+        unsupported_project_settings = sorted(set(cli_config) - {"permissions"})
+        if unsupported_project_settings:
+            errors.append(
+                ".cursor/cli.json: only permissions can be configured at project level; "
+                "move these settings to ~/.cursor/cli-config.json or /config: "
+                + ", ".join(unsupported_project_settings)
+            )
+        permissions = cli_config.get("permissions")
+        if not isinstance(permissions, dict):
+            errors.append(".cursor/cli.json: permissions must be an object")
+        else:
+            for permission_kind in ["allow", "deny"]:
+                entries = permissions.get(permission_kind)
+                if not isinstance(entries, list) or not all(
+                    isinstance(entry, str) for entry in entries
+                ):
+                    errors.append(
+                        f".cursor/cli.json: permissions.{permission_kind} must be a list "
+                        "of strings"
+                    )
 
 if (AI / "project-profile.yaml").exists():
     profile = load_yaml(AI / "project-profile.yaml") or {}

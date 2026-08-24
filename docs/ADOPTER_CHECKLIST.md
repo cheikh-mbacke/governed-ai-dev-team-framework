@@ -17,8 +17,12 @@ production-facing release.
 - [ ] Review `.ai-team/constitution/60-staffing-policy.yaml` and
       `15-risk-strategy.yaml` (WIP limits, activation rules); adjust only if
       your project's risk profile differs from the reference profile.
-- [ ] Review `.ai-team/constitution/70-permissions-policy.yaml` and
-      `.cursor/permissions.json` (role permissions, blocked command classes).
+- [ ] Review `.ai-team/constitution/70-permissions-policy.yaml` and both
+      `.cursor/permissions.json` and `.cursor/cli.json` (role permissions,
+      UI/CLI allowlists and blocked command classes).
+- [ ] If using Cursor CLI, complete the subagent approval smoke test in
+      `docs/TERMINAL_GUIDE.md` with one active Work Unit and one writer before
+      increasing WIP limits.
 - [ ] Review `.cursor/BUGBOT.md` if your stack needs stack-specific review
       rules in addition to the governance rules already there.
 - [ ] If the project has a UI: fetch `webapp-testing`'s scripts/examples
@@ -30,8 +34,8 @@ production-facing release.
 
 **Must configure outside Cursor — no framework file can enforce these:**
 - [ ] Protected branch / required CI checks.
-- [ ] CODEOWNERS (or equivalent) for `.ai-team/constitution/` and
-      `.cursor/permissions.json`.
+- [ ] CODEOWNERS (or equivalent) for `.ai-team/constitution/`,
+      `.cursor/permissions.json`, `.cursor/cli.json` and `.cursor/hooks.json`.
 - [ ] Production credentials unavailable to ordinary developer agents.
 
 **Before letting the team implement:**

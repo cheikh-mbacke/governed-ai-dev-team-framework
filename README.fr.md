@@ -23,6 +23,7 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
 - Agent Skills Cursor dans `.cursor/skills/`
 - Hooks de projet Cursor dans `.cursor/hooks.json`
 - Règles d'exécution Cursor par dépôt dans `.cursor/permissions.json`
+- Permissions Cursor CLI par dépôt dans `.cursor/cli.json`
 - Règles Bugbot Cursor dans `.cursor/BUGBOT.md`
 - Constitution d'ingénierie dans `.ai-team/constitution/`
 - JSON Schemas pour tous les objets d'état dans `.ai-team/schemas/`
@@ -44,8 +45,8 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
     système d'exploitation, avec le nom d'interpréteur exact écrit
     là-dedans, donc les hooks ont besoin de celui qui correspond réellement
     à Python 3 sur ta machine.
-- Cursor, avec ton projet cible ouvert en tant que **workspace de confiance**
-  (« trusted workspace », voir l'étape 3 ci-dessous).
+- Cursor, utilisé soit dans l'IU avec le projet cible ouvert comme **workspace
+  de confiance**, soit via le Cursor CLI interactif `agent` (voir l'étape 3).
 - Deux paquets Python : PyYAML et jsonschema. Installe-les une fois, depuis
   l'intérieur du dossier framework cloné, avant de lancer `install.py` :
 
@@ -210,23 +211,30 @@ aussi à faire des rapports sur les Work Units une fois que tu en crées à
 l'étape 4 — normal, pas un problème avec ta configuration.) Il ne te
 demande jamais de toucher `.ai-team/constitution/` — c'est déjà complet.
 
-### 3. Ouvrir le projet dans Cursor
+### 3. Choisir l'IU Cursor ou Cursor CLI
 
-Ouvre **le dossier de ton projet** — celui dans lequel tu as installé le
-framework à l'étape 1, pas le dépôt framework que tu as cloné — dans
-Cursor (File → Open Folder). À la première ouverture, Cursor affiche
-généralement une invite demandant si tu fais confiance aux auteurs du
-dossier (« Trust this folder » / workspace de confiance) ; accepte-la —
-c'est ce qui permet à Cursor de lire les fichiers `.cursor/` qu'on vient
-d'installer (règles, agents, skills, hooks) et de les activer. Si une
-commande `/` attendue (comme `/compile-project`) n'apparaît pas quand tu
-tapes `/` dans le chat, ferme et rouvre Cursor une fois — ça suffit
-généralement à forcer la redécouverte.
+Dans l'IU, ouvre **le dossier de ton projet** — celui dans lequel tu as
+installé le framework à l'étape 1, pas le dépôt framework — puis accepte le
+workspace de confiance. Si une commande `/` n'apparaît pas, ferme et rouvre
+Cursor pour forcer la redécouverte des règles, agents, Skills et hooks.
+
+Dans le terminal, lance l'agent interactif depuis ce même projet :
+
+```bash
+cd /chemin/vers/ton/projet
+agent --workspace "$PWD"
+```
+
+Les deux modes utilisent le même état gouverné. Ne les laisse pas écrire en
+même temps dans le même checkout. L'IU conserve ses règles dans
+`.cursor/permissions.json` ; le CLI utilise `.cursor/cli.json`. Pour le profil
+conservateur initial, le test des autorisations de subagent et la procédure de
+bascule, lis `docs/TERMINAL_GUIDE.fr.md`.
 
 ### 4. Compiler le projet
 
-Dans n'importe quelle session de chat Cursor Agent normale — rien de
-spécial à sélectionner avant — invoque explicitement le Skill. Il n'est
+Dans n'importe quelle session Cursor Agent normale, dans l'IU ou le CLI — rien
+de spécial à sélectionner avant — invoque explicitement le Skill. Il n'est
 volontairement pas auto-déclenché, donc ouvrir Cursor ne lance jamais
 l'équipe silencieusement :
 
@@ -264,7 +272,7 @@ python scripts/ai-team/record_gate.py G1 approved --by TON_NOM --note "Plan d'ex
 
 ### 6. Démarrer l'orchestrateur
 
-Dans l'agent Cursor, tape :
+Dans l'agent Cursor, IU ou CLI, tape :
 
 ```text
 /orchestrator
@@ -363,9 +371,17 @@ Voir `docs/SECURITY_MODEL.md`.
 
 - Checklist complète avant un vrai projet : `docs/ADOPTER_CHECKLIST.md`.
 - Guide opérateur pas à pas (aussi disponible en anglais) : `docs/OPERATOR_GUIDE.fr.md`.
+- Utilisation conjointe IU et Cursor CLI : `docs/TERMINAL_GUIDE.fr.md`.
 - Architecture, machine à états et pipeline de review : `docs/ARCHITECTURE.md`.
 - Ce que couvrent (et ne couvrent pas) les contrôles Cursor : `docs/SECURITY_MODEL.md`.
 - Correspondance entre ce dépôt et le document de cadrage de base : `docs/SOURCE_MAPPING.md`.
+
+Pour vérifier le framework lui-même après une modification :
+
+```bash
+python -m unittest discover -s tests -v
+python scripts/ai-team/validate.py
+```
 
 ## Licence
 

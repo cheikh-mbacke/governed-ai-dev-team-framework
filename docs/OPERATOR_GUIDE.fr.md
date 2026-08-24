@@ -29,11 +29,18 @@ Le fichier `.ai-team/project-profile.yaml` contient les commandes techniques du 
 
 ## 4. Ouvrir le projet dans Cursor
 
-Ouvrir le **projet installé** (pas ce dépôt framework) dans Cursor et faire confiance au workspace. Si une commande `/` n'apparaît pas tout de suite, redémarrer Cursor une fois — c'est ce qui déclenche la découverte de `.cursor/rules/`, `.cursor/agents/`, `.cursor/skills/` et `.cursor/hooks.json`.
+Utiliser au choix l'IU Cursor ou le Cursor CLI interactif sur le **projet
+installé** (pas ce dépôt framework). Dans l'IU, faire confiance au workspace.
+Dans le terminal, lancer `agent --workspace "$PWD"` depuis la racine du projet.
+Les deux modes découvrent `.cursor/rules/`, `.cursor/agents/`,
+`.cursor/skills/` et `.cursor/hooks.json`, et partagent `.ai-team/`. Ne pas les
+laisser écrire en même temps dans le même checkout. Voir
+`TERMINAL_GUIDE.fr.md` pour la configuration et le smoke test CLI.
 
 ## 5. Compiler avant de développer
 
-Dans Cursor, invoquer explicitement le Skill (il n'est pas auto-déclenché) :
+Dans l'IU ou le CLI Cursor, invoquer explicitement le Skill (il n'est pas
+auto-déclenché) :
 
 ```text
 /compile-project
@@ -81,8 +88,9 @@ Pour chaque Work Unit :
 
 ## 9. Si ça semble bloqué
 
-**D'abord, avant tout script** : remonte dans le chat Cursor et cherche un
-bouton "Run"/"Approve" en attente d'un clic. C'est la cause la plus
+**D'abord, avant tout script** : dans l'IU, remonte dans le chat et cherche un
+bouton "Run"/"Approve" ; dans le CLI, cherche une demande d'autorisation en
+attente dans le terminal parent. C'est la cause la plus
 fréquente et la plus invisible — une commande qui n'était pas
 auto-approuvée (démarrer le serveur local, lancer Playwright, installer
 une dépendance) suspend l'agent *avant* qu'il ait la main pour écrire
@@ -90,8 +98,9 @@ quoi que ce soit. Rien de ce que ce framework enregistre ne peut détecter
 cet état, parce qu'aucun événement n'est écrit tant que la commande n'a
 pas été exécutée. Si tu retombes souvent sur ce cas précis pour un type
 de commande donné, ajoute une règle correspondante dans
-`.cursor/permissions.json` → `autoRun.allow_instructions` plutôt que de
-cliquer "Approve" à chaque fois.
+`.cursor/permissions.json` → `autoRun.allow_instructions` pour l'IU, ou un
+token de permission exact dans `.cursor/cli.json` pour le CLI, plutôt que de
+l'approuver à chaque fois.
 
 Si ce n'est pas ça, avant d'arrêter et de relancer — la seule option
 quand tu n'as rien de concret à regarder — lance :

@@ -19,7 +19,8 @@ parser.add_argument("--project-id", required=True)
 parser.add_argument("--project-name", required=True)
 parser.add_argument("--force", action="store_true")
 parser.add_argument("--update", action="store_true",
-    help="Overwrite framework/governance files (agents, skills, rules, hooks, permissions, "
+    help="Overwrite framework/governance files (agents, skills, rules, hooks, UI and CLI "
+         "permissions, "
          "constitution, schemas, scripts) with the latest version from this clone, without "
          "touching project data (project-profile.yaml, source-registry.yaml, Work Units, "
          "state, decisions, events, evidence, findings, audits, releases, acceptance, logs, "
@@ -189,8 +190,11 @@ state_path.write_text(yaml.safe_dump(state, sort_keys=False, allow_unicode=True)
 
 print(f"Installed governed AI team framework into {target}")
 print("Next:")
-print("  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)")
+print("  1. Fill .ai-team/project-profile.yaml (or ask Cursor UI/CLI: /propose-profile)")
 print("  2. Add product documents under docs/product/<category>/")
-print("  3. Register authoritative sources in .ai-team/sources/source-registry.yaml (or ask Cursor: /propose-profile)")
+print(
+    "  3. Register authoritative sources in .ai-team/sources/source-registry.yaml "
+    "(or ask Cursor UI/CLI: /propose-profile)"
+)
 print("  4. Run: python scripts/ai-team/validate.py")
-print("  5. In Cursor, invoke /compile-project")
+print("  5. In Cursor UI or interactive CLI, invoke /compile-project")

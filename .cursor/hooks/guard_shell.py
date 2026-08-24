@@ -18,7 +18,7 @@ patterns = [
     r"git\s+push[^\n]*(--force|-f)",
     r"git\s+reset\s+--hard",
     r"git\s+push[^\n]*(main|master|trunk)",
-    r"rm\s+-rf\s+/(?:\s|$)",
+    r"rm\s+-rf\s+/(?:[\s\"']|$)",
     r"kubectl\s+(apply|delete|patch|replace|scale|rollout)",
     r"terraform\s+(apply|destroy)",
     r"\b(prod|production)\b[^\n]*(deploy|migration|migrate|delete|drop|truncate)",

@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Write(**)",
+      "Shell(git:status*)",
+      "Shell(git:diff*)",
+      "Shell(git:log*)",
+      "Shell(git:show*)",
+      "Shell(python:scripts/ai-team/validate.py*)",
+      "Shell(python:scripts/ai-team/status.py*)",
+      "Shell(python:scripts/ai-team/diagnose.py*)",
+      "Shell(python:scripts/ai-team/check_done.py*)",
+      "Shell(python3:scripts/ai-team/validate.py*)",
+      "Shell(python3:scripts/ai-team/status.py*)",
+      "Shell(python3:scripts/ai-team/diagnose.py*)",
+      "Shell(python3:scripts/ai-team/check_done.py*)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(**/.env*)",
+      "Read(**/*.key)",
+      "Read(**/*.pem)",
+      "Write(.ai-team/constitution/**)",
+      "Write(.cursor/cli.json)",
+      "Write(.cursor/hooks.json)",
+      "Write(.cursor/permissions.json)",
+      "Shell(git:push*--force*)",
+      "Shell(git:push*-f*)",
+      "Shell(git:reset*--hard*)",
+      "Shell(rm:-rf*)",
+      "Shell(kubectl:apply*)",
+      "Shell(kubectl:delete*)",
+      "Shell(kubectl:patch*)",
+      "Shell(kubectl:replace*)",
+      "Shell(kubectl:scale*)",
+      "Shell(kubectl:rollout*)",
+      "Shell(terraform:apply*)",
+      "Shell(terraform:destroy*)"
+    ]
+  }
+}
