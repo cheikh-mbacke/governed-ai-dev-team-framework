@@ -135,6 +135,7 @@ if args.update:
     if skipped_project_data:
         print(f"({len(skipped_project_data)} project-data path(s) correctly left alone.)")
     print("\nRun python scripts/ai-team/validate.py to confirm nothing broke.")
+    print("Before Cursor CLI, run python scripts/ai-team/preflight.py.")
     raise SystemExit(0)
 
 profile_path = target / ".ai-team" / "project-profile.yaml"
@@ -197,4 +198,5 @@ print(
     "(or ask Cursor UI/CLI: /propose-profile)"
 )
 print("  4. Run: python scripts/ai-team/validate.py")
-print("  5. In Cursor UI or interactive CLI, invoke /compile-project")
+print("  5. Before Cursor CLI, run: python scripts/ai-team/preflight.py")
+print("  6. In Cursor UI or interactive CLI, invoke /compile-project")

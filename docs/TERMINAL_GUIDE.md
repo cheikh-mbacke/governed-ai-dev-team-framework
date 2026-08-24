@@ -137,27 +137,33 @@ parent terminal. It is not a product Work Unit cycle.
   UI permissions (`.cursor/permissions.json`) can execute `whoami` without the
   CLI Allowlist prompt, so a successful IDE run does **not** validate this path.
 
-### Environment prerequisites (do these first)
+### Automated environment preflight (do this first)
 
-Separate environment failures from Allowlist failures. Before starting `agent`:
+Separate environment failures from Allowlist failures. Before starting
+`agent`, use whichever Python 3 command works on the host:
 
 ```bash
-python3 --version
-python3 .cursor/hooks/guard_shell.py <<< '{"command":"whoami"}'
+python scripts/ai-team/preflight.py
 ```
 
-Expect `{"permission": "allow"}`. If you see `python3: command not found` or a
-fail-closed hook error (`exit 127`), fix the interpreter first — hooks in
-`.cursor/hooks.json` invoke `python3` literally. On Windows native, if only
-`python` exists on PATH, temporarily replace `python3` with `python` in
-`.cursor/hooks.json`, or install a `python3` shim.
+The dependency-free preflight checks the committed hook configuration, runs
+`guard_shell.py` through the same portable runner Cursor uses, verifies the
+project CLI permissions, and reports the platform capability profile. It does
+not read Cursor's global settings or simulate a human approval; those two
+items remain clearly marked `MANUAL`.
+
+Do not edit `.cursor/hooks.json` to swap `python` and `python3`. The committed
+`.cursor/hooks/run_hook.cmd` selects `python3` / `python` on POSIX and
+`python3` / `python` / `py -3` on Windows, and preserves the hook's first exit
+code. A missing interpreter or fail-closed hook is reported as `BLOCKED`
+before the authorization scenario begins.
 
 ### Platform choice for the subagent
 
 | Goal | Subagent | Notes |
 | --- | --- | --- |
-| Allowlist prompt / deny / allow-once | `auth-smoke` | `readonly: false`; works on Windows native and WSL/Linux |
-| `workspace_readonly` sandbox path | `architect` | `readonly: true`; on Windows native the sandbox may be unavailable and blocks **before** Allowlist — use WSL/Linux for that check |
+| Allowlist prompt / deny / allow-once | `auth-smoke` | Cross-platform routing probe with `readonly: false`; it does not validate the real Architect role |
+| `workspace_readonly` sandbox path | `architect` | Separate integration test with `readonly: true`; `SKIP` on Windows native, required under WSL/Linux |
 
 Do not weaken `architect` to pass the Allowlist smoke test.
 
@@ -186,12 +192,13 @@ Do not weaken `architect` to pass the Allowlist smoke test.
    required for the denied attempt.
 10. Run `git status --short`. No unexpected repo changes beyond the ignored
     log file.
-11. Run `python3 scripts/ai-team/diagnose.py` and confirm there is no silent
-    stall.
+11. Run `python scripts/ai-team/diagnose.py` (or your working Python command)
+    and confirm there is no silent stall.
 
 ### Diagnostic order
 
-1. Can `python3` run the fail-closed hook?
+1. Does `preflight.py` report `PASS` for `hooks_config`, `guard_hook`, and
+   `project_cli`?
 2. Is the Allowlist prompt visible in the **CLI** parent terminal?
 3. Only then: Skip → same prompt → Run once → check hooks.
 
@@ -201,9 +208,11 @@ not an Allowlist pass or fail.
 Do not raise WIP / concurrent writers until this smoke test passes on the
 Cursor CLI version you actually use.
 
-Optional later check: under WSL/Linux, repeat a shell attempt with
-`architect` to confirm `workspace_readonly` works on that host. That does not
-replace the `auth-smoke` Allowlist smoke test.
+Required integration check for full CLI support: under WSL/Linux, repeat a
+shell attempt with `architect` to confirm `workspace_readonly` works on that
+host. Record it independently from the `auth-smoke` result. On Windows native,
+report this check as `SKIP — Cursor workspace_readonly unavailable`, never as
+an Allowlist failure or a pass.
 
 ## 6. Switch between UI and CLI
 

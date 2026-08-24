@@ -149,29 +149,34 @@ terminal parent. Ce n'est pas un cycle produit avec Work Unit.
   exécuter `whoami` sans invite Allowlist CLI ; un succès dans l'IDE ne
   valide **pas** ce parcours.
 
-### Prérequis d'environnement (d'abord)
+### Préflight d'environnement automatisé (d'abord)
 
 Sépare les échecs d'environnement des échecs Allowlist. Avant de lancer
-`agent` :
+`agent`, utilise la commande Python 3 disponible sur l'hôte :
 
 ```bash
-python3 --version
-python3 .cursor/hooks/guard_shell.py <<< '{"command":"whoami"}'
+python scripts/ai-team/preflight.py
 ```
 
-Attendu : `{"permission": "allow"}`. Si tu vois `python3: command not found`
-ou une erreur de hook fail-closed (`exit 127`), corrige l'interpréteur
-d'abord — les hooks de `.cursor/hooks.json` invoquent littéralement
-`python3`. Sous Windows natif, si seul `python` est dans le PATH, remplace
-temporairement `python3` par `python` dans `.cursor/hooks.json`, ou installe
-un shim `python3`.
+Ce préflight sans dépendance vérifie la configuration versionnée des hooks,
+exécute `guard_shell.py` via le même lanceur portable que Cursor, contrôle les
+permissions CLI projet et affiche le profil de capacité de la plateforme. Il
+ne lit pas la configuration globale Cursor et ne simule pas une approbation
+humaine : ces deux contrôles restent explicitement marqués `MANUAL`.
+
+Ne modifie pas `.cursor/hooks.json` pour alterner entre `python` et `python3`.
+Le lanceur versionné `.cursor/hooks/run_hook.cmd` sélectionne
+`python3` / `python` sous POSIX et `python3` / `python` / `py -3` sous
+Windows, tout en conservant le premier code de sortie du hook. Un interpréteur
+absent ou un hook fail-closed cassé est signalé `BLOCKED` avant le scénario
+d'autorisation.
 
 ### Choix de plateforme / subagent
 
 | Objectif | Subagent | Notes |
 | --- | --- | --- |
-| Invite Allowlist / refus / autoriser une fois | `auth-smoke` | `readonly: false` ; Windows natif et WSL/Linux |
-| Parcours sandbox `workspace_readonly` | `architect` | `readonly: true` ; sous Windows natif le sandbox peut être indisponible et bloque **avant** l'Allowlist — utiliser WSL/Linux pour ce contrôle |
+| Invite Allowlist / refus / autoriser une fois | `auth-smoke` | Sonde de routage multiplateforme avec `readonly: false` ; elle ne valide pas le vrai rôle Architecte |
+| Parcours sandbox `workspace_readonly` | `architect` | Test d'intégration séparé avec `readonly: true` ; `SKIP` sous Windows natif, obligatoire sous WSL/Linux |
 
 Ne pas affaiblir `architect` pour faire passer le smoke Allowlist.
 
@@ -203,12 +208,13 @@ Ne pas affaiblir `architect` pour faire passer le smoke Allowlist.
    tentative refusée.
 10. Lance `git status --short`. Aucun changement inattendu hors le journal
     ignoré.
-11. Lance `python3 scripts/ai-team/diagnose.py` et confirme l'absence de
-    blocage silencieux.
+11. Lance `python scripts/ai-team/diagnose.py` (ou ta commande Python valide)
+    et confirme l'absence de blocage silencieux.
 
 ### Ordre de diagnostic
 
-1. `python3` peut-il exécuter le hook fail-closed ?
+1. `preflight.py` affiche-t-il `PASS` pour `hooks_config`, `guard_hook` et
+   `project_cli` ?
 2. L'invite Allowlist est-elle visible dans le terminal parent **CLI** ?
 3. Seulement ensuite : Skip → même prompt → Run once → vérifier les hooks.
 
@@ -218,9 +224,12 @@ Une erreur de hook fail-closed ou un sandbox manquant est un échec
 N'augmente pas le WIP / les writers concurrents tant que ce smoke test n'a
 pas réussi sur la version de Cursor CLI réellement utilisée.
 
-Contrôle optionnel ensuite : sous WSL/Linux, répéter une tentative shell
-avec `architect` pour confirmer `workspace_readonly` sur cet hôte. Cela ne
-remplace pas le smoke Allowlist avec `auth-smoke`.
+Contrôle d'intégration obligatoire pour déclarer le support CLI complet :
+sous WSL/Linux, répète une tentative shell avec `architect` pour confirmer
+`workspace_readonly` sur cet hôte. Enregistre ce résultat séparément de celui
+d'`auth-smoke`. Sous Windows natif, note
+`SKIP — Cursor workspace_readonly indisponible`, jamais un échec ou un succès
+Allowlist.
 
 ## 6. Alterner entre IU et CLI
 

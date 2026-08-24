@@ -25,6 +25,7 @@ required = [
     AI / "sources" / "source-registry.yaml",
     AI / "state" / "project-state.yaml",
     ROOT / ".cursor" / "hooks.json",
+    ROOT / ".cursor" / "hooks" / "run_hook.cmd",
     ROOT / ".cursor" / "permissions.json",
     ROOT / ".cursor" / "cli.json",
 ]

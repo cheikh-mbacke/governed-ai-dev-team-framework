@@ -35,19 +35,17 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
 
 ## Prérequis
 
-- **Python 3.10 ou supérieur**, disponible dans ton PATH sous `python3`
-  (préféré) et/ou `python`.
+- **Python 3.10 ou supérieur**, disponible dans ton PATH sous `python3`,
+  `python` ou via le lanceur Windows `py -3`.
 - Avant d'installer, lance `python3 --version`. Si cette commande n'est pas
-  trouvée, essaie `python --version` à la place.
-  - Les hooks du projet dans `.cursor/hooks.json` invoquent littéralement
-    **`python3`**. Sur macOS et la plupart des installs Linux/WSL, c'est le
-    bon défaut. Si ta machine ne fournit que `python` (fréquent sur certains
-    setups Windows), ouvre `.cursor/hooks.json` après l'install et remplace
-    chaque `"command": "python3 ...` par `"command": "python ...`. Cursor
-    exécute ces chaînes telles quelles et bloquera en fail-closed toute
-    commande shell si le nom est absent du PATH.
+  trouvée, essaie `python --version`, puis `py -3 --version` sous Windows.
+  - Les hooks utilisent le lanceur portable versionné
+    `.cursor/hooks/run_hook.cmd`. Il sélectionne `python3` / `python` sous
+    macOS, Linux et WSL, et `python3` / `python` / `py -3` sous Windows,
+    puis n'exécute le hook qu'une fois. Ne modifie pas `.cursor/hooks.json`
+    machine par machine pour changer le nom de l'interpréteur.
   - Pour les commandes que tu tapes toi-même dans ce guide, utilise
-    `python3` ou `python` selon ce qui fonctionne sur ton PATH.
+    `python3`, `python` ou `py -3` selon ce qui fonctionne sur ton PATH.
 - Cursor, utilisé soit dans l'IU avec le projet cible ouvert comme **workspace
   de confiance**, soit via le Cursor CLI interactif `agent` (voir l'étape 3).
 - Deux paquets Python : PyYAML et jsonschema. Installe-les une fois, depuis
@@ -362,12 +360,11 @@ Matière produit humaine + Constitution d'ingénierie
 Les règles Cursor, les prompts, les hooks et `permissions.json` sont des **contrôles de gouvernance, pas une frontière de sécurité complète**. Garde la protection de branche, les checks CI requis, la protection des environnements, les secrets, les credentials de déploiement, CODEOWNERS et l'IAM production en dehors du modèle, et fais-les respecter par ton hébergeur Git / CI / infrastructure cloud.
 
 Si Cursor arrête soudainement de pouvoir exécuter *n'importe quelle*
-commande shell juste après l'ouverture du projet, vérifie d'abord la
-section Prérequis ci-dessus : le hook `beforeShellExecution` échoue en
-mode fermé par conception (voir `.cursor/hooks.json`), donc un interpréteur
-Python qui ne correspond pas exactement au nom de commande écrit là-dedans
-(`python3` par défaut) bloque les commandes au lieu de simplement ignorer
-le contrôle.
+commande shell juste après l'ouverture du projet, lance d'abord
+`python scripts/ai-team/preflight.py` (ou la commande Python équivalente qui
+fonctionne). Le hook `beforeShellExecution` échoue en mode fermé par
+conception, tandis que le lanceur portable indique les commandes Python
+essayées au lieu d'exiger une modification locale de `hooks.json`.
 
 Voir `docs/SECURITY_MODEL.md`.
 

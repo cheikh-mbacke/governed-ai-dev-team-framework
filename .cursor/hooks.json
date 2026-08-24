@@ -3,54 +3,54 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "python3 .cursor/hooks/session_init.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/session_init.py"
       }
     ],
     "beforeShellExecution": [
       {
-        "command": "python3 .cursor/hooks/audit_event.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/audit_event.py"
       },
       {
-        "command": "python3 .cursor/hooks/guard_shell.py",
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py",
         "failClosed": true
       }
     ],
     "afterShellExecution": [
       {
-        "command": "python3 .cursor/hooks/audit_event.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/audit_event.py"
       }
     ],
     "beforeMCPExecution": [
       {
-        "command": "python3 .cursor/hooks/audit_event.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/audit_event.py"
       }
     ],
     "afterMCPExecution": [
       {
-        "command": "python3 .cursor/hooks/audit_event.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/audit_event.py"
       }
     ],
     "afterFileEdit": [
       {
-        "command": "python3 .cursor/hooks/audit_event.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/audit_event.py"
       }
     ],
     "subagentStart": [
       {
-        "command": "python3 .cursor/hooks/audit_event.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/audit_event.py"
       }
     ],
     "subagentStop": [
       {
-        "command": "python3 .cursor/hooks/audit_event.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/audit_event.py"
       },
       {
-        "command": "python3 .cursor/hooks/backup_push.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/backup_push.py"
       }
     ],
     "stop": [
       {
-        "command": "python3 .cursor/hooks/audit_event.py"
+        "command": ".cursor/hooks/run_hook.cmd .cursor/hooks/audit_event.py"
       }
     ]
   }

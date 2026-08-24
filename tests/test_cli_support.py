@@ -23,6 +23,7 @@ class CursorCliConfigurationTests(unittest.TestCase):
         deny = set(cli_config["permissions"]["deny"])
         self.assertIn("Shell(git:status*)", allow)
         self.assertIn("Shell(python:scripts/ai-team/diagnose.py*)", allow)
+        self.assertIn("Shell(py:-3 scripts/ai-team/preflight.py*)", allow)
         self.assertIn("Write(.ai-team/constitution/**)", deny)
         self.assertIn("Write(.cursor/cli.json)", deny)
         self.assertIn("Shell(git:reset*--hard*)", deny)
@@ -42,11 +43,12 @@ class CursorCliConfigurationTests(unittest.TestCase):
             if agent_path.name in readonly_roles:
                 self.assertIn("readonly: true", text, agent_path.name)
 
-    def test_auth_smoke_agent_is_non_readonly_for_windows_allowlist_smoke(self):
+    def test_auth_smoke_agent_is_non_readonly_for_cross_platform_allowlist_smoke(self):
         text = (CURSOR / "agents" / "auth-smoke.md").read_text(encoding="utf-8")
         self.assertIn("name: auth-smoke", text)
         self.assertIn("readonly: false", text)
         self.assertNotIn("readonly: true", text)
+        self.assertIn("Cross-platform CLI Allowlist", text)
 
     def test_hooks_cover_shell_and_subagent_lifecycle(self):
         hooks = json.loads((CURSOR / "hooks.json").read_text(encoding="utf-8"))["hooks"]
@@ -59,11 +61,83 @@ class CursorCliConfigurationTests(unittest.TestCase):
             self.assertIn(hook_name, hooks)
             self.assertTrue(hooks[hook_name])
 
-    def test_hooks_invoke_python3_by_default(self):
-        """WSL/Linux often lack a bare `python`; shipped hooks must use python3."""
-        hooks_text = (CURSOR / "hooks.json").read_text(encoding="utf-8")
-        self.assertNotIn('"command": "python ', hooks_text)
-        self.assertIn('"command": "python3 ', hooks_text)
+    def test_hooks_use_portable_python_runner(self):
+        hooks = json.loads((CURSOR / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+        commands = [item["command"] for definitions in hooks.values() for item in definitions]
+        self.assertTrue(commands)
+        for command in commands:
+            self.assertTrue(
+                command.startswith(".cursor/hooks/run_hook.cmd "), command
+            )
+
+        runner = (CURSOR / "hooks" / "run_hook.cmd").read_text(encoding="utf-8")
+        for candidate in ["python3", "python", "py -3"]:
+            self.assertIn(candidate, runner)
+
+
+class PortableHookRunnerTests(unittest.TestCase):
+    def run_guard(self, command):
+        return subprocess.run(
+            ".cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py",
+            input=json.dumps({"command": command}),
+            text=True,
+            capture_output=True,
+            cwd=ROOT,
+            shell=True,
+            timeout=10,
+        )
+
+    def test_runner_executes_safe_hook(self):
+        result = self.run_guard("whoami")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["permission"], "allow")
+
+    def test_runner_preserves_hook_denial_exit_code(self):
+        result = self.run_guard("git reset --hard HEAD")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["permission"], "deny")
+
+    @unittest.skipIf(os.name == "nt", "POSIX fallback branch only")
+    def test_posix_runner_falls_back_to_python_when_python3_is_absent(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            interpreter = Path(temp_dir) / "python"
+            interpreter.symlink_to(sys.executable)
+            env = os.environ.copy()
+            env["PATH"] = temp_dir
+            result = subprocess.run(
+                ".cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py",
+                input=json.dumps({"command": "whoami"}),
+                text=True,
+                capture_output=True,
+                cwd=ROOT,
+                env=env,
+                shell=True,
+                timeout=10,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["permission"], "allow")
+
+
+class PreflightTests(unittest.TestCase):
+    def test_preflight_reports_machine_readable_capabilities(self):
+        result = subprocess.run(
+            [sys.executable, "scripts/ai-team/preflight.py", "--json"],
+            text=True,
+            capture_output=True,
+            cwd=ROOT,
+            timeout=15,
+        )
+        self.assertIn(result.returncode, {0, 1}, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["hooks_config"]["status"], "pass")
+        self.assertEqual(report["guard_hook"]["status"], "pass")
+        self.assertEqual(report["project_cli"]["status"], "pass")
+        self.assertEqual(report["global_allowlist"]["status"], "manual")
+        self.assertEqual(report["execution_surface"]["status"], "manual")
+        if report["platform"] == "windows-native":
+            self.assertEqual(report["readonly_sandbox"]["status"], "skip")
+        else:
+            self.assertEqual(report["readonly_sandbox"]["status"], "expected")
 
 
 class AuditEventTests(unittest.TestCase):
@@ -181,6 +255,11 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(install.returncode, 0, install.stderr + install.stdout)
             self.assertTrue((target / ".cursor" / "permissions.json").is_file())
             self.assertTrue((target / ".cursor" / "cli.json").is_file())
+            installed_runner = target / ".cursor" / "hooks" / "run_hook.cmd"
+            self.assertTrue(installed_runner.is_file())
+            if os.name != "nt":
+                self.assertTrue(os.access(installed_runner, os.X_OK))
+            self.assertTrue((target / "scripts" / "ai-team" / "preflight.py").is_file())
 
             validate = self.run_command(
                 [sys.executable, "scripts/ai-team/validate.py"], cwd=target

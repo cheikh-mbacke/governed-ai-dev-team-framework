@@ -1,6 +1,6 @@
 ---
 name: auth-smoke
-description: Windows-native Allowlist authorization smoke test only. Non-readonly so Shell can run without workspace_readonly sandbox. Do not use for product work; keep architect readonly unchanged.
+description: Cross-platform CLI Allowlist routing probe only. Non-readonly so the test is independent of workspace_readonly support. Do not use for product work; keep architect readonly unchanged.
 model: inherit
 readonly: false
 ---

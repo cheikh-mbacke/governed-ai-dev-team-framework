@@ -35,19 +35,17 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
 
 ## Requirements
 
-- **Python 3.10 or later**, available on your PATH as `python3` (preferred)
-  and/or `python`.
+- **Python 3.10 or later**, available on your PATH as `python3`, `python`, or
+  the Windows launcher `py -3`.
 - Before installing, run `python3 --version`. If that command isn't found,
-  try `python --version` instead.
-  - Project hooks in `.cursor/hooks.json` invoke **`python3`** literally.
-    On macOS and most Linux/WSL installs that is the correct default. If
-    your machine only provides `python` (common on some Windows setups),
-    open `.cursor/hooks.json` after install and replace every
-    `"command": "python3 ...` with `"command": "python ...`. Cursor runs
-    those strings as-is and will fail closed on shell commands if the
-    name is missing from PATH.
+  try `python --version`, then `py -3 --version` on Windows.
+  - Project hooks use the committed portable runner
+    `.cursor/hooks/run_hook.cmd`. It selects `python3` / `python` on
+    macOS, Linux and WSL, and `python3` / `python` / `py -3` on Windows,
+    then invokes the hook exactly once. Do not edit `.cursor/hooks.json`
+    to switch interpreter names per machine.
   - For commands you type yourself in this guide, use whichever of
-    `python3` / `python` works on your PATH.
+    `python3` / `python` / `py -3` works on your PATH.
 - Cursor, either with the target project opened as a **trusted workspace** in
   the UI or through the interactive `agent` Cursor CLI (see step 3).
 - Two Python packages: PyYAML and jsonschema. Install them once, from
@@ -348,11 +346,10 @@ Human product material + Engineering Constitution
 Cursor rules, prompts, hooks, and `permissions.json` are **governance controls, not a complete security boundary**. Keep branch protection, CI checks, environment protection, secrets, deployment credentials, CODEOWNERS, and production IAM outside the model and enforce them in Git hosting / CI / cloud infrastructure.
 
 If Cursor suddenly stops being able to run *any* shell command right after
-you open the project, check the Requirements section above first: the
-`beforeShellExecution` hook fails closed by design (see
-`.cursor/hooks.json`), so a Python interpreter that doesn't match the exact
-command name written there (`python3` by default) blocks commands instead of
-silently skipping the check.
+you open the project, run `python scripts/ai-team/preflight.py` (or the
+equivalent working Python command) first. The `beforeShellExecution` hook
+fails closed by design, while the portable hook runner reports which Python
+commands it tried instead of requiring a per-machine edit to `hooks.json`.
 
 See `docs/SECURITY_MODEL.md`.
 

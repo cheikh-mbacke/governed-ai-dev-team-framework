@@ -20,13 +20,12 @@ production-facing release.
 - [ ] Review `.ai-team/constitution/70-permissions-policy.yaml` and both
       `.cursor/permissions.json` and `.cursor/cli.json` (role permissions,
       UI/CLI allowlists and blocked command classes).
-- [ ] Confirm `python3` can run project hooks before any CLI smoke test:
-      `python3 .cursor/hooks/guard_shell.py` with stdin
-      `{"command":"whoami"}` must print `{"permission": "allow"}`. If not,
-      fix PATH / install Python 3.10+ (or on Windows-only hosts where solely
-      `python` exists, align `.cursor/hooks.json` command names). A broken
-      fail-closed hook blocks every shell command and is not an Allowlist
-      result.
+- [ ] Run `python scripts/ai-team/preflight.py` (or the available Python 3
+      command) before any CLI smoke test. Require `PASS` for `hooks_config`,
+      `guard_hook`, and `project_cli`. The portable runner selects the local
+      Python command; do not make a machine-specific edit to `.cursor/hooks.json`.
+      A broken fail-closed hook blocks every shell command and is not an
+      Allowlist result.
 - [ ] If using Cursor CLI, complete the subagent Allowlist smoke test in
       `docs/TERMINAL_GUIDE.md` section 5 **from the `agent` CLI terminal**
       (not the UI Agent chat), using `auth-smoke` for deny → allow-once.

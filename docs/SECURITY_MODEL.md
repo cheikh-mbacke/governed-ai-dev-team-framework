@@ -75,11 +75,10 @@ Adapt these patterns to your actual stack.
 `.cursor/hooks.json` sets `failClosed: true` on `guard_shell.py`, so the
 default is to deny a shell command if the hook itself errors out — this is
 intentional and correct: a broken hook must not silently stop protecting
-you. The practical consequence is that every entry in `.cursor/hooks.json`
-invokes `python3` literally; if that exact command name isn't on PATH on
-your machine (common on some Windows setups that only ship `python`), Cursor
-will be unable to run *any* shell command in this project, not just the ones
-the hook is meant to block. See the Requirements section in `README.md` for
-how to check and fix this. Do not confuse a missing interpreter with an
-Allowlist denial — fix the hook runner first, then run the CLI smoke test in
-`docs/TERMINAL_GUIDE.md`.
+you. Every entry therefore goes through `.cursor/hooks/run_hook.cmd`, a
+portable launcher that locates Python without retrying a hook after it has
+started. This last property matters: exit code 2 is a policy denial and must
+never be mistaken for an interpreter failure followed by a second execution.
+Run `python scripts/ai-team/preflight.py` before the interactive smoke test.
+Do not confuse a missing interpreter with an Allowlist denial — fix the hook
+runtime first, then run the CLI smoke test in `docs/TERMINAL_GUIDE.md`.
