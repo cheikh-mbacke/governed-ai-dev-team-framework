@@ -2,6 +2,8 @@
 .ai-team/logs/*.jsonl
 .ai-team/tmp/
 .ai-team/cache/
+.ai-team/migration-backups/*
+!.ai-team/migration-backups/.gitignore
 
 # Python
 __pycache__/

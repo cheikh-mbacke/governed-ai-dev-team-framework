@@ -8,7 +8,10 @@ try:
     import yaml
     from jsonschema import Draft202012Validator
 except ModuleNotFoundError:
-    print("Missing dependency: PyYAML and/or jsonschema. Install them first, then re-run this command:")
+    print(
+        "Missing dependency: PyYAML and/or jsonschema. "
+        "Install them first, then re-run this command:"
+    )
     print("  pip install -r requirements.txt")
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
@@ -24,10 +27,12 @@ required = [
     AI / "constitution" / "constitution.yaml",
     AI / "sources" / "source-registry.yaml",
     AI / "state" / "project-state.yaml",
+    AI / "framework-version.json",
     ROOT / ".cursor" / "hooks.json",
     ROOT / ".cursor" / "hooks" / "run_hook.cmd",
     ROOT / ".cursor" / "permissions.json",
     ROOT / ".cursor" / "cli.json",
+    ROOT / "scripts" / "ai-team" / "migrate.py",
 ]
 for p in required:
     if not p.exists():
@@ -55,6 +60,21 @@ for cursor_json_name in ["hooks.json", "permissions.json"]:
     cursor_json_path = cursor_dir / cursor_json_name
     if cursor_json_path.exists():
         load_json(cursor_json_path)
+
+version_path = AI / "framework-version.json"
+if version_path.exists():
+    version_manifest = load_json(version_path)
+    if version_manifest is not None:
+        if not isinstance(version_manifest.get("version"), str):
+            errors.append(".ai-team/framework-version.json: version must be a string")
+        managed_files = version_manifest.get("managed_files")
+        if managed_files is not None and (
+            not isinstance(managed_files, list)
+            or not all(isinstance(path, str) for path in managed_files)
+        ):
+            errors.append(
+                ".ai-team/framework-version.json: managed_files must be a list of strings"
+            )
 
 cli_config_path = cursor_dir / "cli.json"
 if cli_config_path.exists():
@@ -125,7 +145,8 @@ def validate_instance(instance_path, schema_name):
     schema_path = schema_dir / schema_name
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     for err in Draft202012Validator(schema).iter_errors(data):
-        errors.append(f"{instance_path.relative_to(ROOT)}: {'/'.join(map(str, err.path))}: {err.message}")
+        location = "/".join(map(str, err.path))
+        errors.append(f"{instance_path.relative_to(ROOT)}: {location}: {err.message}")
 
 
 # Validate framework metadata objects

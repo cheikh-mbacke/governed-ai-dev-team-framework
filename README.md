@@ -102,14 +102,19 @@ bash/zsh/Git Bash, `^` on `cmd.exe`, `` ` `` on PowerShell.
 unless you pass `--force`, and never copies `examples/`.
 
 Picking up a framework fix after you've already installed and started
-working? Re-run the same command with `--update` instead of `--force`: it
-overwrites governance files (agents, skills, rules, hooks, permissions,
-Constitution, schemas, scripts) to the latest version, and leaves your
-project data — `project-profile.yaml`, `source-registry.yaml`, Work
-Units, state, decisions, events, evidence, everything you've written
-under `docs/product/` — completely untouched. `--force` overwrites
-everything, including that data; use `--update` instead unless you
-specifically want a clean slate.
+working? Start with a read-only plan from the latest framework clone:
+
+```bash
+python tools/install.py --target /path/to/your/project --update --dry-run
+```
+
+On a clean target worktree, remove `--dry-run` to apply a transactional
+update. It replaces framework-owned governance files, migrates known legacy
+data with backups, records the installed version, and automatically rolls
+back if target validation fails. It never deletes obsolete files. Do not use
+`--force` for an upgrade. See [`docs/UPGRADING.md`](docs/UPGRADING.md) for the
+complete workflow, ownership boundary, WIP/stash ordering, and emergency
+overrides.
 
 ### 2. Fill in what only you know
 
@@ -358,6 +363,7 @@ See `docs/SECURITY_MODEL.md`.
 - Full checklist before running on a real project: `docs/ADOPTER_CHECKLIST.md`.
 - Step-by-step operator reference (also available in French): `docs/OPERATOR_GUIDE.md`.
 - Combined Cursor UI and CLI operation: `docs/TERMINAL_GUIDE.md`.
+- Safe upgrades and project-data migrations: `docs/UPGRADING.md`.
 - Architecture, state machine and review pipeline: `docs/ARCHITECTURE.md`.
 - What Cursor governance controls do and don't cover: `docs/SECURITY_MODEL.md`.
 - Where each part of this repository maps back to the base design document: `docs/SOURCE_MAPPING.md`.

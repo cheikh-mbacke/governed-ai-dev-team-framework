@@ -237,22 +237,38 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             timeout=30,
         )
 
+    def initialize_git(self, target):
+        commands = [
+            ["git", "init", "-q"],
+            ["git", "config", "user.name", "Framework Test"],
+            ["git", "config", "user.email", "framework-test@example.invalid"],
+            ["git", "add", "."],
+            ["git", "commit", "-qm", "test fixture"],
+        ]
+        for command in commands:
+            result = self.run_command(command, cwd=target)
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+
+    def install_target(self, target, project_id="cli-test", project_name="CLI Test"):
+        install = self.run_command(
+            [
+                sys.executable,
+                "tools/install.py",
+                "--target",
+                str(target),
+                "--project-id",
+                project_id,
+                "--project-name",
+                project_name,
+            ]
+        )
+        self.assertEqual(install.returncode, 0, install.stderr + install.stdout)
+        return install
+
     def test_install_update_and_validation_keep_both_cursor_modes(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir) / "target-project"
-            install = self.run_command(
-                [
-                    sys.executable,
-                    "tools/install.py",
-                    "--target",
-                    str(target),
-                    "--project-id",
-                    "cli-test",
-                    "--project-name",
-                    "CLI Test",
-                ]
-            )
-            self.assertEqual(install.returncode, 0, install.stderr + install.stdout)
+            self.install_target(target)
             self.assertTrue((target / ".cursor" / "permissions.json").is_file())
             self.assertTrue((target / ".cursor" / "cli.json").is_file())
             installed_runner = target / ".cursor" / "hooks" / "run_hook.cmd"
@@ -272,6 +288,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             cli_config = json.loads(cli_path.read_text(encoding="utf-8"))
             cli_config["permissions"]["allow"].append("Shell(test-local-override)")
             cli_path.write_text(json.dumps(cli_config), encoding="utf-8")
+            self.initialize_git(target)
 
             update = self.run_command(
                 [
@@ -279,10 +296,6 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     "tools/install.py",
                     "--target",
                     str(target),
-                    "--project-id",
-                    "ignored-on-update",
-                    "--project-name",
-                    "Ignored On Update",
                     "--update",
                 ]
             )
@@ -293,23 +306,18 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                 "Shell(test-local-override)", updated_cli["permissions"]["allow"]
             )
             self.assertTrue((target / ".cursor" / "permissions.json").is_file())
+            manifest = json.loads(
+                (target / ".ai-team" / "framework-version.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(manifest["version"], "0.2.0")
+            self.assertIn(".cursor/hooks.json", manifest["managed_files"])
 
     def test_validation_rejects_global_only_settings_in_project_cli_config(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir) / "target-project"
-            install = self.run_command(
-                [
-                    sys.executable,
-                    "tools/install.py",
-                    "--target",
-                    str(target),
-                    "--project-id",
-                    "global-setting-test",
-                    "--project-name",
-                    "Global Setting Test",
-                ]
-            )
-            self.assertEqual(install.returncode, 0, install.stderr + install.stdout)
+            self.install_target(target, "global-setting-test", "Global Setting Test")
             cli_path = target / ".cursor" / "cli.json"
             cli_config = json.loads(cli_path.read_text(encoding="utf-8"))
             cli_config["approvalMode"] = "allowlist"
@@ -324,19 +332,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
     def test_validation_rejects_malformed_cli_configuration(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir) / "target-project"
-            install = self.run_command(
-                [
-                    sys.executable,
-                    "tools/install.py",
-                    "--target",
-                    str(target),
-                    "--project-id",
-                    "invalid-cli-test",
-                    "--project-name",
-                    "Invalid CLI Test",
-                ]
-            )
-            self.assertEqual(install.returncode, 0, install.stderr + install.stdout)
+            self.install_target(target, "invalid-cli-test", "Invalid CLI Test")
             (target / ".cursor" / "cli.json").write_text("{not-json", encoding="utf-8")
 
             validate = self.run_command(
@@ -344,6 +340,233 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(validate.returncode, 1)
             self.assertIn("Invalid JSON .cursor", validate.stdout)
+
+    def test_update_dry_run_is_read_only_even_without_site_packages(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            cli_path = target / ".cursor" / "cli.json"
+            before = cli_path.read_bytes()
+            result = self.run_command(
+                [
+                    sys.executable,
+                    "-S",
+                    "tools/install.py",
+                    "--target",
+                    str(target),
+                    "--update",
+                    "--dry-run",
+                ]
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn("DRY-RUN: no file was modified", result.stdout)
+            self.assertEqual(cli_path.read_bytes(), before)
+
+    @unittest.skipIf(os.name == "nt", "WSL/Linux target-venv selection test")
+    def test_update_started_without_site_packages_uses_target_venv_for_validation(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            marker = target / ".ai-team" / "framework-version.json"
+            marker.unlink()
+            target_python = target / ".venv" / "bin" / "python"
+            target_python.parent.mkdir(parents=True)
+            target_python.write_text(
+                f'#!/bin/sh\nexec "{sys.executable}" "$@"\n', encoding="utf-8"
+            )
+            target_python.chmod(0o755)
+            self.initialize_git(target)
+
+            result = self.run_command(
+                [
+                    sys.executable,
+                    "-S",
+                    "tools/install.py",
+                    "--target",
+                    str(target),
+                    "--update",
+                ]
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn("Post-update validation: PASS", result.stdout)
+            self.assertTrue(marker.is_file())
+
+    def test_update_aborts_on_dirty_target_before_writing(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            self.initialize_git(target)
+            cli_path = target / ".cursor" / "cli.json"
+            original = cli_path.read_text(encoding="utf-8")
+            cli_path.write_text(original + "\n", encoding="utf-8")
+            result = self.run_command(
+                [sys.executable, "tools/install.py", "--target", str(target), "--update"]
+            )
+            self.assertEqual(result.returncode, 2, result.stderr + result.stdout)
+            self.assertIn("target must be a clean", result.stdout)
+            self.assertEqual(cli_path.read_text(encoding="utf-8"), original + "\n")
+
+    def test_update_rejects_unknown_future_version_before_writing(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            marker = target / ".ai-team" / "framework-version.json"
+            payload = json.loads(marker.read_text(encoding="utf-8"))
+            payload["version"] = "99.0.0"
+            marker.write_text(json.dumps(payload), encoding="utf-8")
+            cli_path = target / ".cursor" / "cli.json"
+            cli_before = cli_path.read_bytes()
+            self.initialize_git(target)
+
+            result = self.run_command(
+                [sys.executable, "tools/install.py", "--target", str(target), "--update"]
+            )
+            self.assertEqual(result.returncode, 2, result.stderr + result.stdout)
+            self.assertIn("No safe migration path", result.stdout)
+            self.assertEqual(cli_path.read_bytes(), cli_before)
+            self.assertEqual(
+                json.loads(marker.read_text(encoding="utf-8"))["version"], "99.0.0"
+            )
+
+    def test_legacy_update_migrates_acceptance_and_keeps_backup(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            (target / ".ai-team" / "framework-version.json").unlink()
+            acceptance = target / ".ai-team" / "acceptance" / "ACC-LEGACY.yaml"
+            acceptance.write_text(
+                "id: ACC-LEGACY\nscenarios: []\nhuman_result:\n  status: accepted\n",
+                encoding="utf-8",
+            )
+            cli_path = target / ".cursor" / "cli.json"
+            cli_config = json.loads(cli_path.read_text(encoding="utf-8"))
+            cli_config["permissions"]["allow"].append("Shell(legacy-override)")
+            cli_path.write_text(json.dumps(cli_config), encoding="utf-8")
+            self.initialize_git(target)
+
+            result = self.run_command(
+                [sys.executable, "tools/install.py", "--target", str(target), "--update"]
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn("Post-update validation: PASS", result.stdout)
+            self.assertIn("status: passed", acceptance.read_text(encoding="utf-8"))
+            backup = (
+                target
+                / ".ai-team"
+                / "migration-backups"
+                / "acceptance-status-passed"
+                / ".ai-team"
+                / "acceptance"
+                / "ACC-LEGACY.yaml"
+            )
+            self.assertIn("status: accepted", backup.read_text(encoding="utf-8"))
+            updated_cli = json.loads(cli_path.read_text(encoding="utf-8"))
+            self.assertNotIn("Shell(legacy-override)", updated_cli["permissions"]["allow"])
+            manifest = json.loads(
+                (target / ".ai-team" / "framework-version.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(manifest["version"], "0.2.0")
+
+    def test_failed_post_update_validation_rolls_back_all_touched_files(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            marker = target / ".ai-team" / "framework-version.json"
+            marker.unlink()
+            acceptance = target / ".ai-team" / "acceptance" / "ACC-INVALID.yaml"
+            acceptance.write_text(
+                "id: ACC-INVALID\nscenarios: []\nhuman_result:\n  status: invalid\n",
+                encoding="utf-8",
+            )
+            cli_path = target / ".cursor" / "cli.json"
+            cli_config = json.loads(cli_path.read_text(encoding="utf-8"))
+            cli_config["permissions"]["allow"].append("Shell(must-survive-rollback)")
+            cli_path.write_text(json.dumps(cli_config), encoding="utf-8")
+            self.initialize_git(target)
+
+            result = self.run_command(
+                [sys.executable, "tools/install.py", "--target", str(target), "--update"]
+            )
+            self.assertEqual(result.returncode, 1, result.stderr + result.stdout)
+            self.assertIn("Update rolled back", result.stdout)
+            self.assertFalse(marker.exists())
+            rolled_back_cli = json.loads(cli_path.read_text(encoding="utf-8"))
+            self.assertIn(
+                "Shell(must-survive-rollback)", rolled_back_cli["permissions"]["allow"]
+            )
+
+
+class MigrationTests(unittest.TestCase):
+    def run_migration(self, target, apply=False):
+        command = [
+            sys.executable,
+            "scripts/ai-team/migrate.py",
+            "--target",
+            str(target),
+        ]
+        if apply:
+            command.append("--apply")
+        return subprocess.run(
+            command,
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=15,
+        )
+
+    def test_standalone_migration_is_dry_run_then_idempotent_apply(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir)
+            acceptance_dir = target / ".ai-team" / "acceptance"
+            acceptance_dir.mkdir(parents=True)
+            acceptance = acceptance_dir / "ACC-WU-BE-0004.yaml"
+            original = (
+                "id: ACC-WU-BE-0004\n"
+                "scenarios: []\n"
+                "human_result:\n"
+                "  status: 'accepted' # legacy value\n"
+            )
+            acceptance.write_text(original, encoding="utf-8")
+
+            dry_run = self.run_migration(target)
+            self.assertEqual(dry_run.returncode, 0, dry_run.stderr + dry_run.stdout)
+            self.assertIn("MIGRATE", dry_run.stdout)
+            self.assertEqual(acceptance.read_text(encoding="utf-8"), original)
+
+            applied = self.run_migration(target, apply=True)
+            self.assertEqual(applied.returncode, 0, applied.stderr + applied.stdout)
+            self.assertIn("status: 'passed' # legacy value", acceptance.read_text())
+            second = self.run_migration(target, apply=True)
+            self.assertEqual(second.returncode, 0, second.stderr + second.stdout)
+            self.assertIn("No project-data migration required", second.stdout)
+
+    def test_migration_only_changes_status_inside_human_result(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir)
+            acceptance_dir = target / ".ai-team" / "acceptance"
+            acceptance_dir.mkdir(parents=True)
+            acceptance = acceptance_dir / "ACC-SCOPED.yaml"
+            acceptance.write_text(
+                "status: accepted\n"
+                "machine_result:\n"
+                "  status: accepted\n"
+                "human_result:\n"
+                "  status: accepted\n",
+                encoding="utf-8",
+            )
+
+            result = self.run_migration(target, apply=True)
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertEqual(
+                acceptance.read_text(encoding="utf-8"),
+                "status: accepted\n"
+                "machine_result:\n"
+                "  status: accepted\n"
+                "human_result:\n"
+                "  status: passed\n",
+            )
 
 
 if __name__ == "__main__":

@@ -1,53 +1,29 @@
 #!/usr/bin/env python3
+"""Install or transactionally update the Governed AI Dev Team framework."""
+
+from __future__ import annotations
+
 import argparse
+import fnmatch
+import importlib.util
+import json
 from pathlib import Path
 import shutil
+import subprocess
 import sys
-import fnmatch
+import tempfile
 
-try:
-    import yaml
-except ModuleNotFoundError:
-    print("Missing dependency: PyYAML. Install it first, then re-run this command:")
-    print("  pip install -r requirements.txt")
-    print("(or: pip install PyYAML jsonschema)")
-    raise SystemExit(1)
 
-parser = argparse.ArgumentParser(description="Install Governed AI Dev Team framework into an existing repository")
-parser.add_argument("--target", required=True)
-parser.add_argument("--project-id", required=True)
-parser.add_argument("--project-name", required=True)
-parser.add_argument("--force", action="store_true")
-parser.add_argument("--update", action="store_true",
-    help="Overwrite framework/governance files (agents, skills, rules, hooks, UI and CLI "
-         "permissions, "
-         "constitution, schemas, scripts) with the latest version from this clone, without "
-         "touching project data (project-profile.yaml, source-registry.yaml, Work Units, "
-         "state, decisions, events, evidence, findings, audits, releases, acceptance, logs, "
-         "or any product document you've written under docs/product/). Use this to pick up "
-         "framework fixes on a project you already installed into.")
-args = parser.parse_args()
-
-if args.update and args.force:
-    print("--update and --force are mutually exclusive: --force overwrites everything "
-          "including your project data, --update is specifically designed not to. Pick one.")
-    raise SystemExit(2)
-
-target = Path(args.target).expanduser().resolve()
-
-if args.update and not (target / ".ai-team" / "project-profile.yaml").exists():
-    print(f"--update expects an already-installed project at {target}, but "
-          "no .ai-team/project-profile.yaml was found there. Run a normal install "
-          "first (no --update), then use --update for subsequent framework updates.")
-    raise SystemExit(2)
-
-source_root = Path(__file__).resolve().parents[1]
-target.mkdir(parents=True, exist_ok=True)
-
-# Paths (relative to the project root) that belong to YOUR project, never the
-# framework - --update must never overwrite these even though they live
-# under directories (.ai-team/, docs/product/) that otherwise get refreshed.
-# Patterns are matched with fnmatch against the path relative to target.
+SOURCE_ROOT = Path(__file__).resolve().parents[1]
+VERSION_FILE = Path(".ai-team/framework-version.json")
+COPY_ITEMS = [
+    ".cursor",
+    ".ai-team",
+    "scripts",
+    "docs/product",
+    "AGENTS.md",
+    "requirements.txt",
+]
 PROJECT_OWNED_PATTERNS = [
     ".ai-team/project-profile.yaml",
     ".ai-team/sources/source-registry.yaml",
@@ -62,141 +38,459 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/acceptance/*",
     ".ai-team/context-packages/*",
     ".ai-team/logs/*",
+    ".ai-team/migration-backups/*",
     ".ai-team/project-profile.yaml.bak",
 ]
+SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0"}
 
 
-def is_project_owned(rel_posix):
-    for pattern in PROJECT_OWNED_PATTERNS:
-        if fnmatch.fnmatch(rel_posix, pattern):
-            return True
-    return False
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Install Governed AI Dev Team framework into an existing repository"
+    )
+    parser.add_argument("--target", required=True)
+    parser.add_argument("--project-id")
+    parser.add_argument("--project-name")
+    parser.add_argument("--force", action="store_true")
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        help=(
+            "Transactionally refresh framework-owned files, migrate compatible legacy "
+            "project data, and preserve project-owned state"
+        ),
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="with --update, show files and migrations without changing the target",
+    )
+    parser.add_argument(
+        "--allow-dirty",
+        action="store_true",
+        help="with --update, explicitly allow a dirty or unversioned target (not recommended)",
+    )
+    parser.add_argument(
+        "--skip-validation",
+        action="store_true",
+        help="with --update, skip post-update validate.py (not recommended)",
+    )
+    args = parser.parse_args()
+    update_only_flags = args.dry_run or args.allow_dirty or args.skip_validation
+    if update_only_flags and not args.update:
+        parser.error("--dry-run, --allow-dirty and --skip-validation require --update")
+    if args.update and args.force:
+        parser.error("--update and --force are mutually exclusive")
+    if not args.update and (not args.project_id or not args.project_name):
+        parser.error("--project-id and --project-name are required for a fresh install")
+    return args
 
 
-def is_docs_product_readme(rel_posix):
-    # docs/product/README.md and docs/product/<category>/README.md are
-    # framework-authored stubs (safe to refresh). Any other file under
-    # docs/product/ is the human's own product material - never touched
-    # by --update, even though it lives in a directory that otherwise gets
-    # refreshed.
+def is_project_owned(rel_posix: str) -> bool:
+    if rel_posix == ".ai-team/migration-backups/.gitignore":
+        return False
+    return any(fnmatch.fnmatch(rel_posix, pattern) for pattern in PROJECT_OWNED_PATTERNS)
+
+
+def is_docs_product_readme(rel_posix: str) -> bool:
     return rel_posix == "docs/product/README.md" or (
-        rel_posix.startswith("docs/product/") and rel_posix.endswith("/README.md")
+        rel_posix.startswith("docs/product/")
+        and rel_posix.endswith("/README.md")
         and rel_posix.count("/") == 3
     )
 
 
-copy_items = [".cursor", ".ai-team", "scripts", "docs/product", "AGENTS.md", "requirements.txt"]
-updated_files = []
-skipped_project_data = []
-for item in copy_items:
-    src = source_root / item
-    dst = target / item
-    if src.is_dir():
-        if args.update and dst.exists():
-            for p in src.rglob("*"):
-                if p.is_dir():
-                    continue
-                rel = p.relative_to(source_root)
-                rel_posix = rel.as_posix()
-                out = target / rel
-                if item == "docs/product" and not is_docs_product_readme(rel_posix):
-                    continue  # human's own product material - never touched
-                if is_project_owned(rel_posix):
-                    if out.exists():
-                        skipped_project_data.append(rel_posix)
-                    continue
-                out.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(p, out)
-                updated_files.append(rel_posix)
-        elif dst.exists() and not args.force:
-            # Merge without overwriting existing files.
-            for p in src.rglob("*"):
-                rel = p.relative_to(src)
-                out = dst / rel
-                if p.is_dir():
-                    out.mkdir(parents=True, exist_ok=True)
-                elif not out.exists():
-                    out.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(p, out)
+def iter_managed_source_files():
+    for item in COPY_ITEMS:
+        src = SOURCE_ROOT / item
+        if not src.exists():
+            continue
+        paths = src.rglob("*") if src.is_dir() else [src]
+        for path in paths:
+            if path.is_dir():
+                continue
+            relative = path.relative_to(SOURCE_ROOT)
+            rel_posix = relative.as_posix()
+            if "__pycache__" in relative.parts or path.suffix == ".pyc":
+                continue
+            if relative == VERSION_FILE:
+                continue
+            if item == "docs/product" and not is_docs_product_readme(rel_posix):
+                continue
+            if is_project_owned(rel_posix):
+                continue
+            yield relative, path
+
+
+def current_version() -> str:
+    payload = json.loads((SOURCE_ROOT / VERSION_FILE).read_text(encoding="utf-8"))
+    return payload["version"]
+
+
+def read_installed_manifest(target: Path) -> dict:
+    path = target / VERSION_FILE
+    if not path.exists():
+        return {"schema_version": 1, "version": None, "managed_files": []}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Invalid installed framework version file: {exc}") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("version"), str):
+        raise ValueError("Invalid installed framework version file: version must be a string")
+    return payload
+
+
+def manifest_bytes(version: str, managed_files: list[str]) -> bytes:
+    payload = {
+        "schema_version": 1,
+        "version": version,
+        "managed_files": sorted(managed_files),
+    }
+    return (json.dumps(payload, indent=2) + "\n").encode("utf-8")
+
+
+def target_git_status(target: Path) -> tuple[str, list[str]]:
+    try:
+        root_result = subprocess.run(
+            ["git", "-C", str(target), "rev-parse", "--show-toplevel"],
+            text=True,
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "unversioned", []
+    if root_result.returncode != 0:
+        return "unversioned", []
+    git_root = Path(root_result.stdout.strip()).resolve()
+    if git_root != target:
+        return "unversioned", []
+    status = subprocess.run(
+        ["git", "-C", str(target), "status", "--porcelain", "--untracked-files=all"],
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+    if status.returncode != 0:
+        return "error", [status.stderr.strip() or "git status failed"]
+    lines = [line for line in status.stdout.splitlines() if line.strip()]
+    return ("dirty" if lines else "clean"), lines
+
+
+def load_migration_module():
+    path = SOURCE_ROOT / "scripts" / "ai-team" / "migrate.py"
+    spec = importlib.util.spec_from_file_location("governed_ai_migrations", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot load migration module: {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def validation_python(target: Path) -> Path | None:
+    candidates = [
+        target / ".venv" / "bin" / "python",
+        target / ".venv" / "Scripts" / "python.exe",
+        Path(sys.executable),
+    ]
+    seen = set()
+    for candidate in candidates:
+        key = str(candidate.resolve()) if candidate.exists() else str(candidate)
+        if key in seen or not candidate.exists():
+            continue
+        seen.add(key)
+        probe = subprocess.run(
+            [str(candidate), "-c", "import yaml, jsonschema"],
+            text=True,
+            capture_output=True,
+            timeout=15,
+        )
+        if probe.returncode == 0:
+            return candidate
+    return None
+
+
+def copy_plan(target: Path):
+    entries = []
+    managed = []
+    for relative, source in iter_managed_source_files():
+        rel_posix = relative.as_posix()
+        managed.append(rel_posix)
+        destination = target / relative
+        if not destination.exists():
+            action = "add"
+        elif destination.read_bytes() != source.read_bytes():
+            action = "update"
         else:
-            shutil.copytree(src, dst, dirs_exist_ok=True)
+            action = "unchanged"
+        entries.append((action, relative, source, destination))
+    managed.append(VERSION_FILE.as_posix())
+    return entries, sorted(managed)
+
+
+def snapshot(paths: list[Path], target: Path, backup_root: Path):
+    existing = set()
+    for path in paths:
+        relative = path.relative_to(target)
+        if path.exists():
+            existing.add(relative.as_posix())
+            backup = backup_root / relative
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, backup)
+    return existing
+
+
+def rollback(paths: list[Path], existing: set[str], target: Path, backup_root: Path):
+    for path in sorted(set(paths), key=lambda item: len(item.parts), reverse=True):
+        relative = path.relative_to(target)
+        rel_posix = relative.as_posix()
+        if rel_posix in existing:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(backup_root / relative, path)
+        elif path.exists() and path.is_file():
+            path.unlink()
+
+
+def print_update_plan(
+    target: Path,
+    git_state: str,
+    dirty_paths: list[str],
+    installed_version: str | None,
+    new_version: str,
+    entries,
+    migration_changes,
+    obsolete: list[str],
+):
+    print("Governed AI Team update plan")
+    print("=" * 29)
+    print(f"Target: {target}")
+    print(f"Version: {installed_version or 'legacy/unversioned'} -> {new_version}")
+    print(f"Git worktree: {git_state}")
+    for line in dirty_paths:
+        print(f"DIRTY   {line}")
+    for action, relative, _source, _destination in entries:
+        if action != "unchanged":
+            print(f"{action.upper():7} {relative.as_posix()}")
+    for change in migration_changes:
+        print(f"MIGRATE {change.path.relative_to(target).as_posix()}")
+    for path in obsolete:
+        print(f"OBSOLETE {path} (left untouched)")
+    changed = sum(action != "unchanged" for action, *_rest in entries)
+    print(
+        f"Summary: {changed} framework file change(s), "
+        f"{len(migration_changes)} project-data migration(s), "
+        f"{len(obsolete)} obsolete managed file(s)."
+    )
+
+
+def run_update(args, target: Path) -> int:
+    if not (target / ".ai-team" / "project-profile.yaml").exists():
+        print(
+            f"--update expects an installed project at {target}; "
+            ".ai-team/project-profile.yaml is missing."
+        )
+        return 2
+    try:
+        installed = read_installed_manifest(target)
+    except ValueError as exc:
+        print(exc)
+        return 2
+    installed_version = installed.get("version")
+    new_version = current_version()
+    if installed_version not in SUPPORTED_UPDATE_FROM:
+        print(
+            f"No safe migration path from framework version {installed_version!r} "
+            f"to {new_version}. Update aborted before writing files."
+        )
+        return 2
+
+    git_state, dirty_paths = target_git_status(target)
+    entries, managed_files = copy_plan(target)
+    old_managed = set(installed.get("managed_files") or [])
+    obsolete = sorted(
+        path for path in old_managed - set(managed_files) if (target / path).exists()
+    )
+    migrations = load_migration_module()
+    migration_changes = migrations.plan_acceptance_status(target)
+    print_update_plan(
+        target,
+        git_state,
+        dirty_paths,
+        installed_version,
+        new_version,
+        entries,
+        migration_changes,
+        obsolete,
+    )
+    if args.dry_run:
+        print("DRY-RUN: no file was modified.")
+        return 0
+    if git_state != "clean" and not args.allow_dirty:
+        print(
+            "Update aborted before writing files: target must be a clean standalone Git "
+            "worktree. Commit/stash existing work, or use --allow-dirty explicitly."
+        )
+        return 2
+
+    validator = None if args.skip_validation else validation_python(target)
+    if not args.skip_validation and validator is None:
+        print(
+            "Update aborted before writing files: no Python environment with PyYAML and "
+            "jsonschema was found. The updater checked the target .venv and its own "
+            "interpreter. Install requirements or use --skip-validation explicitly."
+        )
+        return 2
+
+    changed_entries = [entry for entry in entries if entry[0] != "unchanged"]
+    marker = target / VERSION_FILE
+    marker_content = manifest_bytes(new_version, managed_files)
+    marker_changes = not marker.exists() or marker.read_bytes() != marker_content
+    touched = [entry[3] for entry in changed_entries]
+    touched.extend(change.path for change in migration_changes)
+    if marker_changes:
+        touched.append(marker)
+
+    with tempfile.TemporaryDirectory(prefix="governed-ai-update-") as temp_dir:
+        backup_root = Path(temp_dir)
+        existing = snapshot(touched, target, backup_root)
+        try:
+            for _action, _relative, source, destination in changed_entries:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
+            migration_backup = migrations.apply_changes(target, migration_changes)
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_bytes(marker_content)
+
+            if validator is not None:
+                validation = subprocess.run(
+                    [str(validator), "scripts/ai-team/validate.py"],
+                    cwd=target,
+                    text=True,
+                    capture_output=True,
+                    timeout=60,
+                )
+                if validation.returncode != 0:
+                    raise RuntimeError(
+                        "Post-update validation failed:\n"
+                        + validation.stdout
+                        + validation.stderr
+                    )
+        except Exception as exc:
+            rollback(touched, existing, target, backup_root)
+            print(str(exc))
+            print("Update rolled back; target files were restored.")
+            return 1
+
+    print(f"Update complete: framework {new_version} installed.")
+    if migration_changes:
+        print(f"Migrated {len(migration_changes)} project-data file(s).")
+        if migration_backup is not None:
+            print(f"Migration backup: {migration_backup.relative_to(target)}")
+    if obsolete:
+        print("Obsolete managed files were reported but not deleted.")
+    if validator is not None:
+        print("Post-update validation: PASS")
     else:
-        if args.update or not dst.exists() or args.force:
+        print("WARNING: post-update validation was explicitly skipped.")
+    print("Before Cursor CLI, run python scripts/ai-team/preflight.py.")
+    return 0
+
+
+def install_fresh(args, target: Path) -> int:
+    try:
+        import yaml
+    except ModuleNotFoundError:
+        print("Missing dependency: PyYAML. Install it first, then re-run this command:")
+        print("  pip install -r requirements.txt")
+        return 1
+
+    target.mkdir(parents=True, exist_ok=True)
+    for item in COPY_ITEMS:
+        src = SOURCE_ROOT / item
+        dst = target / item
+        if not src.exists():
+            continue
+        if src.is_dir():
+            if dst.exists() and not args.force:
+                for path in src.rglob("*"):
+                    relative = path.relative_to(src)
+                    output = dst / relative
+                    if "__pycache__" in relative.parts or path.suffix == ".pyc":
+                        continue
+                    if path.is_dir():
+                        output.mkdir(parents=True, exist_ok=True)
+                    elif not output.exists():
+                        output.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(path, output)
+            else:
+                shutil.copytree(
+                    src,
+                    dst,
+                    dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                )
+        elif not dst.exists() or args.force:
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
-            if args.update:
-                updated_files.append(item)
 
-if args.update:
-    print(f"Updated {len(updated_files)} framework file(s) in {target} to the latest version.")
-    print("Project data left untouched (project-profile.yaml, source-registry.yaml, Work Units,")
-    print("state, decisions, events, evidence, findings, audits, releases, acceptance, logs,")
-    print("and every file you've written under docs/product/ other than the category READMEs).")
-    if skipped_project_data:
-        print(f"({len(skipped_project_data)} project-data path(s) correctly left alone.)")
-    print("\nRun python scripts/ai-team/validate.py to confirm nothing broke.")
-    print("Before Cursor CLI, run python scripts/ai-team/preflight.py.")
-    raise SystemExit(0)
+    profile_path = target / ".ai-team" / "project-profile.yaml"
+    profile_text = profile_path.read_text(encoding="utf-8")
+    substitutions = [
+        ("  id: framework-template", f"  id: {args.project_id}"),
+        ("  name: Governed AI Development Team Framework", f"  name: {args.project_name}"),
+        (
+            "  repository_kind: framework_template",
+            "  repository_kind: existing_or_greenfield_project",
+        ),
+        ("  template: true", "  template: false"),
+        (
+            '  note: "The installer rewrites project.id, project.name and template=false. '
+            "Fill repository-specific commands, paths and human authorities before "
+            'production use."',
+            '  note: "Complete commands, paths and human authorities before production use."',
+        ),
+    ]
+    if all(profile_text.count(old) == 1 for old, _new in substitutions):
+        for old, new in substitutions:
+            profile_text = profile_text.replace(old, new, 1)
+        profile_path.write_text(profile_text, encoding="utf-8")
+    else:
+        profile = yaml.safe_load(profile_text)
+        profile["project"]["id"] = args.project_id
+        profile["project"]["name"] = args.project_name
+        profile["project"]["repository_kind"] = "existing_or_greenfield_project"
+        profile["setup_status"]["template"] = False
+        profile["setup_status"]["note"] = (
+            "Complete commands, paths and human authorities before production use."
+        )
+        profile_path.write_text(
+            yaml.safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
+        )
 
-profile_path = target / ".ai-team" / "project-profile.yaml"
-profile_text = profile_path.read_text(encoding="utf-8")
+    state_path = target / ".ai-team" / "state" / "project-state.yaml"
+    state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+    state["project_id"] = args.project_id
+    state_path.write_text(
+        yaml.safe_dump(state, sort_keys=False, allow_unicode=True), encoding="utf-8"
+    )
+    managed_files = [relative.as_posix() for relative, _source in iter_managed_source_files()]
+    (target / VERSION_FILE).write_bytes(manifest_bytes(current_version(), managed_files))
 
-# Rewrite specific known lines in place with plain text substitution rather
-# than a full yaml.safe_load/safe_dump round trip: PyYAML's dumper silently
-# drops all comments, which would strip the guidance example shipped at the
-# top of this file. Each substitution is applied only if the exact shipped
-# default line is still present and unique, so a hand-edited file is never
-# corrupted by a partial or ambiguous match.
-substitutions = [
-    ("  id: framework-template", f"  id: {args.project_id}"),
-    ("  name: Governed AI Development Team Framework", f"  name: {args.project_name}"),
-    ("  repository_kind: framework_template", "  repository_kind: existing_or_greenfield_project"),
-    ("  template: true", "  template: false"),
-    (
-        '  note: "The installer rewrites project.id, project.name and template=false. '
-        'Fill repository-specific commands, paths and human authorities before production use."',
-        '  note: "Complete commands, paths and human authorities before production use."',
-    ),
-]
+    print(f"Installed governed AI team framework {current_version()} into {target}")
+    print("Next:")
+    print("  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)")
+    print("  2. Add and register authoritative product documents")
+    print("  3. Run: python scripts/ai-team/validate.py")
+    print("  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py")
+    print("  5. In Cursor UI or interactive CLI, invoke /compile-project")
+    return 0
 
-if all(profile_text.count(old) == 1 for old, _ in substitutions):
-    for old, new in substitutions:
-        profile_text = profile_text.replace(old, new, 1)
-    profile_path.write_text(profile_text, encoding="utf-8")
-else:
-    # Fallback for a project-profile.yaml that no longer matches the shipped
-    # defaults exactly (e.g. re-running install against an already-edited
-    # file): fall back to a structural rewrite. This still updates the
-    # required fields correctly, but any comments in the file are lost.
-    profile = yaml.safe_load(profile_text)
-    profile["project"]["id"] = args.project_id
-    profile["project"]["name"] = args.project_name
-    profile["project"]["repository_kind"] = "existing_or_greenfield_project"
-    profile["setup_status"]["template"] = False
-    profile["setup_status"]["note"] = "Complete commands, paths and human authorities before production use."
-    profile_path.write_text(yaml.safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8")
-    print("NOTE: .ai-team/project-profile.yaml already existed and didn't match "
-          "the shipped template exactly (common if you're re-running install.py "
-          "against a target you already installed into, or already edited by "
-          "hand). project.id, project.name and setup_status were still updated "
-          "correctly; only the commented example at the top of the file, if it "
-          "was still there, was not preserved. Nothing to fix unless you want "
-          "that comment back, in which case remove the target and reinstall "
-          "into a fresh directory.")
 
-state_path = target / ".ai-team" / "state" / "project-state.yaml"
-state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
-state["project_id"] = args.project_id
-state_path.write_text(yaml.safe_dump(state, sort_keys=False, allow_unicode=True), encoding="utf-8")
+def main() -> int:
+    args = parse_args()
+    target = Path(args.target).expanduser().resolve()
+    return run_update(args, target) if args.update else install_fresh(args, target)
 
-print(f"Installed governed AI team framework into {target}")
-print("Next:")
-print("  1. Fill .ai-team/project-profile.yaml (or ask Cursor UI/CLI: /propose-profile)")
-print("  2. Add product documents under docs/product/<category>/")
-print(
-    "  3. Register authoritative sources in .ai-team/sources/source-registry.yaml "
-    "(or ask Cursor UI/CLI: /propose-profile)"
-)
-print("  4. Run: python scripts/ai-team/validate.py")
-print("  5. Before Cursor CLI, run: python scripts/ai-team/preflight.py")
-print("  6. In Cursor UI or interactive CLI, invoke /compile-project")
+
+if __name__ == "__main__":
+    raise SystemExit(main())

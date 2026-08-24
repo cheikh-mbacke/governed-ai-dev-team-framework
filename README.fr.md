@@ -105,15 +105,22 @@ Bash, `^` sur `cmd.exe`, `` ` `` sur PowerShell.
 `install.py` n'écrase jamais un fichier déjà présent dans la cible (sauf
 `--force`), et ne copie jamais `examples/`.
 
-Tu veux récupérer une correction du framework après avoir déjà installé
-et commencé à travailler ? Relance la même commande avec `--update` au
-lieu de `--force` : ça écrase les fichiers de gouvernance (agents,
-skills, règles, hooks, permissions, Constitution, schémas, scripts) avec
-la dernière version, et laisse tes données de projet totalement
-intactes — `project-profile.yaml`, `source-registry.yaml`, Work Units,
-état, décisions, événements, preuves, tout ce que tu as écrit sous
-`docs/product/`. `--force` écrase tout, y compris ces données ; utilise
-`--update` sauf si tu veux vraiment repartir de zéro.
+Tu veux récupérer une correction du framework après avoir déjà installé et
+commencé à travailler ? Commence par un plan en lecture seule depuis le clone
+à jour du framework :
+
+```bash
+python tools/install.py --target /chemin/vers/ton/projet --update --dry-run
+```
+
+Sur un working tree cible propre, retire `--dry-run` pour appliquer une mise à
+jour transactionnelle. Elle remplace les fichiers de gouvernance du framework,
+migre les anciennes données connues avec sauvegarde, enregistre la version
+installée et restaure automatiquement les fichiers si la validation cible
+échoue. Elle ne supprime jamais les fichiers obsolètes. N'utilise pas `--force`
+pour un upgrade. Consulte [`docs/UPGRADING.fr.md`](docs/UPGRADING.fr.md) pour le
+protocole complet, la frontière de propriété, l'ordre WIP/stash et les options
+d'urgence.
 
 ### 2. Remplir ce que toi seul sais
 
@@ -373,6 +380,7 @@ Voir `docs/SECURITY_MODEL.md`.
 - Checklist complète avant un vrai projet : `docs/ADOPTER_CHECKLIST.md`.
 - Guide opérateur pas à pas (aussi disponible en anglais) : `docs/OPERATOR_GUIDE.fr.md`.
 - Utilisation conjointe IU et Cursor CLI : `docs/TERMINAL_GUIDE.fr.md`.
+- Upgrades sûrs et migrations de données projet : `docs/UPGRADING.fr.md`.
 - Architecture, machine à états et pipeline de review : `docs/ARCHITECTURE.md`.
 - Ce que couvrent (et ne couvrent pas) les contrôles Cursor : `docs/SECURITY_MODEL.md`.
 - Correspondance entre ce dépôt et le document de cadrage de base : `docs/SOURCE_MAPPING.md`.

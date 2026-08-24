@@ -14,6 +14,10 @@ production-facing release.
 - [ ] Run `python scripts/ai-team/validate.py` and resolve every warning.
 
 **Should review — shipped as working defaults, not placeholders:**
+- [ ] For an existing installation, follow `docs/UPGRADING.md`: clean target
+      worktree, `--update --dry-run`, reviewed plan, transactional update,
+      successful post-update validation, then project tests. If a Work Unit
+      stash is restored later, run `migrate.py` again before validation.
 - [ ] Review `.ai-team/constitution/60-staffing-policy.yaml` and
       `15-risk-strategy.yaml` (WIP limits, activation rules); adjust only if
       your project's risk profile differs from the reference profile.
