@@ -16,8 +16,11 @@ except ModuleNotFoundError:
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
 
+from i18n import project_language, t
+
 ROOT = Path(__file__).resolve().parents[2]
 AI = ROOT / ".ai-team"
+LANG = project_language(ROOT)
 
 errors = []
 warnings = []
@@ -266,11 +269,15 @@ for retrospective_path in sorted((AI / "retrospectives").glob("*.yaml")):
                 f"{observation_id}"
             )
 
-print("Governed AI Team validation")
+print(t(LANG, "Governed AI Team validation", "Validation Governed AI Team"))
 print("=" * 28)
+# Error/warning bodies below are left in English even in a French project:
+# most embed file paths, YAML/JSON keys, or messages produced by PyYAML/
+# jsonschema themselves, which are never translated - translating only the
+# surrounding sentence would make these harder to read, not easier.
 for w in warnings:
     print(f"WARN  {w}")
 for e in errors:
     print(f"ERROR {e}")
-print(f"\n{len(errors)} error(s), {len(warnings)} warning(s)")
+print("\n" + t(LANG, f"{len(errors)} error(s), {len(warnings)} warning(s)", f"{len(errors)} erreur(s), {len(warnings)} avertissement(s)"))
 sys.exit(1 if errors else 0)

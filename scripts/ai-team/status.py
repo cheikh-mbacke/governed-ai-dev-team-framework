@@ -10,13 +10,16 @@ except ModuleNotFoundError:
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
 
+from i18n import project_language, t
+
 ROOT = Path(__file__).resolve().parents[2]
 AI = ROOT / ".ai-team"
+LANG = project_language(ROOT)
 state = yaml.safe_load((AI / "state" / "project-state.yaml").read_text(encoding="utf-8"))
 
-print(f"Project: {state.get('project_id')}")
-print(f"Phase:   {state.get('phase')}")
-print("Gates:")
+print(t(LANG, "Project:", "Projet :") + f" {state.get('project_id')}")
+print(t(LANG, "Phase:  ", "Phase :  ") + f" {state.get('phase')}")
+print(t(LANG, "Gates:", "Gates :"))
 for k, v in (state.get("gates") or {}).items():
     print(f"  {k}: {v.get('status') if isinstance(v, dict) else v}")
 
@@ -28,16 +31,16 @@ for p in (AI / "work-units").glob("*.yaml"):
         pass
 if wus:
     c = Counter(w.get("status", "unknown") for w in wus)
-    print("Work Units:")
+    print(t(LANG, "Work Units:", "Unites de travail :"))
     for status, n in sorted(c.items()):
         print(f"  {status}: {n}")
 else:
-    print("Work Units: none")
+    print(t(LANG, "Work Units: none", "Unites de travail : aucune"))
 
-print(f"Open decisions: {len(state.get('open_decisions') or [])}")
-print(f"Open defects:   {len(state.get('open_defects') or [])}")
-print(f"Open findings:  {len(state.get('open_findings') or [])}")
-print(f"Active workers: {len(state.get('active_workers') or [])}")
+print(t(LANG, "Open decisions:", "Decisions ouvertes :") + f" {len(state.get('open_decisions') or [])}")
+print(t(LANG, "Open defects:  ", "Defauts ouverts :   ") + f" {len(state.get('open_defects') or [])}")
+print(t(LANG, "Open findings: ", "Constats ouverts :  ") + f" {len(state.get('open_findings') or [])}")
+print(t(LANG, "Active workers:", "Agents actifs :     ") + f" {len(state.get('active_workers') or [])}")
 
 observations = []
 for p in (AI / "observations").glob("*.yaml"):
@@ -51,12 +54,12 @@ open_observations = [
     for observation in observations
     if observation.get("status") in unresolved
 ]
-print(f"Open observations: {len(open_observations)}")
+print(t(LANG, "Open observations:", "Constats d'apprentissage ouverts :") + f" {len(open_observations)}")
 if open_observations:
     categories = Counter(
         observation.get("category", "unknown") for observation in open_observations
     )
     print(
-        "  by category: "
+        "  " + t(LANG, "by category: ", "par categorie : ")
         + ", ".join(f"{category}={count}" for category, count in sorted(categories.items()))
     )

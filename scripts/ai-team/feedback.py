@@ -29,6 +29,10 @@ except ModuleNotFoundError:
     print("Missing dependency: PyYAML and/or jsonschema. Install requirements first.")
     raise SystemExit(1)
 
+from i18n import project_language, t
+
+LANG = project_language(ROOT)
+
 
 CATEGORIES = [
     "readiness",
@@ -153,7 +157,7 @@ def record_observation(args: argparse.Namespace) -> int:
     validate_payload(payload, "observation.schema.json")
     path = AI / "observations" / f"{observation_id}.yaml"
     atomic_write_yaml(path, payload)
-    print(f"Recorded {observation_id}: {path.relative_to(ROOT)}")
+    print(t(LANG, f"Recorded {observation_id}: {path.relative_to(ROOT)}", f"Enregistre {observation_id} : {path.relative_to(ROOT)}"))
     return 0
 
 
@@ -231,7 +235,7 @@ def generate_retrospective(args: argparse.Namespace) -> int:
         shown = path.relative_to(ROOT)
     except ValueError:
         shown = path
-    print(f"Generated {retrospective_id}: {shown}")
+    print(t(LANG, f"Generated {retrospective_id}: {shown}", f"Genere {retrospective_id} : {shown}"))
     return 0
 
 
@@ -324,9 +328,13 @@ def export_feedback(args: argparse.Namespace) -> int:
         shown = path.relative_to(ROOT)
     except ValueError:
         shown = path
-    print(f"Exported {args.detail_level} feedback: {shown}")
+    print(t(LANG, f"Exported {args.detail_level} feedback: {shown}", f"Export {args.detail_level} genere : {shown}"))
     if args.detail_level == "full":
-        print("WARNING: full exports may contain project-sensitive free text and references.")
+        print(t(
+            LANG,
+            "WARNING: full exports may contain project-sensitive free text and references.",
+            "ATTENTION : un export complet peut contenir du texte libre et des references sensibles au projet.",
+        ))
     return 0
 
 
@@ -339,7 +347,7 @@ def main() -> int:
             return generate_retrospective(args)
         return export_feedback(args)
     except (OSError, ValueError) as exc:
-        print(f"ERROR: {exc}")
+        print(t(LANG, f"ERROR: {exc}", f"ERREUR : {exc}"))
         return 2
 
 

@@ -463,6 +463,47 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertNotIn("Shell(make:check*)", rerun_report["cli_allow_additions"])
             self.assertIn("Shell(make:install*)", rerun_report["cli_allow_additions"])
 
+    def test_scripts_follow_communication_language_for_their_own_output(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target, "lang-test", "Lang Test")
+            profile_path = target / ".ai-team" / "project-profile.yaml"
+            base_text = profile_path.read_text(encoding="utf-8")
+
+            english_status = self.run_command(
+                [sys.executable, "scripts/ai-team/status.py"], cwd=target
+            )
+            self.assertEqual(english_status.returncode, 0, english_status.stderr)
+            self.assertIn("Project:", english_status.stdout)
+
+            profile_path.write_text(
+                base_text.replace("language: english", "language: français"),
+                encoding="utf-8",
+            )
+            french_status = self.run_command(
+                [sys.executable, "scripts/ai-team/status.py"], cwd=target
+            )
+            self.assertEqual(french_status.returncode, 0, french_status.stderr)
+            self.assertIn("Projet :", french_status.stdout)
+            self.assertNotIn("Project:", french_status.stdout)
+            # Enum values and YAML-facing content are never translated.
+            self.assertIn("not_compiled", french_status.stdout)
+
+            missing_wu = self.run_command(
+                [sys.executable, "scripts/ai-team/check_done.py", "WU-DOES-NOT-EXIST"],
+                cwd=target,
+            )
+            self.assertEqual(missing_wu.returncode, 2)
+            self.assertIn("introuvable", missing_wu.stdout)
+
+            validate = self.run_command(
+                [sys.executable, "scripts/ai-team/validate.py"], cwd=target
+            )
+            self.assertIn("Validation Governed AI Team", validate.stdout)
+            self.assertIn("erreur(s)", validate.stdout)
+            # Error/warning bodies stay in English regardless of project language.
+            self.assertIn("WARN  Project command", validate.stdout)
+
     def test_validation_rejects_global_only_settings_in_project_cli_config(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir) / "target-project"
