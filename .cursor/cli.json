@@ -12,16 +12,19 @@
       "Shell(python:scripts/ai-team/diagnose.py*)",
       "Shell(python:scripts/ai-team/preflight.py*)",
       "Shell(python:scripts/ai-team/check_done.py*)",
+      "Shell(python:scripts/ai-team/propose_allowlist.py*)",
       "Shell(python3:scripts/ai-team/validate.py*)",
       "Shell(python3:scripts/ai-team/status.py*)",
       "Shell(python3:scripts/ai-team/diagnose.py*)",
       "Shell(python3:scripts/ai-team/preflight.py*)",
       "Shell(python3:scripts/ai-team/check_done.py*)",
+      "Shell(python3:scripts/ai-team/propose_allowlist.py*)",
       "Shell(py:-3 scripts/ai-team/validate.py*)",
       "Shell(py:-3 scripts/ai-team/status.py*)",
       "Shell(py:-3 scripts/ai-team/diagnose.py*)",
       "Shell(py:-3 scripts/ai-team/preflight.py*)",
-      "Shell(py:-3 scripts/ai-team/check_done.py*)"
+      "Shell(py:-3 scripts/ai-team/check_done.py*)",
+      "Shell(py:-3 scripts/ai-team/propose_allowlist.py*)"
     ],
     "deny": [
       "Read(.env*)",

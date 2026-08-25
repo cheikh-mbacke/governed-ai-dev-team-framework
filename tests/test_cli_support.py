@@ -6,6 +6,8 @@ import sys
 import tempfile
 import unittest
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CURSOR = ROOT / ".cursor"
@@ -24,9 +26,16 @@ class CursorCliConfigurationTests(unittest.TestCase):
         self.assertIn("Shell(git:status*)", allow)
         self.assertIn("Shell(python:scripts/ai-team/diagnose.py*)", allow)
         self.assertIn("Shell(py:-3 scripts/ai-team/preflight.py*)", allow)
+        self.assertIn("Shell(python:scripts/ai-team/propose_allowlist.py*)", allow)
+        self.assertIn("Shell(py:-3 scripts/ai-team/propose_allowlist.py*)", allow)
         self.assertIn("Write(.ai-team/constitution/**)", deny)
         self.assertIn("Write(.cursor/cli.json)", deny)
+        self.assertIn("Write(.cursor/permissions.json)", deny)
         self.assertIn("Shell(git:reset*--hard*)", deny)
+
+        terminal_allowlist = set(ui_config.get("terminalAllowlist") or [])
+        self.assertIn("python scripts/ai-team/propose_allowlist.py", terminal_allowlist)
+        self.assertIn("py -3 scripts/ai-team/propose_allowlist.py", terminal_allowlist)
 
     def test_subagents_are_foreground_by_default_and_readonly_roles_stay_readonly(self):
         readonly_roles = {
@@ -313,6 +322,76 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(manifest["version"], "0.2.0")
             self.assertIn(".cursor/hooks.json", manifest["managed_files"])
+
+    def test_propose_allowlist_derives_tokens_from_declared_commands_only(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target, "allowlist-test", "Allowlist Test")
+            self.assertTrue((target / "scripts" / "ai-team" / "propose_allowlist.py").is_file())
+
+            profile_path = target / ".ai-team" / "project-profile.yaml"
+            profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+            profile["commands"] = {
+                "setup": "make install",
+                "build": "make check",
+                "lint": "make lint",
+                "typecheck": "make typecheck",
+                "unit_test": "make test",
+                "integration_test": "make test",
+                "e2e_test": "cd frontend && pnpm test:e2e",
+            }
+            profile_path.write_text(yaml.safe_dump(profile, sort_keys=False), encoding="utf-8")
+
+            result = self.run_command(
+                [sys.executable, "scripts/ai-team/propose_allowlist.py", "--json"],
+                cwd=target,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            report = json.loads(result.stdout)
+
+            self.assertIn("make install", report["terminal_allowlist_additions"])
+            self.assertIn("make check", report["terminal_allowlist_additions"])
+            self.assertIn("make lint", report["terminal_allowlist_additions"])
+            self.assertIn("make typecheck", report["terminal_allowlist_additions"])
+            self.assertIn("make test", report["terminal_allowlist_additions"])
+            # integration_test duplicates unit_test's "make test" - proposed once, not twice.
+            self.assertEqual(report["terminal_allowlist_additions"].count("make test"), 1)
+
+            self.assertIn("Shell(make:install*)", report["cli_allow_additions"])
+            self.assertIn("Shell(make:check*)", report["cli_allow_additions"])
+            self.assertIn("Shell(make:test*)", report["cli_allow_additions"])
+
+            # No tool-level wildcard is ever emitted.
+            joined = " ".join(report["cli_allow_additions"])
+            self.assertNotIn("Shell(make:*)", joined)
+
+            # A compound command (shell operators) has no single binary to key a
+            # Shell(tool:args) token on: it must be flagged for manual review, not
+            # guessed at (e.g. never "Shell(cd:frontend && pnpm test:e2e*)").
+            self.assertIn("cd frontend && pnpm test:e2e", report["terminal_allowlist_additions"])
+            self.assertFalse(
+                any("cd" in token for token in report["cli_allow_additions"]),
+                report["cli_allow_additions"],
+            )
+            manual_review_commands = {
+                item["command"] for item in report["cli_allow_needs_manual_review"]
+            }
+            self.assertIn("cd frontend && pnpm test:e2e", manual_review_commands)
+
+            cli_path = target / ".cursor" / "cli.json"
+            cli_config = json.loads(cli_path.read_text(encoding="utf-8"))
+            cli_config["permissions"]["allow"].append("Shell(make:check*)")
+            cli_path.write_text(json.dumps(cli_config), encoding="utf-8")
+
+            rerun = self.run_command(
+                [sys.executable, "scripts/ai-team/propose_allowlist.py", "--json"],
+                cwd=target,
+            )
+            self.assertEqual(rerun.returncode, 0, rerun.stderr + rerun.stdout)
+            rerun_report = json.loads(rerun.stdout)
+            # Already-present entries are not re-proposed.
+            self.assertNotIn("Shell(make:check*)", rerun_report["cli_allow_additions"])
+            self.assertIn("Shell(make:install*)", rerun_report["cli_allow_additions"])
 
     def test_validation_rejects_global_only_settings_in_project_cli_config(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:

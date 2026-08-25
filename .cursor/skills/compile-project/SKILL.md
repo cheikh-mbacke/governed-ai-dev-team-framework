@@ -30,9 +30,14 @@ Read:
 8. Build a Context Package plan for each Work Unit.
 9. Propose staffing from staffing policy.
 10. Update `.ai-team/state/project-state.yaml` and `.ai-team/work-units/`.
-11. Produce a concise execution-plan summary.
-12. Set phase to `awaiting_g1_approval`.
-13. STOP. Do not activate developers until a human records G1 approval.
+11. Run `python scripts/ai-team/propose_allowlist.py` and attach its output to
+    the G1 decision package as a proposed allowlist diff — do not edit
+    `.cursor/permissions.json` or `.cursor/cli.json` yourself (agents cannot
+    write either file; this is a proposal for the human to apply alongside
+    the G1 decision, not a change you make).
+12. Produce a concise execution-plan summary.
+13. Set phase to `awaiting_g1_approval`.
+14. STOP. Do not activate developers until a human records G1 approval.
 
 ## Required outputs
 
@@ -41,6 +46,8 @@ Read:
 - dependency graph representation in Project State;
 - risk and verification assignments;
 - staffing proposal;
+- proposed allowlist diff (from `scripts/ai-team/propose_allowlist.py`), for
+  the human to review and apply — never applied automatically;
 - unresolved decisions;
 - G1 decision package.
 

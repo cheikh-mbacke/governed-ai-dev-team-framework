@@ -9,10 +9,12 @@
     "python scripts/ai-team/status.py",
     "python scripts/ai-team/diagnose.py",
     "python scripts/ai-team/preflight.py",
+    "python scripts/ai-team/propose_allowlist.py",
     "py -3 scripts/ai-team/validate.py",
     "py -3 scripts/ai-team/status.py",
     "py -3 scripts/ai-team/diagnose.py",
-    "py -3 scripts/ai-team/preflight.py"
+    "py -3 scripts/ai-team/preflight.py",
+    "py -3 scripts/ai-team/propose_allowlist.py"
   ],
   "autoRun": {
     "allow_instructions": [
