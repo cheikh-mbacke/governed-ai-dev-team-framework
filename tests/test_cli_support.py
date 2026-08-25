@@ -24,6 +24,8 @@ class CursorCliConfigurationTests(unittest.TestCase):
         allow = set(cli_config["permissions"]["allow"])
         deny = set(cli_config["permissions"]["deny"])
         self.assertIn("Shell(git:status*)", allow)
+        self.assertIn("Shell(git:add*)", allow)
+        self.assertIn("Shell(git:commit*)", allow)
         self.assertIn("Shell(python:scripts/ai-team/diagnose.py*)", allow)
         self.assertIn("Shell(py:-3 scripts/ai-team/preflight.py*)", allow)
         self.assertIn("Shell(python:scripts/ai-team/propose_allowlist.py*)", allow)
@@ -32,8 +34,12 @@ class CursorCliConfigurationTests(unittest.TestCase):
         self.assertIn("Write(.cursor/cli.json)", deny)
         self.assertIn("Write(.cursor/permissions.json)", deny)
         self.assertIn("Shell(git:reset*--hard*)", deny)
+        self.assertIn("Shell(git:commit*--amend*)", deny)
+        self.assertIn("Shell(git:rebase*)", deny)
 
         terminal_allowlist = set(ui_config.get("terminalAllowlist") or [])
+        self.assertIn("git add", terminal_allowlist)
+        self.assertIn("git commit", terminal_allowlist)
         self.assertIn("python scripts/ai-team/propose_allowlist.py", terminal_allowlist)
         self.assertIn("py -3 scripts/ai-team/propose_allowlist.py", terminal_allowlist)
 
@@ -212,15 +218,39 @@ class AuditEventTests(unittest.TestCase):
 
 
 class GuardShellTests(unittest.TestCase):
-    def run_guard(self, command):
+    def run_guard(self, command, project_dir=None):
+        env = os.environ.copy()
+        if project_dir:
+            env["CURSOR_PROJECT_DIR"] = str(project_dir)
         return subprocess.run(
             [sys.executable, str(CURSOR / "hooks" / "guard_shell.py")],
             input=json.dumps({"command": command}),
             text=True,
             capture_output=True,
             cwd=ROOT,
+            env=env,
             timeout=10,
         )
+
+    def initialize_project(self, target):
+        (target / ".ai-team").mkdir(parents=True)
+        (target / ".ai-team" / "project-profile.yaml").write_text(
+            "release:\n  protected_branch: main\n", encoding="utf-8"
+        )
+        (target / "tracked.txt").write_text("initial\n", encoding="utf-8")
+        commands = [
+            ["git", "init", "-q"],
+            ["git", "config", "user.name", "Guard Test"],
+            ["git", "config", "user.email", "guard@example.invalid"],
+            ["git", "add", "."],
+            ["git", "commit", "-qm", "initial"],
+            ["git", "branch", "-M", "main"],
+        ]
+        for command in commands:
+            result = subprocess.run(
+                command, cwd=target, text=True, capture_output=True, timeout=10
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
 
     def test_safe_command_is_allowed(self):
         result = self.run_guard("git status --short")
@@ -239,6 +269,41 @@ class GuardShellTests(unittest.TestCase):
                 result = self.run_guard(command)
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertEqual(json.loads(result.stdout)["permission"], "deny")
+
+    def test_working_branch_commits_are_allowed_but_protected_branch_is_blocked(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir)
+            self.initialize_project(target)
+
+            protected = self.run_guard("git add tracked.txt", target)
+            self.assertEqual(protected.returncode, 2, protected.stderr)
+            self.assertIn("protected branch", json.loads(protected.stdout)["message"])
+
+            switch = subprocess.run(
+                ["git", "switch", "-c", "work/WU-TEST"],
+                cwd=target,
+                text=True,
+                capture_output=True,
+                timeout=10,
+            )
+            self.assertEqual(switch.returncode, 0, switch.stderr + switch.stdout)
+            working = self.run_guard(
+                'git commit -m "feat(WU-TEST): coherent change"', target
+            )
+            self.assertEqual(working.returncode, 0, working.stderr)
+
+            missing_work_unit = self.run_guard(
+                'git commit -m "feat: missing governed scope"', target
+            )
+            self.assertEqual(missing_work_unit.returncode, 2, missing_work_unit.stderr)
+            self.assertIn("type(WU-ID)", json.loads(missing_work_unit.stdout)["message"])
+
+    def test_history_rewrite_is_not_an_autonomous_path(self):
+        for command in ["git commit --amend --no-edit", "git rebase main"]:
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("History rewriting", json.loads(result.stdout)["message"])
 
 
 class InstallerCliIntegrationTests(unittest.TestCase):
@@ -325,7 +390,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual(manifest["version"], "0.3.0")
+            self.assertEqual(manifest["version"], "0.4.0")
             self.assertIn(".cursor/hooks.json", manifest["managed_files"])
 
     def test_propose_allowlist_derives_tokens_from_declared_commands_only(self):
@@ -512,6 +577,59 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                 json.loads(marker.read_text(encoding="utf-8"))["version"], "99.0.0"
             )
 
+    def test_update_activates_new_constitution_only_between_cycles(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            marker = target / ".ai-team" / "framework-version.json"
+            marker_payload = json.loads(marker.read_text(encoding="utf-8"))
+            marker_payload["version"] = "0.3.0"
+            marker.write_text(json.dumps(marker_payload), encoding="utf-8")
+            state_path = target / ".ai-team" / "state" / "project-state.yaml"
+            state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+            state["constitution_version"] = "1.0.0"
+            state["phase"] = "not_compiled"
+            state_path.write_text(
+                yaml.safe_dump(state, sort_keys=False), encoding="utf-8"
+            )
+            self.initialize_git(target)
+
+            result = self.run_command(
+                [sys.executable, "tools/install.py", "--target", str(target), "--update"]
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn("constitution_version 1.0.0 -> 1.1.0", result.stdout)
+            migrated = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+            self.assertEqual(migrated["constitution_version"], "1.1.0")
+
+    def test_update_refuses_constitution_change_during_active_cycle(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            marker = target / ".ai-team" / "framework-version.json"
+            marker_payload = json.loads(marker.read_text(encoding="utf-8"))
+            marker_payload["version"] = "0.3.0"
+            marker.write_text(json.dumps(marker_payload), encoding="utf-8")
+            state_path = target / ".ai-team" / "state" / "project-state.yaml"
+            state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+            state["constitution_version"] = "1.0.0"
+            state["phase"] = "execution"
+            state_path.write_text(
+                yaml.safe_dump(state, sort_keys=False), encoding="utf-8"
+            )
+            self.initialize_git(target)
+            before = state_path.read_bytes()
+
+            result = self.run_command(
+                [sys.executable, "tools/install.py", "--target", str(target), "--update"]
+            )
+            self.assertEqual(result.returncode, 2, result.stderr + result.stdout)
+            self.assertIn("Constitution 1.0.0 is frozen", result.stdout)
+            self.assertEqual(state_path.read_bytes(), before)
+            self.assertEqual(
+                json.loads(marker.read_text(encoding="utf-8"))["version"], "0.3.0"
+            )
+
     def test_legacy_update_migrates_acceptance_and_keeps_backup(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir) / "target-project"
@@ -551,7 +669,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual(manifest["version"], "0.3.0")
+            self.assertEqual(manifest["version"], "0.4.0")
 
     def test_failed_post_update_validation_rolls_back_all_touched_files(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:

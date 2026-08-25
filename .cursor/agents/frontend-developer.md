@@ -23,6 +23,12 @@ Before handoff, use `.cursor/skills/webapp-testing/SKILL.md` to capture a
 real screenshot of what you built — a code diff is not evidence that the
 UI looks or behaves as intended. Include it in your handoff.
 
-Produce a structured handoff with changed files, behavior, tests/checks run, visual/manual verification needed, limitations and open questions.
+After the developer checks and visual evidence are captured, create a coherent
+commit on the isolated Work Unit branch according to
+`95-git-release-policy.yaml`. Reference the Work Unit in the message and include
+the exact SHA in the handoff. A WIP checkpoint is not verified evidence.
+
+Produce a structured handoff with changed files, behavior, tests/checks run,
+commit SHA, visual/manual verification needed, limitations and open questions.
 
 Do not invent UX/product behavior where the authoritative sources are silent. Raise CLARIFICATION_REQUEST or DECISION_REQUEST instead.

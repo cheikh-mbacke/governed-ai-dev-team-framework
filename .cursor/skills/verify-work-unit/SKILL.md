@@ -11,6 +11,11 @@ Read the Work Unit, Test Strategy, Definition of Done and evidence objects.
 
 Check that required verification is not merely claimed but linked to concrete results and the evaluated code revision.
 
+Require one exact candidate commit SHA for the evaluated state. If the current
+SHA differs from the SHA referenced by QA, review, security, or audit evidence,
+report those checks as stale and require re-verification. A WIP commit cannot
+satisfy Definition of Done.
+
 Report:
 - satisfied checks;
 - missing checks;

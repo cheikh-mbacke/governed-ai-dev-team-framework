@@ -100,7 +100,7 @@ class FeedbackLoopIntegrationTests(unittest.TestCase):
             observation_paths = list((target / ".ai-team" / "observations").glob("*.yaml"))
             self.assertEqual(len(observation_paths), 1)
             observation = yaml.safe_load(observation_paths[0].read_text(encoding="utf-8"))
-            self.assertEqual(observation["framework_version"], "0.3.0")
+            self.assertEqual(observation["framework_version"], "0.4.0")
             self.assertEqual(observation["impact"]["blocked_minutes"], 15)
 
             retrospective = self.run_command(

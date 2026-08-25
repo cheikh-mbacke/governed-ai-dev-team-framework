@@ -15,6 +15,10 @@ Verification evidence must identify, as applicable:
 
 Never report "end-to-end verified" unless the relevant layers were actually executed and observed.
 
+If the evaluated SHA changes after evidence is produced, invalidate the affected
+evidence and rerun the relevant checks. Do not preserve a passing claim across an
+amend, rebase, remediation commit, or any other revision change without new proof.
+
 Auditors classify conclusions as:
 - expected_and_observed;
 - expected_but_not_demonstrated;

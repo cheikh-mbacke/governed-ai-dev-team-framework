@@ -88,13 +88,21 @@ For each Work Unit:
 1. build a minimal Context Package;
 2. choose staffing;
 3. delegate to the appropriate Developer;
-4. collect the diff and initial evidence;
-5. trigger QA;
-6. trigger Reviewer;
-7. trigger Security if policy requires it;
-8. trigger Auditor if policy requires it;
-9. produce the human acceptance package;
-10. close only once the Definition of Done is satisfied.
+4. run developer checks and inspect the diff;
+5. create a coherent commit on the Work Unit branch with its ID in the message;
+6. hand the exact SHA to QA and Reviewer;
+7. trigger QA;
+8. trigger Reviewer;
+9. trigger Security if policy requires it;
+10. trigger Auditor if policy requires it;
+11. produce the human acceptance package;
+12. close only once the Definition of Done is satisfied.
+
+The Developer does not need separate human confirmation for each coherent commit
+on an isolated branch. It must stop before a protected-branch commit, merge,
+unauthorized push, or history rewrite. Remediation creates a new commit and the
+affected checks run again on the new SHA. A WIP commit may preserve interrupted
+work but cannot enter QA as a verified candidate.
 
 ## 9. If it looks stuck
 

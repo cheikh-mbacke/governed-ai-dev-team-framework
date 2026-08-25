@@ -16,3 +16,7 @@ Before making product changes:
    with `python scripts/ai-team/feedback.py record`. Keep the origin `unknown` until
    evidence supports a stronger classification; the observation does not replace any
    operational BLOCKER, DEFECT, or DECISION_REQUEST required for the current run.
+9. Commit coherent Work Unit changes on the isolated working branch before
+   QA/review, include the Work Unit ID in the message, and hand off the exact SHA.
+   Never stage or commit on a protected branch, and never rewrite history after
+   evidence without explicit human authorization and re-verification.

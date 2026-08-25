@@ -16,4 +16,9 @@ High-impact actions require explicit authorization according to policy, includin
 - production deployment;
 - direct protected-branch modification.
 
+Developers may stage and commit coherent Work Unit changes without a separate
+human confirmation only on an isolated, non-protected branch and only under
+`95-git-release-policy.yaml` commit policy. History rewriting is not an
+autonomous action.
+
 Reviewer and Auditor roles must not silently remediate the code they are evaluating.
