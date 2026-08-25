@@ -167,6 +167,49 @@ if state_path.exists():
 
 for p in sorted((AI / "work-units").glob("*.yaml")):
     validate_instance(p, "work-unit.schema.json")
+
+# Cross-check: a Work Unit marked done/accepted in project-state.yaml must be
+# backed by a matching work-unit file and by the artifacts it references.
+# validate_instance() above only checks each file's own schema; it cannot
+# catch project-state.yaml claiming a completion that the WU's own record,
+# events, or evidence never actually reached.
+if state_path.exists():
+    state = load_yaml(state_path) or {}
+    wu_files = {p.stem: p for p in (AI / "work-units").glob("*.yaml")}
+    for wu_id, entry in (state.get("work_units") or {}).items():
+        claims_done = entry.get("status") == "done"
+        claims_accepted = entry.get("human_acceptance") == "accepted"
+        if not claims_done and not claims_accepted:
+            continue
+        wu_path = wu_files.get(wu_id)
+        wu_data = load_yaml(wu_path) if wu_path else None
+        if wu_data is None:
+            errors.append(
+                f"project-state.yaml: {wu_id} marked done but work-units/{wu_id}.yaml is missing"
+            )
+            continue
+        if claims_done and wu_data.get("status") != "done":
+            errors.append(
+                f"project-state.yaml claims {wu_id} is done, but work-units/{wu_id}.yaml "
+                f"status is '{wu_data.get('status')}'"
+            )
+        if claims_accepted and (wu_data.get("outcomes") or {}).get("human_acceptance") != "accepted":
+            errors.append(
+                f"project-state.yaml claims {wu_id} human_acceptance is accepted, but "
+                f"work-units/{wu_id}.yaml outcomes.human_acceptance disagrees"
+            )
+        done_event = entry.get("done_event")
+        if done_event and not (AI / "events" / f"{done_event}.yaml").exists():
+            errors.append(f"project-state.yaml: {wu_id}.done_event references missing event: {done_event}")
+        acceptance_package = entry.get("acceptance_package")
+        if acceptance_package and not (ROOT / acceptance_package).exists():
+            errors.append(
+                f"project-state.yaml: {wu_id}.acceptance_package references missing file: {acceptance_package}"
+            )
+        for ev_id in entry.get("evidence") or []:
+            if not (AI / "evidence" / f"{ev_id}.yaml").exists():
+                errors.append(f"project-state.yaml: {wu_id} references missing evidence: {ev_id}")
+
 for p in sorted((AI / "events").glob("*.yaml")):
     validate_instance(p, "event.schema.json")
 for p in sorted((AI / "evidence").glob("*.yaml")):
