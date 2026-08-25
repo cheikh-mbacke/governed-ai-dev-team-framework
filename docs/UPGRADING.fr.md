@@ -43,6 +43,12 @@ Le plan affiche :
 - les chemins sales éventuels ;
 - les anciens fichiers gérés devenus obsolètes.
 
+Si l'upgrade change la version de la Constitution, l'installeur ne l'active
+que lorsque le Project State est `not_compiled` ou `completed`. Toute autre
+phase correspond à un cycle encore ouvert : l'upgrade s'arrête avant d'écrire
+afin de ne pas changer les règles sous une exécution en cours. Termine ou ferme
+explicitement ce cycle, puis relance le dry-run.
+
 Le dry-run n'utilise que la bibliothèque standard Python et ne modifie jamais
 la cible. Les fichiers obsolètes sont signalés, mais jamais supprimés
 automatiquement.

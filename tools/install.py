@@ -8,6 +8,7 @@ import fnmatch
 import importlib.util
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -44,7 +45,7 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/migration-backups/*",
     ".ai-team/project-profile.yaml.bak",
 ]
-SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0"}
+SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0", "0.4.0"}
 
 
 def parse_args():
@@ -128,6 +129,31 @@ def iter_managed_source_files():
 def current_version() -> str:
     payload = json.loads((SOURCE_ROOT / VERSION_FILE).read_text(encoding="utf-8"))
     return payload["version"]
+
+
+def source_constitution_version() -> str:
+    text = (SOURCE_ROOT / ".ai-team" / "constitution" / "constitution.yaml").read_text(
+        encoding="utf-8"
+    )
+    match = re.search(r'(?m)^\s{2}version:\s*["\']?([^"\'\s]+)', text)
+    if not match:
+        raise ValueError("Source Constitution version is missing or malformed")
+    return match.group(1)
+
+
+def target_constitution_state(target: Path) -> tuple[str | None, str | None]:
+    path = target / ".ai-team" / "state" / "project-state.yaml"
+    if not path.exists():
+        return None, None
+    text = path.read_text(encoding="utf-8")
+    version_match = re.search(
+        r'(?m)^constitution_version:\s*["\']?([^"\'\s]+)', text
+    )
+    phase_match = re.search(r'(?m)^phase:\s*["\']?([^"\'\s]+)', text)
+    return (
+        version_match.group(1) if version_match else None,
+        phase_match.group(1) if phase_match else None,
+    )
 
 
 def read_installed_manifest(target: Path) -> dict:
@@ -262,6 +288,7 @@ def print_update_plan(
     new_version: str,
     entries,
     migration_changes,
+    constitution_change,
     obsolete: list[str],
 ):
     print("Governed AI Team update plan")
@@ -276,12 +303,19 @@ def print_update_plan(
             print(f"{action.upper():7} {relative.as_posix()}")
     for change in migration_changes:
         print(f"MIGRATE {change.path.relative_to(target).as_posix()}")
+    if constitution_change:
+        old_version, new_version = constitution_change
+        print(
+            "MIGRATE .ai-team/state/project-state.yaml "
+            f"constitution_version {old_version} -> {new_version}"
+        )
     for path in obsolete:
         print(f"OBSOLETE {path} (left untouched)")
     changed = sum(action != "unchanged" for action, *_rest in entries)
     print(
         f"Summary: {changed} framework file change(s), "
-        f"{len(migration_changes)} project-data migration(s), "
+        f"{len(migration_changes) + bool(constitution_change)} "
+        "project-data migration(s), "
         f"{len(obsolete)} obsolete managed file(s)."
     )
 
@@ -307,6 +341,26 @@ def run_update(args, target: Path) -> int:
         )
         return 2
 
+    new_constitution_version = source_constitution_version()
+    installed_constitution_version, phase = target_constitution_state(target)
+    constitution_change = None
+    if (
+        installed_constitution_version
+        and installed_constitution_version != new_constitution_version
+    ):
+        constitution_change = (
+            installed_constitution_version,
+            new_constitution_version,
+        )
+        if phase not in {"not_compiled", "completed"}:
+            print(
+                "Update aborted before writing files: Constitution "
+                f"{installed_constitution_version} is frozen while project phase is "
+                f"{phase!r}. Finish or explicitly close the current execution cycle "
+                f"before activating Constitution {new_constitution_version}."
+            )
+            return 2
+
     git_state, dirty_paths = target_git_status(target)
     entries, managed_files = copy_plan(target)
     old_managed = set(installed.get("managed_files") or [])
@@ -323,6 +377,7 @@ def run_update(args, target: Path) -> int:
         new_version,
         entries,
         migration_changes,
+        constitution_change,
         obsolete,
     )
     if args.dry_run:
@@ -350,6 +405,9 @@ def run_update(args, target: Path) -> int:
     marker_changes = not marker.exists() or marker.read_bytes() != marker_content
     touched = [entry[3] for entry in changed_entries]
     touched.extend(change.path for change in migration_changes)
+    state_path = target / ".ai-team" / "state" / "project-state.yaml"
+    if constitution_change:
+        touched.append(state_path)
     if marker_changes:
         touched.append(marker)
 
@@ -361,6 +419,21 @@ def run_update(args, target: Path) -> int:
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, destination)
             migration_backup = migrations.apply_changes(target, migration_changes)
+            if constitution_change:
+                old_version, new_constitution_version = constitution_change
+                state_text = state_path.read_text(encoding="utf-8")
+                state_text, replacements = re.subn(
+                    r'(?m)^constitution_version:\s*["\']?[^"\'\s]+["\']?\s*$',
+                    f'constitution_version: "{new_constitution_version}"',
+                    state_text,
+                    count=1,
+                )
+                if replacements != 1:
+                    raise RuntimeError(
+                        "Could not migrate Project State constitution_version "
+                        f"from {old_version} to {new_constitution_version}"
+                    )
+                state_path.write_text(state_text, encoding="utf-8")
             marker.parent.mkdir(parents=True, exist_ok=True)
             marker.write_bytes(marker_content)
 
@@ -389,6 +462,11 @@ def run_update(args, target: Path) -> int:
         print(f"Migrated {len(migration_changes)} project-data file(s).")
         if migration_backup is not None:
             print(f"Migration backup: {migration_backup.relative_to(target)}")
+    if constitution_change:
+        print(
+            "Activated Constitution "
+            f"{constitution_change[1]} for the next safe execution cycle."
+        )
     if obsolete:
         print("Obsolete managed files were reported but not deleted.")
     if validator is not None:

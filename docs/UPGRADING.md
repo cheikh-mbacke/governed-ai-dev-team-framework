@@ -41,6 +41,12 @@ The plan reports:
 - dirty paths, when present;
 - previously managed files that are now obsolete.
 
+When an update changes the Constitution version, the installer activates it
+only while Project State is `not_compiled` or `completed`. Any other phase is
+an open execution cycle, so the update stops before writing instead of changing
+policy underneath active work. Finish or explicitly close that cycle, then run
+the dry-run again.
+
 Dry-run uses only the Python standard library and never modifies the target.
 Obsolete files are reported but never deleted automatically.
 

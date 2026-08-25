@@ -5,6 +5,8 @@
     "git log",
     "git show",
     "git branch",
+    "git add",
+    "git commit",
     "python scripts/ai-team/validate.py",
     "python scripts/ai-team/status.py",
     "python scripts/ai-team/diagnose.py",
@@ -30,6 +32,8 @@
     "block_instructions": [
       "Require explicit approval for any command that pushes directly to main, master, trunk, or another protected branch.",
       "Require explicit approval for destructive Git history operations such as force push, reset --hard, or deleting protected branches.",
+      "Require explicit approval and recorded evidence impact before git commit --amend, git rebase, or another history rewrite.",
+      "Never create a commit or stage changes on main, master, trunk, or the project-configured protected branch; use an isolated Work Unit branch or worktree.",
       "Require explicit approval for production deployments or commands targeting a production environment.",
       "Require explicit approval for production database writes, destructive migrations, or data deletion.",
       "Require explicit approval for Kubernetes, Terraform, cloud, IAM, permission, secret, or credential mutations.",

@@ -318,10 +318,13 @@ Ce dépôt fournit un **profil de référence assumé** :
 - Workers écrivant du code en parallèle max : 2
 - Work Units risque élevé/critique simultanées max : 1
 - Un writer principal par Work Unit
+- Commits autonomes sur la branche isolée de la Work Unit, avant QA/review
+- ID de Work Unit obligatoire dans le message de commit
 - Reviewer : lecture seule
 - Security reviewer : lecture seule
 - Auditor : lecture seule et indépendant de la remédiation
 - Release production : gate humaine G3
+- Merge vers la branche protégée séparé du commit et soumis à la Definition of Done
 - Recette finale : gate humaine G4
 
 Ce sont des réglages par défaut, pas des vérités universelles. Change-les dans la Constitution et versionne le changement.

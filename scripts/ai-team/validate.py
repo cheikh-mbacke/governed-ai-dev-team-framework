@@ -169,6 +169,18 @@ if (AI / "sources" / "source-registry.yaml").exists():
 state_path = AI / "state" / "project-state.yaml"
 if state_path.exists():
     validate_instance(state_path, "project-state.schema.json")
+    state_for_version = load_yaml(state_path) or {}
+    constitution_for_version = load_yaml(AI / "constitution" / "constitution.yaml") or {}
+    state_constitution_version = state_for_version.get("constitution_version")
+    active_constitution_version = constitution_for_version.get("constitution", {}).get(
+        "version"
+    )
+    if state_constitution_version != active_constitution_version:
+        errors.append(
+            "project-state.yaml constitution_version "
+            f"{state_constitution_version!r} does not match active Constitution "
+            f"{active_constitution_version!r}"
+        )
 
 for p in sorted((AI / "work-units").glob("*.yaml")):
     validate_instance(p, "work-unit.schema.json")

@@ -26,6 +26,7 @@ This implementation follows the supplied design document's major concepts:
 | `.cursor/agents/auditor.md` + `50-audit-strategy.yaml` | Independent audit |
 | `definition-of-done.yaml` | Definition of Done |
 | `90-gates-and-autonomy.yaml` | G0-G4 + autonomy levels |
+| `95-git-release-policy.yaml` commit policy | Section 21.2 — Git and merge; implemented as autonomous coherent commits on isolated Work Unit branches, stable SHA handoffs, protected-branch separation, and evidence invalidation after revision changes |
 | `.ai-team/acceptance/` | Human acceptance / defects / remediation |
 | `.ai-team/observations/`, `.ai-team/retrospectives/`, `scripts/ai-team/feedback.py` | Section 32 — metrics and continuous improvement; implemented as evidence-linked observations, deterministic retrospectives, and privacy-conscious exports |
 

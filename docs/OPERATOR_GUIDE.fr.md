@@ -79,13 +79,22 @@ Pour chaque Work Unit :
 1. construire un Context Package minimal ;
 2. choisir le staffing ;
 3. déléguer au Developer approprié ;
-4. collecter le diff et les premières preuves ;
-5. déclencher QA ;
-6. déclencher Reviewer ;
-7. déclencher Security si la politique l'impose ;
-8. déclencher Auditor si la politique l'impose ;
-9. produire la recette humaine ;
-10. fermer seulement quand la Definition of Done est satisfaite.
+4. exécuter les vérifications développeur et inspecter le diff ;
+5. créer un commit cohérent sur la branche de la Work Unit, avec son ID dans le message ;
+6. transmettre son SHA exact à QA et au Reviewer ;
+7. déclencher QA ;
+8. déclencher Reviewer ;
+9. déclencher Security si la politique l'impose ;
+10. déclencher Auditor si la politique l'impose ;
+11. produire la recette humaine ;
+12. fermer seulement quand la Definition of Done est satisfaite.
+
+Le Developer n'a pas besoin de demander une confirmation humaine pour chaque
+commit cohérent sur sa branche isolée. Il doit en revanche s'arrêter avant tout
+commit sur la branche protégée, merge, push non autorisé ou réécriture d'historique.
+Après une remédiation, un nouveau commit est créé et les vérifications affectées
+sont rejouées sur le nouveau SHA. Un commit WIP peut sauvegarder un travail
+interrompu mais ne peut pas entrer en QA comme candidat vérifié.
 
 ## 9. Si ça semble bloqué
 

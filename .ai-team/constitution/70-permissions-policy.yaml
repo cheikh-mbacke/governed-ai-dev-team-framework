@@ -1,5 +1,5 @@
 policy: skills_permissions_least_privilege
-version: "1.0.0"
+version: "1.1.0"
 skill_statuses:
   approved: "May be used by explicitly authorized roles/resources."
   restricted: "Requires a condition, environment restriction or human approval."
@@ -27,14 +27,14 @@ roles:
     allow: [read_repository, analyze_architecture, propose_architecture, propose_contract_change, impact_analysis]
     deny: [product_decision, production_deploy, silent_contract_change]
   backend-developer:
-    allow: [read, write_working_branch, run_nonproduction_tests, produce_evidence]
-    deny: [direct_protected_branch_merge, production_deploy, product_decision]
+    allow: [read, write_working_branch, commit_working_branch, run_nonproduction_tests, produce_evidence]
+    deny: [direct_protected_branch_merge, history_rewrite, production_deploy, product_decision]
   frontend-developer:
-    allow: [read, write_working_branch, run_nonproduction_tests, produce_evidence]
-    deny: [direct_protected_branch_merge, production_deploy, product_decision]
+    allow: [read, write_working_branch, commit_working_branch, run_nonproduction_tests, produce_evidence]
+    deny: [direct_protected_branch_merge, history_rewrite, production_deploy, product_decision]
   qa-test:
-    allow: [read, write_tests_and_qa_artifacts, run_nonproduction_tests, produce_defects, produce_evidence]
-    deny: [production_deploy, protected_branch_bypass, product_decision]
+    allow: [read, write_tests_and_qa_artifacts, commit_working_branch, run_nonproduction_tests, produce_defects, produce_evidence]
+    deny: [history_rewrite, production_deploy, protected_branch_bypass, product_decision]
   code-reviewer:
     allow: [read_diff, read_repository, read_evidence, approve_or_reject, produce_findings]
     deny: [modify_evaluated_code, production_deploy]

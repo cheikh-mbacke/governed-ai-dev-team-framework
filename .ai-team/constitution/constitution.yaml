@@ -1,6 +1,6 @@
 constitution:
   name: governed-ai-development-reference-constitution
-  version: "1.0.0"
+  version: "1.1.0"
   status: active
   freeze_policy: "A Constitution version is frozen for an execution cycle. Changes take effect only after human approval, versioning, scope definition, and impact analysis."
   authority_owner: human

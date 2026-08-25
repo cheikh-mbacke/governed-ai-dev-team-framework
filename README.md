@@ -302,10 +302,13 @@ This repository ships with an **opinionated reference profile**:
 - Max concurrent code-writing workers: 2
 - Max concurrent high/critical-risk Work Units: 1
 - One primary writer per Work Unit
+- Autonomous commits on the isolated Work Unit branch before QA/review
+- Work Unit ID required in commit messages
 - Reviewer: read-only
 - Security reviewer: read-only
 - Auditor: read-only and independent from remediation
 - Production release: human gate G3
+- Protected-branch merge remains separate from commit and requires Definition of Done
 - Final acceptance: human gate G4
 
 These are implementation defaults, not universal truths. Change them in the Constitution and version the change.
