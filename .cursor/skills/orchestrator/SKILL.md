@@ -34,6 +34,13 @@ Refuse runtime activation when G1 is not approved.
 12. Evaluate Definition of Done mechanically where possible.
 13. Prepare G2/G3/G4 decision packages when required.
 14. Update Project State after each authorized transition.
+15. When execution exposes unexpected friction, rework, avoidable human
+    intervention, or a framework/tool/environment limitation, record a
+    structured observation with `python scripts/ai-team/feedback.py record`.
+    Keep the origin `unknown` until evidence supports a stronger classification.
+16. Generate `python scripts/ai-team/feedback.py retrospective --work-unit WU-ID`
+    after a Work Unit reaches a terminal state, and a project retrospective at
+    the end of an increment or project when requested by the human.
 
 ## Escalation
 
@@ -51,3 +58,6 @@ Investigate authoritative sources before asking the human. If no existing decisi
   dispatched stops without producing a handoff or an event, write the
   BLOCKER yourself before ending your own turn; do not leave the human
   with nothing recorded to act on.
+- Operational events and framework observations are distinct: an event drives
+  the current execution; an observation captures a reusable learning signal.
+  Record both when a blocker is also evidence of a framework-level friction.

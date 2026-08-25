@@ -11,3 +11,8 @@ Before making product changes:
 5. Do not bypass G0-G4 gates.
 6. Do not declare DONE without the required evidence, review, audit, and human acceptance status.
 7. Use structured events from the communication policy instead of leaving important decisions only in chat.
+8. When execution exposes reusable friction, rework, avoidable human intervention,
+   or a framework/tool/environment limitation, also record a structured observation
+   with `python scripts/ai-team/feedback.py record`. Keep the origin `unknown` until
+   evidence supports a stronger classification; the observation does not replace any
+   operational BLOCKER, DEFECT, or DECISION_REQUEST required for the current run.

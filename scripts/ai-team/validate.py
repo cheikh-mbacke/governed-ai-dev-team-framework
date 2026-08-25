@@ -33,6 +33,11 @@ required = [
     ROOT / ".cursor" / "permissions.json",
     ROOT / ".cursor" / "cli.json",
     ROOT / "scripts" / "ai-team" / "migrate.py",
+    ROOT / "scripts" / "ai-team" / "feedback.py",
+    ROOT / "scripts" / "ai-team" / "feedback_common.py",
+    AI / "schemas" / "observation.schema.json",
+    AI / "schemas" / "retrospective.schema.json",
+    AI / "schemas" / "feedback-export.schema.json",
 ]
 for p in required:
     if not p.exists():
@@ -216,6 +221,10 @@ for p in sorted((AI / "evidence").glob("*.yaml")):
     validate_instance(p, "evidence.schema.json")
 for p in sorted((AI / "findings").glob("*.yaml")):
     validate_instance(p, "finding.schema.json")
+for p in sorted((AI / "observations").glob("*.yaml")):
+    validate_instance(p, "observation.schema.json")
+for p in sorted((AI / "retrospectives").glob("*.yaml")):
+    validate_instance(p, "retrospective.schema.json")
 for p in sorted((AI / "decisions").glob("*.yaml")):
     if p.name.startswith("gate-"):
         validate_instance(p, "gate-decision.schema.json")
@@ -227,6 +236,23 @@ for p in sorted((AI / "acceptance").glob("*.yaml")):
     validate_instance(p, "acceptance.schema.json")
 for p in sorted((AI / "releases").glob("*.yaml")):
     validate_instance(p, "release-candidate.schema.json")
+
+# Retrospectives are derived snapshots. Their observation references must
+# continue to resolve so an exported metric can always be traced back to its
+# project-local source object.
+observation_ids = {
+    data.get("id")
+    for path in (AI / "observations").glob("*.yaml")
+    if (data := load_yaml(path)) and data.get("id")
+}
+for retrospective_path in sorted((AI / "retrospectives").glob("*.yaml")):
+    retrospective = load_yaml(retrospective_path) or {}
+    for observation_id in retrospective.get("observation_refs") or []:
+        if observation_id not in observation_ids:
+            errors.append(
+                f"{retrospective_path.relative_to(ROOT)} references missing observation: "
+                f"{observation_id}"
+            )
 
 print("Governed AI Team validation")
 print("=" * 28)

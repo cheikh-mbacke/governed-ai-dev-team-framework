@@ -86,8 +86,13 @@ class CursorCliConfigurationTests(unittest.TestCase):
 
 class PortableHookRunnerTests(unittest.TestCase):
     def run_guard(self, command):
+        runner_command = (
+            r".cursor\hooks\run_hook.cmd .cursor\hooks\guard_shell.py"
+            if os.name == "nt"
+            else ".cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py"
+        )
         return subprocess.run(
-            ".cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py",
+            runner_command,
             input=json.dumps({"command": command}),
             text=True,
             capture_output=True,
@@ -320,7 +325,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual(manifest["version"], "0.2.0")
+            self.assertEqual(manifest["version"], "0.3.0")
             self.assertIn(".cursor/hooks.json", manifest["managed_files"])
 
     def test_propose_allowlist_derives_tokens_from_declared_commands_only(self):
@@ -546,7 +551,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual(manifest["version"], "0.2.0")
+            self.assertEqual(manifest["version"], "0.3.0")
 
     def test_failed_post_update_validation_rolls_back_all_touched_files(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:

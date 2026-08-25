@@ -27,5 +27,6 @@ This implementation follows the supplied design document's major concepts:
 | `definition-of-done.yaml` | Definition of Done |
 | `90-gates-and-autonomy.yaml` | G0-G4 + autonomy levels |
 | `.ai-team/acceptance/` | Human acceptance / defects / remediation |
+| `.ai-team/observations/`, `.ai-team/retrospectives/`, `scripts/ai-team/feedback.py` | Section 32 — metrics and continuous improvement; implemented as evidence-linked observations, deterministic retrospectives, and privacy-conscious exports |
 
 The source document intentionally left some parameters open. This repository chooses explicit reference defaults for WIP, worker counts, activation thresholds, autonomy default, and a baseline permission matrix. Those values are tagged as implementation defaults and are meant to be versioned when changed.

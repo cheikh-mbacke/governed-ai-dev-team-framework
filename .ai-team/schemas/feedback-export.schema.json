@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FrameworkFeedbackExport",
+  "type": "object",
+  "required": [
+    "format_version",
+    "generated_at",
+    "detail_level",
+    "project_ref",
+    "framework_version",
+    "constitution_version",
+    "summary",
+    "observations",
+    "retrospectives"
+  ],
+  "properties": {
+    "format_version": {"const": "1.0"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "detail_level": {"enum": ["aggregate", "structured", "full"]},
+    "project_ref": {"type": "string", "minLength": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "framework_version": {"type": "string", "minLength": 1},
+    "constitution_version": {"type": "string", "minLength": 1},
+    "summary": {"type": "object"},
+    "observations": {"type": "array", "items": {"type": "object"}},
+    "retrospectives": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": false
+}

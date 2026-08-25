@@ -30,6 +30,8 @@ The AI team may analyze, propose, implement, test, review, and audit. It may **n
 - Ready-to-use templates in `.ai-team/templates/`
 - Runtime directories for Work Units, decisions, evidence, findings, audit, release and acceptance
 - Validation and status tooling in `scripts/ai-team/`
+- Structured learning loop for observations, retrospectives, and cross-project
+  exports through `scripts/ai-team/feedback.py`
 - Cross-platform installer in `tools/install.py`
 - An optional, non-installed reference example in `examples/project-a/`
 
@@ -367,6 +369,7 @@ See `docs/SECURITY_MODEL.md`.
 - Architecture, state machine and review pipeline: `docs/ARCHITECTURE.md`.
 - What Cursor governance controls do and don't cover: `docs/SECURITY_MODEL.md`.
 - Where each part of this repository maps back to the base design document: `docs/SOURCE_MAPPING.md`.
+- How to capture and export execution friction: `docs/LEARNING_LOOP.md`.
 
 To verify the framework itself after a change:
 

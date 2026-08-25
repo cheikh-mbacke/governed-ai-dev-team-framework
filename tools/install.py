@@ -38,10 +38,13 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/acceptance/*",
     ".ai-team/context-packages/*",
     ".ai-team/logs/*",
+    ".ai-team/metrics/*",
+    ".ai-team/observations/*",
+    ".ai-team/retrospectives/*",
     ".ai-team/migration-backups/*",
     ".ai-team/project-profile.yaml.bak",
 ]
-SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0"}
+SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0"}
 
 
 def parse_args():

@@ -38,3 +38,25 @@ print(f"Open decisions: {len(state.get('open_decisions') or [])}")
 print(f"Open defects:   {len(state.get('open_defects') or [])}")
 print(f"Open findings:  {len(state.get('open_findings') or [])}")
 print(f"Active workers: {len(state.get('active_workers') or [])}")
+
+observations = []
+for p in (AI / "observations").glob("*.yaml"):
+    try:
+        observations.append(yaml.safe_load(p.read_text(encoding="utf-8")) or {})
+    except Exception:
+        pass
+unresolved = {"open", "acknowledged", "candidate_change"}
+open_observations = [
+    observation
+    for observation in observations
+    if observation.get("status") in unresolved
+]
+print(f"Open observations: {len(open_observations)}")
+if open_observations:
+    categories = Counter(
+        observation.get("category", "unknown") for observation in open_observations
+    )
+    print(
+        "  by category: "
+        + ", ".join(f"{category}={count}" for category, count in sorted(categories.items()))
+    )

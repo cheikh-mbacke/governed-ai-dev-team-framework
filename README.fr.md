@@ -30,6 +30,8 @@ L'équipe IA peut analyser, proposer, implémenter, tester, reviewer et auditer.
 - Templates prêts à l'emploi dans `.ai-team/templates/`
 - Dossiers runtime pour Work Units, décisions, preuves, findings, audit, release et recette
 - Outillage de validation et de statut dans `scripts/ai-team/`
+- Boucle d'apprentissage structurée : observations, rétrospectives et exports
+  inter-projets via `scripts/ai-team/feedback.py`
 - Installeur multiplateforme dans `tools/install.py`
 - Un exemple de référence optionnel, non installé, dans `examples/project-a/`
 
@@ -384,6 +386,7 @@ Voir `docs/SECURITY_MODEL.md`.
 - Architecture, machine à états et pipeline de review : `docs/ARCHITECTURE.md`.
 - Ce que couvrent (et ne couvrent pas) les contrôles Cursor : `docs/SECURITY_MODEL.md`.
 - Correspondance entre ce dépôt et le document de cadrage de base : `docs/SOURCE_MAPPING.md`.
+- Collecte et export des frictions rencontrées : `docs/LEARNING_LOOP.fr.md`.
 
 Pour vérifier le framework lui-même après une modification :
 
