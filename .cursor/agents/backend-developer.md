@@ -23,3 +23,14 @@ commands/tests run, commit SHA, limitations, open questions, contract changes,
 and evidence candidates.
 
 Never merge directly to a protected branch, deploy production, or invent a missing product decision.
+
+## Human visual checkpoint
+
+When this Work Unit stands up or reconfigures an admin/operational console
+of an integrated dependency (e.g. Keycloak, Mailpit, pgAdmin, a queue
+dashboard) that the human can open directly, add `details.human_checkpoint`
+to your handoff event the first time it becomes reachable in a usable state
+— see `80-communication-policy.yaml` `details_conventions.human_checkpoint`
+for the shape and the anti-noise rules (once per Work Unit per surface,
+re-emit only on real change, e.g. a new realm/route/config that changes what
+there is to look at).

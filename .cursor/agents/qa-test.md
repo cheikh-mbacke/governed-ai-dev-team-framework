@@ -37,30 +37,14 @@ For every verification result report:
 
 ## Human visual checkpoint
 
-The human cannot watch every Work Unit render — flag the moment worth their
-own eyes, without turning it into noise. When zone.area is frontend,
-fullstack, or mobile and this is the **first** time in this Work Unit's
-history that all applicable `6_required_states` render correctly under your
-own independent verification, add to the STATUS/HANDOFF event you already
-produce:
-
-```yaml
-details:
-  human_checkpoint:
-    command: "<exact command you used to launch/reach it, e.g. via with_server.py>"
-    why: "<one line: what is now visually verifiable>"
-    states_to_check: [<the required states you actually observed>]
-```
-
-Rules to keep this signal worth reading:
-- At most once per Work Unit per visual milestone. Before emitting, check
-  `.ai-team/events/` for an already-open event on this `work_unit` carrying
-  `human_checkpoint`; if one is open and nothing UI-relevant changed since
-  it was recorded, do not emit another one.
-- Re-emit only when a `CONTRACT_CHANGE` event affecting this Work Unit's UI
-  landed since the last checkpoint, or when a previously-missing required
-  state is now covered — not on every rework/retry loop.
-- Never emit for a Work Unit outside `applies_to.work_unit_zones`
-  (`35-ui-ux-strategy.yaml`), and never as a substitute for your own
-  independent verification — it is a pointer for the human, not a
-  delegation of QA.
+See `80-communication-policy.yaml` `details_conventions.human_checkpoint` for
+the shape and the anti-noise rules (once per Work Unit per surface, re-emit
+only on real change). Your trigger: when zone.area is frontend, fullstack,
+or mobile and this is the **first** time in this Work Unit's history that
+all applicable `6_required_states` render correctly under your own
+independent verification, add `details.human_checkpoint` to the STATUS/
+HANDOFF event you already produce, with `states_to_check` listing the states
+you actually observed. Never emit for a Work Unit outside
+`applies_to.work_unit_zones` (`35-ui-ux-strategy.yaml`), and never as a
+substitute for your own independent verification — it is a pointer for the
+human, not a delegation of QA.
