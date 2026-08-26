@@ -47,6 +47,15 @@ an open execution cycle, so the update stops before writing instead of changing
 policy underneath active work. Finish or explicitly close that cycle, then run
 the dry-run again.
 
+If you need the rest of the update (new scripts, docs, migrations) without
+waiting for the cycle to close, pass `--force-constitution-update`. It bypasses
+the freeze for that one run and activates the new Constitution version anyway.
+Work Units already gated (G1-G4) under the old version are **not**
+retroactively re-validated — the installer records a `CONTRACT_CHANGE` event
+under `.ai-team/events/` with `requires_human: true` so you review the impact
+on in-flight Work Units before their next gate. Treat it as an explicit,
+emergency override, not the normal workflow.
+
 Dry-run uses only the Python standard library and never modifies the target.
 Obsolete files are reported but never deleted automatically.
 

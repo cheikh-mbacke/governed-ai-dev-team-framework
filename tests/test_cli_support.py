@@ -671,6 +671,70 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                 json.loads(marker.read_text(encoding="utf-8"))["version"], "0.3.0"
             )
 
+    def test_update_force_constitution_update_bypasses_freeze_and_logs_event(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            marker = target / ".ai-team" / "framework-version.json"
+            marker_payload = json.loads(marker.read_text(encoding="utf-8"))
+            marker_payload["version"] = "0.3.0"
+            marker.write_text(json.dumps(marker_payload), encoding="utf-8")
+            state_path = target / ".ai-team" / "state" / "project-state.yaml"
+            state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+            state["constitution_version"] = "1.0.0"
+            state["phase"] = "execution"
+            state_path.write_text(
+                yaml.safe_dump(state, sort_keys=False), encoding="utf-8"
+            )
+            self.initialize_git(target)
+            events_dir = target / ".ai-team" / "events"
+            before_events = set(events_dir.glob("*.yaml")) if events_dir.exists() else set()
+
+            result = self.run_command(
+                [
+                    sys.executable,
+                    "tools/install.py",
+                    "--target",
+                    str(target),
+                    "--update",
+                    "--force-constitution-update",
+                ]
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn("WARNING: forcing Constitution", result.stdout)
+            migrated = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+            self.assertEqual(migrated["constitution_version"], "1.1.0")
+
+            after_events = set(events_dir.glob("*.yaml"))
+            new_events = after_events - before_events
+            self.assertEqual(len(new_events), 1)
+            event = yaml.safe_load(new_events.pop().read_text(encoding="utf-8"))
+            self.assertEqual(event["type"], "CONTRACT_CHANGE")
+            self.assertTrue(event["requires_human"])
+            self.assertEqual(event["status"], "open")
+            self.assertEqual(event["details"]["old_constitution_version"], "1.0.0")
+            self.assertEqual(event["details"]["new_constitution_version"], "1.1.0")
+            self.assertEqual(event["details"]["phase_at_override"], "execution")
+
+    def test_force_constitution_update_requires_update_flag(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            result = self.run_command(
+                [
+                    sys.executable,
+                    "tools/install.py",
+                    "--target",
+                    str(target),
+                    "--force-constitution-update",
+                    "--project-id",
+                    "demo",
+                    "--project-name",
+                    "Demo",
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("require --update", result.stderr + result.stdout)
+
     def test_legacy_update_migrates_acceptance_and_keeps_backup(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir) / "target-project"

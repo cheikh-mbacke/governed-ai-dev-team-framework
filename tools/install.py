@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import fnmatch
 import importlib.util
 import json
@@ -79,10 +80,28 @@ def parse_args():
         action="store_true",
         help="with --update, skip post-update validate.py (not recommended)",
     )
+    parser.add_argument(
+        "--force-constitution-update",
+        action="store_true",
+        help=(
+            "with --update, activate a new Constitution version even while the project "
+            "phase is mid-cycle, bypassing the freeze_policy. Records a CONTRACT_CHANGE "
+            "event for human review. Use only when you understand that Work Units already "
+            "gated under the old Constitution are not retroactively re-validated."
+        ),
+    )
     args = parser.parse_args()
-    update_only_flags = args.dry_run or args.allow_dirty or args.skip_validation
+    update_only_flags = (
+        args.dry_run
+        or args.allow_dirty
+        or args.skip_validation
+        or args.force_constitution_update
+    )
     if update_only_flags and not args.update:
-        parser.error("--dry-run, --allow-dirty and --skip-validation require --update")
+        parser.error(
+            "--dry-run, --allow-dirty, --skip-validation and --force-constitution-update "
+            "require --update"
+        )
     if args.update and args.force:
         parser.error("--update and --force are mutually exclusive")
     if not args.update and (not args.project_id or not args.project_name):
@@ -280,6 +299,42 @@ def rollback(paths: list[Path], existing: set[str], target: Path, backup_root: P
             path.unlink()
 
 
+def write_forced_constitution_event(
+    target: Path, old_version: str, new_version: str, phase: str
+) -> Path:
+    timestamp = datetime.now(timezone.utc)
+    event_id = f"EVT-{timestamp:%Y%m%dT%H%M%SZ}-CONSTITUTION-FORCE-UPDATE"
+    events_dir = target / ".ai-team" / "events"
+    events_dir.mkdir(parents=True, exist_ok=True)
+    path = events_dir / f"{event_id}.yaml"
+    summary = (
+        f"Constitution force-updated {old_version} -> {new_version} via "
+        f"'tools/install.py --update --force-constitution-update' while project phase "
+        f"was '{phase}', bypassing freeze_policy."
+    )
+    content = (
+        f"id: {event_id}\n"
+        "type: CONTRACT_CHANGE\n"
+        "work_unit: null\n"
+        f"created_at: '{timestamp.isoformat(timespec='seconds')}'\n"
+        "created_by_role: human\n"
+        f"summary: >-\n  {summary}\n"
+        "details:\n"
+        f"  old_constitution_version: \"{old_version}\"\n"
+        f"  new_constitution_version: \"{new_version}\"\n"
+        f"  phase_at_override: \"{phase}\"\n"
+        "  note: >-\n"
+        "    Work Units already gated (G1/G2/G3/G4) under the old Constitution version\n"
+        "    were not retroactively re-validated against the new version. Review\n"
+        "    open/in-flight Work Units for impact before their next gate.\n"
+        "affected_nodes: []\n"
+        "requires_human: true\n"
+        "status: open\n"
+    )
+    path.write_text(content, encoding="utf-8")
+    return path
+
+
 def print_update_plan(
     target: Path,
     git_state: str,
@@ -352,14 +407,29 @@ def run_update(args, target: Path) -> int:
             installed_constitution_version,
             new_constitution_version,
         )
-        if phase not in {"not_compiled", "completed"}:
+        if phase not in {"not_compiled", "completed"} and not args.force_constitution_update:
             print(
                 "Update aborted before writing files: Constitution "
                 f"{installed_constitution_version} is frozen while project phase is "
                 f"{phase!r}. Finish or explicitly close the current execution cycle "
-                f"before activating Constitution {new_constitution_version}."
+                f"before activating Constitution {new_constitution_version}, or pass "
+                "--force-constitution-update to override at your own risk."
             )
             return 2
+
+    forced_constitution_override = bool(
+        constitution_change
+        and phase not in {"not_compiled", "completed"}
+        and args.force_constitution_update
+    )
+    if forced_constitution_override:
+        print(
+            "WARNING: forcing Constitution "
+            f"{constitution_change[0]} -> {constitution_change[1]} while project phase is "
+            f"{phase!r}. This bypasses freeze_policy; Work Units already gated under "
+            f"Constitution {constitution_change[0]} are NOT retroactively re-validated. "
+            "A CONTRACT_CHANGE event will be recorded for human review."
+        )
 
     git_state, dirty_paths = target_git_status(target)
     entries, managed_files = copy_plan(target)
@@ -466,6 +536,14 @@ def run_update(args, target: Path) -> int:
         print(
             "Activated Constitution "
             f"{constitution_change[1]} for the next safe execution cycle."
+        )
+    if forced_constitution_override:
+        event_path = write_forced_constitution_event(
+            target, constitution_change[0], constitution_change[1], phase
+        )
+        print(
+            f"Recorded {event_path.relative_to(target).as_posix()} "
+            "(CONTRACT_CHANGE, requires_human: true) — review it before the next G4."
         )
     if obsolete:
         print("Obsolete managed files were reported but not deleted.")
