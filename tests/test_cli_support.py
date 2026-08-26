@@ -30,6 +30,8 @@ class CursorCliConfigurationTests(unittest.TestCase):
         self.assertIn("Shell(py:-3 scripts/ai-team/preflight.py*)", allow)
         self.assertIn("Shell(python:scripts/ai-team/propose_allowlist.py*)", allow)
         self.assertIn("Shell(py:-3 scripts/ai-team/propose_allowlist.py*)", allow)
+        self.assertIn("Shell(python:scripts/ai-team/read_docx.py*)", allow)
+        self.assertIn("Shell(py:-3 scripts/ai-team/read_docx.py*)", allow)
         self.assertIn("Write(.ai-team/constitution/**)", deny)
         self.assertIn("Write(.cursor/cli.json)", deny)
         self.assertIn("Write(.cursor/permissions.json)", deny)
@@ -568,6 +570,54 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertIn("WU-FE-0001", result.stdout)
             self.assertNotIn("WU-FE-0002", result.stdout)
             self.assertNotIn("WU-BE-0001", result.stdout)
+
+    def test_read_docx_extracts_paragraphs_and_table_rows(self):
+        try:
+            import docx
+        except ModuleNotFoundError:
+            self.skipTest("python-docx not installed")
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target, "docx-test", "Docx Test")
+
+            document = docx.Document()
+            document.add_paragraph("La VersionExercice devient immuable des l'attribution.")
+            table = document.add_table(rows=1, cols=3)
+            table.rows[0].cells[0].text = "INV-004"
+            table.rows[0].cells[1].text = "INV"
+            table.rows[0].cells[2].text = "Une version deja utilisee est immuable."
+            docx_path = target / "sample.docx"
+            document.save(str(docx_path))
+
+            full = self.run_command(
+                [sys.executable, "scripts/ai-team/read_docx.py", "sample.docx"],
+                cwd=target,
+            )
+            self.assertEqual(full.returncode, 0, full.stderr)
+            self.assertIn("VersionExercice devient immuable", full.stdout)
+            self.assertIn("INV-004 | INV | Une version deja utilisee est immuable.", full.stdout)
+
+            grepped = self.run_command(
+                [
+                    sys.executable,
+                    "scripts/ai-team/read_docx.py",
+                    "sample.docx",
+                    "--grep",
+                    "INV-004",
+                    "--context",
+                    "10",
+                ],
+                cwd=target,
+            )
+            self.assertEqual(grepped.returncode, 0, grepped.stderr)
+            self.assertIn("INV-004", grepped.stdout)
+            self.assertNotIn("VersionExercice", grepped.stdout)
+
+            missing = self.run_command(
+                [sys.executable, "scripts/ai-team/read_docx.py", "does-not-exist.docx"],
+                cwd=target,
+            )
+            self.assertEqual(missing.returncode, 2)
 
     def test_validation_rejects_global_only_settings_in_project_cli_config(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:

@@ -13,18 +13,20 @@
     "python scripts/ai-team/preflight.py",
     "python scripts/ai-team/propose_allowlist.py",
     "python scripts/ai-team/feedback.py",
+    "python scripts/ai-team/read_docx.py",
     "py -3 scripts/ai-team/validate.py",
     "py -3 scripts/ai-team/status.py",
     "py -3 scripts/ai-team/diagnose.py",
     "py -3 scripts/ai-team/preflight.py",
     "py -3 scripts/ai-team/propose_allowlist.py",
-    "py -3 scripts/ai-team/feedback.py"
+    "py -3 scripts/ai-team/feedback.py",
+    "py -3 scripts/ai-team/read_docx.py"
   ],
   "autoRun": {
     "allow_instructions": [
       "Allow read-only repository inspection commands.",
       "Allow project-local unit, integration, lint, typecheck, formatting, and build commands when they do not target production or mutate protected infrastructure.",
-      "Allow the framework validation, status, diagnose, preflight and structured feedback scripts under scripts/ai-team/.",
+      "Allow the framework validation, status, diagnose, preflight, structured feedback, and read_docx scripts under scripts/ai-team/.",
       "Allow starting, stopping, or restarting a local development or test server bound to localhost or a project-configured local port (e.g. npm start, node app.js, python scripts/with_server.py) when it does not target production or a publicly reachable environment.",
       "Allow local browser automation for UI testing via the webapp-testing skill (Playwright scripts, headless chromium) against a local server only.",
       "Allow installing dependencies already declared in the project's own manifest (package.json, requirements.txt, pyproject.toml) via the project's own setup command from project-profile.yaml, or the equivalent standard install command for the declared package manager."
