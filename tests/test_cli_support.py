@@ -504,6 +504,71 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             # Error/warning bodies stay in English regardless of project language.
             self.assertIn("WARN  Project command", validate.stdout)
 
+    def test_status_surfaces_open_human_checkpoints_deduped_by_work_unit(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target, "checkpoint-test", "Checkpoint Test")
+            events_dir = target / ".ai-team" / "events"
+            events_dir.mkdir(parents=True, exist_ok=True)
+
+            def write_event(name, work_unit, status, why):
+                (events_dir / f"{name}.yaml").write_text(
+                    yaml.safe_dump(
+                        {
+                            "id": name,
+                            "type": "STATUS",
+                            "work_unit": work_unit,
+                            "created_at": "2026-08-26T12:00:00+00:00",
+                            "created_by_role": "qa-test",
+                            "summary": "smoke",
+                            "details": {
+                                "human_checkpoint": {
+                                    "command": "npm run dev",
+                                    "why": why,
+                                    "states_to_check": ["initial_state"],
+                                }
+                            },
+                            "affected_nodes": [work_unit],
+                            "requires_human": False,
+                            "status": status,
+                        },
+                        sort_keys=False,
+                    ),
+                    encoding="utf-8",
+                )
+
+            write_event("EVT-OPEN-FE1-OLD", "WU-FE-0001", "open", "first pass")
+            write_event("EVT-OPEN-FE1-NEW", "WU-FE-0001", "open", "second pass")
+            write_event("EVT-CLOSED-FE2", "WU-FE-0002", "closed", "already reviewed")
+            write_event("EVT-NO-CHECKPOINT", "WU-BE-0001", "open", "n/a")
+            (events_dir / "EVT-NO-CHECKPOINT.yaml").write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "EVT-NO-CHECKPOINT",
+                        "type": "STATUS",
+                        "work_unit": "WU-BE-0001",
+                        "created_at": "2026-08-26T12:00:00+00:00",
+                        "created_by_role": "backend-developer",
+                        "summary": "no UI involved",
+                        "details": {},
+                        "affected_nodes": [],
+                        "requires_human": False,
+                        "status": "open",
+                    },
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
+            )
+
+            result = self.run_command(
+                [sys.executable, "scripts/ai-team/status.py"], cwd=target
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Visual checkpoints available: 1", result.stdout)
+            self.assertIn("WU-FE-0001", result.stdout)
+            self.assertNotIn("WU-FE-0002", result.stdout)
+            self.assertNotIn("WU-BE-0001", result.stdout)
+
     def test_validation_rejects_global_only_settings_in_project_cli_config(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir) / "target-project"

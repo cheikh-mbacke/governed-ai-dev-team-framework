@@ -63,3 +63,21 @@ if open_observations:
         "  " + t(LANG, "by category: ", "par categorie : ")
         + ", ".join(f"{category}={count}" for category, count in sorted(categories.items()))
     )
+
+checkpoints = {}
+for p in sorted((AI / "events").glob("*.yaml")):
+    try:
+        event = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    except Exception:
+        continue
+    if event.get("status") != "open":
+        continue
+    checkpoint = (event.get("details") or {}).get("human_checkpoint")
+    if not checkpoint:
+        continue
+    # One line per Work Unit: keep the latest open checkpoint only.
+    checkpoints[event.get("work_unit")] = (event.get("id"), checkpoint)
+print(t(LANG, "Visual checkpoints available:", "Points de controle visuels disponibles :") + f" {len(checkpoints)}")
+for work_unit, (event_id, checkpoint) in sorted(checkpoints.items(), key=lambda kv: kv[0] or ""):
+    print(f"  {work_unit} ({event_id}): {checkpoint.get('command')}")
+    print(f"    {checkpoint.get('why')}")
