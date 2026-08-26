@@ -32,16 +32,37 @@ class CursorCliConfigurationTests(unittest.TestCase):
         self.assertIn("Shell(py:-3 scripts/ai-team/propose_allowlist.py*)", allow)
         self.assertIn("Shell(python:scripts/ai-team/read_docx.py*)", allow)
         self.assertIn("Shell(py:-3 scripts/ai-team/read_docx.py*)", allow)
+        # Themed read-only additions: git reconnaissance verbs beyond the
+        # original status/diff/log/show, and read-only PowerShell cmdlets
+        # (never a write cmdlet like Remove-Item/Set-Content).
+        self.assertIn("Shell(git:rev-parse*)", allow)
+        self.assertIn("Shell(git:merge-base*)", allow)
+        self.assertIn("Shell(git:branch*)", allow)
+        self.assertIn("Shell(Get-ChildItem:*)", allow)
+        self.assertIn("Shell(Select-String:*)", allow)
+        self.assertIn("Shell(Test-Path:*)", allow)
+        for write_cmdlet in ("Remove-Item", "Set-Content", "Stop-Process", "New-Item"):
+            self.assertFalse(
+                any(entry.startswith(f"Shell({write_cmdlet}") for entry in allow),
+                f"{write_cmdlet} must stay behind approval, not be broadly allowed",
+            )
         self.assertIn("Write(.ai-team/constitution/**)", deny)
         self.assertIn("Write(.cursor/cli.json)", deny)
         self.assertIn("Write(.cursor/permissions.json)", deny)
         self.assertIn("Shell(git:reset*--hard*)", deny)
         self.assertIn("Shell(git:commit*--amend*)", deny)
         self.assertIn("Shell(git:rebase*)", deny)
+        # The broadened Shell(git:branch*) allow must not open a path to
+        # force-deleting a branch without approval.
+        self.assertIn("Shell(git:branch*-D*)", deny)
+        self.assertIn("Shell(git:branch*--delete*--force*)", deny)
 
         terminal_allowlist = set(ui_config.get("terminalAllowlist") or [])
         self.assertIn("git add", terminal_allowlist)
         self.assertIn("git commit", terminal_allowlist)
+        self.assertIn("git rev-parse", terminal_allowlist)
+        self.assertIn("git merge-base", terminal_allowlist)
+        self.assertIn("Get-ChildItem", terminal_allowlist)
         self.assertIn("python scripts/ai-team/propose_allowlist.py", terminal_allowlist)
         self.assertIn("py -3 scripts/ai-team/propose_allowlist.py", terminal_allowlist)
 
