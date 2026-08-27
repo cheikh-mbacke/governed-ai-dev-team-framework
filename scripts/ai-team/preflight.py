@@ -18,9 +18,12 @@ import subprocess
 import sys
 
 
+from i18n import project_language, t
+
 ROOT = Path(__file__).resolve().parents[2]
 CURSOR = ROOT / ".cursor"
 HOOK_RUNNER = CURSOR / "hooks" / "run_hook.cmd"
+LANG = project_language(ROOT)
 
 
 def platform_profile() -> str:
@@ -185,7 +188,10 @@ def main() -> int:
     if args.json:
         print(json.dumps(report, indent=2))
     else:
-        print("Governed AI Team preflight")
+        # Field names/statuses below stay in English even in a French
+        # project: they are the technical contract other tooling and docs
+        # (auth-smoke, TERMINAL_GUIDE) reference verbatim - see i18n.py.
+        print(t(LANG, "Governed AI Team preflight", "Verification prealable Governed AI Team"))
         print("=" * 26)
         print(f"platform: {report['platform']}")
         for name, result in report.items():

@@ -49,6 +49,16 @@ phase correspond à un cycle encore ouvert : l'upgrade s'arrête avant d'écrire
 afin de ne pas changer les règles sous une exécution en cours. Termine ou ferme
 explicitement ce cycle, puis relance le dry-run.
 
+Si tu as besoin du reste de la mise à jour (nouveaux scripts, docs,
+migrations) sans attendre la clôture du cycle, passe
+`--force-constitution-update`. Cela contourne le gel pour cette exécution et
+active quand même la nouvelle Constitution. Les Work Units déjà gatées (G1-G4)
+sous l'ancienne version ne sont **pas** revalidées rétroactivement —
+l'installeur enregistre un événement `CONTRACT_CHANGE` sous
+`.ai-team/events/` avec `requires_human: true`, à revoir avant leur prochain
+gate. À traiter comme un contournement d'urgence explicite, pas comme le
+fonctionnement normal.
+
 Le dry-run n'utilise que la bibliothèque standard Python et ne modifie jamais
 la cible. Les fichiers obsolètes sont signalés, mais jamais supprimés
 automatiquement.

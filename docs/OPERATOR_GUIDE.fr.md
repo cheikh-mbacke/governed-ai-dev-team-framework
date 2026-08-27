@@ -27,6 +27,36 @@ Une source doit indiquer :
 
 Le fichier `.ai-team/project-profile.yaml` contient les commandes techniques du projet : build, lint, tests, chemins source/tests/docs, environnement et règles de release. Un exemple commenté est en haut du fichier. C'est le seul autre fichier réellement vide — tout le reste de la Constitution est déjà un default fonctionnel.
 
+## 3b. Perimetre linguistique
+
+`communication.language` dans `project-profile.yaml` regle la facon dont les
+agents vous parlent et la prose destinee a l'humain qu'ils redigent a
+l'execution — titres de Work Unit, questions, rapports generes. Ca ne change
+jamais les cles YAML, les valeurs d'enum, les chemins de fichiers, les
+commandes ou le code, et ca ne change jamais non plus les fichiers livres
+par le framework lui-meme :
+
+- La Constitution, `AGENTS.md`, et les regles/agents/skills Cursor sous
+  `.cursor/` restent en anglais, dans tous les projets, quel que soit
+  `communication.language`. Ces fichiers sont lus par l'agent pour gouverner
+  son propre comportement, pas par vous directement, et une copie traduite
+  d'un texte normatif risquerait de diverger silencieusement de l'original
+  anglais — deux "sources de verite" pour la meme regle, c'est pire qu'une
+  seule source dans une langue qu'on lit une fois.
+- `docs/product/*/README.md` (les dossiers de matiere de construction) et ce
+  guide ont une traduction francaise (`*.fr.md`) maintenue a la main, de la
+  meme facon que `README.fr.md` existe a cote de `README.md` a la racine du
+  depot.
+- Les quelques scripts sous `scripts/ai-team/` qui affichent directement
+  dans votre terminal (`status.py`, `check_done.py`, `feedback.py`,
+  `diagnose.py`) lisent `communication.language` et affichent leurs
+  libelles fixes en francais quand c'est le cas — voir
+  `scripts/ai-team/i18n.py`. `validate.py` et `preflight.py` traduisent
+  leur ligne d'en-tete mais laissent le corps des erreurs et diagnostics en
+  anglais partout, car il est construit a partir de chemins de fichiers, de
+  cles YAML, et de messages des bibliotheques PyYAML/jsonschema qui ne sont
+  jamais traduits non plus.
+
 ## 4. Ouvrir le projet dans Cursor
 
 Utiliser au choix l'IU Cursor ou le Cursor CLI interactif sur le **projet

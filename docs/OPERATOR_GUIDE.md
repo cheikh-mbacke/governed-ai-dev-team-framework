@@ -35,6 +35,33 @@ rules. A commented example is at the top of the file. It's the only
 other file that's genuinely empty — everything else in the Constitution
 is already a working default.
 
+## 3b. Language scope
+
+`communication.language` in `project-profile.yaml` controls how agents talk
+to you and the human-facing prose they write at runtime — Work Unit titles,
+questions, generated reports. It never changes YAML keys, enum values, file
+paths, commands, or code, and it never changes the framework's own shipped
+files:
+
+- The Constitution, `AGENTS.md`, and the Cursor rules/agents/skills under
+  `.cursor/` stay in English, in every project, regardless of
+  `communication.language`. These are read by the agent to govern its own
+  behavior, not by you directly, and a translated copy of normative text
+  would risk silently drifting from the English original — two "sources of
+  truth" for the same rule is worse than one source in a language you have
+  to read once.
+- `docs/product/*/README.md` (the construction-material folders) and this
+  guide have French translations (`*.fr.md`) maintained by hand, the same
+  way `README.fr.md` exists next to `README.md` at the repository root.
+- The handful of scripts under `scripts/ai-team/` that print directly to
+  your terminal (`status.py`, `check_done.py`, `feedback.py`, `diagnose.py`)
+  read `communication.language` and print their fixed labels in French when
+  it says so — see `scripts/ai-team/i18n.py`. `validate.py` and
+  `preflight.py` keep their header line in English/French but leave error
+  and diagnostic bodies in English everywhere, because those are built from
+  file paths, YAML keys, and PyYAML/jsonschema library messages that are
+  never translated either way.
+
 ## 4. Open the project in Cursor
 
 Use either Cursor UI or the interactive Cursor CLI on the **installed project**

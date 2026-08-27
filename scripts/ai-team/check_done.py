@@ -15,12 +15,16 @@ except ModuleNotFoundError:
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
 
-if len(sys.argv) != 2:
-    print("Usage: check_done.py WU-ID")
-    raise SystemExit(2)
+from i18n import project_language, t
 
 ROOT = Path(__file__).resolve().parents[2]
 AI = ROOT / ".ai-team"
+LANG = project_language(ROOT)
+
+if len(sys.argv) != 2:
+    print(t(LANG, "Usage: check_done.py WU-ID", "Usage : check_done.py WU-ID"))
+    raise SystemExit(2)
+
 wu_id = sys.argv[1]
 wu_dir = AI / "work-units"
 
@@ -49,30 +53,34 @@ def find_work_unit_path(wu_dir: Path, wu_id: str):
 
 path, ambiguity = find_work_unit_path(wu_dir, wu_id)
 if ambiguity:
-    print(f"Work Unit id '{wu_id}' is ambiguous: {ambiguity}")
+    print(t(LANG, f"Work Unit id '{wu_id}' is ambiguous: {ambiguity}", f"Identifiant de Work Unit '{wu_id}' ambigu : {ambiguity}"))
     raise SystemExit(2)
 if path is None:
-    print(f"Work Unit not found: {wu_id}")
+    print(t(LANG, f"Work Unit not found: {wu_id}", f"Work Unit introuvable : {wu_id}"))
     raise SystemExit(2)
 wu = yaml.safe_load(path.read_text(encoding="utf-8"))
 req = wu.get("required_verification", {})
 missing = []
 
 if not wu.get("evidence"):
-    missing.append("evidence")
+    missing.append(t(LANG, "evidence", "preuves"))
 if req.get("review") and not wu.get("outcomes", {}).get("review_status") == "approved":
-    missing.append("approved review")
+    missing.append(t(LANG, "approved review", "revue approuvee"))
 if req.get("audit") and not wu.get("outcomes", {}).get("audit_status") == "passed":
-    missing.append("required audit")
+    missing.append(t(LANG, "required audit", "audit requis"))
 if req.get("human_acceptance") and not wu.get("outcomes", {}).get("human_acceptance") in ("passed", "accepted"):
-    missing.append("human acceptance")
+    missing.append(t(LANG, "human acceptance", "acceptation humaine"))
 critical = wu.get("outcomes", {}).get("critical_open_items", [])
 if critical:
-    missing.append("resolution/decision for critical open items")
+    missing.append(t(
+        LANG,
+        "resolution/decision for critical open items",
+        "resolution/decision pour les points critiques ouverts",
+    ))
 
 if missing:
-    print("NOT DONE")
+    print(t(LANG, "NOT DONE", "PAS TERMINE"))
     for item in missing:
-        print(f"- missing: {item}")
+        print(t(LANG, f"- missing: {item}", f"- manquant : {item}"))
     raise SystemExit(1)
-print("DONE prerequisites recorded")
+print(t(LANG, "DONE prerequisites recorded", "Prerequis de cloture enregistres"))

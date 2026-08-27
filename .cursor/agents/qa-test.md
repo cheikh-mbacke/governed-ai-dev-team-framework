@@ -34,3 +34,17 @@ For every verification result report:
 - mocks/stubs/environment limitations;
 - regression coverage;
 - DEFECT objects for failures.
+
+## Human visual checkpoint
+
+See `80-communication-policy.yaml` `details_conventions.human_checkpoint` for
+the shape and the anti-noise rules (once per Work Unit per surface, re-emit
+only on real change). Your trigger: when zone.area is frontend, fullstack,
+or mobile and this is the **first** time in this Work Unit's history that
+all applicable `6_required_states` render correctly under your own
+independent verification, add `details.human_checkpoint` to the STATUS/
+HANDOFF event you already produce, with `states_to_check` listing the states
+you actually observed. Never emit for a Work Unit outside
+`applies_to.work_unit_zones` (`35-ui-ux-strategy.yaml`), and never as a
+substitute for your own independent verification — it is a pointer for the
+human, not a delegation of QA.

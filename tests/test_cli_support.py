@@ -30,16 +30,39 @@ class CursorCliConfigurationTests(unittest.TestCase):
         self.assertIn("Shell(py:-3 scripts/ai-team/preflight.py*)", allow)
         self.assertIn("Shell(python:scripts/ai-team/propose_allowlist.py*)", allow)
         self.assertIn("Shell(py:-3 scripts/ai-team/propose_allowlist.py*)", allow)
+        self.assertIn("Shell(python:scripts/ai-team/read_docx.py*)", allow)
+        self.assertIn("Shell(py:-3 scripts/ai-team/read_docx.py*)", allow)
+        # Themed read-only additions: git reconnaissance verbs beyond the
+        # original status/diff/log/show, and read-only PowerShell cmdlets
+        # (never a write cmdlet like Remove-Item/Set-Content).
+        self.assertIn("Shell(git:rev-parse*)", allow)
+        self.assertIn("Shell(git:merge-base*)", allow)
+        self.assertIn("Shell(git:branch*)", allow)
+        self.assertIn("Shell(Get-ChildItem:*)", allow)
+        self.assertIn("Shell(Select-String:*)", allow)
+        self.assertIn("Shell(Test-Path:*)", allow)
+        for write_cmdlet in ("Remove-Item", "Set-Content", "Stop-Process", "New-Item"):
+            self.assertFalse(
+                any(entry.startswith(f"Shell({write_cmdlet}") for entry in allow),
+                f"{write_cmdlet} must stay behind approval, not be broadly allowed",
+            )
         self.assertIn("Write(.ai-team/constitution/**)", deny)
         self.assertIn("Write(.cursor/cli.json)", deny)
         self.assertIn("Write(.cursor/permissions.json)", deny)
         self.assertIn("Shell(git:reset*--hard*)", deny)
         self.assertIn("Shell(git:commit*--amend*)", deny)
         self.assertIn("Shell(git:rebase*)", deny)
+        # The broadened Shell(git:branch*) allow must not open a path to
+        # force-deleting a branch without approval.
+        self.assertIn("Shell(git:branch*-D*)", deny)
+        self.assertIn("Shell(git:branch*--delete*--force*)", deny)
 
         terminal_allowlist = set(ui_config.get("terminalAllowlist") or [])
         self.assertIn("git add", terminal_allowlist)
         self.assertIn("git commit", terminal_allowlist)
+        self.assertIn("git rev-parse", terminal_allowlist)
+        self.assertIn("git merge-base", terminal_allowlist)
+        self.assertIn("Get-ChildItem", terminal_allowlist)
         self.assertIn("python scripts/ai-team/propose_allowlist.py", terminal_allowlist)
         self.assertIn("py -3 scripts/ai-team/propose_allowlist.py", terminal_allowlist)
 
@@ -463,6 +486,160 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertNotIn("Shell(make:check*)", rerun_report["cli_allow_additions"])
             self.assertIn("Shell(make:install*)", rerun_report["cli_allow_additions"])
 
+    def test_scripts_follow_communication_language_for_their_own_output(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target, "lang-test", "Lang Test")
+            profile_path = target / ".ai-team" / "project-profile.yaml"
+            base_text = profile_path.read_text(encoding="utf-8")
+
+            english_status = self.run_command(
+                [sys.executable, "scripts/ai-team/status.py"], cwd=target
+            )
+            self.assertEqual(english_status.returncode, 0, english_status.stderr)
+            self.assertIn("Project:", english_status.stdout)
+
+            profile_path.write_text(
+                base_text.replace("language: english", "language: français"),
+                encoding="utf-8",
+            )
+            french_status = self.run_command(
+                [sys.executable, "scripts/ai-team/status.py"], cwd=target
+            )
+            self.assertEqual(french_status.returncode, 0, french_status.stderr)
+            self.assertIn("Projet :", french_status.stdout)
+            self.assertNotIn("Project:", french_status.stdout)
+            # Enum values and YAML-facing content are never translated.
+            self.assertIn("not_compiled", french_status.stdout)
+
+            missing_wu = self.run_command(
+                [sys.executable, "scripts/ai-team/check_done.py", "WU-DOES-NOT-EXIST"],
+                cwd=target,
+            )
+            self.assertEqual(missing_wu.returncode, 2)
+            self.assertIn("introuvable", missing_wu.stdout)
+
+            validate = self.run_command(
+                [sys.executable, "scripts/ai-team/validate.py"], cwd=target
+            )
+            self.assertIn("Validation Governed AI Team", validate.stdout)
+            self.assertIn("erreur(s)", validate.stdout)
+            # Error/warning bodies stay in English regardless of project language.
+            self.assertIn("WARN  Project command", validate.stdout)
+
+    def test_status_surfaces_open_human_checkpoints_deduped_by_work_unit(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target, "checkpoint-test", "Checkpoint Test")
+            events_dir = target / ".ai-team" / "events"
+            events_dir.mkdir(parents=True, exist_ok=True)
+
+            def write_event(name, work_unit, status, why):
+                (events_dir / f"{name}.yaml").write_text(
+                    yaml.safe_dump(
+                        {
+                            "id": name,
+                            "type": "STATUS",
+                            "work_unit": work_unit,
+                            "created_at": "2026-08-26T12:00:00+00:00",
+                            "created_by_role": "qa-test",
+                            "summary": "smoke",
+                            "details": {
+                                "human_checkpoint": {
+                                    "command": "npm run dev",
+                                    "why": why,
+                                    "states_to_check": ["initial_state"],
+                                }
+                            },
+                            "affected_nodes": [work_unit],
+                            "requires_human": False,
+                            "status": status,
+                        },
+                        sort_keys=False,
+                    ),
+                    encoding="utf-8",
+                )
+
+            write_event("EVT-OPEN-FE1-OLD", "WU-FE-0001", "open", "first pass")
+            write_event("EVT-OPEN-FE1-NEW", "WU-FE-0001", "open", "second pass")
+            write_event("EVT-CLOSED-FE2", "WU-FE-0002", "closed", "already reviewed")
+            write_event("EVT-NO-CHECKPOINT", "WU-BE-0001", "open", "n/a")
+            (events_dir / "EVT-NO-CHECKPOINT.yaml").write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "EVT-NO-CHECKPOINT",
+                        "type": "STATUS",
+                        "work_unit": "WU-BE-0001",
+                        "created_at": "2026-08-26T12:00:00+00:00",
+                        "created_by_role": "backend-developer",
+                        "summary": "no UI involved",
+                        "details": {},
+                        "affected_nodes": [],
+                        "requires_human": False,
+                        "status": "open",
+                    },
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
+            )
+
+            result = self.run_command(
+                [sys.executable, "scripts/ai-team/status.py"], cwd=target
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Visual checkpoints available: 1", result.stdout)
+            self.assertIn("WU-FE-0001", result.stdout)
+            self.assertNotIn("WU-FE-0002", result.stdout)
+            self.assertNotIn("WU-BE-0001", result.stdout)
+
+    def test_read_docx_extracts_paragraphs_and_table_rows(self):
+        try:
+            import docx
+        except ModuleNotFoundError:
+            self.skipTest("python-docx not installed")
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target, "docx-test", "Docx Test")
+
+            document = docx.Document()
+            document.add_paragraph("La VersionExercice devient immuable des l'attribution.")
+            table = document.add_table(rows=1, cols=3)
+            table.rows[0].cells[0].text = "INV-004"
+            table.rows[0].cells[1].text = "INV"
+            table.rows[0].cells[2].text = "Une version deja utilisee est immuable."
+            docx_path = target / "sample.docx"
+            document.save(str(docx_path))
+
+            full = self.run_command(
+                [sys.executable, "scripts/ai-team/read_docx.py", "sample.docx"],
+                cwd=target,
+            )
+            self.assertEqual(full.returncode, 0, full.stderr)
+            self.assertIn("VersionExercice devient immuable", full.stdout)
+            self.assertIn("INV-004 | INV | Une version deja utilisee est immuable.", full.stdout)
+
+            grepped = self.run_command(
+                [
+                    sys.executable,
+                    "scripts/ai-team/read_docx.py",
+                    "sample.docx",
+                    "--grep",
+                    "INV-004",
+                    "--context",
+                    "10",
+                ],
+                cwd=target,
+            )
+            self.assertEqual(grepped.returncode, 0, grepped.stderr)
+            self.assertIn("INV-004", grepped.stdout)
+            self.assertNotIn("VersionExercice", grepped.stdout)
+
+            missing = self.run_command(
+                [sys.executable, "scripts/ai-team/read_docx.py", "does-not-exist.docx"],
+                cwd=target,
+            )
+            self.assertEqual(missing.returncode, 2)
+
     def test_validation_rejects_global_only_settings_in_project_cli_config(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir) / "target-project"
@@ -629,6 +806,70 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(
                 json.loads(marker.read_text(encoding="utf-8"))["version"], "0.3.0"
             )
+
+    def test_update_force_constitution_update_bypasses_freeze_and_logs_event(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            self.install_target(target)
+            marker = target / ".ai-team" / "framework-version.json"
+            marker_payload = json.loads(marker.read_text(encoding="utf-8"))
+            marker_payload["version"] = "0.3.0"
+            marker.write_text(json.dumps(marker_payload), encoding="utf-8")
+            state_path = target / ".ai-team" / "state" / "project-state.yaml"
+            state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+            state["constitution_version"] = "1.0.0"
+            state["phase"] = "execution"
+            state_path.write_text(
+                yaml.safe_dump(state, sort_keys=False), encoding="utf-8"
+            )
+            self.initialize_git(target)
+            events_dir = target / ".ai-team" / "events"
+            before_events = set(events_dir.glob("*.yaml")) if events_dir.exists() else set()
+
+            result = self.run_command(
+                [
+                    sys.executable,
+                    "tools/install.py",
+                    "--target",
+                    str(target),
+                    "--update",
+                    "--force-constitution-update",
+                ]
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn("WARNING: forcing Constitution", result.stdout)
+            migrated = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+            self.assertEqual(migrated["constitution_version"], "1.1.0")
+
+            after_events = set(events_dir.glob("*.yaml"))
+            new_events = after_events - before_events
+            self.assertEqual(len(new_events), 1)
+            event = yaml.safe_load(new_events.pop().read_text(encoding="utf-8"))
+            self.assertEqual(event["type"], "CONTRACT_CHANGE")
+            self.assertTrue(event["requires_human"])
+            self.assertEqual(event["status"], "open")
+            self.assertEqual(event["details"]["old_constitution_version"], "1.0.0")
+            self.assertEqual(event["details"]["new_constitution_version"], "1.1.0")
+            self.assertEqual(event["details"]["phase_at_override"], "execution")
+
+    def test_force_constitution_update_requires_update_flag(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "target-project"
+            result = self.run_command(
+                [
+                    sys.executable,
+                    "tools/install.py",
+                    "--target",
+                    str(target),
+                    "--force-constitution-update",
+                    "--project-id",
+                    "demo",
+                    "--project-name",
+                    "Demo",
+                ]
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("require --update", result.stderr + result.stdout)
 
     def test_legacy_update_migrates_acceptance_and_keeps_backup(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
