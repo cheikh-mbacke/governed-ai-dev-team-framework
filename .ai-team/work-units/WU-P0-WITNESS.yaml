@@ -39,11 +39,18 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P0-WITNESS
-status: ready
-events: []
-evidence: []
+status: done
+events:
+  - EVT-20260828-184500-orchestrator-start
+  - EVT-20260828-184800-backend-handoff
+  - EVT-20260828-185000-qa-pass
+  - EVT-20260828-185100-review-approved
+  - EVT-20260828-185200-wu-done
+evidence:
+  - EV-WU-P0-WITNESS-integration
+  - EV-WU-P0-WITNESS-review
 outcomes:
-  review_status: pending
+  review_status: approved_with_notes
   audit_status: not_required
   critical_open_items: []
   defects: []

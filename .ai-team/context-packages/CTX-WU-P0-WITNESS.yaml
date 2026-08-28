@@ -1,7 +1,7 @@
 id: CTX-WU-P0-WITNESS
 work_unit: WU-P0-WITNESS
 role: backend-developer
-assembled_at: null
+assembled_at: '2026-08-28T18:45:00+00:00'
 items:
 - level: L0_constitution
   source: .ai-team/constitution/constitution.yaml

@@ -114,7 +114,7 @@ work_units:
     milestone: M-P0
     risk: medium
   WU-P0-WITNESS:
-    status: ready
+    status: done
     milestone: M-P0
     risk: medium
   WU-P1-SCAFFOLD:
@@ -434,4 +434,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-28T20:51:00+00:00'
+last_updated: '2026-08-28T18:52:00+00:00'

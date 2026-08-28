@@ -1,0 +1,12 @@
+id: EV-WU-P0-WITNESS-review
+work_unit: WU-P0-WITNESS
+type: code_review
+commit_sha: e3a6c03c91f9d8a569b7bbd88165d425f6e2da01
+recorded_at: '2026-08-28T18:50:00+00:00'
+recorded_by_role: code-reviewer
+result: approved_with_notes
+summary: "Revue APPROVED_WITH_NOTES — criteres Doc 13/14 couverts ; notes evidence et precision tests."
+findings_open:
+  - F-002
+  - F-003
+  - F-004
