@@ -44,11 +44,27 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P1-COMMON
-status: in_progress
-events: []
-evidence: []
+status: done
+events:
+  - EVT-20260828-201800-orchestrator-start
+  - EVT-20260828-203000-backend-handoff
+  - EVT-20260828-204500-qa-pass
+  - EVT-20260828-204600-review-approved
+evidence:
+  - id: EVD-WU-P1-COMMON-IMPL
+    type: implementation
+    commit_sha: bb84d42e9db1793272bb77e205355b18f14eee26
+    verified_by: backend-developer
+  - id: EVD-WU-P1-COMMON-QA
+    type: qa
+    commit_sha: bb84d42e9db1793272bb77e205355b18f14eee26
+    event: EVT-20260828-204500-qa-pass
+  - id: EVD-WU-P1-COMMON-REVIEW
+    type: review
+    commit_sha: bb84d42e9db1793272bb77e205355b18f14eee26
+    event: EVT-20260828-204600-review-approved
 outcomes:
-  review_status: pending
+  review_status: approved_with_notes
   audit_status: not_required
   critical_open_items: []
   defects: []

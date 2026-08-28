@@ -122,7 +122,7 @@ work_units:
     milestone: M-P1
     risk: high
   WU-P1-COMMON:
-    status: in_progress
+    status: done
     milestone: M-P1
     risk: high
   WU-P1-FEEDBACK-MOD:
@@ -359,11 +359,7 @@ open_decisions: []
 open_blockers: []
 open_defects: []
 open_findings: []
-active_workers:
-- role: backend-developer
-  work_unit: WU-P1-COMMON
-  branch: wu/WU-P1-COMMON
-  started_at: '2026-08-28T20:18:00+00:00'
+active_workers: []
 staffing_proposal:
   default_roles:
   - backend-developer
@@ -438,4 +434,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-28T20:18:00+00:00'
+last_updated: '2026-08-28T20:56:00+00:00'
