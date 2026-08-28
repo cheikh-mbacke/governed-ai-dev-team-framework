@@ -4,35 +4,21 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter
-from copy import deepcopy
-import hashlib
-from pathlib import Path
 import sys
 
 try:
-    from feedback_common import (
-        AI,
-        ROOT,
-        atomic_write_json,
-        atomic_write_yaml,
-        find_work_unit,
-        generated_id,
-        load_yaml_directory,
-        metadata,
-        now_iso,
-        observation_summary,
-        relates_to_work_unit,
-        validate_payload,
-    )
+    from feedback_common import ROOT
 except ModuleNotFoundError:
     print("Missing dependency: PyYAML and/or jsonschema. Install requirements first.")
     raise SystemExit(1)
 
+from governed_ai.core.workspace import Workspace
+from governed_ai.feedback import commands
+
 from i18n import project_language, t
 
 LANG = project_language(ROOT)
-
+WORKSPACE = Workspace.from_root(ROOT)
 
 CATEGORIES = [
     "readiness",
@@ -115,226 +101,83 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def record_observation(args: argparse.Namespace) -> int:
-    if args.blocked_minutes < 0:
-        raise ValueError("--blocked-minutes cannot be negative")
-    if args.work_unit and find_work_unit(args.work_unit) is None:
-        raise ValueError(f"Work Unit not found: {args.work_unit}")
-    for work_unit in args.affected_work_unit:
-        if find_work_unit(work_unit) is None:
-            raise ValueError(f"Affected Work Unit not found: {work_unit}")
-
-    meta = metadata()
-    observation_id = generated_id("OBS")
-    payload = {
-        "id": observation_id,
-        "recorded_at": now_iso(),
-        "recorded_by": args.recorded_by,
-        "project_id": meta["project_id"],
-        "framework_version": meta["framework_version"],
-        "constitution_version": meta["constitution_version"],
-        "work_unit": args.work_unit,
-        "phase": args.phase or meta["phase"],
-        "category": args.category,
-        "severity": args.severity,
-        "symptom": args.symptom,
-        "classification": {
-            "origin": args.origin,
-            "confidence": args.confidence,
-        },
-        "impact": {
-            "blocked_minutes": args.blocked_minutes,
-            "rework_required": args.rework_required,
-            "human_intervention": args.human_intervention,
-            "affected_work_units": sorted(set(args.affected_work_unit)),
-        },
-        "evidence_refs": sorted(set(args.evidence_ref)),
-        "workaround": args.workaround,
-        "candidate_improvement": args.candidate_improvement,
-        "recurrence_key": args.recurrence_key,
-        "status": args.status,
-        "resolution": args.resolution,
-    }
-    validate_payload(payload, "observation.schema.json")
-    path = AI / "observations" / f"{observation_id}.yaml"
-    atomic_write_yaml(path, payload)
-    print(t(LANG, f"Recorded {observation_id}: {path.relative_to(ROOT)}", f"Enregistre {observation_id} : {path.relative_to(ROOT)}"))
+    result = commands.record_observation(
+        WORKSPACE,
+        commands.RecordObservationParams(
+            category=args.category,
+            symptom=args.symptom,
+            severity=args.severity,
+            origin=args.origin,
+            confidence=args.confidence,
+            work_unit=args.work_unit,
+            phase=args.phase,
+            recorded_by=args.recorded_by,
+            blocked_minutes=args.blocked_minutes,
+            rework_required=args.rework_required,
+            human_intervention=args.human_intervention,
+            affected_work_unit=tuple(args.affected_work_unit),
+            evidence_ref=tuple(args.evidence_ref),
+            workaround=args.workaround,
+            candidate_improvement=args.candidate_improvement,
+            recurrence_key=args.recurrence_key,
+            status=args.status,
+            resolution=args.resolution,
+        ),
+    )
+    print(
+        t(
+            LANG,
+            f"Recorded {result.observation_id}: {result.display_path}",
+            f"Enregistre {result.observation_id} : {result.display_path}",
+        )
+    )
     return 0
-
-
-def _scoped_objects(directory: str, work_unit_id: str | None) -> list[dict]:
-    return [
-        payload
-        for _path, payload in load_yaml_directory(AI / directory)
-        if relates_to_work_unit(payload, work_unit_id)
-    ]
 
 
 def generate_retrospective(args: argparse.Namespace) -> int:
-    meta = metadata()
-    work_unit_id = args.work_unit
-    work_units = []
-    if work_unit_id:
-        found = find_work_unit(work_unit_id)
-        if found is None:
-            raise ValueError(f"Work Unit not found: {work_unit_id}")
-        work_units = [found[1]]
-        scope_type = "work_unit"
-        scope_ref = work_unit_id
-    else:
-        work_units = [data for _path, data in load_yaml_directory(AI / "work-units")]
-        scope_type = "project"
-        scope_ref = meta["project_id"]
-
-    observations = _scoped_objects("observations", work_unit_id)
-    events = _scoped_objects("events", work_unit_id)
-    decisions = _scoped_objects("decisions", work_unit_id)
-    findings = _scoped_objects("findings", work_unit_id)
-    acceptances = _scoped_objects("acceptance", work_unit_id)
-    summary, signals = observation_summary(observations)
-    signals["event_types"] = dict(
-        sorted(Counter(item.get("type", "unknown") for item in events).items())
+    result = commands.generate_retrospective(
+        WORKSPACE,
+        commands.RetrospectiveParams(
+            work_unit=args.work_unit,
+            project=args.project,
+            notes=args.notes,
+            output=args.output,
+        ),
     )
-    signals["work_unit_statuses"] = dict(
-        sorted(Counter(item.get("status", "unknown") for item in work_units).items())
+    print(
+        t(
+            LANG,
+            f"Generated {result.retrospective_id}: {result.display_path}",
+            f"Genere {result.retrospective_id} : {result.display_path}",
+        )
     )
-    unresolved = {"open", "acknowledged", "candidate_change"}
-
-    retrospective_id = generated_id("RET")
-    payload = {
-        "id": retrospective_id,
-        "generated_at": now_iso(),
-        "project_id": meta["project_id"],
-        "framework_version": meta["framework_version"],
-        "constitution_version": meta["constitution_version"],
-        "scope": {"type": scope_type, "ref": scope_ref},
-        "source_snapshot": {
-            "observations": len(observations),
-            "events": len(events),
-            "decisions": len(decisions),
-            "findings": len(findings),
-            "acceptances": len(acceptances),
-            "work_units": len(work_units),
-        },
-        "observation_summary": summary,
-        "signals": signals,
-        "observation_refs": [item["id"] for item in observations],
-        "unresolved_observation_refs": [
-            item["id"] for item in observations if item.get("status") in unresolved
-        ],
-        "notes": args.notes,
-        "status": "generated",
-    }
-    validate_payload(payload, "retrospective.schema.json")
-    path = (
-        Path(args.output).expanduser().resolve()
-        if args.output
-        else AI / "retrospectives" / f"{retrospective_id}.yaml"
-    )
-    atomic_write_yaml(path, payload)
-    try:
-        shown = path.relative_to(ROOT)
-    except ValueError:
-        shown = path
-    print(t(LANG, f"Generated {retrospective_id}: {shown}", f"Genere {retrospective_id} : {shown}"))
     return 0
 
 
-def _hash_ref(value: str | None) -> str:
-    return hashlib.sha256((value or "unknown").encode("utf-8")).hexdigest()[:12]
-
-
-def _structured_observation(item: dict) -> dict:
-    recurrence = item.get("recurrence_key")
-    return {
-        "id": item.get("id"),
-        "category": item.get("category"),
-        "severity": item.get("severity"),
-        "origin": (item.get("classification") or {}).get("origin"),
-        "confidence": (item.get("classification") or {}).get("confidence"),
-        "impact": item.get("impact") or {},
-        "recurrence_ref": _hash_ref(recurrence) if recurrence else None,
-        "status": item.get("status"),
-    }
-
-
-def _full_without_project_id(item: dict, project_ref: str, include_id: bool) -> dict:
-    result = deepcopy(item)
-    if not include_id:
-        result.pop("project_id", None)
-        result["project_ref"] = project_ref
-        if (result.get("scope") or {}).get("type") == "project":
-            result["scope"]["ref"] = project_ref
-    return result
-
-
 def export_feedback(args: argparse.Namespace) -> int:
-    meta = metadata()
-    observations = [data for _path, data in load_yaml_directory(AI / "observations")]
-    retrospectives = [
-        data for _path, data in load_yaml_directory(AI / "retrospectives")
-    ]
-    summary, signals = observation_summary(observations)
-    summary["signals"] = signals
-    summary["retrospectives"] = len(retrospectives)
-    project_ref = _hash_ref(meta["project_id"])
-
-    if args.detail_level == "aggregate":
-        exported_observations = []
-        exported_retrospectives = []
-    elif args.detail_level == "structured":
-        exported_observations = [_structured_observation(item) for item in observations]
-        exported_retrospectives = [
-            {
-                "id": item.get("id"),
-                "scope_type": (item.get("scope") or {}).get("type"),
-                "observation_summary": item.get("observation_summary") or {},
-                "signals": item.get("signals") or {},
-                "status": item.get("status"),
-            }
-            for item in retrospectives
-        ]
-    else:
-        exported_observations = [
-            _full_without_project_id(item, project_ref, args.include_project_id)
-            for item in observations
-        ]
-        exported_retrospectives = [
-            _full_without_project_id(item, project_ref, args.include_project_id)
-            for item in retrospectives
-        ]
-
-    payload = {
-        "format_version": "1.0",
-        "generated_at": now_iso(),
-        "detail_level": args.detail_level,
-        "project_ref": project_ref,
-        "framework_version": meta["framework_version"],
-        "constitution_version": meta["constitution_version"],
-        "summary": summary,
-        "observations": exported_observations,
-        "retrospectives": exported_retrospectives,
-    }
-    if args.include_project_id:
-        payload["project_id"] = meta["project_id"]
-    validate_payload(payload, "feedback-export.schema.json")
-    timestamp = now_iso().replace(":", "").replace("+00:00", "Z")
-    path = (
-        Path(args.output).expanduser().resolve()
-        if args.output
-        else AI / "metrics" / f"framework-feedback-{timestamp}.json"
+    result = commands.export_feedback(
+        WORKSPACE,
+        commands.ExportParams(
+            detail_level=args.detail_level,
+            include_project_id=args.include_project_id,
+            output=args.output,
+        ),
     )
-    atomic_write_json(path, payload)
-    try:
-        shown = path.relative_to(ROOT)
-    except ValueError:
-        shown = path
-    print(t(LANG, f"Exported {args.detail_level} feedback: {shown}", f"Export {args.detail_level} genere : {shown}"))
-    if args.detail_level == "full":
-        print(t(
+    print(
+        t(
             LANG,
-            "WARNING: full exports may contain project-sensitive free text and references.",
-            "ATTENTION : un export complet peut contenir du texte libre et des references sensibles au projet.",
-        ))
+            f"Exported {result.detail_level} feedback: {result.display_path}",
+            f"Export {result.detail_level} genere : {result.display_path}",
+        )
+    )
+    if result.show_full_warning:
+        print(
+            t(
+                LANG,
+                "WARNING: full exports may contain project-sensitive free text and references.",
+                "ATTENTION : un export complet peut contenir du texte libre et des references sensibles au projet.",
+            )
+        )
     return 0
 
 
