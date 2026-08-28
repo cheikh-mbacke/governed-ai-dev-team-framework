@@ -47,12 +47,18 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P0-BASELINE
-status: in_progress
+status: done
 events:
   - EVT-20260828-170600-orchestrator-start
-evidence: []
+  - EVT-20260828-171500-backend-handoff
+  - EVT-20260828-171600-qa-pass
+  - EVT-20260828-172000-review-approved
+evidence:
+  - EV-WU-P0-BASELINE-unit-tests
+  - EV-WU-P0-BASELINE-integration
+  - EV-WU-P0-BASELINE-review
 outcomes:
-  review_status: pending
+  review_status: approved
   audit_status: not_required
   critical_open_items: []
   defects: []

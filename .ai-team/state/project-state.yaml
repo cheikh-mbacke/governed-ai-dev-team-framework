@@ -106,11 +106,11 @@ increments:
 releases: []
 work_units:
   WU-P0-BASELINE:
-    status: in_progress
+    status: done
     milestone: M-P0
     risk: medium
   WU-P0-FIXTURES:
-    status: ready
+    status: done
     milestone: M-P0
     risk: medium
   WU-P0-WITNESS:
@@ -359,11 +359,7 @@ open_decisions: []
 open_blockers: []
 open_defects: []
 open_findings: []
-active_workers:
-- role: backend-developer
-  work_unit: WU-P0-BASELINE
-  branch: wu/WU-P0-BASELINE
-  started_at: '2026-08-28T17:06:00+00:00'
+active_workers: []
 staffing_proposal:
   default_roles:
   - backend-developer
@@ -438,4 +434,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-28T17:06:00+00:00'
+last_updated: '2026-08-28T20:51:00+00:00'

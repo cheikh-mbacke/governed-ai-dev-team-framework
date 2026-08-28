@@ -47,13 +47,19 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P0-FIXTURES
-status: in_progress
+status: done
 events:
   - EVT-20260828-183200-orchestrator-start
   - EVT-20260828-203500-backend-handoff
-evidence: []
+  - EVT-20260828-204100-qa-pass
+  - EVT-20260828-204200-review-changes-requested
+  - EVT-20260828-205000-review-approved
+  - EVT-20260828-205100-wu-done
+evidence:
+  - EV-WU-P0-FIXTURES-unit-tests
+  - EV-WU-P0-FIXTURES-review
 outcomes:
-  review_status: pending
+  review_status: approved_with_notes
   audit_status: not_required
   critical_open_items: []
   defects: []
