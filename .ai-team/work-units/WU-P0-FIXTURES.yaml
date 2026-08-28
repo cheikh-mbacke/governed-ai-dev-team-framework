@@ -47,8 +47,10 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P0-FIXTURES
-status: ready
-events: []
+status: in_progress
+events:
+  - EVT-20260828-183200-orchestrator-start
+  - EVT-20260828-203500-backend-handoff
 evidence: []
 outcomes:
   review_status: pending

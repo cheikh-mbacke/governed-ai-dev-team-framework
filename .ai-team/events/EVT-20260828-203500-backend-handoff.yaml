@@ -1,0 +1,32 @@
+id: EVT-20260828-203500-backend-handoff
+type: HANDOFF
+work_unit: WU-P0-FIXTURES
+created_at: '2026-08-28T20:35:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff implémentation WU-P0-FIXTURES — fixtures objets golden, inventaire propriétaires 214 chemins, validateur ownership."
+details:
+  commit_sha: 6f9b3b0e061621ddc773e39826a0b3a95d9a4c43
+  branch: wu/WU-P0-FIXTURES
+  files_created:
+    - scripts/ai-team/validate_ownership.py
+    - tests/fixtures/legacy-0.4/file-ownership-inventory.json
+    - tests/fixtures/legacy-0.4/objects-manifest.json
+    - tests/fixtures/legacy-0.4/objects/project-profile.yaml
+    - tests/fixtures/legacy-0.4/objects/project-state.yaml
+    - tests/fixtures/legacy-0.4/objects/work-unit.yaml
+    - tests/fixtures/legacy-0.4/objects/gate-decision.yaml
+    - tests/fixtures/legacy-0.4/objects/observation.yaml
+    - tests/fixtures/legacy-0.4/objects/retrospective.yaml
+    - tests/fixtures/legacy-0.4/objects/installation-manifest.json
+    - tests/test_file_ownership.py
+  tests_run: "python -m pytest tests/test_file_ownership.py -q → 14 passed; python -m ruff check scripts/ai-team/validate_ownership.py → clean"
+  lint: "python -m ruff check scripts/ai-team/validate_ownership.py → All checks passed"
+  acceptance_criteria_met: true
+  limitations:
+    - "Tests CLI golden (test_cli_golden) échouent par dérive project-state vs capture baseline — non introduit par ce commit ; install copie l'état .ai-team courant"
+    - "installation-manifest.json modélise framework-version.json v1 ; installation-record v2 reporté à WU-P5-INSTALL-RECORD"
+    - "Inventaire régénérable via python scripts/ai-team/validate_ownership.py --generate"
+affected_nodes:
+  - WU-P0-FIXTURES
+requires_human: false
+status: open
