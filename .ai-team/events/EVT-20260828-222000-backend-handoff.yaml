@@ -1,0 +1,33 @@
+id: EVT-20260828-222000-backend-handoff
+type: HANDOFF
+work_unit: WU-P2-BUNDLE-SCHEMA
+created_at: '2026-08-28T22:20:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P2-BUNDLE-SCHEMA — schémas JSON Schema Draft 2020-12 du Published Contract Bundle v1, hash canonique et validation CT-001..007."
+details:
+  commit_sha: pending
+  branch: wu/WU-P2-BUNDLE-SCHEMA
+  extension_namespacing: "Root properties matching ^x-[a-z0-9]+(-[a-z0-9]+)+$ (ex. x-vendor-meta); additionalProperties false elsewhere."
+  checks:
+    ruff: pass
+    architecture_pytest: "5 passed"
+    contracts_pytest: "7 passed (CT-001..CT-007)"
+    full_pytest: "71 passed, 13 failed, 2 skipped (aucune nouvelle régression vs baseline ~13)"
+  files:
+    - src/governed_ai/contracts/schemas/bundle-manifest.schema.json
+    - src/governed_ai/contracts/schemas/role-definition-revision.schema.json
+    - src/governed_ai/contracts/schemas/procedure-revision.schema.json
+    - src/governed_ai/contracts/bundle_hash.py
+    - src/governed_ai/contracts/validate_bundle.py
+    - src/governed_ai/contracts/__init__.py
+    - src/governed_ai/contracts/schemas/__init__.py
+    - tests/contracts/test_bundle.py
+    - tests/contracts/bundle_fixtures.py
+  limitations:
+    - "Incompatibilité capacité procédure↔rôle (Doc 12 §2.4) non couverte — hors CT-001..007."
+    - "Catalogue rôles/procédures complet différé à WU-P2-ROLES / WU-P2-PROCEDURES."
+    - "Publication atomique / immutabilité runtime différée à WU-P2-PUBLISH."
+affected_nodes:
+  - WU-P2-BUNDLE-SCHEMA
+requires_human: false
+status: open
