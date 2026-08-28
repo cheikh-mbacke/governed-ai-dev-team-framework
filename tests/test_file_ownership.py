@@ -73,6 +73,35 @@ class FileOwnershipInventoryTests(unittest.TestCase):
     def test_validate_ownership_script_importable(self):
         self.assertTrue(INVENTORY_PATH.is_file())
 
+    def test_migration_backups_gitignore_is_core(self):
+        path = ".ai-team/migration-backups/.gitignore"
+        self.assertEqual(classify_owner(path), "core")
+        inventory = load_json(INVENTORY_PATH)
+        self.assertEqual(inventory["files"][path], "core")
+
+    def test_managed_files_classify_as_non_project(self):
+        framework_version = load_json(ROOT / ".ai-team" / "framework-version.json")
+        for path in framework_version["managed_files"]:
+            if not path.startswith(".ai-team/") and not path.startswith("scripts/"):
+                continue
+            if not any(
+                path.startswith(prefix)
+                for prefix in (
+                    ".ai-team/constitution/",
+                    ".ai-team/schemas/",
+                    ".ai-team/templates/",
+                    ".ai-team/migration-backups/",
+                    "scripts/ai-team/",
+                )
+            ):
+                continue
+            owner = classify_owner(path)
+            self.assertNotEqual(
+                owner,
+                "project",
+                f"managed_file {path} must not be classified as project",
+            )
+
 
 class GoldenObjectFixturesTests(unittest.TestCase):
     @classmethod

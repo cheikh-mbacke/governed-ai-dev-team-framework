@@ -48,6 +48,8 @@ def classify_owner(path: str) -> str:
         return "core"
     if p.startswith(".ai-team/templates/"):
         return "core"
+    if p == ".ai-team/migration-backups/.gitignore":
+        return "core"
 
     project_prefixes = (
         ".ai-team/project-profile.yaml",
