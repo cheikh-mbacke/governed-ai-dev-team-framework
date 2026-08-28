@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "version": "0.4.0",
+  "description": "Golden fixture for 0.4.x installed manifest (framework-version.json shape before installation-record v2).",
+  "managed_files": [
+    ".ai-team/constitution/constitution.yaml",
+    ".ai-team/schemas/work-unit.schema.json",
+    ".ai-team/templates/work-unit.yaml",
+    ".cursor/hooks.json",
+    ".cursor/rules/00-governance.mdc",
+    "AGENTS.md",
+    "scripts/ai-team/validate.py",
+    "tools/install.py"
+  ]
+}

@@ -1,0 +1,31 @@
+project_id: golden-fixture-project
+constitution_version: 1.1.0
+phase: execution
+gates:
+  G0:
+    status: passed
+    evaluated_at: '2026-01-01T00:00:00Z'
+    note: Golden fixture gate snapshot.
+  G1:
+    status: approved
+    by: fixture-operator
+    at: '2026-01-01T00:00:00Z'
+    note: Golden fixture execution plan approved.
+  G2:
+    status: not_required
+  G3:
+    status: not_required
+  G4:
+    status: not_required
+work_units:
+  WU-GOLDEN-FIXTURE:
+    status: in_progress
+    milestone: M-P0
+    risk: low
+dependency_edges: []
+active_workers: []
+open_decisions: []
+open_blockers: []
+open_defects: []
+open_findings: []
+last_updated: '2026-01-01T00:00:00Z'

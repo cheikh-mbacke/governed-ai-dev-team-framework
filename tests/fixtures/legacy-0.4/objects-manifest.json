@@ -1,0 +1,42 @@
+{
+  "framework_version": "0.4.0",
+  "fixture_set": "legacy-0.4/objects",
+  "description": "Immutable golden object fixtures with SHA256 hashes (Document 14 section 14).",
+  "objects": [
+    {
+      "path": "objects/project-profile.yaml",
+      "object_type": "project-profile",
+      "sha256": "ed6f8b5a91cba4e1a446a88a458c03776fcc86d10f482526a92e8a3354579fd4"
+    },
+    {
+      "path": "objects/project-state.yaml",
+      "object_type": "project-state",
+      "sha256": "428c665b01dd93ab0989fde3dcad68b874ae9c9f9d5c076977d936c609351799"
+    },
+    {
+      "path": "objects/work-unit.yaml",
+      "object_type": "work-unit",
+      "sha256": "334652c4942197ca988600549ff4d1bca2cadbf796f57448a9176ce1880cb142"
+    },
+    {
+      "path": "objects/gate-decision.yaml",
+      "object_type": "gate-decision",
+      "sha256": "8da968fa66a9c691969136fb5abded83ecdc9b87ae7aa0f2a05df7907dfe8248"
+    },
+    {
+      "path": "objects/observation.yaml",
+      "object_type": "observation",
+      "sha256": "0dd7403e73e75a7a3c3a2665896d4b559238280ab6af725bfc0dff44f93633fa"
+    },
+    {
+      "path": "objects/retrospective.yaml",
+      "object_type": "retrospective",
+      "sha256": "a605bfa58fcb9c07667457cc21071370a871c3df2774f53a9f71a12924c5d819"
+    },
+    {
+      "path": "objects/installation-manifest.json",
+      "object_type": "installation-manifest",
+      "sha256": "6befab8ad72c29217258e45d6c9875920e1a85e45f7ebcb30b6854d7827ce4ed"
+    }
+  ]
+}
