@@ -1,6 +1,6 @@
 {
   "framework_version": "0.4.0",
-  "generated_at": "2026-08-28T18:48:27+00:00",
+  "generated_at": "2026-08-28T20:32:47+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -521,7 +521,7 @@
         },
         {
           "path": "scripts/ai-team/common.py",
-          "sha256": "7351c5b356cf651687c8a0231575296197d372df455c08caef4b42de35659fdc"
+          "sha256": "3ce6e1139cd673ede42ff89ab93e9d059a88f999a02e924dcf0e2a9b50b5aa89"
         },
         {
           "path": "scripts/ai-team/diagnose.py",
@@ -1124,7 +1124,7 @@
         },
         {
           "path": "scripts/ai-team/common.py",
-          "sha256": "7351c5b356cf651687c8a0231575296197d372df455c08caef4b42de35659fdc"
+          "sha256": "3ce6e1139cd673ede42ff89ab93e9d059a88f999a02e924dcf0e2a9b50b5aa89"
         },
         {
           "path": "scripts/ai-team/diagnose.py",
