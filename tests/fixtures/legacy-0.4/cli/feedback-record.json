@@ -1,0 +1,9 @@
+{
+  "framework_version": "0.4.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenario": "feedback-record",
+  "exit_code": 0,
+  "stdout": "Enregistre OBS-<TIMESTAMP> : .ai-team\\observations\\OBS-<TIMESTAMP>.yaml\n",
+  "stderr": ""
+}

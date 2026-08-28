@@ -1,0 +1,59 @@
+id: WU-P1-SCAFFOLD
+title: "Arborescence src/governed_ai et SPI adaptateur"
+objective:
+  result: "L'arborescence cible Document 11 §3 existe avec packages importables et adapters/spi.py."
+  rationale: "Document 13 Phase 1 — créer les modules sans changer les comportements installés."
+scope:
+  include:
+    - src/governed_ai/core/
+    - src/governed_ai/feedback/
+    - src/governed_ai/contracts/
+    - src/governed_ai/adapters/spi.py
+  exclude:
+    - adapters/cursor/
+    - distribution/
+zone:
+  area: backend
+  capabilities:
+    - module-scaffolding
+    - adapter-spi
+  components:
+    - src/governed_ai
+expected_behavior: "Les packages core, feedback, contracts et spi sont importables ; aucune forme de données installée ne change."
+applicable_rules_requirements:
+  - "Document 11 §3 arborescence source"
+  - "Document 11 §5 règles de dépendance"
+  - "Document 13 §4 Phase 1"
+acceptance_criteria:
+  - "Arborescence conforme à Document 11 §3 (sans adapters/cursor ni distribution)"
+  - "adapters/spi.py expose les interfaces describe, check_compatibility, compile, execute, collect"
+  - "Import Python des packages sans erreur"
+  - "Golden tests Phase 0 restent identiques"
+dependencies:
+  - WU-P0-WITNESS
+risk:
+  class: high
+  reasons:
+    - "Changement structurel partagé — fondation des modules Core"
+    - "Contrat SPI utilisé par toute la refonte"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P1-SCAFFOLD
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

@@ -1,0 +1,9 @@
+{
+  "framework_version": "0.4.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenario": "check-done-missing",
+  "exit_code": 2,
+  "stdout": "Work Unit introuvable : WU-NOT-FOUND\n",
+  "stderr": ""
+}

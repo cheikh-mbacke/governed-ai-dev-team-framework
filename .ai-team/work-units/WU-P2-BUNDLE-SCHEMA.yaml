@@ -1,0 +1,52 @@
+id: WU-P2-BUNDLE-SCHEMA
+title: "Schémas Published Contract Bundle v1"
+objective:
+  result: "Schémas JSON Schema pour manifest, RoleDefinitionRevision et ProcedureRevision conformes au Document 12."
+  rationale: "Document 13 Phase 2 — fondation du bundle atomique versionné."
+scope:
+  include:
+    - src/governed_ai/contracts/schemas/
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - contract-schemas
+  components:
+    - src/governed_ai/contracts/schemas
+expected_behavior: "Les schémas valident les exemples Document 12 §2 et rejettent les payloads invalides avec codes attendus."
+applicable_rules_requirements:
+  - "Document 12 §2 Published Contract Bundle"
+  - "Document 14 CT-001 à CT-007"
+acceptance_criteria:
+  - "Schémas manifest, RoleDefinitionRevision, ProcedureRevision sous contracts/schemas/"
+  - "Tests CT-001 bundle minimal valide passent"
+  - "Tests CT-002 à CT-007 passent (duplicata, référence absente, hash, lint frontière, champs inconnus, extensions)"
+  - "additionalProperties false sauf extensions namespacées"
+dependencies:
+  - WU-P1-ARCH-TEST
+risk:
+  class: high
+  reasons:
+    - "Contrat partagé publié — impacte Core et Adaptateur"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P2-BUNDLE-SCHEMA
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

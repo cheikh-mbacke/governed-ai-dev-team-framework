@@ -1,0 +1,27 @@
+policy: project_strategy
+version: "1.0.0"
+planning:
+  organize_by: [milestones, deliverable_increments, work_units]
+  priority_factors: [value, critical_path, dependencies, risk, human_gates]
+  progress_source: real_object_states_and_evidence
+  release_is_first_class_object: true
+wip_limits:
+  implementation_default: true
+  max_active_work_units: 3
+  max_concurrent_code_writers: 2
+  max_concurrent_high_or_critical_risk_work_units: 1
+  max_primary_writers_per_work_unit: 1
+risk:
+  assigned_before_execution_when_known: true
+  reevaluation_allowed: true
+  reevaluation_must_be_recorded_event: true
+project_state_must_track:
+  - objectives_and_scope
+  - milestones_increments_releases
+  - features_capabilities_work_units
+  - dependencies_and_critical_path
+  - risks
+  - questions_decisions_blockers_contract_changes
+  - test_review_audit_evidence
+  - defects_remediation_acceptance
+  - active_role_allocation_and_runtime_state

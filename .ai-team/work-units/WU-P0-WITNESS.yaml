@@ -1,0 +1,51 @@
+id: WU-P0-WITNESS
+title: "Projets témoins propre et legacy"
+objective:
+  result: "Deux projets témoins reproductibles — un propre et un avec données runtime, fichiers obsolètes et changements utilisateur."
+  rationale: "Document 13 Phase 0 — projets témoins pour valider migration et distribution."
+scope:
+  include:
+    - tests/fixtures/projects/
+  exclude:
+    - src/governed_ai/
+zone:
+  area: backend
+  capabilities:
+    - witness-project-fixtures
+  components:
+    - tests/fixtures/projects
+expected_behavior: "Les projets témoins s'installent, se valident et reproduisent les scénarios legacy décrits dans Document 13 §3 sans modification manuelle."
+applicable_rules_requirements:
+  - "Document 13 §3 Phase 0"
+  - "Document 14 §2 fixtures/projects"
+acceptance_criteria:
+  - "Projet témoin propre créé et documenté sous tests/fixtures/projects/clean/"
+  - "Projet témoin legacy avec données runtime et fichiers obsolètes sous tests/fixtures/projects/legacy/"
+  - "Scripts ou documentation permettent de recréer les témoins de façon déterministe"
+dependencies:
+  - WU-P0-FIXTURES
+risk:
+  class: medium
+  reasons:
+    - "Couverture des scénarios de migration réels"
+required_verification:
+  unit_tests: false
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P0-WITNESS
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

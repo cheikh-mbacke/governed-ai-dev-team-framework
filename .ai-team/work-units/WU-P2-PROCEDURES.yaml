@@ -1,0 +1,53 @@
+id: WU-P2-PROCEDURES
+title: "Transcription des procédures agnostiques"
+objective:
+  result: "Les procédures existantes sont transcrites en ProcedureRevision agnostiques ; les étapes Cursor sont isolées pour le compilateur."
+  rationale: "Document 13 Phase 2 — séparer contenu agnostique des étapes propres à Cursor."
+scope:
+  include:
+    - src/governed_ai/contracts/
+    - docs/product/users-and-rules/06-catalogue-contrats-role.md
+    - .cursor/skills/
+  exclude:
+    - adapters/cursor/compiler/
+zone:
+  area: backend
+  capabilities:
+    - procedure-contracts
+  components:
+    - contracts/bundles
+expected_behavior: "Chaque ProcedureRevision référencée par un rôle existe ; les étapes Cursor-specific ne figurent pas dans le bundle agnostique."
+applicable_rules_requirements:
+  - "Document 12 §2.3 ProcedureRevision"
+  - "Document 08 classification rôle procédure adaptateur"
+acceptance_criteria:
+  - "Toutes les procédures référencées par les rôles existent dans le bundle"
+  - "CT-003 rejette une procédure absente"
+  - "Étapes Cursor isolées documentées pour le compilateur futur"
+dependencies:
+  - WU-P2-ROLES
+risk:
+  class: high
+  reasons:
+    - "Contrat partagé procédures — cohérence rôle/procédure"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P2-PROCEDURES
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

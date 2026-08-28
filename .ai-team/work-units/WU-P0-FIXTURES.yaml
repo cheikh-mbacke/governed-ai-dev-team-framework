@@ -1,0 +1,59 @@
+id: WU-P0-FIXTURES
+title: "Golden fixtures et inventaire des propriétaires de fichiers"
+objective:
+  result: "Fixtures représentatives versionnées et chaque fichier livré classé core, adapter:cursor, distribution ou project."
+  rationale: "Document 13 Phase 0 — fixtures et inventaire propriétaires requis avant extraction."
+scope:
+  include:
+    - tests/fixtures/
+    - .ai-team/
+    - .cursor/
+    - scripts/
+    - AGENTS.md
+    - tools/
+  exclude:
+    - src/governed_ai/
+zone:
+  area: backend
+  capabilities:
+    - fixture-management
+    - file-ownership-inventory
+  components:
+    - tests/fixtures
+    - .ai-team/state
+expected_behavior: "Les fixtures couvrent Project Profile, Project State, Work Unit, Gate Decision, Observation, Retrospective et manifeste installé ; l'inventaire propriétaires est complet et vérifiable."
+applicable_rules_requirements:
+  - "Document 00 §5 critère 1"
+  - "Document 11 §4 arborescence installée"
+  - "Document 13 §3 Phase 0"
+acceptance_criteria:
+  - "Fixtures golden pour chaque type d'objet listé dans Document 13 §3"
+  - "Inventaire fichier → propriétaire couvrant 100 % des fichiers livrés actuels"
+  - "Validateur ou script d'inventaire vérifie la cohérence propriétaire/chemin"
+dependencies:
+  - WU-P0-BASELINE
+risk:
+  class: medium
+  reasons:
+    - "Inventaire erroné causerait perte de fichiers project-owned en Phase 5"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P0-FIXTURES
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

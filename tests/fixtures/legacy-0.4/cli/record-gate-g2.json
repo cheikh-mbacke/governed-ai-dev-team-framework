@@ -1,0 +1,9 @@
+{
+  "framework_version": "0.4.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenario": "record-gate-g2",
+  "exit_code": 0,
+  "stdout": "Recorded G2=not_required by baseline-test\n",
+  "stderr": ""
+}

@@ -1,0 +1,54 @@
+id: WU-P3-LEGACY-WRAPPERS
+title: "Wrappers record_gate et feedback vers Command Envelope"
+objective:
+  result: "record_gate.py et feedback.py traduisent leurs arguments en Command Envelope avec dépréciation stderr ; échec de traduction sans repli silencieux."
+  rationale: "Document 13 Phase 3 fenêtre compatibilité."
+scope:
+  include:
+    - scripts/ai-team/record_gate.py
+    - scripts/ai-team/feedback.py
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - legacy-cli-bridge
+  components:
+    - scripts/ai-team
+expected_behavior: "Si traduction legacy échoue, le wrapper s'arrête avant Gateway, code non nul et message stderr explicite — jamais de repli en écriture directe."
+applicable_rules_requirements:
+  - "Document 13 §6 fenêtre compatibilité"
+  - "Document 13 §7 échec traduction wrapper"
+acceptance_criteria:
+  - "record_gate.py et feedback.py traduisent vers Command Envelope"
+  - "Avertissement dépréciation sur stderr"
+  - "Échec traduction → exit non nul, pas d'appel Gateway, pas d'écriture directe"
+  - "Scripts automatisés lisant stdout non cassés"
+dependencies:
+  - WU-P3-GW-RETRO
+  - WU-P3-SCHEMA-V2
+risk:
+  class: high
+  reasons:
+    - "Risque de contournement du Gateway si repli silencieux"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: true
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P3-LEGACY-WRAPPERS
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

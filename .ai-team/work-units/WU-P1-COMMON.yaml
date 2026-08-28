@@ -1,0 +1,56 @@
+id: WU-P1-COMMON
+title: "Extraction common.py vers modules Core"
+objective:
+  result: "La logique de common.py est dans src/governed_ai/core avec abstraction workspace, sans Path(__file__).parents."
+  rationale: "Document 13 §10 matrice — extraire common.py tout en conservant wrapper compatible."
+scope:
+  include:
+    - scripts/ai-team/common.py
+    - src/governed_ai/core/
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - workspace-abstraction
+    - yaml-json-validation
+  components:
+    - src/governed_ai/core/persistence
+    - src/governed_ai/core/queries
+expected_behavior: "Racine projet, lecture YAML/JSON, validation schéma, timestamps, identifiants et écriture atomique sont centralisés dans Core ; les CLI historiques produisent les mêmes résultats."
+applicable_rules_requirements:
+  - "Document 13 §4 Phase 1"
+  - "Document 11 §5 règle 1 — Core n'importe pas Cursor"
+acceptance_criteria:
+  - "Fonctions métier de common.py déplacées vers modules importables sous core/"
+  - "Abstraction workspace remplace Path(__file__).parents[N]"
+  - "Parité golden des CLI via wrappers"
+  - "Aucune chaîne .cursor, Cursor, hooks.json, permissions.json ou cli.json dans core/"
+dependencies:
+  - WU-P1-SCAFFOLD
+risk:
+  class: high
+  reasons:
+    - "Migration structurelle du code partagé"
+    - "Régression silencieuse possible sur tous les scripts"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P1-COMMON
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

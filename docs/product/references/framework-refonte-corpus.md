@@ -26,11 +26,31 @@ Cette édition révise les Documents 00 à 10 après audit indépendant du dép�
 | Feedback | Mutations non implémentées reconnues ; export persistant et consentement cible explicités. |
 | Codex | Hooks et skills par agent reconnus selon la documentation actuelle. |
 
+## Emplacement dans `docs/product/`
+
+| Doc | Titre | Catégorie | Fichier |
+|---|---|---|---|
+| 00 | Vision et objectifs | `vision-and-scope/` | [`00-vision-et-objectifs.md`](../vision-and-scope/00-vision-et-objectifs.md) |
+| 01 | Langage ubiquitaire | `users-and-rules/` | [`01-langage-ubiquitaire.md`](../users-and-rules/01-langage-ubiquitaire.md) |
+| 02 | Carte des contextes | `architecture-and-constraints/` | [`02-carte-des-contextes.md`](../architecture-and-constraints/02-carte-des-contextes.md) |
+| 03 | Modèle tactique Adaptateur/Runtime | `architecture-and-constraints/` | [`03-modele-tactique-adaptateur-runtime.md`](../architecture-and-constraints/03-modele-tactique-adaptateur-runtime.md) |
+| 04 | Protocole d’interaction noyau ↔ Adaptateur | `requirements/` | [`04-protocole-interaction.md`](../requirements/04-protocole-interaction.md) |
+| 05 | Résolution des écarts du protocole | `requirements/` | [`05-combler-ecarts-protocole.md`](../requirements/05-combler-ecarts-protocole.md) |
+| 06 | Catalogue des contrats de Rôle | `users-and-rules/` | [`06-catalogue-contrats-role.md`](../users-and-rules/06-catalogue-contrats-role.md) |
+| 07 | Modèle tactique Gouvernance | `architecture-and-constraints/` | [`07-modele-tactique-gouvernance.md`](../architecture-and-constraints/07-modele-tactique-gouvernance.md) |
+| 08 | Classification Rôle, Procédure et Adaptateur | `architecture-and-constraints/` | [`08-classification-role-procedure.md`](../architecture-and-constraints/08-classification-role-procedure.md) |
+| 09 | Modèle tactique Distribution/Installation | `architecture-and-constraints/` | [`09-modele-tactique-distribution.md`](../architecture-and-constraints/09-modele-tactique-distribution.md) |
+| 10 | Modèle tactique Feedback/Apprentissage | `architecture-and-constraints/` | [`10-modele-tactique-feedback.md`](../architecture-and-constraints/10-modele-tactique-feedback.md) |
+| 11 | Architecture cible | `architecture-and-constraints/` | [`11-architecture-cible.md`](../architecture-and-constraints/11-architecture-cible.md) |
+| 12 | Contrats noyau ↔ Adaptateur | `architecture-and-constraints/` | [`12-contrats-noyau-adaptateur.md`](../architecture-and-constraints/12-contrats-noyau-adaptateur.md) |
+| 13 | Plan de migration | `architecture-and-constraints/` | [`13-plan-de-migration.md`](../architecture-and-constraints/13-plan-de-migration.md) |
+| 14 | Tests de conformité | `acceptance-criteria/` | [`14-tests-de-conformite.md`](../acceptance-criteria/14-tests-de-conformite.md) |
+
 ## Ordre de lecture
 
-00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10, puis les spécifications techniques `../specs/11` à `../specs/14`.
+00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10, puis les spécifications techniques 11 → 14 (voir tableau ci-dessus).
 
-Le rapport d’audit d’origine reste disponible un niveau au-dessus sous `rapport-audit-ddd-governed-ai.md`.
+Le rapport d’audit d’origine reste disponible à la racine du dépôt sous `rapport-audit-ddd-governed-ai.md` s’il y est ajouté.
 
 ## Corrections post-audit technique indépendant (28 août 2026, portant sur 00–14)
 

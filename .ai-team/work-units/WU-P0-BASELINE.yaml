@@ -1,0 +1,60 @@
+id: WU-P0-BASELINE
+title: "Baseline 0.4.x et gel comportemental"
+objective:
+  result: "La révision 0.4.x est étiquetée, la suite existante est verte et les sorties CLI critiques sont capturées comme référence."
+  rationale: "Document 13 Phase 0 — aucun déplacement de code sans caractérisation préalable du comportement actuel."
+scope:
+  include:
+    - scripts/ai-team/
+    - tools/install.py
+    - workspace/governed-ai-dev-team-framework/tests/
+    - tests/
+  exclude:
+    - src/governed_ai/
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - baseline-capture
+    - cli-characterization
+  components:
+    - scripts/ai-team
+    - tests/fixtures
+expected_behavior: "Exécuter validate.py, record_gate.py, feedback.py, check_done.py, preflight.py, diagnose.py, status.py et tools/install.py produit les mêmes codes de sortie et sorties stdout/stderr que la baseline enregistrée."
+applicable_rules_requirements:
+  - "Document 13 §3 Phase 0"
+  - "Document 14 §2 organisation tests"
+  - "definition-of-ready verification dimension"
+acceptance_criteria:
+  - "Révision 0.4.x de référence identifiée et documentée dans les preuves"
+  - "Suite de tests 0.4.x existante entièrement verte"
+  - "Captures golden des CLI listées dans Document 13 §3 versionnées sous tests/fixtures/"
+  - "Aucun parcours critique installation, gate, done ou feedback sans test de caractérisation"
+dependencies: []
+risk:
+  class: medium
+  reasons:
+    - "Fondation de toute la refonte — régression non détectée bloquerait les phases suivantes"
+    - "Surface modérée mais parcours critiques couverts"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P0-BASELINE
+status: in_progress
+events:
+  - EVT-20260828-170600-orchestrator-start
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

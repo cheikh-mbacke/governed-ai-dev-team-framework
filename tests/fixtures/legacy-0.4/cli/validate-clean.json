@@ -1,0 +1,9 @@
+{
+  "framework_version": "0.4.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenario": "validate-clean",
+  "exit_code": 0,
+  "stdout": "Validation Governed AI Team\n============================\nWARN  Project command 'build' is not configured\n\n0 erreur(s), 1 avertissement(s)\n",
+  "stderr": ""
+}

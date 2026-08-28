@@ -1,0 +1,53 @@
+id: WU-P2-PUBLISH
+title: "Publication bundle v1.0.0 avec hash canonique"
+objective:
+  result: "bundle_version 1.0.0 publié, immuable, avec validation atomique et hash reproductible."
+  rationale: "Document 13 Phase 2 sortie — bundle valide et immuable."
+scope:
+  include:
+    - src/governed_ai/contracts/
+    - .ai-team/contracts/
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - bundle-publication
+  components:
+    - src/governed_ai/contracts/compatibility.py
+expected_behavior: "Publier le bundle calcule un hash canonique ; toute modification post-hash est rejetée ; les références croisées sont vérifiées avant publication."
+applicable_rules_requirements:
+  - "Document 12 §2.4 validation bundle"
+  - "Document 14 CT-001 CT-004"
+acceptance_criteria:
+  - "bundle_version 1.0.0 publié sous .ai-team/contracts/bundles/"
+  - "Hash canonique reproductible (CT-001, CT-004)"
+  - "Aucun rôle ne référence une procédure absente"
+  - "Handoff inclut identités bundle/rôle/procédure exactes"
+dependencies:
+  - WU-P2-PROCEDURES
+risk:
+  class: high
+  reasons:
+    - "Artefact immuable — erreur nécessite nouvelle révision"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P2-PUBLISH
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

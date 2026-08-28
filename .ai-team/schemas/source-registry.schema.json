@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SourceRegistry",
+  "type": "object",
+  "required": [
+    "registry_version",
+    "sources"
+  ],
+  "properties": {
+    "registry_version": {
+      "type": "string"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "authority",
+          "scope",
+          "version",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "human_construction_material",
+              "engineering_constitution",
+              "recorded_human_decision",
+              "observed_reference"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "authority": {
+            "enum": [
+              "human",
+              "observed"
+            ]
+          },
+          "scope": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "superseded",
+              "draft"
+            ]
+          },
+          "owner": {
+            "type": "string"
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "path"
+            ]
+          },
+          {
+            "required": [
+              "uri"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": true
+}

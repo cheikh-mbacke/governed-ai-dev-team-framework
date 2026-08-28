@@ -1,0 +1,54 @@
+id: WU-P4-SHADOW-COMPILE
+title: "Shadow compile et golden compile pour parité Cursor"
+objective:
+  result: "Shadow compile compare aux historiques ; golden compile fige les différences explicables ; opt-in témoin puis default installation."
+  rationale: "Document 13 Phase 4 §4.2 stratégie de parité."
+scope:
+  include:
+    - adapters/cursor/compiler/
+    - tests/adapters/cursor/
+    - .cursor/
+  exclude:
+    - src/governed_ai/core/
+zone:
+  area: backend
+  capabilities:
+    - parity-validation
+  components:
+    - tests/adapters/cursor
+expected_behavior: "Shadow compile génère sans utiliser et compare ; différences explicables acceptées et golden figées ; projet témoin opt-in validé avant default."
+applicable_rules_requirements:
+  - "Document 13 §7 Phase 4 §4.2"
+  - "Document 00 §5 critère 4 parité Cursor"
+acceptance_criteria:
+  - "Shadow compile implémenté avec rapport de différences"
+  - "Golden compile avec différences documentées"
+  - "Projet témoin opt-in validé sans régression fonctionnelle"
+  - "Installation default utilise compilateur Cursor"
+dependencies:
+  - WU-P4-MANIFEST-COMPILER
+risk:
+  class: high
+  reasons:
+    - "Parité fonctionnelle exigée pour critère de fin"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: true
+  e2e: true
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P4-SHADOW-COMPILE
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

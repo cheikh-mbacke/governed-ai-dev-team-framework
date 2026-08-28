@@ -1,0 +1,57 @@
+id: WU-P3-SCHEMA-V2
+title: "Migration schémas mutables v2 avec revision et timestamps"
+objective:
+  result: "Schémas v2 avec revision, created_at, updated_at et migration déterministe sans invention de valeurs métier."
+  rationale: "Document 13 Phase 3 migration objets mutables."
+scope:
+  include:
+    - .ai-team/schemas/
+    - scripts/ai-team/migrate.py
+    - src/governed_ai/core/persistence/
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - schema-migration
+  components:
+    - .ai-team/schemas
+    - src/governed_ai/core/persistence/migrations
+expected_behavior: "Objet sans revision → revision 1 ; timestamp absent horodaté avec provenance migration ; migration s'arrête si valeur métier obligatoire manquante (MIG-001 MIG-002)."
+applicable_rules_requirements:
+  - "Document 11 §7.1 mutable v2"
+  - "Document 13 §6 migration objets mutables"
+  - "Document 14 MIG-001 MIG-002"
+acceptance_criteria:
+  - "Schémas v2 avec revision, created_at, updated_at pour agrégats mutables"
+  - "Migration déterministe depuis v1 documentée"
+  - "MIG-001 et MIG-002 verts"
+  - "Anciens Gate Decisions lus comme audit legacy sans réécriture"
+dependencies:
+  - WU-P3-GW-INFRA
+risk:
+  class: high
+  reasons:
+    - "Migration structurelle des données runtime"
+    - "Risque d'invention ou perte de données"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: true
+  human_acceptance: false
+context_package_ref: CTX-WU-P3-SCHEMA-V2
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: pending
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

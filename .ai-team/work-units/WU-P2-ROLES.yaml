@@ -1,0 +1,54 @@
+id: WU-P2-ROLES
+title: "Transcription des neuf rôles métier et Control Plane"
+objective:
+  result: "Les neuf rôles métier et le Control Plane sont transcrits en RoleDefinitionRevision agnostiques."
+  rationale: "Document 13 Phase 2 — bundle depuis Documents 5–6 corrigés."
+scope:
+  include:
+    - src/governed_ai/contracts/
+    - docs/product/users-and-rules/06-catalogue-contrats-role.md
+  exclude:
+    - adapters/cursor/templates/
+zone:
+  area: backend
+  capabilities:
+    - role-contracts
+  components:
+    - contracts/bundles
+expected_behavior: "Chaque rôle a writes.product, writes.authoritative_governance_commands, writes.non_authoritative_signal_commands et procedure_refs valides ; aucune syntaxe Cursor dans les champs agnostiques."
+applicable_rules_requirements:
+  - "Document 06 catalogue contrats rôle"
+  - "Document 12 §2.2 RoleDefinitionRevision"
+  - "Document 05 trois axes d'écriture"
+acceptance_criteria:
+  - "Neuf rôles métier + Control Plane transcrits en JSON"
+  - "Trois axes d'écriture présents pour chaque rôle"
+  - "Aucune référence .cursor dans les champs agnostiques"
+  - "CT-005 lint frontière vert"
+dependencies:
+  - WU-P2-BUNDLE-SCHEMA
+risk:
+  class: high
+  reasons:
+    - "Contrat d'autorisation — erreur élargirait ou restreindrait les capacités agents"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: true
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P2-ROLES
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

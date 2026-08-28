@@ -1,0 +1,9 @@
+{
+  "framework_version": "0.4.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenario": "install-missing-target",
+  "exit_code": 2,
+  "stdout": "",
+  "stderr": "usage: install.py [-h] --target TARGET [--project-id PROJECT_ID]\n                  [--project-name PROJECT_NAME] [--force] [--update]\n                  [--dry-run] [--allow-dirty] [--skip-validation]\n                  [--force-constitution-update]\ninstall.py: error: the following arguments are required: --target\n"
+}

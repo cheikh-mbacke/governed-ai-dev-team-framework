@@ -1,0 +1,441 @@
+project_id: framework-renov
+constitution_version: 1.1.0
+phase: execution
+gates:
+  G0:
+    status: passed
+    evaluated_at: '2026-08-28T16:59:00Z'
+    note: Sources produit 00–14 actives ; constitution versionnée ; profil projet
+      complété.
+  G1:
+    status: approved
+    by: cheikh MBACKE
+    at: '2026-08-28T17:03:15.860408+00:00'
+    note: Plan d execution approuve - 31 WU, activation WU-P0-BASELINE
+  G2:
+    status: not_required
+  G3:
+    status: not_required
+  G4:
+    status: not_required
+milestones:
+- id: M-P0
+  title: Phase 0 — Baseline et gel comportemental
+  work_units:
+  - WU-P0-BASELINE
+  - WU-P0-FIXTURES
+  - WU-P0-WITNESS
+  target_version: 0.4.x-baseline
+- id: M-P1
+  title: Phase 1 — Modules Core sans changement comportemental
+  work_units:
+  - WU-P1-SCAFFOLD
+  - WU-P1-COMMON
+  - WU-P1-FEEDBACK-MOD
+  - WU-P1-ARCH-TEST
+  target_version: 0.5.0-alpha
+- id: M-P2
+  title: Phase 2 — Published Contract Bundle v1
+  work_units:
+  - WU-P2-BUNDLE-SCHEMA
+  - WU-P2-ROLES
+  - WU-P2-PROCEDURES
+  - WU-P2-PUBLISH
+  - WU-P2-PARITY-TEST
+  target_version: 0.5.0-alpha
+- id: M-P3
+  title: Phase 3 — Command Gateway et persistance sûre
+  work_units:
+  - WU-P3-GW-INFRA
+  - WU-P3-GW-OBS-EVID
+  - WU-P3-GW-WU
+  - WU-P3-GW-DEC-FIND
+  - WU-P3-GW-GATE-ACC
+  - WU-P3-GW-RETRO
+  - WU-P3-SCHEMA-V2
+  - WU-P3-LEGACY-WRAPPERS
+  - WU-P3-TX-TESTS
+  target_version: 0.5.0-beta
+- id: M-P4
+  title: Phase 4 — Adaptateur Cursor extrait
+  work_units:
+  - WU-P4-MANIFEST-COMPILER
+  - WU-P4-SHADOW-COMPILE
+  - WU-P4-RUNTIME
+  - WU-P4-CONFORMANCE
+  target_version: 0.5.0-beta
+- id: M-P5
+  title: Phase 5 — Distribution et Installation Record v2
+  work_units:
+  - WU-P5-INSTALL-RECORD
+  - WU-P5-INSTALL-UPDATE
+  target_version: 0.5.0
+- id: M-P6
+  title: Phase 6 — Nettoyage et documentation
+  work_units:
+  - WU-P6-DECOUPLE
+  - WU-P6-DOCS
+  - WU-P6-CLEANUP
+  target_version: 0.6.0
+- id: M-CONFORMITY
+  title: Conformité intégrale Document 14
+  work_units:
+  - WU-E2E-CONFORMITY
+  target_version: 0.5.0
+increments:
+- id: INC-ALPHA
+  title: 0.5.0-alpha — Core modules et bundle
+  milestones:
+  - M-P0
+  - M-P1
+  - M-P2
+- id: INC-BETA
+  title: 0.5.0-beta — Gateway et Adaptateur Cursor
+  milestones:
+  - M-P3
+  - M-P4
+- id: INC-RELEASE
+  title: 0.5.0 — Distribution v2 et conformité
+  milestones:
+  - M-P5
+  - M-CONFORMITY
+- id: INC-CLEANUP
+  title: 0.6.0 — Dépréciations et nettoyage
+  milestones:
+  - M-P6
+releases: []
+work_units:
+  WU-P0-BASELINE:
+    status: in_progress
+    milestone: M-P0
+    risk: medium
+  WU-P0-FIXTURES:
+    status: ready
+    milestone: M-P0
+    risk: medium
+  WU-P0-WITNESS:
+    status: ready
+    milestone: M-P0
+    risk: medium
+  WU-P1-SCAFFOLD:
+    status: ready
+    milestone: M-P1
+    risk: high
+  WU-P1-COMMON:
+    status: ready
+    milestone: M-P1
+    risk: high
+  WU-P1-FEEDBACK-MOD:
+    status: ready
+    milestone: M-P1
+    risk: medium
+  WU-P1-ARCH-TEST:
+    status: ready
+    milestone: M-P1
+    risk: medium
+  WU-P2-BUNDLE-SCHEMA:
+    status: ready
+    milestone: M-P2
+    risk: high
+  WU-P2-ROLES:
+    status: ready
+    milestone: M-P2
+    risk: high
+  WU-P2-PROCEDURES:
+    status: ready
+    milestone: M-P2
+    risk: high
+  WU-P2-PUBLISH:
+    status: ready
+    milestone: M-P2
+    risk: high
+  WU-P2-PARITY-TEST:
+    status: ready
+    milestone: M-P2
+    risk: medium
+  WU-P3-GW-INFRA:
+    status: ready
+    milestone: M-P3
+    risk: critical
+  WU-P3-GW-OBS-EVID:
+    status: ready
+    milestone: M-P3
+    risk: high
+  WU-P3-GW-WU:
+    status: ready
+    milestone: M-P3
+    risk: high
+  WU-P3-GW-DEC-FIND:
+    status: ready
+    milestone: M-P3
+    risk: high
+  WU-P3-GW-GATE-ACC:
+    status: ready
+    milestone: M-P3
+    risk: critical
+  WU-P3-GW-RETRO:
+    status: ready
+    milestone: M-P3
+    risk: high
+  WU-P3-SCHEMA-V2:
+    status: ready
+    milestone: M-P3
+    risk: high
+  WU-P3-LEGACY-WRAPPERS:
+    status: ready
+    milestone: M-P3
+    risk: high
+  WU-P3-TX-TESTS:
+    status: ready
+    milestone: M-P3
+    risk: critical
+  WU-P4-MANIFEST-COMPILER:
+    status: ready
+    milestone: M-P4
+    risk: high
+  WU-P4-SHADOW-COMPILE:
+    status: ready
+    milestone: M-P4
+    risk: high
+  WU-P4-RUNTIME:
+    status: ready
+    milestone: M-P4
+    risk: high
+  WU-P4-CONFORMANCE:
+    status: ready
+    milestone: M-P4
+    risk: high
+  WU-P5-INSTALL-RECORD:
+    status: ready
+    milestone: M-P5
+    risk: high
+  WU-P5-INSTALL-UPDATE:
+    status: ready
+    milestone: M-P5
+    risk: high
+  WU-P6-DECOUPLE:
+    status: ready
+    milestone: M-P6
+    risk: medium
+  WU-P6-DOCS:
+    status: ready
+    milestone: M-P6
+    risk: low
+  WU-P6-CLEANUP:
+    status: ready
+    milestone: M-P6
+    risk: medium
+  WU-E2E-CONFORMITY:
+    status: ready
+    milestone: M-CONFORMITY
+    risk: critical
+dependency_edges:
+- from: WU-P0-FIXTURES
+  to: WU-P0-BASELINE
+  type: blocks
+- from: WU-P0-WITNESS
+  to: WU-P0-FIXTURES
+  type: blocks
+- from: WU-P1-SCAFFOLD
+  to: WU-P0-WITNESS
+  type: blocks
+- from: WU-P1-COMMON
+  to: WU-P1-SCAFFOLD
+  type: blocks
+- from: WU-P1-FEEDBACK-MOD
+  to: WU-P1-COMMON
+  type: blocks
+- from: WU-P1-ARCH-TEST
+  to: WU-P1-FEEDBACK-MOD
+  type: blocks
+- from: WU-P2-BUNDLE-SCHEMA
+  to: WU-P1-ARCH-TEST
+  type: blocks
+- from: WU-P2-ROLES
+  to: WU-P2-BUNDLE-SCHEMA
+  type: blocks
+- from: WU-P2-PROCEDURES
+  to: WU-P2-ROLES
+  type: blocks
+- from: WU-P2-PUBLISH
+  to: WU-P2-PROCEDURES
+  type: blocks
+- from: WU-P2-PARITY-TEST
+  to: WU-P2-PUBLISH
+  type: blocks
+- from: WU-P3-GW-INFRA
+  to: WU-P2-PARITY-TEST
+  type: blocks
+- from: WU-P3-GW-OBS-EVID
+  to: WU-P3-GW-INFRA
+  type: blocks
+- from: WU-P3-GW-WU
+  to: WU-P3-GW-OBS-EVID
+  type: blocks
+- from: WU-P3-GW-DEC-FIND
+  to: WU-P3-GW-WU
+  type: blocks
+- from: WU-P3-GW-GATE-ACC
+  to: WU-P3-GW-DEC-FIND
+  type: blocks
+- from: WU-P3-GW-RETRO
+  to: WU-P3-GW-GATE-ACC
+  type: blocks
+- from: WU-P3-SCHEMA-V2
+  to: WU-P3-GW-INFRA
+  type: blocks
+- from: WU-P3-LEGACY-WRAPPERS
+  to: WU-P3-GW-RETRO
+  type: blocks
+- from: WU-P3-LEGACY-WRAPPERS
+  to: WU-P3-SCHEMA-V2
+  type: blocks
+- from: WU-P3-TX-TESTS
+  to: WU-P3-LEGACY-WRAPPERS
+  type: blocks
+- from: WU-P4-MANIFEST-COMPILER
+  to: WU-P3-TX-TESTS
+  type: blocks
+- from: WU-P4-SHADOW-COMPILE
+  to: WU-P4-MANIFEST-COMPILER
+  type: blocks
+- from: WU-P4-RUNTIME
+  to: WU-P4-SHADOW-COMPILE
+  type: blocks
+- from: WU-P4-CONFORMANCE
+  to: WU-P4-RUNTIME
+  type: blocks
+- from: WU-P5-INSTALL-RECORD
+  to: WU-P4-CONFORMANCE
+  type: blocks
+- from: WU-P5-INSTALL-UPDATE
+  to: WU-P5-INSTALL-RECORD
+  type: blocks
+- from: WU-P6-DECOUPLE
+  to: WU-P5-INSTALL-UPDATE
+  type: blocks
+- from: WU-P6-DOCS
+  to: WU-P6-DECOUPLE
+  type: blocks
+- from: WU-E2E-CONFORMITY
+  to: WU-P5-INSTALL-UPDATE
+  type: blocks
+- from: WU-P6-CLEANUP
+  to: WU-P6-DOCS
+  type: blocks
+- from: WU-P6-CLEANUP
+  to: WU-E2E-CONFORMITY
+  type: blocks
+critical_path:
+- WU-P0-BASELINE
+- WU-P0-FIXTURES
+- WU-P0-WITNESS
+- WU-P1-SCAFFOLD
+- WU-P1-COMMON
+- WU-P1-FEEDBACK-MOD
+- WU-P1-ARCH-TEST
+- WU-P2-BUNDLE-SCHEMA
+- WU-P2-ROLES
+- WU-P2-PROCEDURES
+- WU-P2-PUBLISH
+- WU-P2-PARITY-TEST
+- WU-P3-GW-INFRA
+- WU-P3-GW-OBS-EVID
+- WU-P3-GW-WU
+- WU-P3-GW-DEC-FIND
+- WU-P3-GW-GATE-ACC
+- WU-P3-GW-RETRO
+- WU-P3-SCHEMA-V2
+- WU-P3-LEGACY-WRAPPERS
+- WU-P3-TX-TESTS
+- WU-P4-MANIFEST-COMPILER
+- WU-P4-SHADOW-COMPILE
+- WU-P4-RUNTIME
+- WU-P4-CONFORMANCE
+- WU-P5-INSTALL-RECORD
+- WU-P5-INSTALL-UPDATE
+- WU-E2E-CONFORMITY
+open_decisions: []
+open_blockers: []
+open_defects: []
+open_findings: []
+active_workers:
+- role: backend-developer
+  work_unit: WU-P0-BASELINE
+  branch: wu/WU-P0-BASELINE
+  started_at: '2026-08-28T17:06:00+00:00'
+staffing_proposal:
+  default_roles:
+  - backend-developer
+  - qa-test
+  phase_assignments:
+    M-P0:
+      primary: backend-developer
+      support:
+      - qa-test
+      - code-reviewer
+    M-P1:
+      primary: backend-developer
+      support:
+      - architect
+      - qa-test
+      - code-reviewer
+    M-P2:
+      primary: backend-developer
+      support:
+      - architect
+      - qa-test
+      - code-reviewer
+      - security-reviewer
+    M-P3:
+      primary: backend-developer
+      support:
+      - architect
+      - qa-test
+      - code-reviewer
+      - security-reviewer
+      - auditor
+      note: WIP limit 1 sur WU critical (GW-INFRA, GW-GATE-ACC, TX-TESTS)
+    M-P4:
+      primary: backend-developer
+      support:
+      - qa-test
+      - code-reviewer
+      - security-reviewer
+      - auditor
+    M-P5:
+      primary: backend-developer
+      support:
+      - qa-test
+      - code-reviewer
+      - auditor
+    M-P6:
+      primary: backend-developer
+      support:
+      - qa-test
+      - code-reviewer
+    M-CONFORMITY:
+      primary: qa-test
+      support:
+      - backend-developer
+      - code-reviewer
+      - security-reviewer
+      - auditor
+      - release-agent
+  wip_limits:
+    maximum_active_role_instances: 6
+    maximum_code_writers: 2
+    critical_wu_concurrent_max: 1
+execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique + Adaptateur
+  Cursor, suivant le plan de migration Document 13 en 7 phases et 31 Work Units.
+
+  Chemin critique linéaire Phase 0 → 5 puis E2E ; Phase 6 (nettoyage) après conformité.
+
+  Increments : alpha (Core+bundle), beta (Gateway+Adaptateur), release 0.5.0 (Distribution+conformité),
+  cleanup 0.6.0.
+
+  Risque maximal sur Command Gateway (Phase 3) et conformité finale ; staffing renforcé
+  architect/security/auditor sur ces phases.
+
+  '
+last_updated: '2026-08-28T17:06:00+00:00'

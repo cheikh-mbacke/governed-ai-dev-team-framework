@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""Answer 'is anything actually waiting on me, and what happened last?'
+
+Run this before stopping and restarting anything. It never modifies state.
+"""
+from pathlib import Path
+from datetime import datetime, timezone
+import json
+
+try:
+    import yaml
+except ModuleNotFoundError:
+    print("Missing dependency: PyYAML. Install it first, then re-run this command:")
+    print("  pip install -r requirements.txt")
+    print("(or: pip install PyYAML jsonschema)")
+    raise SystemExit(1)
+
+from i18n import project_language, t
+
+ROOT = Path(__file__).resolve().parents[2]
+AI = ROOT / ".ai-team"
+LANG = project_language(ROOT)
+
+
+def load_yaml(p):
+    try:
+        return yaml.safe_load(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+print(t(LANG, "Governed AI Team diagnosis", "Diagnostic Governed AI Team"))
+print("=" * 26)
+print()
+print(t(
+    LANG,
+    "Before anything below: scroll up in the Cursor chat and check for a\n"
+    "pending command-approval prompt (a 'Run' / 'Approve' button waiting\n"
+    "for a click). This script cannot see that state - Cursor suspends the\n"
+    "agent before it can write anything this script could read. It is the\n"
+    "single most common invisible-stall cause; check it first.",
+    "Avant toute chose : remontez dans le chat Cursor et cherchez une\n"
+    "invite d'autorisation de commande en attente (un bouton 'Run' / 'Approve'\n"
+    "qui attend un clic). Ce script ne peut pas voir cet etat - Cursor suspend\n"
+    "l'agent avant qu'il puisse ecrire quoi que ce soit que ce script pourrait lire.\n"
+    "C'est la cause de blocage invisible la plus frequente ; verifiez-la en premier.",
+))
+
+# 1. Anything explicitly waiting on a human?
+open_human_events = []
+events_dir = AI / "events"
+if events_dir.exists():
+    for p in sorted(events_dir.glob("*.yaml")):
+        ev = load_yaml(p)
+        if not ev:
+            continue
+        if ev.get("status") == "open" and ev.get("requires_human"):
+            open_human_events.append((p.name, ev))
+
+if open_human_events:
+    print("\n" + t(LANG, "ACTION NEEDED — open events waiting on a human:", "ACTION REQUISE - evenements ouverts en attente d'un humain :"))
+    for fname, ev in open_human_events:
+        no_summary = t(LANG, "(no summary)", "(pas de resume)")
+        print(f"  [{ev.get('type', '?')}] {fname} — {ev.get('summary', no_summary)}")
+        if ev.get("work_unit"):
+            print("      " + t(LANG, "Work Unit:", "Work Unit :") + f" {ev['work_unit']}")
+else:
+    print("\n" + t(LANG, "No open event is explicitly marked as requiring human input.", "Aucun evenement ouvert n'est marque comme requerant explicitement un humain."))
+    print(t(
+        LANG,
+        "If something still looks stuck, that itself is worth noting — see below.",
+        "Si quelque chose semble quand meme bloque, c'est deja une information utile - voir plus bas.",
+    ))
+
+# 2. Work Units that are neither ready nor done — where is the work actually sitting?
+wu_dir = AI / "work-units"
+in_flight = []
+if wu_dir.exists():
+    for p in sorted(wu_dir.glob("*.yaml")):
+        wu = load_yaml(p)
+        if not wu:
+            continue
+        status = wu.get("status")
+        if status not in ("done", "cancelled", "ready", None):
+            in_flight.append((p.stem, status))
+
+if in_flight:
+    print("\n" + t(LANG, "Work Units currently in flight (not ready, not done):", "Work Units actuellement en cours (ni pretes, ni terminees) :"))
+    for wu_id, status in in_flight:
+        print(f"  {wu_id}: {status}")
+
+# 3. When did anything last actually happen?
+log_path = AI / "logs" / "cursor-events.jsonl"
+if log_path.exists():
+    last_line = None
+    with log_path.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                last_line = line
+    if last_line:
+        try:
+            record = json.loads(last_line)
+            ts = record.get("timestamp")
+            if ts:
+                last_dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                delta = datetime.now(timezone.utc) - last_dt
+                minutes = int(delta.total_seconds() // 60)
+                print("\n" + t(
+                    LANG,
+                    f"Last recorded Cursor hook activity: {minutes} minute(s) ago ({ts}).",
+                    f"Derniere activite Cursor (hook) enregistree : il y a {minutes} minute(s) ({ts}).",
+                ))
+                event_kind = None
+                inner = record.get("event")
+                if isinstance(inner, dict):
+                    event_kind = inner.get("hook_event_name") or inner.get("event")
+                if event_kind:
+                    print("  " + t(LANG, f"(last event type: {event_kind})", f"(dernier type d'evenement : {event_kind})"))
+        except Exception:
+            print("\n" + t(LANG, "Could not parse the last log line's timestamp.", "Impossible d'analyser l'horodatage de la derniere ligne du journal."))
+else:
+    print("\n" + t(
+        LANG,
+        "No .ai-team/logs/cursor-events.jsonl yet — no Cursor hook activity recorded.",
+        "Pas encore de .ai-team/logs/cursor-events.jsonl - aucune activite Cursor (hook) enregistree.",
+    ))
+
+print()
+if open_human_events:
+    print(t(
+        LANG,
+        "Next step: resolve the event(s) above, then continue — no need to restart anything.",
+        "Prochaine etape : traiter le(s) evenement(s) ci-dessus, puis continuer - inutile de redemarrer quoi que ce soit.",
+    ))
+elif in_flight:
+    print(t(
+        LANG,
+        "Next step: nothing is explicitly asking for you, but Work Units are mid-flight.",
+        "Prochaine etape : rien ne vous sollicite explicitement, mais des Work Units sont en cours.",
+    ))
+    print(t(
+        LANG,
+        "If Cursor's own UI shows a subagent stalled with no recent hook activity above,\n"
+        "that's a real stall with no recorded reason. See docs/OPERATOR_GUIDE.md\n"
+        "(section 'If it looks stuck') before stopping/restarting.",
+        "Si l'interface Cursor montre un subagent bloque sans activite (hook) recente ci-dessus,\n"
+        "c'est un vrai blocage sans raison enregistree. Voir docs/OPERATOR_GUIDE.fr.md\n"
+        "(section 'If it looks stuck') avant d'arreter/redemarrer quoi que ce soit.",
+    ))
+else:
+    print(t(LANG, "Nothing appears in flight or waiting on you.", "Rien ne semble en cours ni en attente de votre part."))

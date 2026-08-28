@@ -1,0 +1,54 @@
+id: WU-P1-FEEDBACK-MOD
+title: "Extraction feedback vers module feedback"
+objective:
+  result: "feedback_common.py et la logique feedback.py résident dans src/governed_ai/feedback/."
+  rationale: "Document 13 §10 — séparer le domaine Feedback du Core."
+scope:
+  include:
+    - scripts/ai-team/feedback_common.py
+    - scripts/ai-team/feedback.py
+    - src/governed_ai/feedback/
+  exclude:
+    - src/governed_ai/core/commands/
+zone:
+  area: backend
+  capabilities:
+    - feedback-domain
+  components:
+    - src/governed_ai/feedback
+expected_behavior: "Le module feedback est importable ; feedback.py reste un wrapper produisant les mêmes sorties qu'en Phase 0."
+applicable_rules_requirements:
+  - "Document 11 §5 règle 2 — feedback importe interfaces Core, pas repositories concrets"
+  - "Document 13 §4 Phase 1"
+acceptance_criteria:
+  - "Logique feedback extraite vers src/governed_ai/feedback/"
+  - "Wrapper feedback.py délègue au module"
+  - "Tests feedback_loop existants verts"
+  - "Golden parity stdout/stderr préservée"
+dependencies:
+  - WU-P1-COMMON
+risk:
+  class: medium
+  reasons:
+    - "Domaine isolé avec surface de régression modérée"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P1-FEEDBACK-MOD
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

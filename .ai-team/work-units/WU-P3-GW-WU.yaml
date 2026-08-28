@@ -1,0 +1,55 @@
+id: WU-P3-GW-WU
+title: "Handlers Work Unit création et transitions"
+objective:
+  result: "Création et transitions Work Unit passent par le Gateway avec expected_revision et machines à états normatives."
+  rationale: "Document 13 Phase 3 ordre 3 — Work Unit comme agrégat central."
+scope:
+  include:
+    - src/governed_ai/core/commands/
+    - src/governed_ai/core/domain/
+    - .ai-team/schemas/work-unit.schema.json
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - work-unit-lifecycle
+  components:
+    - src/governed_ai/core/domain/work_unit
+expected_behavior: "Chaque transition permise et interdite est testée ; CONFLICT si expected_revision obsolète (CG-003) ; done exige outcomes selon le risque."
+applicable_rules_requirements:
+  - "Document 14 §6 machines à états"
+  - "Document 11 §7.1 mutable revision"
+  - "definition-of-done.yaml"
+acceptance_criteria:
+  - "Handlers création et transitions Work Unit via Gateway"
+  - "CG-003 CONFLICT sur revision obsolète"
+  - "Tests transitions permises et interdites générés depuis table normative"
+  - "check_done.py wrapper fonctionnel"
+dependencies:
+  - WU-P3-GW-OBS-EVID
+risk:
+  class: high
+  reasons:
+    - "Agrégat central gouvernant l'exécution"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P3-GW-WU
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

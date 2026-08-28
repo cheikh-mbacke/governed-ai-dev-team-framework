@@ -1,0 +1,55 @@
+id: WU-P4-MANIFEST-COMPILER
+title: "Manifest adaptateur Cursor et compilateur bundle → artefacts Cursor"
+objective:
+  result: "adapters/cursor/manifest.json et compilateur produisent .cursor/agents, skills, rules, hooks, permissions et CLI de façon déterministe."
+  rationale: "Document 13 Phase 4 §4.1."
+scope:
+  include:
+    - adapters/cursor/
+    - adapters/cursor/manifest.json
+    - adapters/cursor/compiler/
+  exclude:
+    - src/governed_ai/core/
+zone:
+  area: backend
+  capabilities:
+    - cursor-compiler
+  components:
+    - adapters/cursor/compiler
+expected_behavior: "Même bundle + profil → mêmes octets hors champs horodatés (CT-010) ; staging puis validation avant installation."
+applicable_rules_requirements:
+  - "Document 13 §7 Phase 4 §4.1"
+  - "Document 14 CT-010 AD-002"
+acceptance_criteria:
+  - "manifest.json adaptateur cursor créé"
+  - "Compilateur bundle → .cursor/ opérationnel"
+  - "CT-010 byte-identique sur double compilation"
+  - "Génération en staging avec validation pré-installation"
+dependencies:
+  - WU-P3-TX-TESTS
+risk:
+  class: high
+  reasons:
+    - "Traduction capacités et permissions — risque d'élargissement"
+    - "Artefacts exécutés par Cursor"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: true
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P4-MANIFEST-COMPILER
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

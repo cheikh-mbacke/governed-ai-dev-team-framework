@@ -1,0 +1,57 @@
+id: WU-P5-INSTALL-UPDATE
+title: "Install, update, dry-run et rollback multi-composants"
+objective:
+  result: "Distribution install/update/dry-run/rollback fonctionnels sur Windows/Linux/macOS avec validation et rollback étendus."
+  rationale: "Document 13 Phase 5 installation fraîche et mise à jour."
+scope:
+  include:
+    - distribution/installer/
+    - tools/install.py
+    - tests/distribution/
+  exclude:
+    - adapters/cursor/compiler/
+zone:
+  area: infra
+  capabilities:
+    - multi-component-install
+    - rollback
+  components:
+    - distribution/installer
+expected_behavior: "Installation écrit composants gérés, initialise données projet, écrit installation-record en dernier ; update détecte obsolètes par propriétaire ; rollback restaure snapshot manifesté."
+applicable_rules_requirements:
+  - "Document 13 §8 Phase 5 installation et mise à jour"
+  - "Document 13 §11 rollback"
+  - "Document 14 tests distribution"
+acceptance_criteria:
+  - "Install fraîche initialise active_adapter_id=cursor"
+  - "Update n'efface jamais fichier project-owned"
+  - "Dry-run et rollback verts sur fixtures"
+  - "Refus Git sale sauf autorisation explicite"
+  - "Rollback Document 13 §11 implémenté"
+dependencies:
+  - WU-P5-INSTALL-RECORD
+risk:
+  class: high
+  reasons:
+    - "Opérations destructives potentielles sur fichiers projet"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: true
+  qa: true
+  review: true
+  security_review: false
+  audit: true
+  human_acceptance: false
+context_package_ref: CTX-WU-P5-INSTALL-UPDATE
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: pending
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

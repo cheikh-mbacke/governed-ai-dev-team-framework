@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FrameworkObservation",
+  "type": "object",
+  "required": [
+    "id",
+    "recorded_at",
+    "project_id",
+    "framework_version",
+    "constitution_version",
+    "category",
+    "severity",
+    "symptom",
+    "classification",
+    "impact",
+    "status"
+  ],
+  "properties": {
+    "id": {"type": "string", "pattern": "^OBS-[A-Za-z0-9._-]+$"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "recorded_by": {"type": ["string", "null"]},
+    "project_id": {"type": "string", "minLength": 1},
+    "framework_version": {"type": "string", "minLength": 1},
+    "constitution_version": {"type": "string", "minLength": 1},
+    "work_unit": {"type": ["string", "null"]},
+    "phase": {"type": ["string", "null"]},
+    "category": {
+      "enum": [
+        "readiness",
+        "decomposition",
+        "context",
+        "staffing",
+        "permissions",
+        "orchestration",
+        "tooling",
+        "testing",
+        "review",
+        "audit",
+        "human_gate",
+        "environment",
+        "documentation",
+        "other"
+      ]
+    },
+    "severity": {"enum": ["info", "low", "medium", "high", "critical"]},
+    "symptom": {"type": "string", "minLength": 1},
+    "classification": {
+      "type": "object",
+      "required": ["origin", "confidence"],
+      "properties": {
+        "origin": {
+          "enum": [
+            "framework",
+            "project",
+            "environment",
+            "external_service",
+            "human_process",
+            "unknown"
+          ]
+        },
+        "confidence": {"enum": ["low", "probable", "high", "confirmed"]}
+      },
+      "additionalProperties": false
+    },
+    "impact": {
+      "type": "object",
+      "required": ["blocked_minutes", "rework_required", "human_intervention"],
+      "properties": {
+        "blocked_minutes": {"type": "integer", "minimum": 0},
+        "rework_required": {"type": "boolean"},
+        "human_intervention": {"type": "boolean"},
+        "affected_work_units": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "workaround": {"type": ["string", "null"]},
+    "candidate_improvement": {"type": ["string", "null"]},
+    "recurrence_key": {"type": ["string", "null"]},
+    "status": {
+      "enum": ["open", "acknowledged", "candidate_change", "resolved", "rejected"]
+    },
+    "resolution": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

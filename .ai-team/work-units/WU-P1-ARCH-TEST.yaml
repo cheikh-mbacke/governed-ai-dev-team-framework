@@ -1,0 +1,55 @@
+id: WU-P1-ARCH-TEST
+title: "Tests d'architecture anti-fuites Cursor dans Core"
+objective:
+  result: "Des tests automatisés échouent si Core importe Cursor ou référence des artefacts .cursor."
+  rationale: "Document 11 §5 et Document 14 §2 tests/architecture/."
+scope:
+  include:
+    - tests/architecture/
+    - src/governed_ai/core/
+    - src/governed_ai/feedback/
+    - src/governed_ai/contracts/
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - architecture-guard
+  components:
+    - tests/architecture/test_dependencies.py
+    - tests/architecture/test_named_tool_leaks.py
+expected_behavior: "test_dependencies et test_named_tool_leaks passent sur l'état Phase 1 et échouent si une fuite Cursor est introduite."
+applicable_rules_requirements:
+  - "Document 11 §5 règles 1 et 5"
+  - "Document 14 §2 tests/architecture/"
+acceptance_criteria:
+  - "test_dependencies.py vérifie l'absence d'import adapters.cursor et distribution depuis core"
+  - "test_named_tool_leaks.py détecte .cursor, Cursor, hooks.json, permissions.json, cli.json dans core et contracts"
+  - "Tests intégrés à la suite CI L0"
+dependencies:
+  - WU-P1-FEEDBACK-MOD
+risk:
+  class: medium
+  reasons:
+    - "Garde-fou structurel sans mutation de données"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P1-ARCH-TEST
+status: ready
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

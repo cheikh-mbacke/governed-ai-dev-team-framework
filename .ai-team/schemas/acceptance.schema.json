@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HumanAcceptance",
+  "type": "object",
+  "required": [
+    "id",
+    "scenarios",
+    "human_result"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "release_or_increment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "environment": {
+      "type": "string"
+    },
+    "preconditions": {
+      "type": "array"
+    },
+    "scenarios": {
+      "type": "array"
+    },
+    "human_result": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "passed",
+            "failed",
+            "partial"
+          ]
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}
