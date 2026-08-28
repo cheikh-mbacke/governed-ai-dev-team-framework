@@ -47,7 +47,7 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P1-SCAFFOLD
-status: ready
+status: in_progress
 events: []
 evidence: []
 outcomes:
