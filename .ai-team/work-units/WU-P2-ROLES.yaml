@@ -42,11 +42,33 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P2-ROLES
-status: in_progress
-events: []
-evidence: []
+status: done
+events:
+  - EVT-20260828-225200-orchestrator-start
+  - EVT-20260828-230500-backend-handoff
+  - EVT-20260828-231000-qa-pass
+  - EVT-20260828-231100-review-approved
+  - EVT-20260828-231200-security-approved
+evidence:
+  - id: EVD-WU-P2-ROLES-IMPL
+    type: implementation
+    commit_sha: 2d508aeb3e6f12387095ad5eb69d13334f754938
+    verified_by: backend-developer
+  - id: EVD-WU-P2-ROLES-QA
+    type: qa
+    commit_sha: 2d508aeb3e6f12387095ad5eb69d13334f754938
+    event: EVT-20260828-231000-qa-pass
+  - id: EVD-WU-P2-ROLES-REVIEW
+    type: review
+    commit_sha: 2d508aeb3e6f12387095ad5eb69d13334f754938
+    event: EVT-20260828-231100-review-approved
+  - id: EVD-WU-P2-ROLES-SECURITY
+    type: security_review
+    commit_sha: 2d508aeb3e6f12387095ad5eb69d13334f754938
+    event: EVT-20260828-231200-security-approved
 outcomes:
-  review_status: pending
+  review_status: approved_with_notes
+  security_review_status: approved_with_notes
   audit_status: not_required
   critical_open_items: []
   defects: []

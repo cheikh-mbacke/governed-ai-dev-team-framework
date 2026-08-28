@@ -1,0 +1,20 @@
+id: EVT-20260828-230500-backend-handoff
+type: HANDOFF
+work_unit: WU-P2-ROLES
+created_at: '2026-08-28T23:05:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P2-ROLES — 10 RoleDefinitionRevision + 13 procedure stubs dans bundles/v1."
+details:
+  commit_sha: 2d508aeb3e6f12387095ad5eb69d13334f754938
+  branch: wu/WU-P2-ROLES
+  bundle_hash: sha256:c4bc571179b05f00434a472bdd1c41f5e426b253adca6210f9876b7d66af42ca
+  checks:
+    contracts_pytest: "32 passed"
+    architecture_pytest: "5 passed"
+  limitations:
+    - "Procédures stub — contenu complet WU-P2-PROCEDURES"
+    - "procedure_refs readonly inférées pour rôles sans ref Doc 06"
+affected_nodes:
+  - WU-P2-ROLES
+requires_human: false
+status: open

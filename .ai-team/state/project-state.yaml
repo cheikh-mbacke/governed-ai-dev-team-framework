@@ -138,7 +138,7 @@ work_units:
     milestone: M-P2
     risk: high
   WU-P2-ROLES:
-    status: in_progress
+    status: done
     milestone: M-P2
     risk: high
   WU-P2-PROCEDURES:
@@ -359,11 +359,7 @@ open_decisions: []
 open_blockers: []
 open_defects: []
 open_findings: []
-active_workers:
-- role: backend-developer
-  work_unit: WU-P2-ROLES
-  branch: wu/WU-P2-ROLES
-  started_at: '2026-08-28T22:52:00+00:00'
+active_workers: []
 staffing_proposal:
   default_roles:
   - backend-developer
