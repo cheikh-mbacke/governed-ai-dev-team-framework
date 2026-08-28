@@ -1,0 +1,10 @@
+{
+  "procedure_id": "orchestrator",
+  "revision": "1.0.0",
+  "intent": "Coordinate Work Unit execution, staffing and handoffs.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["project_state"],
+  "steps": ["Select ready Work Units", "Delegate to roles", "Track outcomes"],
+  "required_outputs": ["execution_status"],
+  "invariants": ["Respect gates and staffing policy"]
+}

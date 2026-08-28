@@ -1,0 +1,10 @@
+{
+  "procedure_id": "verify-work-unit",
+  "revision": "1.0.0",
+  "intent": "Evaluate whether a Work Unit meets Definition of Done prerequisites.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["work_unit", "base_sha"],
+  "steps": ["Check evidence", "Check review and audit status"],
+  "required_outputs": ["verification_report"],
+  "invariants": ["Claims require evidence"]
+}

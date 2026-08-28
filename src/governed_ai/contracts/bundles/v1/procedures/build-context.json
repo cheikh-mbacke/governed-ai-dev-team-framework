@@ -1,0 +1,10 @@
+{
+  "procedure_id": "build-context",
+  "revision": "1.0.0",
+  "intent": "Assemble the minimum sufficient Context Package for a Work Unit.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["work_unit"],
+  "steps": ["Select authoritative sources", "Assemble context package"],
+  "required_outputs": ["context_package_ref"],
+  "invariants": ["Preserve provenance"]
+}

@@ -1,0 +1,10 @@
+{
+  "procedure_id": "impact-analysis",
+  "revision": "1.0.0",
+  "intent": "Analyze impact of changes on Work Units, contracts and architecture.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["change_scope"],
+  "steps": ["Identify affected components", "Report impact and risks"],
+  "required_outputs": ["impact_report"],
+  "invariants": ["Do not acquire product authority"]
+}

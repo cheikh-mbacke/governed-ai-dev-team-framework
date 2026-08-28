@@ -1,0 +1,10 @@
+{
+  "procedure_id": "frontend-design",
+  "revision": "1.0.0",
+  "intent": "Apply intentional visual design direction for frontend Work Units.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["work_unit", "context_package"],
+  "steps": ["Read design constraints", "Apply visual direction"],
+  "required_outputs": ["design_notes"],
+  "invariants": ["Respect usability and accessibility constraints"]
+}

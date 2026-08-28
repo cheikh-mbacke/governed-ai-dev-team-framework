@@ -1,0 +1,10 @@
+{
+  "procedure_id": "propose-profile",
+  "revision": "1.0.0",
+  "intent": "Propose or refine the project profile from authoritative sources.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["authoritative_sources"],
+  "steps": ["Inspect sources", "Draft profile proposal"],
+  "required_outputs": ["profile_proposal"],
+  "invariants": ["Distinguish proposals from decisions"]
+}

@@ -1,0 +1,10 @@
+{
+  "procedure_id": "implement-work-unit",
+  "revision": "1.0.0",
+  "intent": "Implement the approved Work Unit and return a verifiable handoff.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["work_unit", "context_package", "base_sha"],
+  "steps": ["Read inputs", "Implement within scope", "Run required checks"],
+  "required_outputs": ["result_sha", "checks", "limitations"],
+  "invariants": ["Do not change product authority", "Do not broaden scope"]
+}

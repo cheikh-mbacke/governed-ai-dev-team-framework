@@ -1,0 +1,10 @@
+{
+  "procedure_id": "retrospective",
+  "revision": "1.0.0",
+  "intent": "Generate a retrospective snapshot for a Work Unit or project scope.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["scope"],
+  "steps": ["Collect outcomes", "Summarize lessons"],
+  "required_outputs": ["retrospective_snapshot"],
+  "invariants": ["Observations are non-authoritative"]
+}

@@ -2,7 +2,7 @@
   "framework_version": "0.4.0",
   "generated_at": "2026-08-28T20:32:47+00:00",
   "platform": "win32",
-  "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
+  "description": "Reproducible witness projects for migration and distribution tests (Document 13 §3, Document 14 §2).",
   "scenarios": {
     "clean": {
       "summary": "Fresh install with minimal project-owned data.",
@@ -489,7 +489,7 @@
         },
         {
           "path": "docs/product/users-and-rules/06-catalogue-contrats-role.md",
-          "sha256": "0908e5321802fd7bbe1090309e2362718ab2348be1800b2d0b62e2bbb2299941"
+          "sha256": "107b6db883c2982a48cd484d06e093555d4a09baf9da8457fe366015b6657281"
         },
         {
           "path": "docs/product/users-and-rules/README.fr.md",
@@ -1092,7 +1092,7 @@
         },
         {
           "path": "docs/product/users-and-rules/06-catalogue-contrats-role.md",
-          "sha256": "0908e5321802fd7bbe1090309e2362718ab2348be1800b2d0b62e2bbb2299941"
+          "sha256": "107b6db883c2982a48cd484d06e093555d4a09baf9da8457fe366015b6657281"
         },
         {
           "path": "docs/product/users-and-rules/README.fr.md",

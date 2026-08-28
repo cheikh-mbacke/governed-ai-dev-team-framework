@@ -1,0 +1,10 @@
+{
+  "procedure_id": "compile-project",
+  "revision": "1.0.0",
+  "intent": "Compile authoritative product sources into derived project state.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["project_profile"],
+  "steps": ["Read sources", "Derive project state"],
+  "required_outputs": ["project_state"],
+  "invariants": ["Do not invent missing product decisions"]
+}

@@ -1,0 +1,10 @@
+{
+  "procedure_id": "security-review",
+  "revision": "1.0.0",
+  "intent": "Examine security-relevant dimensions and report findings without modifying code.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["work_unit", "base_sha"],
+  "steps": ["Inspect security surfaces", "Report findings with evidence"],
+  "required_outputs": ["findings", "limitations"],
+  "invariants": ["Do not modify evaluated code"]
+}

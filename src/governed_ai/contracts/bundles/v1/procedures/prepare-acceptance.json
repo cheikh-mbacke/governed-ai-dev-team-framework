@@ -1,0 +1,10 @@
+{
+  "procedure_id": "prepare-acceptance",
+  "revision": "1.0.0",
+  "intent": "Build a human-executable acceptance package for an increment or release.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["work_unit", "base_sha"],
+  "steps": ["Assemble scenarios", "Define expected outcomes", "Capture preconditions"],
+  "required_outputs": ["acceptance_package"],
+  "invariants": ["Do not authorize production release"]
+}

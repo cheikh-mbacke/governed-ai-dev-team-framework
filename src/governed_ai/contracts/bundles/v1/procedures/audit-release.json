@@ -1,0 +1,10 @@
+{
+  "procedure_id": "audit-release",
+  "revision": "1.0.0",
+  "intent": "Coordinate an independent audit and produce a conformity report.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["work_unit", "base_sha"],
+  "steps": ["Run audit passes", "Measure conformity", "Produce report"],
+  "required_outputs": ["audit_report", "limitations"],
+  "invariants": ["Do not remediate during measurement"]
+}

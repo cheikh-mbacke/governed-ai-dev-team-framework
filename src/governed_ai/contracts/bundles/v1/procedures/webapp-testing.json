@@ -1,0 +1,10 @@
+{
+  "procedure_id": "webapp-testing",
+  "revision": "1.0.0",
+  "intent": "Observe UI behavior and capture visual or DOM evidence.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["work_unit", "base_sha"],
+  "steps": ["Launch application", "Observe required states", "Capture evidence"],
+  "required_outputs": ["evidence_artifacts", "observations"],
+  "invariants": ["Evidence must match claimed behavior"]
+}
