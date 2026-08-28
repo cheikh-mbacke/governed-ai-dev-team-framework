@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContextPackage",
+  "type": "object",
+  "required": [
+    "id",
+    "work_unit",
+    "role",
+    "items"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "work_unit": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "level",
+          "source",
+          "provenance",
+          "reason"
+        ],
+        "properties": {
+          "level": {
+            "enum": [
+              "L0_constitution",
+              "L1_project",
+              "L2_relevant_zone",
+              "L3_work_unit"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "authoritative",
+              "derived",
+              "observed"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "open_context_requests": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true
+}

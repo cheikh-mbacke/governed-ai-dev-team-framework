@@ -1,0 +1,41 @@
+id: RET-WITNESS-001
+generated_at: '2026-01-01T13:00:00+00:00'
+project_id: witness-legacy
+framework_version: 0.4.0
+constitution_version: 1.1.0
+scope:
+  type: work_unit
+  ref: WU-WITNESS-DONE
+source_snapshot:
+  observations: 1
+  events: 3
+  decisions: 2
+  findings: 1
+  acceptances: 0
+  work_units: 3
+observation_summary:
+  total: 1
+  open: 1
+  by_category:
+    tooling: 1
+  by_origin:
+    framework: 1
+  by_severity:
+    low: 1
+signals:
+  blocked_minutes: 0
+  rework_observations: 0
+  human_interventions: 0
+  event_types:
+    STATUS: 2
+    HANDOFF: 1
+  work_unit_statuses:
+    ready: 1
+    in_progress: 1
+    done: 1
+observation_refs:
+- OBS-WITNESS-001
+unresolved_observation_refs:
+- OBS-WITNESS-001
+notes: Witness legacy retrospective — sanitized representative example.
+status: generated

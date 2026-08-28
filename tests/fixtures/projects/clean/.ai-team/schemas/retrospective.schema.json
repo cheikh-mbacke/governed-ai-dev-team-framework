@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionRetrospective",
+  "type": "object",
+  "required": [
+    "id",
+    "generated_at",
+    "project_id",
+    "framework_version",
+    "constitution_version",
+    "scope",
+    "source_snapshot",
+    "observation_summary",
+    "signals",
+    "status"
+  ],
+  "properties": {
+    "id": {"type": "string", "pattern": "^RET-[A-Za-z0-9._-]+$"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "project_id": {"type": "string", "minLength": 1},
+    "framework_version": {"type": "string", "minLength": 1},
+    "constitution_version": {"type": "string", "minLength": 1},
+    "scope": {
+      "type": "object",
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {"enum": ["work_unit", "project"]},
+        "ref": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "source_snapshot": {
+      "type": "object",
+      "required": ["observations", "events", "decisions", "findings", "acceptances"],
+      "properties": {
+        "observations": {"type": "integer", "minimum": 0},
+        "events": {"type": "integer", "minimum": 0},
+        "decisions": {"type": "integer", "minimum": 0},
+        "findings": {"type": "integer", "minimum": 0},
+        "acceptances": {"type": "integer", "minimum": 0},
+        "work_units": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "observation_summary": {
+      "type": "object",
+      "required": ["total", "open", "by_category", "by_origin", "by_severity"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "open": {"type": "integer", "minimum": 0},
+        "by_category": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "by_origin": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "by_severity": {"type": "object", "additionalProperties": {"type": "integer"}}
+      },
+      "additionalProperties": false
+    },
+    "signals": {
+      "type": "object",
+      "required": ["blocked_minutes", "rework_observations", "human_interventions"],
+      "properties": {
+        "blocked_minutes": {"type": "integer", "minimum": 0},
+        "rework_observations": {"type": "integer", "minimum": 0},
+        "human_interventions": {"type": "integer", "minimum": 0},
+        "event_types": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "work_unit_statuses": {"type": "object", "additionalProperties": {"type": "integer"}}
+      },
+      "additionalProperties": false
+    },
+    "observation_refs": {"type": "array", "items": {"type": "string"}},
+    "unresolved_observation_refs": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": ["string", "null"]},
+    "status": {"enum": ["generated", "reviewed"]}
+  },
+  "additionalProperties": false
+}

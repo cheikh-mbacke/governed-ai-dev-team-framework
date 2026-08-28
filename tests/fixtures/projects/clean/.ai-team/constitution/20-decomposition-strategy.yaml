@@ -1,0 +1,16 @@
+policy: decomposition_strategy
+version: "1.0.0"
+rules:
+  - "Decompose from capabilities, journeys, contracts and boundaries already established in human material."
+  - "Associate every Work Unit with observable behavior or a verifiable result."
+  - "Prefer vertical slices that produce useful behavior over isolated technical layers when feasible."
+  - "Make each Work Unit testable and as independent as existing contracts permit."
+  - "Make dependencies explicit and distinguish true blocking prerequisites."
+  - "Limit size by complexity, expected duration, touched components, risk and context volume."
+  - "Attach acceptance criteria, risk and required verification to every Work Unit."
+  - "When human material is insufficient for non-ambiguous decomposition, create a clarification/decision request instead of inventing product structure."
+size_reference_defaults:
+  implementation_default: true
+  target_changed_components_max: 3
+  target_primary_behavior_count: 1
+  split_when_multiple_independent_acceptance_outcomes: true

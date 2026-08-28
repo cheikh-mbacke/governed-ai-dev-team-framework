@@ -1,0 +1,15 @@
+id: DEC-XXX
+type: DECISION_REQUEST
+work_units: []
+question: ""
+why_human_authority_is_required: ""
+source_investigation: []
+options: []
+impact_by_option: {}
+recommended_option: null
+status: pending_human
+decision:
+  selected_option: null
+  scope: null
+  decided_by: null
+  decided_at: null

@@ -1,0 +1,31 @@
+policy: test_strategy
+version: "1.0.0"
+behavior_matrix:
+  business_rule_or_calculation:
+    required: [targeted_unit_tests]
+    focus: [invariants, edge_cases, applicable_decisions]
+  persistence:
+    required: [integration_tests_with_relevant_infrastructure]
+  api_or_contract:
+    required: [integration_tests, contract_tests]
+  component_interaction:
+    required: [component_or_integration_tests, contract_verification]
+  critical_user_journey:
+    required: [e2e, relevant_failure_scenarios]
+  authorization_or_security:
+    required: [permission_matrix, negative_cases, targeted_controls]
+  performance:
+    required: [benchmark_against_explicit_threshold]
+  bug_fix:
+    required: [regression_test]
+    preferred: "demonstrate failure before fix and success after when feasible"
+  high_risk:
+    required: [deeper_evidence_combination, strengthened_review]
+    audit: according_to_audit_policy
+evidence_requirements:
+  test_file_presence_is_not_enough: true
+  inspect_assertions: true
+  identify_mocks_stubs_and_doubles: true
+  verify_tests_still_target_current_implementation_and_contracts: true
+  link_execution_result_to_exact_code_revision: true
+  prefer_behavioral_coverage_over_line_coverage: true

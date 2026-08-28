@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProjectState",
+  "type": "object",
+  "required": [
+    "project_id",
+    "constitution_version",
+    "phase",
+    "gates",
+    "work_units",
+    "dependency_edges",
+    "active_workers"
+  ],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "constitution_version": {
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "not_compiled",
+        "readiness_blocked",
+        "awaiting_g1_approval",
+        "execution",
+        "verification",
+        "release_candidate",
+        "human_acceptance",
+        "completed",
+        "paused"
+      ]
+    },
+    "gates": {
+      "type": "object"
+    },
+    "milestones": {
+      "type": "array"
+    },
+    "increments": {
+      "type": "array"
+    },
+    "releases": {
+      "type": "array"
+    },
+    "work_units": {
+      "type": "object"
+    },
+    "dependency_edges": {
+      "type": "array"
+    },
+    "critical_path": {
+      "type": "array"
+    },
+    "open_decisions": {
+      "type": "array"
+    },
+    "open_blockers": {
+      "type": "array"
+    },
+    "open_defects": {
+      "type": "array"
+    },
+    "open_findings": {
+      "type": "array"
+    },
+    "active_workers": {
+      "type": "array"
+    },
+    "last_updated": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,41 @@
+id: WU-WITNESS-ACTIVE
+title: Witness active Work Unit
+objective:
+  result: Witness legacy scenario for WU-WITNESS-ACTIVE.
+  rationale: USER EDIT — operator adjusted rationale after starting execution.
+scope:
+  include:
+  - witness-scenario
+  exclude: []
+expected_behavior: Static witness fixture for migration and distribution tests.
+applicable_rules_requirements:
+- Document 13 §3 Phase 0
+acceptance_criteria:
+- Fixture validates and represents intended scenario.
+dependencies: []
+risk:
+  class: low
+  reasons:
+  - Static fixture
+required_verification:
+  unit_tests: false
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: false
+  review: false
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-WITNESS-ACTIVE
+status: in_progress
+events:
+- EVT-20260101-100000-orchestrator-start
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

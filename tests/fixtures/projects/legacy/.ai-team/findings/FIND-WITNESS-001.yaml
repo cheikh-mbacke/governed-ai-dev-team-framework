@@ -1,0 +1,10 @@
+id: FIND-WITNESS-001
+severity: low
+classification: expected_and_observed
+claim: Obsolete managed file remains on disk until update classifies it.
+evidence:
+- OBS-WITNESS-001
+limitations:
+- Static fixture — no live update executed
+remediation_required: false
+status: open

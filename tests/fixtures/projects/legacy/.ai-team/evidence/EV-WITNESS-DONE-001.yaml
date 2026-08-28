@@ -1,0 +1,16 @@
+id: EV-WITNESS-DONE-001
+work_unit: WU-WITNESS-DONE
+type: test_execution
+code_revision: '0000000000000000000000000000000000000000'
+performed_at: '2026-01-01T11:30:00+00:00'
+performed_by_role: qa-test
+command_or_observation: python -m pytest tests/test_witness_projects.py -q
+result:
+  status: passed
+  details:
+    tests: witness fixture smoke
+demonstrates:
+- Witness legacy Work Unit verification path
+limitations:
+- Fixture-only evidence — no live runtime
+artifacts: []

@@ -1,0 +1,12 @@
+id: EVT-20260101-100000-orchestrator-start
+type: STATUS
+work_unit: WU-WITNESS-ACTIVE
+created_at: '2026-01-01T10:00:00+00:00'
+created_by_role: orchestrator
+summary: Orchestrator started WU-WITNESS-ACTIVE on witness legacy fixture.
+details:
+  branch: wu/WU-WITNESS-ACTIVE
+affected_nodes:
+- WU-WITNESS-ACTIVE
+requires_human: false
+status: open

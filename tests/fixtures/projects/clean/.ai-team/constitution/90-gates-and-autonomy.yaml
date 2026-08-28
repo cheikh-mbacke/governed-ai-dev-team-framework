@@ -1,0 +1,40 @@
+policy: human_gates_and_autonomy
+version: "1.0.0"
+gates:
+  G0:
+    name: readiness
+    trigger: insufficient_inputs_or_blocking_ambiguity
+    human_decision: [complete_inputs, arbitrate, reduce_scope]
+  G1:
+    name: execution_plan
+    trigger: initial_project_state_and_execution_plan_proposed
+    human_decision: [approve, request_changes, reject]
+  G2:
+    name: reserved_decision
+    trigger: product_decision_policy_sensitive_permission_or_source_conflict
+    human_decision: [choose_option_and_record_scope]
+  G3:
+    name: release_production
+    trigger: release_candidate_targets_protected_environment
+    human_decision: [authorize, request_remediation, reject]
+  G4:
+    name: acceptance
+    trigger: increment_or_release_verified_and_audited_as_required
+    human_decision: [accept, partially_accept, reject, request_remediation]
+autonomy_profiles:
+  level_1:
+    name: coordinated_copilots
+    behavior: "Agents execute limited work; human validates important intermediate steps."
+  level_2:
+    name: semi_autonomous_team
+    behavior: "From a sufficiently specified mission, agents inspect, plan, implement, test and prepare delivery; human focuses on defined gates."
+  level_3:
+    name: autonomous_software_factory
+    behavior: "A wider portion of the technical cycle is automated; readiness, permissions, traceability and audit become stricter."
+reference_default:
+  implementation_default: true
+  level: 2
+invariants:
+  product_and_policy_authority_remain_human: true
+  autonomy_does_not_authorize_product_invention: true
+  system_may_not_self_modify_constitution: true

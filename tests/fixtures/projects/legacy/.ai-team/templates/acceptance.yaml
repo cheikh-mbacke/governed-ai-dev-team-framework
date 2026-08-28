@@ -1,0 +1,12 @@
+id: UAT-XXX
+release_or_increment: null
+environment: staging
+preconditions: []
+scenarios: []
+# scenario fields: id, title, purpose, steps, expected, evidence_to_capture
+human_result:
+  status: pending
+  executed_by: null
+  executed_at: null
+  notes: null
+  defects: []

@@ -1,0 +1,15 @@
+policy: definition_of_ready
+version: "1.0.0"
+rule: "No product implementation begins for a scope that has not passed readiness."
+dimensions:
+  intention: "Objective and expected result are understandable."
+  scope: "Included and excluded scope are explicit enough for the Work Unit."
+  usages_and_rules: "Relevant actors, use cases, business rules and invariants are identified."
+  requirements: "Applicable functional and non-functional requirements are available."
+  acceptance: "Observable acceptance criteria exist."
+  architecture_and_contracts: "Necessary constraints, interfaces and structural decisions are known."
+  security_and_compliance: "Applicable constraints are identified where relevant."
+  constitution: "Policies required for the mission are present and versioned."
+  dependencies: "Major dependencies and external decisions are known or explicitly unknown."
+  verification: "Risk level and verification requirements can be determined."
+blocking_rule: "Readiness requires sufficient precision for the considered scope, not exhaustive documentation for the whole product."

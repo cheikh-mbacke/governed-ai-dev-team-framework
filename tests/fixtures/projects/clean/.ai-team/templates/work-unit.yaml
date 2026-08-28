@@ -1,0 +1,40 @@
+id: WU-XXX
+title: "Observable result"
+objective:
+  result: ""
+  rationale: ""
+scope:
+  include: []
+  exclude: []
+zone:
+  area: unknown
+  capabilities: []
+  components: []
+expected_behavior: ""
+applicable_rules_requirements: []
+acceptance_criteria: []
+dependencies: []
+risk:
+  class: medium
+  reasons: []
+required_verification:
+  unit_tests: false
+  integration_tests: false
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: true
+context_package_ref: null
+status: draft
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

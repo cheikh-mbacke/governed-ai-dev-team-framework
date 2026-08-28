@@ -1,0 +1,6 @@
+id: G1-WITNESS-0001
+gate: G1
+status: approved
+by: witness-operator
+at: '2026-01-01T08:00:00+00:00'
+note: Witness legacy G1 approval for execution plan.

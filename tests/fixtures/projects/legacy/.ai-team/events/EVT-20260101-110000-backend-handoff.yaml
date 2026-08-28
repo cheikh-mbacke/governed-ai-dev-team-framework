@@ -1,0 +1,12 @@
+id: EVT-20260101-110000-backend-handoff
+type: HANDOFF
+work_unit: WU-WITNESS-ACTIVE
+created_at: '2026-01-01T11:00:00+00:00'
+created_by_role: backend-developer
+summary: Backend handoff for witness active Work Unit.
+details:
+  commit_sha: '0000000000000000000000000000000000000000'
+affected_nodes:
+- WU-WITNESS-ACTIVE
+requires_human: false
+status: open

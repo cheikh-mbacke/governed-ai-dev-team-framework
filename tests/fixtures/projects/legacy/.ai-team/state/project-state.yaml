@@ -1,0 +1,57 @@
+project_id: witness-legacy
+constitution_version: 1.1.0
+phase: execution
+gates:
+  G0:
+    status: passed
+    evaluated_at: '2026-01-01T00:00:00+00:00'
+    note: Witness legacy readiness snapshot.
+  G1:
+    status: approved
+    by: witness-operator
+    at: '2026-01-01T08:00:00+00:00'
+    note: Witness legacy execution plan approved.
+  G2:
+    status: not_required
+  G3:
+    status: not_required
+  G4:
+    status: not_required
+milestones:
+- id: M-WITNESS
+  title: Witness legacy milestone
+  work_units:
+  - WU-WITNESS-READY
+  - WU-WITNESS-ACTIVE
+  - WU-WITNESS-DONE
+work_units:
+  WU-WITNESS-READY:
+    status: ready
+    milestone: M-WITNESS
+    risk: low
+  WU-WITNESS-ACTIVE:
+    status: in_progress
+    milestone: M-WITNESS
+    risk: medium
+  WU-WITNESS-DONE:
+    status: done
+    milestone: M-WITNESS
+    risk: low
+    done_event: EVT-20260101-120000-wu-done
+    evidence:
+    - EV-WITNESS-DONE-001
+dependency_edges:
+- from: WU-WITNESS-ACTIVE
+  to: WU-WITNESS-READY
+  type: blocks
+- from: WU-WITNESS-DONE
+  to: WU-WITNESS-ACTIVE
+  type: blocks
+active_workers: []
+open_decisions:
+- DEC-WITNESS-001
+open_blockers: []
+open_defects: []
+open_findings:
+- FIND-WITNESS-001
+last_updated: '2026-01-01T13:00:00+00:00'

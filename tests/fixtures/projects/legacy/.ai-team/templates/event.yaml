@@ -1,0 +1,10 @@
+id: EVT-XXX
+type: STATUS
+work_unit: null
+created_at: null
+created_by_role: null
+summary: ""
+details: {}
+affected_nodes: []
+requires_human: false
+status: open

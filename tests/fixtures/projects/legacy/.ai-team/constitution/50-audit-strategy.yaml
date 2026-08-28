@@ -1,0 +1,33 @@
+policy: audit_strategy
+version: "1.0.0"
+independence:
+  auditor_must_not_remediate_while_measuring: true
+  developer_claims_are_not_truth: true
+  findings_are_first_class_project_state_objects: true
+passes:
+  - id: discovery
+    objective: "Identify relevant names, routes, pages, services, models, events, tests and configuration."
+  - id: path_tracing
+    objective: "Trace entry points to real effects and find consumers of internal services."
+  - id: capabilities_and_behaviors
+    objective: "Reconstruct actually observed capabilities, rules and behaviors."
+  - id: tests
+    objective: "Read assertions, mocks, execution evidence and proof strength."
+  - id: security
+    objective: "Analyze relevant dimensions and distinguish observation, assessment, risk and unknown."
+  - id: debt_and_inconsistencies
+    objective: "Find dead code, stubs, TODOs, duplication, disabled paths, weak tests and required configuration."
+  - id: coherence
+    objective: "Validate references, identifiers, relationships, contracts and derived data."
+  - id: report_and_validation
+    objective: "Produce the audit artifact and validate its structural and semantic consistency."
+truth_classifications:
+  - expected_and_observed
+  - expected_but_not_demonstrated
+  - observed_but_not_specified
+  - contradiction
+  - unknown
+risk_triggers:
+  implementation_default: true
+  audit_required_for: [high, critical]
+  audit_required_for_production_release: true

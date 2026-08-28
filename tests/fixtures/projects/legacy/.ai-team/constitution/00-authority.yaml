@@ -1,0 +1,42 @@
+policy: authority_and_sources
+version: "1.0.0"
+principles:
+  - id: human_product_authority
+    rule: "Humans are authoritative for product intent, scope, business rules, requirements, expected architecture/constraints, and acceptance criteria."
+  - id: human_policy_authority
+    rule: "Humans are authoritative for the Engineering Constitution and changes to it."
+  - id: proposal_not_decision
+    rule: "An agent proposal does not become a product or policy decision until approved by the appropriate human authority."
+  - id: missing_stays_missing
+    rule: "Absence of a decision remains explicit; agents may investigate or propose options but may not silently create a product rule."
+source_truth:
+  precedence_model:
+    - type: human_construction_material
+      authority: human
+      meaning: intended_product
+    - type: engineering_constitution
+      authority: human
+      meaning: operating_policy
+    - type: recorded_human_decision
+      authority: human
+      meaning: explicit_addition_or_change
+    - type: approved_execution_model
+      authority: derived_and_human_approved
+      meaning: operational_plan
+    - type: repository
+      authority: observed
+      meaning: code_and_configuration_reality
+    - type: runtime
+      authority: observed
+      meaning: executed_and_measured_reality
+conflict_policy:
+  human_source_conflict: escalate_g2
+  policy_vs_product_conflict: stop_affected_scope_and_escalate_g2
+  repository_vs_intent: report_conformance_gap_do_not_rewrite_intent
+change_policy:
+  source_change_during_cycle:
+    action: impact_analysis
+    affected_work_units: [invalidate, reevaluate, recompile]
+  constitution_change:
+    allowed_during_cycle: false
+    requirements: [human_approval, version_bump, rationale, scope, effective_date, impact_analysis]
