@@ -1,7 +1,7 @@
 id: CTX-WU-P1-COMMON
 work_unit: WU-P1-COMMON
 role: backend-developer
-assembled_at: null
+assembled_at: '2026-08-28T20:18:00+00:00'
 items:
 - level: L0_constitution
   source: .ai-team/constitution/constitution.yaml
