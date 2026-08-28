@@ -1,0 +1,19 @@
+id: EVT-20260828-224000-wu-done
+type: STATUS
+work_unit: WU-P2-BUNDLE-SCHEMA
+created_at: '2026-08-28T22:40:00+00:00'
+created_by_role: orchestrator
+summary: "WU-P2-BUNDLE-SCHEMA terminee — Phase 2 demarree ; QA + revue approuvee avec notes."
+details:
+  commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
+  retrospective: RET-20260828T223925907949Z-5fc6f3
+  next_ready: WU-P2-ROLES
+  documented_reserves:
+    - "Incompatibilité capacité procédure↔rôle différée"
+    - "Catalogue rôles/procédures → WU-P2-ROLES / WU-P2-PROCEDURES"
+    - "13 échecs pytest préexistants hors scope"
+affected_nodes:
+  - WU-P2-BUNDLE-SCHEMA
+  - WU-P2-ROLES
+requires_human: false
+status: closed

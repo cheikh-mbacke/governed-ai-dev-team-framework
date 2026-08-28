@@ -40,11 +40,27 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P2-BUNDLE-SCHEMA
-status: in_progress
-events: []
-evidence: []
+status: done
+events:
+  - EVT-20260828-220600-orchestrator-start
+  - EVT-20260828-222000-backend-handoff
+  - EVT-20260828-223000-qa-pass
+  - EVT-20260828-223100-review-approved
+evidence:
+  - id: EVD-WU-P2-BUNDLE-SCHEMA-IMPL
+    type: implementation
+    commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
+    verified_by: backend-developer
+  - id: EVD-WU-P2-BUNDLE-SCHEMA-QA
+    type: qa
+    commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
+    event: EVT-20260828-223000-qa-pass
+  - id: EVD-WU-P2-BUNDLE-SCHEMA-REVIEW
+    type: review
+    commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
+    event: EVT-20260828-223100-review-approved
 outcomes:
-  review_status: pending
+  review_status: approved_with_notes
   audit_status: not_required
   critical_open_items: []
   defects: []
