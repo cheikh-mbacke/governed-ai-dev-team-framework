@@ -5,7 +5,7 @@ created_at: '2026-08-28T22:20:00+00:00'
 created_by_role: backend-developer
 summary: "Handoff WU-P2-BUNDLE-SCHEMA — schémas JSON Schema Draft 2020-12 du Published Contract Bundle v1, hash canonique et validation CT-001..007."
 details:
-  commit_sha: pending
+  commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
   branch: wu/WU-P2-BUNDLE-SCHEMA
   extension_namespacing: "Root properties matching ^x-[a-z0-9]+(-[a-z0-9]+)+$ (ex. x-vendor-meta); additionalProperties false elsewhere."
   checks:
