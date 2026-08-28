@@ -47,11 +47,27 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P1-SCAFFOLD
-status: in_progress
-events: []
-evidence: []
+status: done
+events:
+  - EVT-20260828-185400-orchestrator-start
+  - EVT-20260828-190700-backend-handoff
+  - EVT-20260828-191200-qa-pass
+  - EVT-20260828-191500-review-approved
+evidence:
+  - id: EVD-WU-P1-SCAFFOLD-IMPL
+    type: implementation
+    commit_sha: 5b66fc236a2efb4a762cce0b2437b418c35f6859
+    verified_by: backend-developer
+  - id: EVD-WU-P1-SCAFFOLD-QA
+    type: qa
+    commit_sha: 5b66fc236a2efb4a762cce0b2437b418c35f6859
+    event: EVT-20260828-191200-qa-pass
+  - id: EVD-WU-P1-SCAFFOLD-REVIEW
+    type: review
+    commit_sha: 5b66fc236a2efb4a762cce0b2437b418c35f6859
+    event: EVT-20260828-191500-review-approved
 outcomes:
-  review_status: pending
+  review_status: approved_with_notes
   audit_status: not_required
   critical_open_items: []
   defects: []

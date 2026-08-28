@@ -1,0 +1,18 @@
+id: EVT-20260828-191500-review-approved
+type: STATUS
+work_unit: WU-P1-SCAFFOLD
+created_at: '2026-08-28T19:15:00+00:00'
+created_by_role: code-reviewer
+summary: "Revue approuvee avec notes — WU-P1-SCAFFOLD SHA 5b66fc2."
+details:
+  commit_sha: 5b66fc236a2efb4a762cce0b2437b418c35f6859
+  disposition: APPROVED_WITH_NOTES
+  documented_reserves:
+    - "M1: pas de smoke test import automatisé ni pythonpath pytest"
+    - "M2: contract_tests sans artefact test dédié"
+    - "m1: install_artifacts absent (déferré Phase 5/Distribution)"
+    - "m4: project-profile source_roots ne couvre pas src/"
+affected_nodes:
+  - WU-P1-SCAFFOLD
+requires_human: false
+status: closed
