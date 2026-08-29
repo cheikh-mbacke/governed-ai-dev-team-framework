@@ -1,0 +1,18 @@
+id: EVT-20260829-211600-backend-handoff
+type: HANDOFF
+work_unit: WU-E2E-CONFORMITY
+created_at: '2026-08-29T21:16:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-E2E-CONFORMITY — suite end_to_end L3, install/update corrige, 407 tests verts."
+details:
+  commits:
+    - 57acaaa
+    - fix-suite
+  tests:
+    command: python -m pytest tests/ -q
+    result: "407 passed, 2 skipped"
+  l4_cursor_real: not_run
+affected_nodes:
+  - WU-E2E-CONFORMITY
+requires_human: false
+status: open

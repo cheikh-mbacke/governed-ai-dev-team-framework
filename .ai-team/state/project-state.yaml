@@ -226,7 +226,7 @@ work_units:
     milestone: M-P6
     risk: medium
   WU-E2E-CONFORMITY:
-    status: ready
+    status: done
     milestone: M-CONFORMITY
     risk: critical
 dependency_edges:
