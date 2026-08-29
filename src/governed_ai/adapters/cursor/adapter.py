@@ -5,7 +5,20 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from adapters.cursor.compatibility import (
+    CAPABILITY_NOT_ENFORCEABLE,
+    UNSUPPORTED_CONTRACT,
+    negotiate_compatibility,
+    primary_issue_code,
+    requires_blocking,
+)
 from adapters.cursor.runtime.execute import collect_runtime_result, execute_runtime
+from adapters.cursor.runtime.guard import (
+    CapabilityNotEnforceableError,
+    UnsupportedContractError,
+    validate_requested_commands,
+)
+from adapters.cursor.runtime.checks import platform_profile
 
 from governed_ai.adapters.cursor.compile import compile_manifest
 from governed_ai.adapters.spi import (
@@ -58,14 +71,13 @@ class CursorAdapter(AdapterSPIBase):
         procedure: ProcedureRevision,
         platform: str,
     ) -> CompatibilityReport:
-        descriptor = self.describe()
-        supported = platform in descriptor["platforms"]
-        return CompatibilityReport(
-            compatible=supported and bundle["bundle_version"].startswith("1."),
-            adapter_id=descriptor["adapter_id"],
-            role_id=str(role.get("role_id", "")),
-            procedure_id=str(procedure.get("procedure_id", "")),
-            issues=[] if supported else [{"code": "UNSUPPORTED_PLATFORM", "path": platform}],
+        return negotiate_compatibility(
+            self.describe(),
+            bundle,
+            role,
+            procedure,
+            platform,
+            protocol_version="1.0",
         )
 
     def compile(
@@ -90,7 +102,66 @@ class CursorAdapter(AdapterSPIBase):
         )
 
     def execute(self, request: ExecutionRequest) -> RuntimeResult:
+        descriptor = self.describe()
+        protocol_version = str(request.get("protocol_version", "1.0"))
+        if protocol_version not in descriptor["protocol_versions"]:
+            raise UnsupportedContractError(
+                UNSUPPORTED_CONTRACT,
+                f"unsupported protocol_version: {protocol_version}",
+            )
+
+        contract = request["contract"]
+        role = self._load_role(str(contract["role_id"]))
+        procedure = self._load_procedure(str(contract["procedure_id"]))
+        platform = str(request.get("platform") or platform_profile())
+        bundle = self._load_bundle_manifest()
+
+        report = negotiate_compatibility(
+            descriptor,
+            bundle,
+            role,
+            procedure,
+            platform,
+            protocol_version=protocol_version,
+        )
+        if requires_blocking(report):
+            code = primary_issue_code(report) or UNSUPPORTED_CONTRACT
+            message = f"compatibility blocked: {code}"
+            if code == CAPABILITY_NOT_ENFORCEABLE:
+                raise CapabilityNotEnforceableError(code, message)
+            raise UnsupportedContractError(code, message)
+
+        validate_requested_commands(request, role)
         return execute_runtime(self._project_root, request)
 
     def collect(self, execution_id: str) -> RuntimeResult:
         return collect_runtime_result(self._project_root, execution_id)
+
+    def _load_bundle_manifest(self) -> PublishedContractBundle:
+        if self._bundle_dir is None:
+            raise RuntimeError("execute() requires bundle_dir for compatibility negotiation")
+        data = json.loads((self._bundle_dir / "manifest.json").read_text(encoding="utf-8"))
+        return PublishedContractBundle(
+            schema_version=int(data["schema_version"]),
+            bundle_version=str(data["bundle_version"]),
+            created_at=str(data["created_at"]),
+            content_hash=str(data["content_hash"]),
+            roles=list(data["roles"]),
+            procedures=list(data["procedures"]),
+        )
+
+    def _load_role(self, role_id: str) -> RoleDefinitionRevision:
+        if self._bundle_dir is None:
+            raise RuntimeError(f"execute() requires bundle_dir to resolve role {role_id}")
+        path = self._bundle_dir / "roles" / f"{role_id}.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return RoleDefinitionRevision(**data)
+
+    def _load_procedure(self, procedure_id: str) -> ProcedureRevision:
+        if self._bundle_dir is None:
+            raise RuntimeError(
+                f"execute() requires bundle_dir to resolve procedure {procedure_id}"
+            )
+        path = self._bundle_dir / "procedures" / f"{procedure_id}.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return ProcedureRevision(**data)

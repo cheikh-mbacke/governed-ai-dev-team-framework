@@ -123,7 +123,10 @@ def test_collect_reads_persisted_runtime_result(tmp_path: Path) -> None:
 
 def test_cursor_adapter_spi_execute_and_collect(tmp_path: Path) -> None:
     _write_minimal_project(tmp_path)
-    adapter = CursorAdapter(project_root=tmp_path)
+    adapter = CursorAdapter(
+        project_root=tmp_path,
+        bundle_dir=REPO_ROOT / "src" / "governed_ai" / "contracts" / "bundles" / "v1",
+    )
     request = _sample_request("EXE-SPI-001")
     result = adapter.execute(request)
     again = adapter.collect("EXE-SPI-001")
