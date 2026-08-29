@@ -182,7 +182,7 @@ work_units:
     milestone: M-P3
     risk: high
   WU-P3-LEGACY-WRAPPERS:
-    status: ready
+    status: done
     milestone: M-P3
     risk: high
   WU-P3-TX-TESTS:
@@ -434,4 +434,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-29T19:14:00+00:00'
+last_updated: '2026-08-29T19:29:00+00:00'

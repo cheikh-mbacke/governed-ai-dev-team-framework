@@ -1,0 +1,15 @@
+id: EVT-20260829-192500-backend-handoff
+type: HANDOFF
+work_unit: WU-P3-LEGACY-WRAPPERS
+created_at: '2026-08-29T19:25:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P3-LEGACY-WRAPPERS — record_gate.py et feedback.py traduisent vers Command Gateway."
+details:
+  branch: wu/WU-P3-LEGACY-WRAPPERS
+  checks:
+    legacy_pytest: "tests/core/test_legacy_wrappers.py → 6 passed"
+    core_pytest: "tests/core/ → 179 passed"
+affected_nodes:
+  - WU-P3-LEGACY-WRAPPERS
+requires_human: false
+status: open
