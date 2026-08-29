@@ -139,9 +139,9 @@ def _scoped_objects(workspace: Workspace, directory: str, work_unit_id: str | No
     ]
 
 
-def generate_retrospective(
+def build_retrospective_document(
     workspace: Workspace, params: RetrospectiveParams
-) -> RetrospectiveResult:
+) -> tuple[dict, Path]:
     meta = common.metadata(workspace)
     work_unit_id = params.work_unit
     work_units = []
@@ -199,18 +199,24 @@ def generate_retrospective(
         "status": "generated",
     }
     common.validate_payload(workspace, payload, "retrospective.schema.json")
-    path = (
-        Path(params.output).expanduser().resolve()
-        if params.output
-        else workspace.ai_team / "retrospectives" / f"{retrospective_id}.yaml"
-    )
+    if params.output:
+        path = Path(params.output).expanduser().resolve()
+    else:
+        path = workspace.ai_team / "retrospectives" / f"{retrospective_id}.yaml"
+    return payload, path
+
+
+def generate_retrospective(
+    workspace: Workspace, params: RetrospectiveParams
+) -> RetrospectiveResult:
+    payload, path = build_retrospective_document(workspace, params)
     common.atomic_write_yaml(path, payload)
     try:
         display_path = path.relative_to(workspace.root)
     except ValueError:
         display_path = path
     return RetrospectiveResult(
-        retrospective_id=retrospective_id,
+        retrospective_id=payload["id"],
         path=path,
         display_path=display_path,
     )
@@ -244,7 +250,7 @@ def _full_without_project_id(item: dict, project_ref: str, include_id: bool) -> 
     return result
 
 
-def export_feedback(workspace: Workspace, params: ExportParams) -> ExportResult:
+def build_export_document(workspace: Workspace, params: ExportParams) -> tuple[dict, Path]:
     meta = common.metadata(workspace)
     observations = [
         data for _path, data in common.load_yaml_directory(workspace.ai_team / "observations")
@@ -296,12 +302,16 @@ def export_feedback(workspace: Workspace, params: ExportParams) -> ExportResult:
     if params.include_project_id:
         payload["project_id"] = meta["project_id"]
     common.validate_payload(workspace, payload, "feedback-export.schema.json")
-    timestamp = common.now_iso().replace(":", "").replace("+00:00", "Z")
-    path = (
-        Path(params.output).expanduser().resolve()
-        if params.output
-        else workspace.ai_team / "metrics" / f"framework-feedback-{timestamp}.json"
-    )
+    if params.output:
+        path = Path(params.output).expanduser().resolve()
+    else:
+        timestamp = common.now_iso().replace(":", "").replace("+00:00", "Z")
+        path = workspace.ai_team / "metrics" / f"framework-feedback-{timestamp}.json"
+    return payload, path
+
+
+def export_feedback(workspace: Workspace, params: ExportParams) -> ExportResult:
+    payload, path = build_export_document(workspace, params)
     common.atomic_write_json(path, payload)
     try:
         display_path = path.relative_to(workspace.root)

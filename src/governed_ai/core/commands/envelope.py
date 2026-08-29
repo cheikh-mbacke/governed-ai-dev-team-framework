@@ -23,7 +23,6 @@ GATE_COMMANDS_REQUIRING_HUMAN_AUTH = frozenset(
         "RecordGateDecision",
         "RecordAcceptance",
         "ResolveDecisionRequest",
-        "ExportFeedback",
     }
 )
 
@@ -86,6 +85,10 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_record_acceptance(raw)
     elif raw["type"] == "RegisterReleaseCandidate":
         _validate_register_release_candidate(raw)
+    elif raw["type"] == "GenerateRetrospective":
+        _validate_generate_retrospective(raw)
+    elif raw["type"] == "ExportFeedback":
+        _validate_export_feedback(raw)
     elif raw["type"] in GATE_COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
         raise GatewayError(
             ErrorCode.HUMAN_AUTH_REQUIRED,
@@ -337,4 +340,45 @@ def _validate_register_release_candidate(raw: dict[str, Any]) -> None:
             ErrorCode.INVALID_SCHEMA,
             "payload.id must match target.id",
             "/payload/id",
+        )
+
+
+def _validate_generate_retrospective(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "retrospective":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "GenerateRetrospective target.kind must be retrospective",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or payload.get("scope") not in {"work_unit", "project"}:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.scope must be work_unit or project",
+            "/payload/scope",
+        )
+    if payload["scope"] == "work_unit" and not payload.get("work_unit_id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.work_unit_id is required for work_unit scope",
+            "/payload/work_unit_id",
+        )
+
+
+def _validate_export_feedback(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "feedback_export":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "ExportFeedback target.kind must be feedback_export",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
+    detail_level = payload.get("detail_level", "structured")
+    if detail_level == "full" and "human_authorization" not in raw:
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            "human_authorization required for full export",
+            "/human_authorization",
         )
