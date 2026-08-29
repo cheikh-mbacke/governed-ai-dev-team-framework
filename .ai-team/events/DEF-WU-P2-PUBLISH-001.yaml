@@ -1,0 +1,26 @@
+id: DEF-WU-P2-PUBLISH-001
+type: DEFECT
+work_unit: WU-P2-PUBLISH
+created_at: '2026-08-29T07:30:00+00:00'
+created_by_role: qa-test
+summary: "AC4 — le HANDOFF avec identités bundle/rôle/procédure n'est pas dans le SHA 123f940."
+details:
+  severity: medium
+  acceptance_criterion: "Handoff inclut identités bundle/rôle/procédure exactes"
+  observed: >
+    git cat-file -e HEAD:.ai-team/events/EVT-20260829-072000-backend-handoff.yaml échoue
+    (fichier absent de 123f940). Le fichier n'existe qu'en untracked working tree.
+  expected: >
+    Un événement HANDOFF versionné au SHA de handoff développeur, avec
+    details.identities.bundle_version, content_hash, roles[], procedures[].
+  working_tree_note: >
+    Le brouillon untracked EVT-20260829-072000-backend-handoff.yaml contient déjà
+    les identités attendues (bundle 1.0.0, hash sha256:c286…, 10 roles@1.0.0,
+    13 procedures@1.0.0) — remediation = commit cohérent sur wu/WU-P2-PUBLISH
+    puis re-vérification QA sur le nouveau SHA.
+  commit_sha_verified: 123f9401d47d90a45f68d07b7a95e0da310b4e67
+affected_nodes:
+  - WU-P2-PUBLISH
+requires_human: false
+status: remediated
+resolution: "HANDOFF EVT-20260829-072000 versionné sur wu/WU-P2-PUBLISH ; re-QA AC4 requise sur nouveau SHA."
