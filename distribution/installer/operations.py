@@ -14,15 +14,13 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-import yaml
-
 from distribution.installer.build_record import (
     InstallationValidationError,
     finalize_installation_manifests,
     validate_installation_record,
     validate_update_path,
 )
-from distribution.installer.constants import COPY_ITEMS, LEGACY_VERSION_REL
+from distribution.installer.constants import COPY_ITEMS, FRESH_PROJECT_SEEDS, LEGACY_VERSION_REL, PROJECT_OWNED_PATTERNS
 from distribution.installer.migrate_v1_v2 import MigrationError, ensure_installation_record_v2
 from distribution.installer.record import (
     INSTALLATION_RECORD_FILE,
@@ -39,6 +37,12 @@ from distribution.installer.source_files import (
     iter_managed_source_files,
     materialize_cursor_dir,
 )
+
+
+def _yaml_module():
+    import yaml
+
+    return yaml
 
 
 @dataclass
@@ -262,12 +266,12 @@ def build_update_plan(source_root: Path, target: Path) -> UpdatePlan:
 
 def _project_id_from_target(target: Path) -> str:
     profile_path = target / ".ai-team" / "project-profile.yaml"
-    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile = _yaml_module().safe_load(profile_path.read_text(encoding="utf-8"))
     return str(profile.get("project", {}).get("id", ""))
 
 
 def _active_adapter_id(target: Path) -> str:
-    profile = yaml.safe_load((target / ".ai-team" / "project-profile.yaml").read_text(encoding="utf-8"))
+    profile = _yaml_module().safe_load((target / ".ai-team" / "project-profile.yaml").read_text(encoding="utf-8"))
     return str(profile.get("active_adapter_id", "cursor"))
 
 
@@ -377,9 +381,21 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
         snapshot = create_snapshot(target, touched, backup_root)
         migration_backup = None
         try:
-            for entry in changed_entries:
+            cursor_changes = [
+                entry
+                for entry in changed_entries
+                if entry.relative.parts and entry.relative.parts[0] == ".cursor"
+            ]
+            file_changes = [
+                entry
+                for entry in changed_entries
+                if not entry.relative.parts or entry.relative.parts[0] != ".cursor"
+            ]
+            for entry in file_changes:
                 entry.destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(entry.source, entry.destination)
+            if cursor_changes:
+                materialize_cursor_dir(source_root, target)
             migrations = load_migration_module(source_root)
             migration_backup = migrations.apply_acceptance_changes(target, plan.migration_changes)
             if plan.constitution_change:
@@ -465,37 +481,23 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
 
     _ = _yaml
     target.mkdir(parents=True, exist_ok=True)
-    for item in COPY_ITEMS:
-        if item == ".cursor":
+
+    for rel in FRESH_PROJECT_SEEDS:
+        src = source_root / rel
+        if not src.is_file():
             continue
-        src = source_root / item
-        dst = target / item
-        if not src.exists():
-            continue
-        if src.is_dir():
-            if dst.exists() and not args.force:
-                for path in src.rglob("*"):
-                    relative = path.relative_to(src)
-                    output = dst / relative
-                    if "__pycache__" in relative.parts or path.suffix == ".pyc":
-                        continue
-                    if path.is_dir():
-                        output.mkdir(parents=True, exist_ok=True)
-                    elif not output.exists():
-                        output.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.copy2(path, output)
-            else:
-                shutil.copytree(
-                    src,
-                    dst,
-                    dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-                )
-        elif not dst.exists() or args.force:
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dst)
+        dest = target / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+
+    for pattern in PROJECT_OWNED_PATTERNS:
+        if pattern.endswith("/*"):
+            (target / pattern[:-2]).mkdir(parents=True, exist_ok=True)
 
     profile_path = target / ".ai-team" / "project-profile.yaml"
+    if not profile_path.is_file():
+        print(f"Missing seed file: {profile_path}", file=sys.stderr)
+        return 1
     profile_text = profile_path.read_text(encoding="utf-8")
     substitutions = [
         ("  id: framework-template", f"  id: {args.project_id}"),
@@ -517,7 +519,7 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
             profile_text = profile_text.replace(old, new, 1)
         profile_path.write_text(profile_text, encoding="utf-8")
     else:
-        profile = yaml.safe_load(profile_text)
+        profile = _yaml_module().safe_load(profile_text)
         profile["project"]["id"] = args.project_id
         profile["project"]["name"] = args.project_name
         profile["project"]["repository_kind"] = "existing_or_greenfield_project"
@@ -526,25 +528,44 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
             "Complete commands, paths and human authorities before production use."
         )
         profile_path.write_text(
-            yaml.safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
+            _yaml_module().safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
         )
 
-    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile = _yaml_module().safe_load(profile_path.read_text(encoding="utf-8"))
     profile["active_adapter_id"] = "cursor"
     profile_path.write_text(
-        yaml.safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
+        _yaml_module().safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
 
     state_path = target / ".ai-team" / "state" / "project-state.yaml"
-    state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
-    state["project_id"] = args.project_id
+    constitution_version = source_constitution_version(source_root)
+    state = {
+        "project_id": args.project_id,
+        "constitution_version": constitution_version,
+        "phase": "not_compiled",
+        "gates": {gate: {"status": "not_required"} for gate in ("G0", "G1", "G2", "G3", "G4")},
+        "work_units": {},
+        "dependency_edges": [],
+        "active_workers": [],
+        "open_decisions": [],
+        "open_blockers": [],
+        "open_defects": [],
+        "open_findings": [],
+    }
+    state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(
-        yaml.safe_dump(state, sort_keys=False, allow_unicode=True), encoding="utf-8"
+        _yaml_module().safe_dump(state, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
-    materialize_cursor_dir(source_root, target, project_id=args.project_id)
-    managed_files = [
-        relative.as_posix() for relative, _source in iter_managed_source_files(source_root, target)
-    ]
+
+    managed_files: list[str] = []
+    for relative, source in iter_managed_source_files(
+        source_root, target, project_id=args.project_id
+    ):
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+        managed_files.append(relative.as_posix())
+    managed_files = sorted(set(managed_files))
     version = current_version(source_root)
     finalize_installation_manifests(
         target,

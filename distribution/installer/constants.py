@@ -7,6 +7,8 @@ from pathlib import Path
 COPY_ITEMS = [
     ".cursor",
     ".ai-team",
+    "adapters/cursor",
+    "src",
     "scripts",
     "docs/product",
     "docs/operator",
@@ -35,6 +37,12 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/migration-backups/*",
     ".ai-team/project-profile.yaml.bak",
 ]
+
+FRESH_PROJECT_SEEDS = (
+    ".ai-team/project-profile.yaml",
+    ".ai-team/state/project-state.yaml",
+    ".ai-team/sources/source-registry.yaml",
+)
 
 SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0"}
 

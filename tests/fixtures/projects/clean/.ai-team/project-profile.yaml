@@ -48,3 +48,4 @@ setup_status:
   template: false
   cursor_compile_opt_in: true
   note: Witness clean fixture — minimal post-install project data.
+active_adapter_id: cursor

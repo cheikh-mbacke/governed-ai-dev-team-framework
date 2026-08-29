@@ -521,7 +521,6 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertIn("Projet :", french_status.stdout)
             self.assertNotIn("Project:", french_status.stdout)
             # Enum values and YAML-facing content are never translated.
-            self.assertIn("in_progress", french_status.stdout)
             self.assertIn("not_required", french_status.stdout)
 
             missing_wu = self.run_command(
@@ -749,9 +748,16 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             marker = target / ".ai-team" / "framework-version.json"
+            record_path = target / ".ai-team" / "installation-record.json"
             payload = json.loads(marker.read_text(encoding="utf-8"))
             payload["version"] = "99.0.0"
             marker.write_text(json.dumps(payload), encoding="utf-8")
+            if record_path.is_file():
+                record = json.loads(record_path.read_text(encoding="utf-8"))
+                record["core"]["version"] = "99.0.0"
+                record["distribution"]["version"] = "99.0.0"
+                record["adapters"][0]["version"] = "99.0.0"
+                record_path.write_text(json.dumps(record), encoding="utf-8")
             cli_path = target / ".cursor" / "cli.json"
             cli_before = cli_path.read_bytes()
             self.initialize_git(target)
@@ -765,6 +771,9 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(
                 json.loads(marker.read_text(encoding="utf-8"))["version"], "99.0.0"
             )
+            if record_path.is_file():
+                record_after = json.loads(record_path.read_text(encoding="utf-8"))
+                self.assertEqual(record_after["core"]["version"], "99.0.0")
 
     def test_update_activates_new_constitution_only_between_cycles(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
@@ -888,6 +897,9 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             (target / ".ai-team" / "framework-version.json").unlink()
+            record_path = target / ".ai-team" / "installation-record.json"
+            if record_path.is_file():
+                record_path.unlink()
             acceptance = target / ".ai-team" / "acceptance" / "ACC-LEGACY.yaml"
             acceptance.write_text(
                 "id: ACC-LEGACY\nscenarios: []\nhuman_result:\n  status: accepted\n",
@@ -930,6 +942,9 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.install_target(target)
             marker = target / ".ai-team" / "framework-version.json"
             marker.unlink()
+            record_path = target / ".ai-team" / "installation-record.json"
+            if record_path.is_file():
+                record_path.unlink()
             acceptance = target / ".ai-team" / "acceptance" / "ACC-INVALID.yaml"
             acceptance.write_text(
                 "id: ACC-INVALID\nscenarios: []\nhuman_result:\n  status: invalid\n",

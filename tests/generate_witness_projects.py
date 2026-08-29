@@ -61,6 +61,8 @@ WITNESS_V2_STAMP = {
     "updated_at": "2026-01-01T00:00:00+00:00",
 }
 
+WITNESS_INSTALL_STAMP = "2026-01-01T00:00:00+00:00"
+
 IGNORE_NAMES = {"__pycache__", ".pytest_cache", ".git"}
 IGNORE_SUFFIXES = {".pyc", ".pyo"}
 
@@ -179,6 +181,19 @@ def write_yaml(path: Path, payload: dict) -> None:
     )
 
 
+def normalize_installation_record(target: Path) -> None:
+    record_path = target / ".ai-team" / "installation-record.json"
+    if not record_path.is_file():
+        return
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    record["installed_at"] = WITNESS_INSTALL_STAMP
+    record["last_updated_at"] = WITNESS_INSTALL_STAMP
+    record_path.write_text(
+        json.dumps(record, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def finalize_clean_witness(target: Path, project_id: str) -> None:
     clear_project_owned_runtime(target)
     write_yaml(
@@ -192,6 +207,7 @@ def finalize_clean_witness(target: Path, project_id: str) -> None:
     )
     profile["setup_status"]["cursor_compile_opt_in"] = True
     write_yaml(profile_path, profile)
+    normalize_installation_record(target)
 
 
 def work_unit_base(wu_id: str, title: str, status: str) -> dict:
@@ -551,6 +567,7 @@ def apply_legacy_mutations(target: Path, project_id: str) -> None:
         managed.sort()
         version_payload["managed_files"] = managed
         version_path.write_text(json.dumps(version_payload, indent=2) + "\n", encoding="utf-8")
+    normalize_installation_record(target)
 
 
 def should_skip(path: Path) -> bool:

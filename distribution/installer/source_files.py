@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from distribution.installer.constants import COPY_ITEMS, LEGACY_VERSION_REL, PROJECT_OWNED_PATTERNS
-from distribution.installer.record import LEGACY_VERSION_FILE, normalize_path
+from distribution.installer.record import INSTALLATION_RECORD_FILE, LEGACY_VERSION_FILE, normalize_path
 
 
 def bootstrap_adapter_imports(source_root: Path) -> None:
@@ -78,6 +78,8 @@ def iter_managed_source_files(
                 continue
             if relative == LEGACY_VERSION_FILE:
                 continue
+            if relative.as_posix() == INSTALLATION_RECORD_FILE.as_posix():
+                continue
             if item == "docs/product" and not is_docs_product_readme(rel_posix):
                 continue
             if is_project_owned(rel_posix):
@@ -116,7 +118,8 @@ def build_copy_plan(source_root: Path, target: Path) -> tuple[list[CopyPlanEntry
             action = "unchanged"
         entries.append(CopyPlanEntry(action, relative, source, destination))
     managed.append(LEGACY_VERSION_REL.as_posix())
-    return entries, sorted(managed)
+    managed.append(INSTALLATION_RECORD_FILE.as_posix())
+    return entries, sorted(set(managed))
 
 
 def detect_obsolete_managed(old_managed: set[str], new_managed: set[str]) -> list[str]:

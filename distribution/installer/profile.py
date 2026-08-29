@@ -5,9 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from distribution.installer.record import KNOWN_ADAPTER_IDS
+
+
+def _yaml():
+    import yaml
+
+    return yaml
 
 
 class UnknownActiveAdapterError(ValueError):
@@ -22,7 +26,7 @@ def load_project_profile(target: Path) -> dict[str, Any]:
     path = target / ".ai-team" / "project-profile.yaml"
     if not path.is_file():
         raise FileNotFoundError(f"missing project profile: {path}")
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data = _yaml().safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("project-profile.yaml root must be a mapping")
     return data
@@ -31,7 +35,7 @@ def load_project_profile(target: Path) -> dict[str, Any]:
 def write_project_profile(target: Path, profile: dict[str, Any]) -> None:
     path = target / ".ai-team" / "project-profile.yaml"
     path.write_text(
-        yaml.safe_dump(profile, sort_keys=False, allow_unicode=True),
+        _yaml().safe_dump(profile, sort_keys=False, allow_unicode=True),
         encoding="utf-8",
     )
 

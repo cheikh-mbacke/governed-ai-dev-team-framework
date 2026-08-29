@@ -79,6 +79,8 @@ def main() -> int:
                 "baseline-test",
                 "--note",
                 "golden capture",
+                "--authorization-id",
+                "HAUTH-golden-g2",
             ],
             "feedback-record": [
                 sys.executable,

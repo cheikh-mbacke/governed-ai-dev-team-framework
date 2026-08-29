@@ -10,7 +10,7 @@ from pathlib import Path
 
 VALID_OWNERS = frozenset({"core", "adapter:cursor", "distribution", "project"})
 
-SCOPE_DIRS = ("tests/fixtures", ".ai-team", ".cursor", "scripts", "tools")
+SCOPE_DIRS = ("tests/fixtures", ".ai-team", ".cursor", "scripts", "tools", "adapters/cursor", "src")
 SCOPE_FILES = ("AGENTS.md",)
 EXCLUDE_DIR_NAMES = frozenset(
     {".git", "__pycache__", ".ruff_cache", ".pytest_cache", "node_modules"}
@@ -36,13 +36,27 @@ def classify_owner(path: str) -> str:
         return "distribution"
     if p == ".ai-team/framework-version.json":
         return "distribution"
+    if p == ".ai-team/installation-record.json":
+        return "distribution"
     if p == "AGENTS.md":
         return "core"
+    if p == "README.md":
+        return "core"
+    if p.startswith("docs/product/"):
+        return "core"
+    if p.startswith("docs/operator/"):
+        return "core"
+    if p.startswith("src/"):
+        return "core"
+    if p.startswith("adapters/cursor/"):
+        return "adapter:cursor"
     if p.startswith("scripts/ai-team/"):
         return "core"
     if p.startswith("tests/fixtures/"):
         return "core"
     if p.startswith(".ai-team/constitution/"):
+        return "core"
+    if p.startswith(".ai-team/contracts/"):
         return "core"
     if p.startswith(".ai-team/schemas/"):
         return "core"
@@ -77,8 +91,19 @@ def classify_owner(path: str) -> str:
     raise ValueError(f"Unclassified path: {p}")
 
 
-def should_skip(path: Path) -> bool:
-    return any(part in EXCLUDE_DIR_NAMES for part in path.parts)
+def should_skip(path: Path, root: Path | None = None) -> bool:
+    if any(part in EXCLUDE_DIR_NAMES for part in path.parts):
+        return True
+    if root is not None:
+        try:
+            rel = path.relative_to(root).as_posix()
+        except ValueError:
+            return False
+        if rel.startswith("tests/fixtures/projects/"):
+            return True
+        if rel.startswith("src/governed_ai_dev_team_framework.egg-info/"):
+            return True
+    return False
 
 
 def iter_scope_files(root: Path) -> list[str]:
@@ -88,11 +113,11 @@ def iter_scope_files(root: Path) -> list[str]:
         if not base.exists():
             continue
         if base.is_file():
-            if not should_skip(base):
+            if not should_skip(base, root):
                 files.append(normalize_path(base.relative_to(root)))
             continue
         for candidate in sorted(base.rglob("*")):
-            if candidate.is_file() and not should_skip(candidate):
+            if candidate.is_file() and not should_skip(candidate, root):
                 files.append(normalize_path(candidate.relative_to(root)))
     for scope_file in SCOPE_FILES:
         candidate = root / scope_file

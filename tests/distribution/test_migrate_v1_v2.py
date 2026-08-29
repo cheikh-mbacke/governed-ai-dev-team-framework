@@ -28,6 +28,17 @@ GOLDEN_V1 = REPO_ROOT / "tests" / "fixtures" / "legacy-0.4" / "objects" / "insta
 def _copy_legacy_fixture(tmp_path: Path) -> Path:
     target = tmp_path / "legacy-project"
     shutil.copytree(LEGACY_WITNESS, target)
+    v2_record = target / INSTALLATION_RECORD_FILE
+    if v2_record.is_file():
+        v2_record.unlink()
+    legacy_manifest_path = target / LEGACY_VERSION_FILE
+    if legacy_manifest_path.is_file():
+        manifest = json.loads(legacy_manifest_path.read_text(encoding="utf-8"))
+        record_rel = INSTALLATION_RECORD_FILE.as_posix()
+        manifest["managed_files"] = [
+            path for path in manifest.get("managed_files", []) if path != record_rel
+        ]
+        legacy_manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return target
 
 
@@ -114,6 +125,7 @@ def test_legacy_adapter_version_mismatch_blocks(tmp_path: Path) -> None:
     target = _copy_legacy_fixture(tmp_path)
     profile_path = target / ".ai-team" / "project-profile.yaml"
     profile = _load_profile(target)
+    profile.pop("active_adapter_id", None)
     profile["adapter"] = {"id": "cursor", "version": "9.9.9"}
     profile_path.write_text(
         yaml.safe_dump(profile, sort_keys=False, allow_unicode=True),

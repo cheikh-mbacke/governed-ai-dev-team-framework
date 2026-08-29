@@ -16,7 +16,7 @@
     {
       "path": "objects/work-unit.yaml",
       "object_type": "work-unit",
-      "sha256": "334652c4942197ca988600549ff4d1bca2cadbf796f57448a9176ce1880cb142"
+      "sha256": "ee70aadaceab5a7dbfd90fcb63699a4f2f22f15d4bec02c5a09c795f3c554cc2"
     },
     {
       "path": "objects/gate-decision.yaml",

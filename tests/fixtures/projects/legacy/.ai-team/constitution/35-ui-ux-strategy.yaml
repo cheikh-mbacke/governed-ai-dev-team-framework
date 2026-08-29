@@ -88,7 +88,7 @@ principle: >
   writing_note: >
     For empty/error/access-denied states specifically, the copy is part
     of the interface, not an afterthought - see
-    .cursor/skills/frontend-design/SKILL.md § "More on writing in design"
+    frontend-design procedure skill § "More on writing in design"
     (an empty state is an invitation to act; an error explains what
     happened and how to fix it, without apologizing or being vague).
 
@@ -106,7 +106,7 @@ principle: >
     should be true for any Work Unit in applies_to.work_unit_zones unless
     the risk/staffing policy explicitly waives it for that Work Unit's
     risk class. Prefer a real tool run over a manual checklist as
-    evidence when one is available — .cursor/skills/webapp-testing/
+    evidence when one is available — webapp-testing procedure skill
     (screenshots, DOM inspection) is the concrete evidence source this
     framework wires in for sections 6 and 7; see frontend-developer.md,
     qa-test.md and code-reviewer.md.
@@ -140,7 +140,7 @@ definition_of_done_addition:
   # 7_accessibility.verification is unresolved for its risk class.
 
 precedence_over_frontend_design_skill:
-  # .cursor/skills/frontend-design/SKILL.md (vendored from Anthropic) is
+  # frontend-design adapter skill package (vendored from Anthropic) is
   # general-purpose creative-brief guidance, not written for this
   # framework's governance model. Two of its defaults conflict with this
   # policy if followed literally; this Constitution wins both times:

@@ -155,6 +155,8 @@ class FeedbackLoopIntegrationTests(unittest.TestCase):
                     "full",
                     "--output",
                     str(full_path),
+                    "--authorization-id",
+                    "HAUTH-feedback-export-test",
                 ],
                 target,
             )

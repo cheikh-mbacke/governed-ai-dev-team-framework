@@ -1,0 +1,1 @@
+"""Decision Request domain."""

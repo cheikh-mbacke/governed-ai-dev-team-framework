@@ -48,6 +48,7 @@ setup_status:
   template: false
   cursor_compile_opt_in: true
   note: Witness legacy fixture — user customized setup note after install.
+active_adapter_id: cursor
 extensions:
   witness:
     operator: fixture-generator

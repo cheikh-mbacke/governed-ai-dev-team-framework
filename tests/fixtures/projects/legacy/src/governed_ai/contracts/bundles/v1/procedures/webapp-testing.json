@@ -1,0 +1,26 @@
+{
+  "procedure_id": "webapp-testing",
+  "revision": "1.0.0",
+  "intent": "Interact with and test local web applications using browser automation to verify frontend functionality, debug UI behavior, capture screenshots and inspect browser logs.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["test_target", "server_commands", "automation_goal"],
+  "steps": [
+    "Determine whether the target is static HTML or a dynamic web application",
+    "For static HTML, read the markup to identify selectors then write an automation script",
+    "For dynamic applications, confirm whether the application server is already running",
+    "When the server is not running, use a server lifecycle helper to start required services before automation",
+    "Apply reconnaissance-then-action: navigate, wait for network idle, inspect rendered DOM or capture screenshot, identify selectors, then execute actions",
+    "Write automation scripts using a headless browser in synchronous mode",
+    "Wait for dynamic content to finish loading before DOM inspection on single-page applications",
+    "Use descriptive selectors and explicit waits for elements or conditions",
+    "Capture console logs and screenshots when debugging or evidence is required",
+    "Close browser resources when automation completes",
+    "Consult bundled helper scripts with help output before reading their source; treat helpers as black boxes when sufficient"
+  ],
+  "required_outputs": ["automation_script", "test_evidence", "observed_behavior"],
+  "invariants": [
+    "Do not inspect dynamic DOM before content has settled",
+    "Prefer helper scripts for complex server lifecycle over reimplementing them",
+    "Evidence must reflect rendered state, not assumptions from source markup alone"
+  ]
+}
