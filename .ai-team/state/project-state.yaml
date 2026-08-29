@@ -150,7 +150,7 @@ work_units:
     milestone: M-P2
     risk: high
   WU-P2-PARITY-TEST:
-    status: in_progress
+    status: done
     milestone: M-P2
     risk: medium
   WU-P3-GW-INFRA:
@@ -359,10 +359,7 @@ open_decisions: []
 open_blockers: []
 open_defects: []
 open_findings: []
-active_workers:
-  - role: backend-developer
-    work_unit: WU-P2-PARITY-TEST
-    branch: wu/WU-P2-PARITY-TEST
+active_workers: []
 staffing_proposal:
   default_roles:
   - backend-developer
@@ -437,4 +434,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-29T16:24:00+00:00'
+last_updated: '2026-08-29T16:33:00+00:00'

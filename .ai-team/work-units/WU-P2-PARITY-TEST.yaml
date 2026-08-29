@@ -42,12 +42,27 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P2-PARITY-TEST
-status: in_progress
+status: done
 events:
   - EVT-20260829-162400-orchestrator-start
-evidence: []
+  - EVT-20260829-163000-backend-handoff
+  - EVT-20260829-163100-qa-pass
+  - EVT-20260829-163200-review-approved
+evidence:
+  - id: EVD-WU-P2-PARITY-TEST-IMPL
+    type: implementation
+    commit_sha: e2fea44
+    verified_by: backend-developer
+  - id: EVD-WU-P2-PARITY-TEST-QA
+    type: qa
+    commit_sha: e2fea44
+    event: EVT-20260829-163100-qa-pass
+  - id: EVD-WU-P2-PARITY-TEST-REVIEW
+    type: review
+    commit_sha: e2fea44
+    event: EVT-20260829-163200-review-approved
 outcomes:
-  review_status: pending
+  review_status: approved
   audit_status: not_required
   critical_open_items: []
   defects: []
