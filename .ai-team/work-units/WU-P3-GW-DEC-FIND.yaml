@@ -41,7 +41,7 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P3-GW-DEC-FIND
-status: in_progress
+status: done
 events: []
 evidence: []
 outcomes:

@@ -166,7 +166,7 @@ work_units:
     milestone: M-P3
     risk: high
   WU-P3-GW-DEC-FIND:
-    status: in_progress
+    status: done
     milestone: M-P3
     risk: high
   WU-P3-GW-GATE-ACC:
