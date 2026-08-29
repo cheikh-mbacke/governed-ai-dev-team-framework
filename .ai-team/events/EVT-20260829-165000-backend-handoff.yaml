@@ -1,0 +1,20 @@
+id: EVT-20260829-165000-backend-handoff
+type: HANDOFF
+work_unit: WU-P3-GW-INFRA
+created_at: '2026-08-29T16:50:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P3-GW-INFRA — Command Gateway infrastructure opérationnelle."
+details:
+  commit_sha: cd445f4
+  branch: wu/WU-P3-GW-INFRA
+  components:
+    - scripts/ai-team/gov.py
+    - src/governed_ai/core/commands/
+    - src/governed_ai/core/persistence/
+  checks:
+    gateway_pytest: "python -m pytest tests/core/test_command_gateway.py -q → 6 passed"
+    contracts_pytest: "python -m pytest tests/contracts/ tests/core/ -q → 84 passed"
+affected_nodes:
+  - WU-P3-GW-INFRA
+requires_human: false
+status: open

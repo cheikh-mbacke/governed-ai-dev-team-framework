@@ -1,0 +1,13 @@
+id: EVT-20260829-165100-qa-pass
+type: STATUS
+work_unit: WU-P3-GW-INFRA
+created_at: '2026-08-29T16:51:00+00:00'
+created_by_role: qa-test
+summary: "QA pass WU-P3-GW-INFRA — CG-001..CG-005 et CG-010 verts sur SHA cd445f4."
+details:
+  commit_sha: cd445f4
+  pytest: "tests/core/test_command_gateway.py → 6 passed"
+affected_nodes:
+  - WU-P3-GW-INFRA
+requires_human: false
+status: open

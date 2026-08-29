@@ -49,13 +49,38 @@ required_verification:
   audit: true
   human_acceptance: false
 context_package_ref: CTX-WU-P3-GW-INFRA
-status: in_progress
+status: done
 events:
   - EVT-20260829-164000-orchestrator-start
-evidence: []
+  - EVT-20260829-165000-backend-handoff
+  - EVT-20260829-165100-qa-pass
+  - EVT-20260829-165200-review-approved
+  - EVT-20260829-165300-security-approved
+  - EVT-20260829-165400-audit-pass
+evidence:
+  - id: EVD-WU-P3-GW-INFRA-IMPL
+    type: implementation
+    commit_sha: cd445f4
+    verified_by: backend-developer
+  - id: EVD-WU-P3-GW-INFRA-QA
+    type: qa
+    commit_sha: cd445f4
+    event: EVT-20260829-165100-qa-pass
+  - id: EVD-WU-P3-GW-INFRA-REVIEW
+    type: review
+    commit_sha: cd445f4
+    event: EVT-20260829-165200-review-approved
+  - id: EVD-WU-P3-GW-INFRA-SECURITY
+    type: security_review
+    commit_sha: cd445f4
+    event: EVT-20260829-165300-security-approved
+  - id: EVD-WU-P3-GW-INFRA-AUDIT
+    type: audit
+    commit_sha: cd445f4
+    event: EVT-20260829-165400-audit-pass
 outcomes:
-  review_status: pending
-  audit_status: pending
+  review_status: approved
+  audit_status: pass
   critical_open_items: []
   defects: []
   audit_findings: []
