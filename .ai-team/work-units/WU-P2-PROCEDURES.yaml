@@ -41,7 +41,7 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P2-PROCEDURES
-status: ready
+status: in_progress
 events: []
 evidence: []
 outcomes:
