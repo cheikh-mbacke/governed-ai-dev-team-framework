@@ -63,6 +63,16 @@ class Transaction:
             PlannedWrite(relative_path=rel, content=new_text, before_hash=before_hash)
         )
 
+    def plan_json_write(self, absolute_path: Path, new_document: Any) -> None:
+        rel = absolute_path.relative_to(self.workspace_root).as_posix()
+        new_text = json.dumps(new_document, indent=2) + "\n"
+        before_hash = None
+        if absolute_path.is_file():
+            before_hash = _sha256_text(absolute_path.read_text(encoding="utf-8"))
+        self.planned.append(
+            PlannedWrite(relative_path=rel, content=new_text, before_hash=before_hash)
+        )
+
     def commit(self) -> None:
         if not self.planned:
             raise GatewayError(ErrorCode.INTERNAL_ERROR, "transaction has no planned writes")

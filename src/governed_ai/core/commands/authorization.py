@@ -12,6 +12,7 @@ from governed_ai.core.commands.errors import ErrorCode, GatewayError
 
 # Commands granted beyond bundle writes (findings, release prep, evidence from implementers).
 SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
+    "control-plane": frozenset({"ResolveDecisionRequest"}),
     "backend-developer": frozenset({"RegisterEvidence"}),
     "qa-test": frozenset({"RegisterEvidence"}),
     "auditor": frozenset({"RegisterFinding"}),

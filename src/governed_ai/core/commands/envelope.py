@@ -74,6 +74,12 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_record_observation(raw)
     elif raw["type"] == "RegisterEvidence":
         _validate_register_evidence(raw)
+    elif raw["type"] == "CreateDecisionRequest":
+        _validate_create_decision_request(raw)
+    elif raw["type"] == "ResolveDecisionRequest":
+        _validate_resolve_decision_request(raw)
+    elif raw["type"] == "RegisterFinding":
+        _validate_register_finding(raw)
     elif raw["type"] == "RecordGateDecision":
         if "human_authorization" not in raw:
             raise GatewayError(
@@ -171,5 +177,91 @@ def _validate_register_evidence(raw: dict[str, Any]) -> None:
         raise GatewayError(
             ErrorCode.INVALID_SCHEMA,
             "payload.id is required",
+            "/payload/id",
+        )
+
+
+def _validate_create_decision_request(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "decision_request":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "CreateDecisionRequest target.kind must be decision_request",
+            "/target/kind",
+        )
+    if "expected_revision" in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision must not be set on create",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id is required",
+            "/payload/id",
+        )
+    if payload["id"] != target["id"]:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id must match target.id",
+            "/payload/id",
+        )
+    if not payload.get("question"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.question is required",
+            "/payload/question",
+        )
+
+
+def _validate_resolve_decision_request(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "decision_request":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "ResolveDecisionRequest target.kind must be decision_request",
+            "/target/kind",
+        )
+    if "expected_revision" not in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision is required",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("to_status"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.to_status is required",
+            "/payload/to_status",
+        )
+    if "human_authorization" not in raw:
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            "human_authorization required",
+            "/human_authorization",
+        )
+
+
+def _validate_register_finding(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "finding":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "RegisterFinding target.kind must be finding",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id is required",
+            "/payload/id",
+        )
+    if payload["id"] != raw["target"]["id"]:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id must match target.id",
             "/payload/id",
         )
