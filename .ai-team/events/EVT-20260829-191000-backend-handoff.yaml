@@ -6,6 +6,7 @@ created_by_role: backend-developer
 summary: "Handoff WU-P3-SCHEMA-V2 — schémas v2 mutables, migration déterministe et lecture gate legacy."
 details:
   branch: wu/WU-P3-SCHEMA-V2
+  commit_sha: 4b375f0
   checks:
     schema_pytest: "tests/core/test_schema_migration.py → 4 passed"
     core_pytest: "tests/core/ → 173 passed"

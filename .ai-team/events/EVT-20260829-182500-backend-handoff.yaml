@@ -6,6 +6,7 @@ created_by_role: backend-developer
 summary: "Handoff WU-P3-GW-RETRO — GenerateRetrospective et ExportFeedback opérationnels via Gateway."
 details:
   branch: wu/WU-P3-GW-RETRO
+  commit_sha: cd7fb88
   checks:
     retro_pytest: "tests/core/test_retro_export_handlers.py → 5 passed"
     core_pytest: "tests/core/ → 169 passed"

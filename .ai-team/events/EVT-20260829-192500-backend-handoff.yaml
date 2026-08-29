@@ -6,6 +6,7 @@ created_by_role: backend-developer
 summary: "Handoff WU-P3-LEGACY-WRAPPERS — record_gate.py et feedback.py traduisent vers Command Gateway."
 details:
   branch: wu/WU-P3-LEGACY-WRAPPERS
+  commit_sha: a1ef92d
   checks:
     legacy_pytest: "tests/core/test_legacy_wrappers.py → 6 passed"
     core_pytest: "tests/core/ → 179 passed"
