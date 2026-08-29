@@ -49,8 +49,9 @@ required_verification:
   audit: true
   human_acceptance: false
 context_package_ref: CTX-WU-P3-GW-INFRA
-status: ready
-events: []
+status: in_progress
+events:
+  - EVT-20260829-164000-orchestrator-start
 evidence: []
 outcomes:
   review_status: pending

@@ -1,7 +1,7 @@
 id: CTX-WU-P3-GW-INFRA
 work_unit: WU-P3-GW-INFRA
 role: backend-developer
-assembled_at: null
+assembled_at: '2026-08-29T16:40:00+00:00'
 items:
 - level: L0_constitution
   source: .ai-team/constitution/constitution.yaml
