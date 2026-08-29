@@ -219,7 +219,23 @@ def target_constitution_state(target: Path) -> tuple[str | None, str | None]:
 
 
 def read_installed_manifest(target: Path) -> dict:
+    _bootstrap_adapter_imports()
+    from distribution.installer.record import (
+        is_v2_record,
+        managed_files_union,
+        read_installation_manifest,
+    )
+
     path = target / VERSION_FILE
+    record_path = target / ".ai-team" / "installation-record.json"
+    if record_path.is_file():
+        payload = read_installation_manifest(target)
+        if is_v2_record(payload):
+            return {
+                "schema_version": 2,
+                "version": str(payload["core"]["version"]),
+                "managed_files": sorted(managed_files_union(payload)),
+            }
     if not path.exists():
         return {"schema_version": 1, "version": None, "managed_files": []}
     try:
@@ -425,13 +441,29 @@ def run_update(args, target: Path) -> int:
             ".ai-team/project-profile.yaml is missing."
         )
         return 2
+
+    _bootstrap_adapter_imports()
+    from distribution.installer import MigrationError, ensure_installation_record_v2
+
+    new_version = current_version()
+    try:
+        migration = ensure_installation_record_v2(target, target_version=new_version)
+    except MigrationError as exc:
+        print(f"Installation record migration blocked: {exc}")
+        return 2
+    if migration is not None:
+        print(
+            "Migrated legacy framework-version.json to "
+            f".ai-team/installation-record.json (backup: "
+            f"{migration.backup_path.relative_to(target).as_posix()})."
+        )
+
     try:
         installed = read_installed_manifest(target)
     except ValueError as exc:
         print(exc)
         return 2
     installed_version = installed.get("version")
-    new_version = current_version()
     if installed_version not in SUPPORTED_UPDATE_FROM:
         print(
             f"No safe migration path from framework version {installed_version!r} "

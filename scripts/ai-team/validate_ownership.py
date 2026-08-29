@@ -36,6 +36,8 @@ def classify_owner(path: str) -> str:
         return "distribution"
     if p == ".ai-team/framework-version.json":
         return "distribution"
+    if p == ".ai-team/installation-record.json":
+        return "distribution"
     if p == "AGENTS.md":
         return "core"
     if p.startswith("scripts/ai-team/"):
