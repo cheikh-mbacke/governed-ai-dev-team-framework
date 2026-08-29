@@ -210,7 +210,7 @@ work_units:
     milestone: M-P5
     risk: high
   WU-P5-INSTALL-UPDATE:
-    status: ready
+    status: done
     milestone: M-P5
     risk: high
   WU-P6-DECOUPLE:
