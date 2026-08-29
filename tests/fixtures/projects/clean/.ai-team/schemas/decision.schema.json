@@ -7,7 +7,10 @@
     "question",
     "why_human_authority_is_required",
     "options",
-    "status"
+    "status",
+    "revision",
+    "created_at",
+    "updated_at"
   ],
   "properties": {
     "id": {
@@ -38,6 +41,18 @@
     },
     "decision": {
       "type": "object"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "additionalProperties": true

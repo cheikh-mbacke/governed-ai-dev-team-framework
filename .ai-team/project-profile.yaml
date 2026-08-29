@@ -54,4 +54,5 @@ human_authorities:
 
 setup_status:
   template: false
-  note: "DEC-001 tranchée — unit_test et lint définis ; tests/ créé par WU-P0-BASELINE ; typecheck différé (pas de mypy en v1)."
+  cursor_compile_opt_in: true
+  note: "DEC-001 tranchée — unit_test et lint définis ; tests/ créé par WU-P0-BASELINE ; typecheck différé (pas de mypy en v1). WU-P4-SHADOW-COMPILE : opt-in compilateur Cursor actif sur ce dépôt."

@@ -9,7 +9,10 @@
     "claim",
     "evidence",
     "limitations",
-    "status"
+    "status",
+    "revision",
+    "created_at",
+    "updated_at"
   ],
   "properties": {
     "id": {
@@ -52,6 +55,18 @@
         "remediation_planned",
         "closed"
       ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "additionalProperties": true

@@ -49,6 +49,38 @@ PROJECT_OWNED_PATTERNS = [
 SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0", "0.4.0"}
 
 
+def _bootstrap_adapter_imports() -> None:
+    root = str(SOURCE_ROOT)
+    src = str(SOURCE_ROOT / "src")
+    for entry in (root, src):
+        if entry not in sys.path:
+            sys.path.insert(0, entry)
+
+
+def _compile_profile_for_target(target: Path, project_id: str | None = None) -> dict:
+    _bootstrap_adapter_imports()
+    from adapters.cursor.compiler.install_support import (
+        load_project_profile_yaml,
+        minimal_project_profile,
+    )
+
+    profile_path = target / ".ai-team" / "project-profile.yaml"
+    if profile_path.is_file():
+        return load_project_profile_yaml(profile_path)
+    if project_id:
+        return minimal_project_profile(project_id=project_id)
+    return minimal_project_profile()
+
+
+def materialize_cursor_dir(target: Path, project_id: str | None = None) -> None:
+    """Install compiled ``.cursor/`` artefacts (default since WU-P4-SHADOW-COMPILE)."""
+    _bootstrap_adapter_imports()
+    from adapters.cursor.compiler.install_support import compile_cursor_tree
+
+    profile = _compile_profile_for_target(target, project_id=project_id)
+    compile_cursor_tree(SOURCE_ROOT, target / ".cursor", profile)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Install Governed AI Dev Team framework into an existing repository"
@@ -123,8 +155,19 @@ def is_docs_product_readme(rel_posix: str) -> bool:
     )
 
 
-def iter_managed_source_files():
+def iter_managed_source_files(target: Path | None = None, project_id: str | None = None):
+    profile = _compile_profile_for_target(target, project_id=project_id) if target else None
     for item in COPY_ITEMS:
+        if item == ".cursor":
+            _bootstrap_adapter_imports()
+            from adapters.cursor.compiler.install_support import iter_compiled_cursor_files
+
+            for relative, path in iter_compiled_cursor_files(SOURCE_ROOT, profile):
+                rel_posix = relative.as_posix()
+                if is_project_owned(rel_posix):
+                    continue
+                yield relative, path
+            continue
         src = SOURCE_ROOT / item
         if not src.exists():
             continue
@@ -261,7 +304,7 @@ def validation_python(target: Path) -> Path | None:
 def copy_plan(target: Path):
     entries = []
     managed = []
-    for relative, source in iter_managed_source_files():
+    for relative, source in iter_managed_source_files(target):
         rel_posix = relative.as_posix()
         managed.append(rel_posix)
         destination = target / relative
@@ -565,6 +608,8 @@ def install_fresh(args, target: Path) -> int:
 
     target.mkdir(parents=True, exist_ok=True)
     for item in COPY_ITEMS:
+        if item == ".cursor":
+            continue
         src = SOURCE_ROOT / item
         dst = target / item
         if not src.exists():
@@ -632,7 +677,10 @@ def install_fresh(args, target: Path) -> int:
     state_path.write_text(
         yaml.safe_dump(state, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
-    managed_files = [relative.as_posix() for relative, _source in iter_managed_source_files()]
+    materialize_cursor_dir(target, project_id=args.project_id)
+    managed_files = [
+        relative.as_posix() for relative, _source in iter_managed_source_files(target)
+    ]
     (target / VERSION_FILE).write_bytes(manifest_bytes(current_version(), managed_files))
 
     print(f"Installed governed AI team framework {current_version()} into {target}")

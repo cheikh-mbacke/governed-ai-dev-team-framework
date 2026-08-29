@@ -21,3 +21,6 @@ Identify affected Work Units and classify each as:
 - blocked_pending_decision.
 
 Never silently preserve a derived plan that contradicts a changed authoritative source.
+
+Do not invent product decisions to resolve conflicts. Surface blocked pending
+decision cases explicitly instead of assuming resolution.

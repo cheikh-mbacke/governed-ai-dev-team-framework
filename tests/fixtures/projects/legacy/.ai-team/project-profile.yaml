@@ -46,6 +46,7 @@ human_authorities:
   final_acceptance: cheikh MBACKE
 setup_status:
   template: false
+  cursor_compile_opt_in: true
   note: Witness legacy fixture — user customized setup note after install.
 extensions:
   witness:

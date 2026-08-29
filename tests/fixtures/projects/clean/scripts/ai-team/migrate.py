@@ -17,7 +17,7 @@ import shutil
 
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
-MIGRATION_ID = "acceptance-status-passed"
+ACCEPTANCE_MIGRATION_ID = "acceptance-status-passed"
 HUMAN_RESULT_RE = re.compile(r"^(?P<indent> *)human_result\s*:\s*(?:#.*)?$")
 STATUS_RE = re.compile(
     r"^(?P<prefix>\s*status\s*:\s*)(?P<quote>[\"']?)accepted(?P=quote)"
@@ -99,10 +99,10 @@ def plan_acceptance_status(target: Path) -> list[MigrationChange]:
     return changes
 
 
-def apply_changes(target: Path, changes: list[MigrationChange]) -> Path | None:
+def apply_acceptance_changes(target: Path, changes: list[MigrationChange]) -> Path | None:
     if not changes:
         return None
-    backup_root = target / ".ai-team" / "migration-backups" / MIGRATION_ID
+    backup_root = target / ".ai-team" / "migration-backups" / ACCEPTANCE_MIGRATION_ID
     for change in changes:
         relative = change.path.relative_to(target)
         backup = backup_root / relative
@@ -111,6 +111,37 @@ def apply_changes(target: Path, changes: list[MigrationChange]) -> Path | None:
             shutil.copy2(change.path, backup)
         change.path.write_bytes(change.migrated_bytes)
     return backup_root
+
+
+def _load_mutable_v2_module():
+    import importlib.util
+    import sys
+
+    module_path = (
+        DEFAULT_ROOT
+        / "src"
+        / "governed_ai"
+        / "core"
+        / "persistence"
+        / "migrations"
+        / "mutable_v2.py"
+    )
+    module_name = "governed_ai_mutable_v2_migration"
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"unable to load migration module from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _plan_mutable_v2(target: Path):
+    return _load_mutable_v2_module().plan_mutable_v2(target)
+
+
+def _apply_mutable_v2(target: Path, plan):
+    return _load_mutable_v2_module().apply_mutable_v2(target, plan)
 
 
 def main() -> int:
@@ -123,21 +154,45 @@ def main() -> int:
     )
     args = parser.parse_args()
     target = Path(args.target).expanduser().resolve()
-    changes = plan_acceptance_status(target)
+    acceptance_changes = plan_acceptance_status(target)
+    mutable_plan = None
+    mutable_error = None
+    try:
+        mutable_plan = _plan_mutable_v2(target)
+    except Exception as exc:
+        mutable_error = exc
 
     mode = "APPLY" if args.apply else "DRY-RUN"
     print(f"Governed AI Team migrations ({mode})")
     print("=" * 36)
-    if not changes:
+
+    if mutable_error is not None:
+        print(f"ERROR mutable-schema-v2: {mutable_error}")
+        return 1
+
+    if not acceptance_changes and not mutable_plan.changes:
         print("No project-data migration required.")
         return 0
-    for change in changes:
+
+    for change in acceptance_changes:
         relative = change.path.relative_to(target)
-        print(f"MIGRATE {relative} ({change.replacements} replacement(s))")
+        print(f"MIGRATE {relative} ({change.replacements} replacement(s)) [acceptance-status-passed]")
+    for change in mutable_plan.changes:
+        relative = change.path.relative_to(target)
+        print(f"MIGRATE {relative} [mutable-schema-v2]")
+    for skipped in mutable_plan.skipped:
+        relative = skipped.relative_to(target)
+        print(f"SKIP {relative} [legacy gate decision]")
+
     if args.apply:
-        backup_root = apply_changes(target, changes)
-        print(f"Backup: {backup_root.relative_to(target)}")
-        print(f"Applied {len(changes)} file migration(s).")
+        if acceptance_changes:
+            backup_root = apply_acceptance_changes(target, acceptance_changes)
+            print(f"Backup: {backup_root.relative_to(target)}")
+            print(f"Applied {len(acceptance_changes)} acceptance migration(s).")
+        if mutable_plan.changes:
+            backup_root = _apply_mutable_v2(target, mutable_plan)
+            print(f"Backup: {backup_root.relative_to(target)}")
+            print(f"Applied {len(mutable_plan.changes)} mutable v2 migration(s).")
     else:
         print("No file was modified. Re-run with --apply after reviewing this plan.")
     return 0

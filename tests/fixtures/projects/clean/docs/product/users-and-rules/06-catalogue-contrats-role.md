@@ -45,9 +45,9 @@ Le Control Plane est défini au Document 5. Pour tous les Rôles délégués, `r
 - Une absence dans la dernière colonne ne prouve pas une interdiction.
 - Le catalogue cible doit encore recevoir des révisions/hashes et être validé atomiquement avec le catalogue des Procédures.
 
-## 6. Traceabilité bundle v1 (WU-P2-ROLES)
+## 6. Traceabilité bundle v1 (WU-P2-ROLES, WU-P2-PROCEDURES)
 
-Les dix `RoleDefinitionRevision` agnostiques (neuf rôles métier + `control-plane`) sont transcrits sous `src/governed_ai/contracts/bundles/v1/roles/` ; les `ProcedureRevision` référencées y sont des stubs minimalistes en attendant WU-P2-PROCEDURES. `auth-smoke` reste exclu (§4). Le manifeste `bundles/v1/manifest.json` assemble l'ensemble pour validation atomique.
+Les dix `RoleDefinitionRevision` agnostiques (neuf rôles métier + `control-plane`) sont transcrits sous `src/governed_ai/contracts/bundles/v1/roles/`. Les treize `ProcedureRevision` référencées par ces rôles sont transcrites sous `src/governed_ai/contracts/bundles/v1/procedures/` (révision `1.0.0`, contenu agnostique complet). Les étapes propres à l'Adaptateur Cursor sont documentées hors manifeste dans `src/governed_ai/contracts/bundles/v1/cursor-compiler-notes.yaml` pour le compilateur WU-P4. `auth-smoke` reste exclu (§4). Le manifeste `bundles/v1/manifest.json` assemble rôles et procédures pour validation atomique.
 
 ## Sources
 

@@ -1,0 +1,43 @@
+{
+  "role_id": "control-plane",
+  "revision": "1.0.0",
+  "mandate": "Coordinate compilation, staffing, context, verification, review, audit, release and gates without acquiring product authority.",
+  "writes": {
+    "product": {
+      "level": "none",
+      "paths": []
+    },
+    "authoritative_governance_commands": [
+      "CreateWorkUnit",
+      "TransitionWorkUnit",
+      "RegisterEvidence",
+      "CreateDecisionRequest",
+      "TransitionObservation",
+      "GenerateRetrospective"
+    ],
+    "non_authoritative_signal_commands": ["RecordObservation"]
+  },
+  "capabilities": {
+    "repository_read": true,
+    "shell": "deny",
+    "network": "deny_by_default",
+    "external_tools": []
+  },
+  "approval_policy": {
+    "mode": "constitution",
+    "cannot_relax": true
+  },
+  "procedure_refs": [
+    {"procedure_id": "compile-project", "revision": "1.0.0"},
+    {"procedure_id": "orchestrator", "revision": "1.0.0"},
+    {"procedure_id": "build-context", "revision": "1.0.0"},
+    {"procedure_id": "impact-analysis", "revision": "1.0.0"},
+    {"procedure_id": "verify-work-unit", "revision": "1.0.0"},
+    {"procedure_id": "audit-release", "revision": "1.0.0"},
+    {"procedure_id": "prepare-acceptance", "revision": "1.0.0"},
+    {"procedure_id": "propose-profile", "revision": "1.0.0"},
+    {"procedure_id": "retrospective", "revision": "1.0.0"}
+  ],
+  "model_preference": "inherit",
+  "isolation": "not_required"
+}

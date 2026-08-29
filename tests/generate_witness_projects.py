@@ -55,6 +55,12 @@ This file simulates a framework-managed artifact dropped from current managed_fi
 It must remain on disk until a Distribution update classifies and archives it.
 """
 
+WITNESS_V2_STAMP = {
+    "revision": 1,
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "updated_at": "2026-01-01T00:00:00+00:00",
+}
+
 IGNORE_NAMES = {"__pycache__", ".pytest_cache", ".git"}
 IGNORE_SUFFIXES = {".pyc", ".pyo"}
 
@@ -184,6 +190,7 @@ def finalize_clean_witness(target: Path, project_id: str) -> None:
     profile.setdefault("setup_status", {})["note"] = (
         "Witness clean fixture — minimal post-install project data."
     )
+    profile["setup_status"]["cursor_compile_opt_in"] = True
     write_yaml(profile_path, profile)
 
 
@@ -214,6 +221,7 @@ def work_unit_base(wu_id: str, title: str, status: str) -> dict:
         },
         "context_package_ref": None,
         "status": status,
+        **WITNESS_V2_STAMP,
         "events": [],
         "evidence": [],
         "outcomes": {
@@ -449,6 +457,7 @@ def apply_legacy_mutations(target: Path, project_id: str) -> None:
                 {"id": "archive", "label": "Archive during next update"},
             ],
             "status": "pending_human",
+            **WITNESS_V2_STAMP,
         },
     )
 
@@ -463,6 +472,7 @@ def apply_legacy_mutations(target: Path, project_id: str) -> None:
             "limitations": ["Static fixture — no live update executed"],
             "remediation_required": False,
             "status": "open",
+            **WITNESS_V2_STAMP,
         },
     )
 

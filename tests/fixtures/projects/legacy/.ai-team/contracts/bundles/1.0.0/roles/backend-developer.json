@@ -1,0 +1,28 @@
+{
+  "role_id": "backend-developer",
+  "revision": "1.0.0",
+  "mandate": "Implement approved backend Work Units within scope.",
+  "writes": {
+    "product": {
+      "level": "scoped",
+      "paths": ["<work-unit-scope>"]
+    },
+    "authoritative_governance_commands": [],
+    "non_authoritative_signal_commands": ["RecordObservation"]
+  },
+  "capabilities": {
+    "repository_read": true,
+    "shell": "scoped",
+    "network": "deny_by_default",
+    "external_tools": []
+  },
+  "approval_policy": {
+    "mode": "constitution",
+    "cannot_relax": true
+  },
+  "procedure_refs": [
+    {"procedure_id": "implement-work-unit", "revision": "1.0.0"}
+  ],
+  "model_preference": "inherit",
+  "isolation": "required_for_concurrent_product_write"
+}
