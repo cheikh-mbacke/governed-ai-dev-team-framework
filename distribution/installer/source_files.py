@@ -93,6 +93,8 @@ def iter_managed_source_files(
             rel_posix = relative.as_posix()
             if "__pycache__" in relative.parts or path.suffix == ".pyc":
                 continue
+            if ".transactions" in relative.parts:
+                continue
             if relative == LEGACY_VERSION_FILE:
                 continue
             if relative.as_posix() == INSTALLATION_RECORD_FILE.as_posix():
