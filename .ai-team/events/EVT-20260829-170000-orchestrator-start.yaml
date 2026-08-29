@@ -1,0 +1,28 @@
+id: EVT-20260829-170000-orchestrator-start
+type: STATUS
+work_unit: WU-P3-GW-OBS-EVID
+created_at: '2026-08-29T17:00:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P3-GW-OBS-EVID au backend-developer."
+details:
+  gates:
+    G0: passed
+    G1: approved
+  phase: execution
+  milestone: M-P3
+  predecessor:
+    work_unit: WU-P3-GW-INFRA
+    commit_sha: 9bd7310
+  staffing:
+    primary: backend-developer
+    support:
+      - qa-test
+      - code-reviewer
+      - security-reviewer
+  branch: wu/WU-P3-GW-OBS-EVID
+  context_package: CTX-WU-P3-GW-OBS-EVID
+  scope_summary: "Handlers RecordObservation et RegisterEvidence via Command Gateway."
+affected_nodes:
+  - WU-P3-GW-OBS-EVID
+requires_human: false
+status: open

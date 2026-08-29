@@ -10,25 +10,14 @@ from typing import Any
 from governed_ai.contracts.compatibility import resolve_active_bundle_dir
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 
-CONTROL_PLANE_ROLE = "control-plane"
-
-ROLE_COMMANDS: dict[str, frozenset[str]] = {
-    CONTROL_PLANE_ROLE: frozenset(
-        {
-            "CreateWorkUnit",
-            "TransitionWorkUnit",
-            "RegisterEvidence",
-            "CreateDecisionRequest",
-            "TransitionObservation",
-            "GenerateRetrospective",
-        }
-    ),
-    "backend-developer": frozenset({"RegisterEvidence", "RecordObservation"}),
-    "qa-test": frozenset({"RegisterEvidence", "RecordObservation"}),
-    "auditor": frozenset({"RegisterFinding", "RecordObservation"}),
-    "code-reviewer": frozenset({"RegisterFinding", "RecordObservation"}),
-    "security-reviewer": frozenset({"RegisterFinding", "RecordObservation"}),
-    "release-agent": frozenset({"RegisterReleaseCandidate", "RecordObservation"}),
+# Commands granted beyond bundle writes (findings, release prep, evidence from implementers).
+SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
+    "backend-developer": frozenset({"RegisterEvidence"}),
+    "qa-test": frozenset({"RegisterEvidence"}),
+    "auditor": frozenset({"RegisterFinding"}),
+    "code-reviewer": frozenset({"RegisterFinding"}),
+    "security-reviewer": frozenset({"RegisterFinding"}),
+    "release-agent": frozenset({"RegisterReleaseCandidate"}),
 }
 
 
@@ -40,6 +29,16 @@ def _load_role_ids(bundle_dir: str) -> frozenset[str]:
         doc = json.loads(path.read_text(encoding="utf-8"))
         role_ids.add(doc["role_id"])
     return frozenset(role_ids)
+
+
+@lru_cache(maxsize=32)
+def _allowed_commands_for_role(bundle_dir: str, role_id: str) -> frozenset[str]:
+    role_path = Path(bundle_dir) / "roles" / f"{role_id}.json"
+    doc = json.loads(role_path.read_text(encoding="utf-8"))
+    allowed = set(doc["writes"]["authoritative_governance_commands"])
+    allowed.update(doc["writes"]["non_authoritative_signal_commands"])
+    allowed.update(SUPPLEMENTAL_ROLE_COMMANDS.get(role_id, frozenset()))
+    return frozenset(allowed)
 
 
 def authorize_command(envelope: dict[str, Any], workspace_ai_team: Path) -> None:
@@ -60,7 +59,7 @@ def authorize_command(envelope: dict[str, Any], workspace_ai_team: Path) -> None
     if role_id not in known_roles:
         raise GatewayError(ErrorCode.UNAUTHORIZED, f"unknown role {role_id!r}", "/actor/role_id")
 
-    allowed = ROLE_COMMANDS.get(role_id, frozenset())
+    allowed = _allowed_commands_for_role(str(bundle_dir), role_id)
     if command_type not in allowed:
         raise GatewayError(
             ErrorCode.UNAUTHORIZED,

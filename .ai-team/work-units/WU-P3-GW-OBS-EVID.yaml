@@ -43,8 +43,9 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P3-GW-OBS-EVID
-status: ready
-events: []
+status: in_progress
+events:
+  - EVT-20260829-170000-orchestrator-start
 evidence: []
 outcomes:
   review_status: pending

@@ -1,7 +1,7 @@
 id: CTX-WU-P3-GW-OBS-EVID
 work_unit: WU-P3-GW-OBS-EVID
 role: backend-developer
-assembled_at: null
+assembled_at: '2026-08-29T17:00:00+00:00'
 items:
 - level: L0_constitution
   source: .ai-team/constitution/constitution.yaml

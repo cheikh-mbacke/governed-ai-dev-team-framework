@@ -22,6 +22,7 @@ class RecordObservationParams:
     work_unit: str | None = None
     phase: str | None = None
     recorded_by: str | None = None
+    observation_id: str | None = None
     blocked_minutes: int = 0
     rework_required: bool = False
     human_intervention: bool = False
@@ -74,6 +75,19 @@ class ExportResult:
 def record_observation(
     workspace: Workspace, params: RecordObservationParams
 ) -> RecordObservationResult:
+    payload = build_observation_document(workspace, params)
+    path = workspace.ai_team / "observations" / f"{payload['id']}.yaml"
+    common.atomic_write_yaml(path, payload)
+    return RecordObservationResult(
+        observation_id=payload["id"],
+        path=path,
+        display_path=path.relative_to(workspace.root),
+    )
+
+
+def build_observation_document(
+    workspace: Workspace, params: RecordObservationParams
+) -> dict:
     if params.blocked_minutes < 0:
         raise ValueError("--blocked-minutes cannot be negative")
     if params.work_unit and common.find_work_unit(workspace, params.work_unit) is None:
@@ -83,7 +97,7 @@ def record_observation(
             raise ValueError(f"Affected Work Unit not found: {work_unit}")
 
     meta = common.metadata(workspace)
-    observation_id = common.generated_id("OBS")
+    observation_id = params.observation_id or common.generated_id("OBS")
     payload = {
         "id": observation_id,
         "recorded_at": common.now_iso(),
@@ -114,13 +128,7 @@ def record_observation(
         "resolution": params.resolution,
     }
     common.validate_payload(workspace, payload, "observation.schema.json")
-    path = workspace.ai_team / "observations" / f"{observation_id}.yaml"
-    common.atomic_write_yaml(path, payload)
-    return RecordObservationResult(
-        observation_id=observation_id,
-        path=path,
-        display_path=path.relative_to(workspace.root),
-    )
+    return payload
 
 
 def _scoped_objects(workspace: Workspace, directory: str, work_unit_id: str | None) -> list[dict]:

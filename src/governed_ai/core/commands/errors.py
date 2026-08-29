@@ -39,9 +39,9 @@ def exit_code_for(error_code: ErrorCode) -> int:
         return EXIT_UNAUTHORIZED
     if error_code in {ErrorCode.CONFLICT, ErrorCode.IDEMPOTENCY_MISMATCH}:
         return EXIT_CONFLICT
+    if error_code in {ErrorCode.UNSUPPORTED_CONTRACT, ErrorCode.CAPABILITY_NOT_ENFORCEABLE}:
+        return EXIT_UNSUPPORTED
     if error_code in {
-        ErrorCode.UNSUPPORTED_CONTRACT,
-        ErrorCode.CAPABILITY_NOT_ENFORCEABLE,
         ErrorCode.INVALID_TRANSITION,
         ErrorCode.INVARIANT_VIOLATION,
         ErrorCode.NOT_FOUND,
