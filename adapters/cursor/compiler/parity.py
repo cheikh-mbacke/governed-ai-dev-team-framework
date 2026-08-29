@@ -15,7 +15,7 @@ DiffKind = Literal["missing_in_compile", "extra_in_compile", "content_mismatch"]
 TEXT_SUFFIXES = {".md", ".mdc", ".json", ".txt", ".cmd", ".yaml", ".yml", ".py"}
 AGENT_LINE_ENDING_NOTE = (
     "Compiled agent frontmatter uses LF line endings; historical .cursor/agents "
-    "may retain CRLF on Windows until cleanup WU-P6."
+    "may retain CRLF on Windows until normalized on the next compile sync."
 )
 
 

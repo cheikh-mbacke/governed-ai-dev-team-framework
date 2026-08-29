@@ -1,6 +1,6 @@
 {
   "framework_version": "0.4.0",
-  "generated_at": "2026-08-29T19:08:43+00:00",
+  "generated_at": "2026-08-29T21:50:41+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -33,7 +33,7 @@
     {
       "name": "clean",
       "root": "clean",
-      "file_count": 300,
+      "file_count": 292,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -201,11 +201,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "46022b6336bb8a72376bb2519b28670cced2209d38c707bdc587a50748442cef"
+          "sha256": "e44ff97b0f907ff425623516a9bf13054c1d9fc3bc5d30a8b55986edc7cd804f"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "5413f06a98738acd0eb7836541968ebcbbcc95a4d573f54aa661045fc8a61d69"
+          "sha256": "5a1c284d0e70c917630a3ca9d78e7ccc214fa687e91afc6f48b84958028f9fc7"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -245,7 +245,7 @@
         },
         {
           "path": ".ai-team/schemas/gate-decision.schema.json",
-          "sha256": "8b30683d5308cc231516322107eb3f6008e54701a7d21cbb41ad128a2d598160"
+          "sha256": "60d6622187f1622af94dd19111712fb97fec9ba65253c5656791b7b49ae261dc"
         },
         {
           "path": ".ai-team/schemas/observation.schema.json",
@@ -521,7 +521,7 @@
         },
         {
           "path": "adapters/cursor/compiler/parity.py",
-          "sha256": "443f8b48e6f886db539b5e9e565a2d600a84288164bf2ed53ec30c80edcad63b"
+          "sha256": "c5d9aedaeed4c393012662b3ac576072ffcd45eba3e3254a0499bc0ef10ce965"
         },
         {
           "path": "adapters/cursor/compiler/staging.py",
@@ -725,7 +725,7 @@
         },
         {
           "path": "docs/operator/deprecations.md",
-          "sha256": "979714b6c2f42fe81546aaea3475a0e2023f33ad4afbfa71396b4312a783d276"
+          "sha256": "974d62db409484f714fdc7c48d0499687cb9ffda9c294e75fc987292ac882d2e"
         },
         {
           "path": "docs/operator/operator-guide.md",
@@ -733,7 +733,7 @@
         },
         {
           "path": "docs/operator/security-model.md",
-          "sha256": "b00a4af9e11a9bdf5ebd4d78d55872cfab52588f63f818f08b107dd8cbdcf895"
+          "sha256": "87572d6f58763b64a19971428077679b44fffe09a76a724d7f24eb573f15ff21"
         },
         {
           "path": "docs/operator/upgrading.md",
@@ -780,20 +780,12 @@
           "sha256": "8888adbfa1aa48d57bfcdde9a5f03dedc35f45e75e5dded4c39672fb4b23bf59"
         },
         {
-          "path": "scripts/ai-team/common.py",
-          "sha256": "4264f30f3e93969d2b80e83d672c10a6ad4b547bf1d90986f72679fd0803ff33"
-        },
-        {
           "path": "scripts/ai-team/diagnose.py",
           "sha256": "82a8fdd3f7fa2e01929e3f93aedfc7bc5a13fcdcd5a6255b11bfd4c7f06a7df5"
         },
         {
           "path": "scripts/ai-team/feedback.py",
           "sha256": "a9fe3a28241e7e5167d848401463dc2b45d8183b60e6190e2c121f668674ca25"
-        },
-        {
-          "path": "scripts/ai-team/feedback_common.py",
-          "sha256": "f53a40eb73122c953b3da21c2a03d36cb6ef4631e62b53294477544771cfa899"
         },
         {
           "path": "scripts/ai-team/gov.py",
@@ -820,16 +812,12 @@
           "sha256": "510bea37810169dd46c229fcfeba20ef78c2b572b0569f2f854558899966ea28"
         },
         {
-          "path": "scripts/ai-team/record_gate.py",
-          "sha256": "6476724b812863a206aac5bbc16a6318b4c910e039333251564b753f4dd2254f"
-        },
-        {
           "path": "scripts/ai-team/status.py",
           "sha256": "0f5c95f00a4a744faf169f0b1d7dd7e632fb15b27c33cf22db49aa2f5e907564"
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "dbbee9b6afbf7d0f54b6bf7a68daa7006384969a7e788124d25a6e348999ca2e"
+          "sha256": "5f511c5aa9b2ab5e7fc05377b40d31fd9dbdf9d5fd0b20f06f101a8fc465f65b"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
@@ -1214,33 +1202,13 @@
         {
           "path": "src/governed_ai/feedback/domain/__init__.py",
           "sha256": "be637b4d6b0ea7249555003cd1641a94278cdee8254a4d763f76799362cc6b39"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/PKG-INFO",
-          "sha256": "efeb976d6075970881b2e490cccde26e430f8a9dcab20003a4c48898e032d3f4"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/SOURCES.txt",
-          "sha256": "16c830af2da2c239f184f81e1078ce9bfd32719a93b1f2e8b21d85bff81a894b"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/dependency_links.txt",
-          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/requires.txt",
-          "sha256": "a29cce48584ff23d9081f4c255c883d866943107863daed51b5a52d98f1e03c2"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/top_level.txt",
-          "sha256": "50a323e32964156c64157b46f8a5580ee87ecf6a68d4f897a39a19b3252fe4ca"
         }
       ]
     },
     {
       "name": "legacy",
       "root": "legacy",
-      "file_count": 315,
+      "file_count": 307,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -1440,11 +1408,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "6b4dd8a830a90c146951d09e1c392ccdd584d8000ed2ec81f6276cb72334b669"
+          "sha256": "1deec268cee029d0ccc00cc685f6ca14821880f3432911fdd2d72d362b11f96c"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "8116ee4703cbeb9a47a240084a77fb029cb336c15d125a3f5d6ca50f017e10b4"
+          "sha256": "09da94c915f5c96deb4c8030961ac1657061f1b812792c4b5750403a18c43e5e"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1492,7 +1460,7 @@
         },
         {
           "path": ".ai-team/schemas/gate-decision.schema.json",
-          "sha256": "8b30683d5308cc231516322107eb3f6008e54701a7d21cbb41ad128a2d598160"
+          "sha256": "60d6622187f1622af94dd19111712fb97fec9ba65253c5656791b7b49ae261dc"
         },
         {
           "path": ".ai-team/schemas/observation.schema.json",
@@ -1788,7 +1756,7 @@
         },
         {
           "path": "adapters/cursor/compiler/parity.py",
-          "sha256": "443f8b48e6f886db539b5e9e565a2d600a84288164bf2ed53ec30c80edcad63b"
+          "sha256": "c5d9aedaeed4c393012662b3ac576072ffcd45eba3e3254a0499bc0ef10ce965"
         },
         {
           "path": "adapters/cursor/compiler/staging.py",
@@ -1992,7 +1960,7 @@
         },
         {
           "path": "docs/operator/deprecations.md",
-          "sha256": "979714b6c2f42fe81546aaea3475a0e2023f33ad4afbfa71396b4312a783d276"
+          "sha256": "974d62db409484f714fdc7c48d0499687cb9ffda9c294e75fc987292ac882d2e"
         },
         {
           "path": "docs/operator/operator-guide.md",
@@ -2000,7 +1968,7 @@
         },
         {
           "path": "docs/operator/security-model.md",
-          "sha256": "b00a4af9e11a9bdf5ebd4d78d55872cfab52588f63f818f08b107dd8cbdcf895"
+          "sha256": "87572d6f58763b64a19971428077679b44fffe09a76a724d7f24eb573f15ff21"
         },
         {
           "path": "docs/operator/upgrading.md",
@@ -2047,20 +2015,12 @@
           "sha256": "8888adbfa1aa48d57bfcdde9a5f03dedc35f45e75e5dded4c39672fb4b23bf59"
         },
         {
-          "path": "scripts/ai-team/common.py",
-          "sha256": "4264f30f3e93969d2b80e83d672c10a6ad4b547bf1d90986f72679fd0803ff33"
-        },
-        {
           "path": "scripts/ai-team/diagnose.py",
           "sha256": "82a8fdd3f7fa2e01929e3f93aedfc7bc5a13fcdcd5a6255b11bfd4c7f06a7df5"
         },
         {
           "path": "scripts/ai-team/feedback.py",
           "sha256": "a9fe3a28241e7e5167d848401463dc2b45d8183b60e6190e2c121f668674ca25"
-        },
-        {
-          "path": "scripts/ai-team/feedback_common.py",
-          "sha256": "f53a40eb73122c953b3da21c2a03d36cb6ef4631e62b53294477544771cfa899"
         },
         {
           "path": "scripts/ai-team/gov.py",
@@ -2087,16 +2047,12 @@
           "sha256": "510bea37810169dd46c229fcfeba20ef78c2b572b0569f2f854558899966ea28"
         },
         {
-          "path": "scripts/ai-team/record_gate.py",
-          "sha256": "6476724b812863a206aac5bbc16a6318b4c910e039333251564b753f4dd2254f"
-        },
-        {
           "path": "scripts/ai-team/status.py",
           "sha256": "0f5c95f00a4a744faf169f0b1d7dd7e632fb15b27c33cf22db49aa2f5e907564"
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "dbbee9b6afbf7d0f54b6bf7a68daa7006384969a7e788124d25a6e348999ca2e"
+          "sha256": "5f511c5aa9b2ab5e7fc05377b40d31fd9dbdf9d5fd0b20f06f101a8fc465f65b"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
@@ -2481,26 +2437,6 @@
         {
           "path": "src/governed_ai/feedback/domain/__init__.py",
           "sha256": "be637b4d6b0ea7249555003cd1641a94278cdee8254a4d763f76799362cc6b39"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/PKG-INFO",
-          "sha256": "efeb976d6075970881b2e490cccde26e430f8a9dcab20003a4c48898e032d3f4"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/SOURCES.txt",
-          "sha256": "16c830af2da2c239f184f81e1078ce9bfd32719a93b1f2e8b21d85bff81a894b"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/dependency_links.txt",
-          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/requires.txt",
-          "sha256": "a29cce48584ff23d9081f4c255c883d866943107863daed51b5a52d98f1e03c2"
-        },
-        {
-          "path": "src/governed_ai_dev_team_framework.egg-info/top_level.txt",
-          "sha256": "50a323e32964156c64157b46f8a5580ee87ecf6a68d4f897a39a19b3252fe4ca"
         }
       ]
     }

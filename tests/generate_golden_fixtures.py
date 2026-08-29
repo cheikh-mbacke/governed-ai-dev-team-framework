@@ -70,18 +70,6 @@ def main() -> int:
                 "scripts/ai-team/check_done.py",
                 "WU-P0-BASELINE",
             ],
-            "record-gate-g2": [
-                sys.executable,
-                "scripts/ai-team/record_gate.py",
-                "G2",
-                "not_required",
-                "--by",
-                "baseline-test",
-                "--note",
-                "golden capture",
-                "--authorization-id",
-                "HAUTH-golden-g2",
-            ],
             "feedback-record": [
                 sys.executable,
                 "scripts/ai-team/feedback.py",
@@ -132,7 +120,6 @@ def main() -> int:
         "scenarios": sorted(scenarios.keys()),
         "cli_tools": [
             "validate.py",
-            "record_gate.py",
             "feedback.py",
             "check_done.py",
             "preflight.py",

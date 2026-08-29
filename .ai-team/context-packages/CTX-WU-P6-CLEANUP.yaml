@@ -1,7 +1,7 @@
 id: CTX-WU-P6-CLEANUP
 work_unit: WU-P6-CLEANUP
 role: backend-developer
-assembled_at: null
+assembled_at: '2026-08-29T21:45:00+00:00'
 items:
 - level: L0_constitution
   source: .ai-team/constitution/constitution.yaml

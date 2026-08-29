@@ -95,16 +95,13 @@
     "docs/product/vision-and-scope/README.md",
     "requirements.txt",
     "scripts/ai-team/check_done.py",
-    "scripts/ai-team/common.py",
     "scripts/ai-team/diagnose.py",
     "scripts/ai-team/feedback.py",
-    "scripts/ai-team/feedback_common.py",
     "scripts/ai-team/i18n.py",
     "scripts/ai-team/migrate.py",
     "scripts/ai-team/preflight.py",
     "scripts/ai-team/propose_allowlist.py",
     "scripts/ai-team/read_docx.py",
-    "scripts/ai-team/record_gate.py",
     "scripts/ai-team/status.py",
     "scripts/ai-team/validate.py"
   ]

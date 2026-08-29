@@ -94,26 +94,6 @@ class CliGoldenCharacterizationTests(unittest.TestCase):
         )
         self.assert_matches_golden("check-done-in-progress", observed)
 
-    def test_record_gate_g2(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
-            target = install_baseline_target(Path(temp_dir))
-            observed = run_cli(
-                [
-                    sys.executable,
-                    "scripts/ai-team/record_gate.py",
-                    "G2",
-                    "not_required",
-                    "--by",
-                    "baseline-test",
-                    "--note",
-                    "golden capture",
-                    "--authorization-id",
-                    "HAUTH-golden-g2",
-                ],
-                cwd=target,
-            )
-        self.assert_matches_golden("record-gate-g2", observed)
-
     def test_feedback_record_and_export(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = install_baseline_target(Path(temp_dir))
@@ -156,7 +136,6 @@ class CliGoldenCharacterizationTests(unittest.TestCase):
         self.assertEqual(manifest["baseline_tag"], "v0.4.0-baseline")
         for tool in (
             "validate.py",
-            "record_gate.py",
             "feedback.py",
             "check_done.py",
             "preflight.py",
@@ -167,7 +146,6 @@ class CliGoldenCharacterizationTests(unittest.TestCase):
             self.assertIn(tool, manifest["cli_tools"])
         for scenario in (
             "install-fresh",
-            "record-gate-g2",
             "check-done-missing",
             "feedback-record",
         ):

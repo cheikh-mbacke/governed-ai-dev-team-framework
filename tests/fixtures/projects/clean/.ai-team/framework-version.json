@@ -184,17 +184,14 @@
     "docs/product/vision-and-scope/README.md",
     "requirements.txt",
     "scripts/ai-team/check_done.py",
-    "scripts/ai-team/common.py",
     "scripts/ai-team/diagnose.py",
     "scripts/ai-team/feedback.py",
-    "scripts/ai-team/feedback_common.py",
     "scripts/ai-team/gov.py",
     "scripts/ai-team/i18n.py",
     "scripts/ai-team/migrate.py",
     "scripts/ai-team/preflight.py",
     "scripts/ai-team/propose_allowlist.py",
     "scripts/ai-team/read_docx.py",
-    "scripts/ai-team/record_gate.py",
     "scripts/ai-team/status.py",
     "scripts/ai-team/validate.py",
     "scripts/ai-team/validate_ownership.py",
@@ -292,11 +289,6 @@
     "src/governed_ai/feedback/commands/__init__.py",
     "src/governed_ai/feedback/commands/handlers.py",
     "src/governed_ai/feedback/common.py",
-    "src/governed_ai/feedback/domain/__init__.py",
-    "src/governed_ai_dev_team_framework.egg-info/PKG-INFO",
-    "src/governed_ai_dev_team_framework.egg-info/SOURCES.txt",
-    "src/governed_ai_dev_team_framework.egg-info/dependency_links.txt",
-    "src/governed_ai_dev_team_framework.egg-info/requires.txt",
-    "src/governed_ai_dev_team_framework.egg-info/top_level.txt"
+    "src/governed_ai/feedback/domain/__init__.py"
   ]
 }

@@ -14,7 +14,6 @@ from governed_ai.core.commands.errors import EXIT_CLI
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.commands.legacy_cli import (
     DEPRECATION_FEEDBACK,
-    DEPRECATION_RECORD_GATE,
     FeedbackExportArgs,
     FeedbackRecordArgs,
     RecordGateArgs,
@@ -99,33 +98,6 @@ def test_feedback_record_wrapper_executes_via_gateway(wrapper_workspace: Workspa
     assert (wrapper_workspace.ai_team / "observations" / f"{observation_id}.yaml").is_file()
     stdout = format_feedback_record_stdout(receipt, lang="en")
     assert observation_id in stdout
-
-
-def test_record_gate_script_translation_failure_exits_before_gateway(
-    wrapper_workspace: Workspace,
-) -> None:
-    state_before = (wrapper_workspace.ai_team / "state" / "project-state.yaml").read_text(
-        encoding="utf-8"
-    )
-    result = subprocess.run(
-        [
-            sys.executable,
-            str(REPO_ROOT / "scripts" / "ai-team" / "record_gate.py"),
-            "G2",
-            "not_required",
-            "--by",
-            "missing-auth",
-        ],
-        cwd=wrapper_workspace.root,
-        text=True,
-        capture_output=True,
-    )
-    assert result.returncode == EXIT_CLI
-    assert "WRAPPER TRANSLATION ERROR" in result.stderr
-    assert DEPRECATION_RECORD_GATE in result.stderr
-    assert (wrapper_workspace.ai_team / "state" / "project-state.yaml").read_text(
-        encoding="utf-8"
-    ) == state_before
 
 
 def test_feedback_export_script_translation_failure_exits_before_gateway(

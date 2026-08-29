@@ -37,7 +37,6 @@ required = [
     ROOT / ".cursor" / "cli.json",
     ROOT / "scripts" / "ai-team" / "migrate.py",
     ROOT / "scripts" / "ai-team" / "feedback.py",
-    ROOT / "scripts" / "ai-team" / "feedback_common.py",
     AI / "schemas" / "observation.schema.json",
     AI / "schemas" / "retrospective.schema.json",
     AI / "schemas" / "feedback-export.schema.json",

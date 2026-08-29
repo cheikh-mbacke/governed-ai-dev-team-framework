@@ -1,6 +1,19 @@
 # Dépréciations et échéances
 
-Éléments remplacés par la refonte `0.5.0`. Suppression définitive prévue en **`0.6.0`** (Phase 6 nettoyage — WU-P6-CLEANUP), sauf mention contraire.
+Éléments remplacés par la refonte `0.5.0`. Phase 6 nettoyage (**WU-P6-CLEANUP**) : voir [Recherche consommateurs](#recherche-consommateurs-wu-p6-cleanup) et [Supprimé en 0.6.0](#supprimé-en-060).
+
+## Recherche consommateurs (WU-P6-CLEANUP)
+
+Recherche `rg` sur le dépôt (scripts, tests, docs, `.ai-team/`, `tools/`) avant suppression :
+
+| Fichier cible | Consommateurs runtime restants | Décision |
+|---|---|---|
+| `scripts/ai-team/record_gate.py` | Aucun import/script ; tests golden et `test_legacy_wrappers` invoquaient le CLI directement ; handler `RecordGateDecision` via `gov.py` | **Supprimé** — remplacer par `gov.py command` |
+| `scripts/ai-team/common.py` | Aucun `import common` dans `scripts/` ; logique dans `governed_ai.core` | **Supprimé** |
+| `scripts/ai-team/feedback_common.py` | Aucun import ; `validate.py` exigeait seulement sa présence ; logique dans `governed_ai.feedback` | **Supprimé** |
+| `.cursor/` vs `adapters/cursor/templates/.cursor/` | Parité shadow compile vérifiée (0 divergence bloquante) ; listes de fichiers identiques | **Conservé** — `.cursor/` est la sortie installée ; templates = source compilateur |
+
+## Supprimé en 0.6.0
 
 ## Formats et fichiers
 
@@ -13,10 +26,10 @@
 
 | Script | Statut | Remplacement |
 |---|---|---|
-| `scripts/ai-team/record_gate.py` | **Déprécié** — suppression `0.6.0` | `gov.py command` avec enveloppe `RecordGateDecision` |
+| ~~`scripts/ai-team/record_gate.py`~~ | **Supprimé `0.6.0`** | `gov.py command` avec enveloppe `RecordGateDecision` |
+| ~~`scripts/ai-team/common.py`~~, ~~`feedback_common.py`~~ | **Supprimés `0.6.0`** | `governed_ai.core` / `governed_ai.feedback` |
 | `scripts/ai-team/feedback.py` (écritures) | **Wrapper de transition** | Command Gateway pour record/export ; stdout legacy conservé |
 | `scripts/ai-team/migrate.py` | Wrapper acceptance | Appelé par l'installateur ; ne pas invoquer manuellement sauf debug |
-| `scripts/ai-team/common.py`, `feedback_common.py` | Internes legacy | Suppression après recherche consommateurs (WU-P6-CLEANUP) |
 
 Messages `DEPRECATED` émis sur stderr par les wrappers legacy.
 

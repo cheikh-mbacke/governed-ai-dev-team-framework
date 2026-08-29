@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "GateDecisionRecord",
-  "description": "A record of an already-made human gate decision (G0-G4), written by scripts/ai-team/record_gate.py. Distinct from decision.schema.json's DecisionRequest, which represents a question with options still awaiting a human answer.",
+  "description": "A record of an already-made human gate decision (G0-G4), written by the Command Gateway (RecordGateDecision). Distinct from decision.schema.json's DecisionRequest, which represents a question with options still awaiting a human answer.",
   "type": "object",
   "required": ["id", "gate", "status", "by", "at"],
   "properties": {

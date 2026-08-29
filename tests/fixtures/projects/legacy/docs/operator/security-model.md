@@ -19,7 +19,7 @@ Ce document résume les garanties et frontières **prouvées par la refonte `0.5
 - **G3** — release candidate prête.
 - **G4** — acceptation humaine finale.
 
-Enregistrement via `scripts/ai-team/gov.py` (recommandé) ou wrapper legacy `record_gate.py` (déprécié — voir [deprecations.md](deprecations.md)).
+Enregistrement via `scripts/ai-team/gov.py` avec enveloppe `RecordGateDecision` (voir [deprecations.md](deprecations.md)).
 
 ## Capacités et moindre privilège
 

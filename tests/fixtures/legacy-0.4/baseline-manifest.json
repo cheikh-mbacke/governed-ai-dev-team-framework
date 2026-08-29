@@ -11,13 +11,11 @@
     "install-fresh",
     "install-missing-target",
     "preflight-json",
-    "record-gate-g2",
     "status-clean",
     "validate-clean"
   ],
   "cli_tools": [
     "validate.py",
-    "record_gate.py",
     "feedback.py",
     "check_done.py",
     "preflight.py",
