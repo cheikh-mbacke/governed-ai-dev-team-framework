@@ -214,7 +214,7 @@ work_units:
     milestone: M-P5
     risk: high
   WU-P6-DECOUPLE:
-    status: ready
+    status: done
     milestone: M-P6
     risk: medium
   WU-P6-DOCS:

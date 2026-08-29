@@ -46,11 +46,11 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P6-DECOUPLE
-status: ready
+status: done
 events: []
 evidence: []
 outcomes:
-  review_status: pending
+  review_status: approved
   audit_status: not_required
   critical_open_items: []
   defects: []
