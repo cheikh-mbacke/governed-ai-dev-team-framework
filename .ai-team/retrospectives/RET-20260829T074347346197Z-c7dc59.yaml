@@ -1,0 +1,35 @@
+id: RET-20260829T074347346197Z-c7dc59
+generated_at: '2026-08-29T07:43:47.346197+00:00'
+project_id: framework-renov
+framework_version: 0.4.0
+constitution_version: 1.1.0
+scope:
+  type: work_unit
+  ref: WU-P2-PUBLISH
+source_snapshot:
+  observations: 0
+  events: 6
+  decisions: 0
+  findings: 0
+  acceptances: 0
+  work_units: 1
+observation_summary:
+  total: 0
+  open: 0
+  by_category: {}
+  by_origin: {}
+  by_severity: {}
+signals:
+  blocked_minutes: 0
+  rework_observations: 0
+  human_interventions: 0
+  event_types:
+    DEFECT: 1
+    HANDOFF: 1
+    STATUS: 4
+  work_unit_statuses:
+    in_progress: 1
+observation_refs: []
+unresolved_observation_refs: []
+notes: null
+status: generated

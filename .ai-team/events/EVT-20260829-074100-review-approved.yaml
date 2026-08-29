@@ -1,0 +1,17 @@
+id: EVT-20260829-074100-review-approved
+type: STATUS
+work_unit: WU-P2-PUBLISH
+created_at: '2026-08-29T07:41:00+00:00'
+created_by_role: code-reviewer
+summary: "Revue approuvee avec notes — WU-P2-PUBLISH SHA 123f940 (impl) / dcdf37d (remédiation AC4)."
+details:
+  commit_sha: 123f9401d47d90a45f68d07b7a95e0da310b4e67
+  remediation_sha: dcdf37d14644752a5f5e19c8cbc144216b4a1b91
+  disposition: APPROVED_WITH_NOTES
+  documented_reserves:
+    - "Pas de test CI sur l'artefact installé .ai-team/contracts/bundles/1.0.0"
+    - "check_compatibility SPI non implémenté (hors scope)"
+affected_nodes:
+  - WU-P2-PUBLISH
+requires_human: false
+status: closed
