@@ -1,10 +1,38 @@
 {
   "procedure_id": "orchestrator",
   "revision": "1.0.0",
-  "intent": "Coordinate Work Unit execution, staffing and handoffs.",
+  "intent": "Operate as the Control Plane: coordinate approved Work Units, staffing, context, verification, review, audit, release and human gates without becoming product authority.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["project_state"],
-  "steps": ["Select ready Work Units", "Delegate to roles", "Track outcomes"],
-  "required_outputs": ["execution_status"],
-  "invariants": ["Respect gates and staffing policy"]
+  "required_inputs": ["project_state", "project_profile", "constitution_policies"],
+  "steps": [
+    "Read project state, project profile and relevant governance policies",
+    "Refuse runtime activation when the execution plan gate is not approved",
+    "Determine READY Work Units whose dependencies are satisfied",
+    "Respect work-in-progress and high-risk concurrency limits from staffing policy",
+    "For each selected Work Unit, derive staffing from risk, touched areas, permissions and policy",
+    "Build or refresh its Context Package using the build-context procedure",
+    "Delegate implementation to the appropriate role with isolated environments for concurrent writers when available",
+    "Require a coherent Work Unit commit and exact SHA in the developer handoff before verification",
+    "Record handoff and result events",
+    "Trigger QA against the exact candidate SHA according to required verification",
+    "Trigger code review, security review and independent audit when policy requires them",
+    "Convert failures and findings into defects, audit findings or remediation Work Units; require a new commit before re-verification",
+    "Evaluate Definition of Done mechanically where possible",
+    "Prepare human decision packages for gates that require explicit authorization",
+    "Update project state after each authorized transition",
+    "Record structured observations when execution exposes reusable friction or framework limitations",
+    "Generate a work-unit or project retrospective when a Work Unit reaches a terminal state or when requested",
+    "Investigate authoritative sources before escalating; emit a decision request with options and impact when human authority is required and block only the dependent subgraph",
+    "Emit a blocker or clarification request event before stopping when progress cannot continue"
+  ],
+  "required_outputs": ["execution_status", "staffing_assignments", "gate_packages", "structured_events"],
+  "invariants": [
+    "Do not modify the Engineering Constitution during a cycle",
+    "Do not invent product intent",
+    "Do not mark a Work Unit done from an agent self-report alone",
+    "Do not bypass human gates",
+    "Do not send an uncommitted tree or work-in-progress checkpoint to QA or review as a stable candidate",
+    "Invalidate affected evidence and re-run checks when the evaluated SHA changes",
+    "Do not stop silently without recording a blocker or clarification request"
+  ]
 }

@@ -1,10 +1,25 @@
 {
   "procedure_id": "implement-work-unit",
   "revision": "1.0.0",
-  "intent": "Implement the approved Work Unit and return a verifiable handoff.",
+  "intent": "Implement the approved Work Unit within scope and return a verifiable handoff.",
   "invocation_mode": "explicit_only",
   "required_inputs": ["work_unit", "context_package", "base_sha"],
-  "steps": ["Read inputs", "Implement within scope", "Run required checks"],
-  "required_outputs": ["result_sha", "checks", "limitations"],
-  "invariants": ["Do not change product authority", "Do not broaden scope"]
+  "steps": [
+    "Confirm the Work Unit is READY or IN_PROGRESS and required execution gates are satisfied",
+    "Read the Context Package and applicable governance policies",
+    "Stay within Work Unit scope and expected behavior",
+    "Implement the smallest coherent change that satisfies observable behavior and contracts",
+    "Add or update developer-owned tests when required by the Work Unit verification plan",
+    "Run required checks declared by the Work Unit",
+    "Create a coherent commit on the isolated Work Unit branch referencing the Work Unit identifier",
+    "Return a structured handoff with changed files, behavior implemented, commands and tests run, commit SHA, limitations, open questions, contract changes, and evidence candidates"
+  ],
+  "required_outputs": ["result_sha", "checks", "limitations", "handoff_summary"],
+  "invariants": [
+    "Do not change product authority",
+    "Do not broaden Work Unit scope",
+    "Do not merge to protected branches or deploy production without authorization",
+    "Do not invent missing product decisions",
+    "Do not present a work-in-progress checkpoint as verified"
+  ]
 }

@@ -1,10 +1,22 @@
 {
   "procedure_id": "build-context",
   "revision": "1.0.0",
-  "intent": "Assemble the minimum sufficient Context Package for a Work Unit.",
+  "intent": "Assemble the minimum sufficient, traceable Context Package for a Work Unit, preserving provenance and allowing targeted context requests.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["work_unit"],
-  "steps": ["Select authoritative sources", "Assemble context package"],
-  "required_outputs": ["context_package_ref"],
-  "invariants": ["Preserve provenance"]
+  "required_inputs": ["work_unit", "role_id"],
+  "steps": [
+    "Apply the context hierarchy: constitution policies relevant to the role and Work Unit",
+    "Include project scope, architecture and constraints at project level",
+    "Include requirements, contracts and decisions for the affected capability or components at zone level",
+    "Include Work Unit objective, expected behavior, acceptance criteria, dependencies, and relevant files, symbols and tests at Work Unit level",
+    "Avoid dumping the entire repository or every document when narrower context is sufficient",
+    "Create or update a Context Package object containing each item source, provenance and reason for inclusion",
+    "Emit a context request or clarification request when required information is absent; do not fill gaps by guesswork"
+  ],
+  "required_outputs": ["context_package_ref", "context_items", "open_context_requests"],
+  "invariants": [
+    "Preserve provenance for every included item",
+    "Do not invent missing authoritative information",
+    "Prefer minimum sufficient context over exhaustive dumps"
+  ]
 }

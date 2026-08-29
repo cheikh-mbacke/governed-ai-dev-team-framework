@@ -1,10 +1,42 @@
 {
   "procedure_id": "compile-project",
   "revision": "1.0.0",
-  "intent": "Compile authoritative product sources into derived project state.",
+  "intent": "Compile authoritative human product material and the Engineering Constitution into a readiness report, project state, dependency graph, Work Units, risk, context plan and initial staffing. Must run before first runtime activation or after material source changes.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["project_profile"],
-  "steps": ["Read sources", "Derive project state"],
-  "required_outputs": ["project_state"],
-  "invariants": ["Do not invent missing product decisions"]
+  "required_inputs": ["constitution", "project_profile", "source_registry", "authoritative_product_sources"],
+  "steps": [
+    "Read the constitution, project profile, source registry, registered authoritative product sources, and repository state only as observed reality when relevant",
+    "Run Definition of Ready against the requested scope",
+    "If blocking ambiguity exists, emit readiness gate issues and stop the affected scope",
+    "Build capabilities and features without inventing a new product structure",
+    "Decompose into small, observable, testable Work Units",
+    "Build explicit dependencies and identify the critical path",
+    "Assign risk class from policy and record reasons",
+    "Determine required verification from behavior and risk",
+    "Build a Context Package plan for each Work Unit",
+    "Propose staffing from staffing policy",
+    "Propose allowlist changes as a diff for human review; do not apply allowlist changes automatically",
+    "Update project state and work unit definitions",
+    "Produce a concise execution plan summary",
+    "Set phase to awaiting execution plan approval",
+    "Stop without activating developers until a human records execution plan gate approval",
+    "Quote YAML string values that contain colon-space or curly braces to avoid parser ambiguity"
+  ],
+  "required_outputs": [
+    "readiness_summary",
+    "work_units",
+    "dependency_graph",
+    "risk_assignments",
+    "verification_assignments",
+    "staffing_proposal",
+    "proposed_allowlist_diff",
+    "unresolved_decisions",
+    "execution_plan_gate_package"
+  ],
+  "invariants": [
+    "Planning only; do not implement product code",
+    "Do not activate runtime before execution plan gate approval",
+    "Do not invent product intent or structure",
+    "Do not apply permission or allowlist changes without human action"
+  ]
 }

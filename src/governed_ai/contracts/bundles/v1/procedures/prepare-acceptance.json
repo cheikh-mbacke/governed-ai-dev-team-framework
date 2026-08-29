@@ -1,10 +1,22 @@
 {
   "procedure_id": "prepare-acceptance",
   "revision": "1.0.0",
-  "intent": "Build a human-executable acceptance package for an increment or release.",
+  "intent": "Build a human-executable acceptance package for an increment or release, with preconditions, steps, expected outcomes, nominal, error and regression scenarios and evidence capture.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["work_unit", "base_sha"],
-  "steps": ["Assemble scenarios", "Define expected outcomes", "Capture preconditions"],
-  "required_outputs": ["acceptance_package"],
-  "invariants": ["Do not authorize production release"]
+  "required_inputs": ["increment_or_release", "acceptance_criteria", "evidence_summary"],
+  "steps": [
+    "Create an acceptance package under the designated governance acceptance location",
+    "For each scenario define preconditions, exact human steps, expected observable result, and nominal, error or regression purpose",
+    "Document environment and data requirements for each scenario",
+    "Specify evidence the human should capture for each scenario",
+    "Leave human result status as pending until a human records the result",
+    "Create a defect tied to the increment or release and affected evidence when a human test fails",
+    "Route failed acceptance through development, tests, review and retest before closure"
+  ],
+  "required_outputs": ["acceptance_package_ref", "scenarios", "human_result_status"],
+  "invariants": [
+    "Human acceptance result remains pending until explicitly recorded",
+    "Scenarios must be executable by a human without adapter-specific assumptions",
+    "Failed human tests produce traceable defects"
+  ]
 }

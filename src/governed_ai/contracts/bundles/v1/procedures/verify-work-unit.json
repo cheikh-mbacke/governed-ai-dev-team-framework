@@ -1,10 +1,23 @@
 {
   "procedure_id": "verify-work-unit",
   "revision": "1.0.0",
-  "intent": "Evaluate whether a Work Unit meets Definition of Done prerequisites.",
+  "intent": "Evaluate whether a Work Unit has the required evidence, QA, review, audit and acceptance prerequisites for its current risk level and Definition of Done.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["work_unit", "base_sha"],
-  "steps": ["Check evidence", "Check review and audit status"],
-  "required_outputs": ["verification_report"],
-  "invariants": ["Claims require evidence"]
+  "required_inputs": ["work_unit", "test_strategy", "definition_of_done", "evidence_objects"],
+  "steps": [
+    "Read the Work Unit, Test Strategy, Definition of Done and evidence objects",
+    "Require one exact candidate commit SHA for the evaluated state",
+    "Check that required verification is linked to concrete results and the evaluated code revision, not merely claimed",
+    "Mark QA, review, security or audit checks as stale when the current SHA differs from the SHA referenced by their evidence",
+    "Reject a work-in-progress commit as satisfying Definition of Done",
+    "Report satisfied checks, missing checks, failed checks, and critical blockers, defects or findings",
+    "State whether the Work Unit may transition to the next state",
+    "Do not mark human acceptance complete unless an explicit human result exists"
+  ],
+  "required_outputs": ["verification_report", "transition_recommendation", "stale_checks"],
+  "invariants": [
+    "Evidence must reference an exact evaluated revision",
+    "Do not accept self-reported completion without linked evidence",
+    "Human acceptance requires an explicit human result"
+  ]
 }

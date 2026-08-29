@@ -1,10 +1,21 @@
 {
   "procedure_id": "audit-release",
   "revision": "1.0.0",
-  "intent": "Coordinate an independent audit and produce a conformity report.",
+  "intent": "Coordinate an independent release-level audit using the auditor role and the audit strategy, then write a conformity report without remediation.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["work_unit", "base_sha"],
-  "steps": ["Run audit passes", "Measure conformity", "Produce report"],
-  "required_outputs": ["audit_report", "limitations"],
-  "invariants": ["Do not remediate during measurement"]
+  "required_inputs": ["release_candidate", "authoritative_intent", "repository_revision", "evidence", "runtime_observations"],
+  "steps": [
+    "Delegate measurement to the auditor role with clean, sufficient context containing authoritative intent, repository revision, evidence and runtime observations",
+    "Do not prime the auditor with conclusions such as everything passed",
+    "Execute the configured audit strategy passes against the release candidate scope",
+    "Write the audit report and findings to their designated governance locations",
+    "Classify each conclusion as expected and observed, expected but not demonstrated, observed but not specified, contradiction, or unknown",
+    "Create remediation as separate Work Units when findings require code changes; re-verify and re-audit after remediation"
+  ],
+  "required_outputs": ["audit_report_ref", "findings", "conformity_summary"],
+  "invariants": [
+    "The auditor must not remediate the code under evaluation",
+    "Measurement is independent of implementer self-report",
+    "Remediation is out of scope for the audit procedure itself"
+  ]
 }

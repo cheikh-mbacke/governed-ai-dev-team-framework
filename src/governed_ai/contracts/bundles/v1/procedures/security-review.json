@@ -1,10 +1,26 @@
 {
   "procedure_id": "security-review",
   "revision": "1.0.0",
-  "intent": "Examine security-relevant dimensions and report findings without modifying code.",
+  "intent": "Perform read-only security analysis on authentication, authorization, secrets, sensitive data, trust boundaries and high-risk integrations when policy requires security review.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["work_unit", "base_sha"],
-  "steps": ["Inspect security surfaces", "Report findings with evidence"],
-  "required_outputs": ["findings", "limitations"],
-  "invariants": ["Do not modify evaluated code"]
+  "required_inputs": ["change_scope", "repository_revision", "relevant_policies"],
+  "steps": [
+    "Analyze only the security dimensions relevant to the change scope",
+    "Separate observation from assessment and unknowns",
+    "Review authentication and authorization paths",
+    "Review ownership and tenant isolation where applicable",
+    "Review input validation and injection surfaces",
+    "Review secrets and credential handling",
+    "Review sensitive data exposure and logging",
+    "Review trust boundaries and external integrations",
+    "Review negative permission cases and dangerous configuration defaults",
+    "Review auditability of security-relevant actions",
+    "Return findings with evidence, severity, exploit preconditions, affected scope and recommended remediation"
+  ],
+  "required_outputs": ["security_findings", "severity_summary", "unknowns"],
+  "invariants": [
+    "Read-only: do not modify evaluated code",
+    "Findings must cite evidence",
+    "Distinguish confirmed issues from unverified risks"
+  ]
 }

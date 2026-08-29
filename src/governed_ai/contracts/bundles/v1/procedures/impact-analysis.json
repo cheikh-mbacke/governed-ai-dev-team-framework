@@ -1,10 +1,21 @@
 {
   "procedure_id": "impact-analysis",
   "revision": "1.0.0",
-  "intent": "Analyze impact of changes on Work Units, contracts and architecture.",
+  "intent": "Analyze the impact of changed human sources, shared contracts, architecture or policy on existing Work Units and derived project state.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["change_scope"],
-  "steps": ["Identify affected components", "Report impact and risks"],
-  "required_outputs": ["impact_report"],
-  "invariants": ["Do not acquire product authority"]
+  "required_inputs": ["change_description", "project_state", "work_units"],
+  "steps": [
+    "Identify the trigger: authoritative human source change, shared contract change, structural migration proposal, or constitution version change",
+    "Enumerate Work Units potentially affected by the change",
+    "Classify each affected Work Unit as unaffected, needs context refresh, needs reverification, invalidated needs recompile, or blocked pending decision",
+    "Identify derived project state elements that contradict the changed authoritative source",
+    "Report required follow-up actions: context rebuild, re-verification, recompilation or human decision",
+    "Never silently preserve a derived plan that contradicts a changed authoritative source"
+  ],
+  "required_outputs": ["impact_report", "affected_work_units", "recommended_actions"],
+  "invariants": [
+    "Treat changed authoritative sources as overriding stale derived state",
+    "Do not invent product decisions to resolve conflicts",
+    "Surface blocked pending decision cases explicitly"
+  ]
 }

@@ -1,10 +1,26 @@
 {
   "procedure_id": "frontend-design",
   "revision": "1.0.0",
-  "intent": "Apply intentional visual design direction for frontend Work Units.",
+  "intent": "Produce distinctive, intentional visual design when building new UI or reshaping existing UI, with deliberate aesthetic direction, typography and layout choices specific to the brief.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["work_unit", "context_package"],
-  "steps": ["Read design constraints", "Apply visual direction"],
-  "required_outputs": ["design_notes"],
-  "invariants": ["Respect usability and accessibility constraints"]
+  "required_inputs": ["design_brief", "subject_context", "existing_ui_constraints"],
+  "steps": [
+    "Ground the design in the subject: name the concrete subject, audience and the page primary job when the brief does not pin them down",
+    "Derive distinctive choices from the subject world rather than generic template defaults",
+    "Define a compact token system with named palette, typography roles, layout concept and a single signature element",
+    "Review the plan against the brief and revise parts that read like generic defaults for any similar page",
+    "Build to the revised plan, deriving every color and type decision from it",
+    "Apply motion deliberately where it serves the subject; prefer orchestrated moments over scattered effects",
+    "Match implementation complexity to the chosen vision",
+    "Write copy from the end user perspective with active voice and consistent vocabulary through the flow",
+    "Apply restraint: one memorable signature element with disciplined surroundings",
+    "Meet a quality floor: responsive layout, visible keyboard focus, and reduced motion respected",
+    "Critique the result during build and remove decoration that does not serve the brief"
+  ],
+  "required_outputs": ["design_plan", "implementation_artifacts", "design_rationale"],
+  "invariants": [
+    "The brief own words win when they pin a visual direction",
+    "Avoid templated default aesthetics when the brief leaves an axis free",
+    "Copy and structure must serve comprehension, not decoration alone"
+  ]
 }

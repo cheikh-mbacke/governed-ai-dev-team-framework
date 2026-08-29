@@ -1,10 +1,26 @@
 {
   "procedure_id": "propose-profile",
   "revision": "1.0.0",
-  "intent": "Propose or refine the project profile from authoritative sources.",
+  "intent": "Inspect the repository and product documentation to propose values for the project profile and source registry without writing either file without explicit human confirmation.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["authoritative_sources"],
-  "steps": ["Inspect sources", "Draft profile proposal"],
-  "required_outputs": ["profile_proposal"],
-  "invariants": ["Distinguish proposals from decisions"]
+  "required_inputs": ["repository_root", "product_docs_root"],
+  "steps": [
+    "Inspect the repository for language, package manager, build tooling, source roots and test roots using concrete files present on disk",
+    "Propose project profile commands only when backed by scripts, configuration or dependencies actually present",
+    "Never guess a command unsupported by repository evidence; leave gaps explicit in the proposal",
+    "Ask the human directly for human authority names; never infer approval authority from the repository",
+    "Ask the human for communication language preference; do not infer it from code comments or readme language alone",
+    "List every authoritative product document under the product docs tree and propose a source registry entry for each file found",
+    "Do not propose registry entries for files not found on disk or for organizational readme stubs",
+    "Present the full proposed content of both files for human review in one pass",
+    "Ask which fields to accept, correct or leave unfilled; write files only after explicit human confirmation",
+    "State which values were inferred from concrete signals versus left unfilled for lack of evidence"
+  ],
+  "required_outputs": ["proposed_project_profile", "proposed_source_registry", "human_confirmation_request"],
+  "invariants": [
+    "This is bootstrap convenience, not constitution authority",
+    "Do not invent product intent",
+    "Never write profile or registry files without explicit human confirmation",
+    "An honest gap is better than a plausible invention"
+  ]
 }
