@@ -158,7 +158,7 @@ work_units:
     milestone: M-P3
     risk: critical
   WU-P3-GW-OBS-EVID:
-    status: in_progress
+    status: done
     milestone: M-P3
     risk: high
   WU-P3-GW-WU:
@@ -359,10 +359,7 @@ open_decisions: []
 open_blockers: []
 open_defects: []
 open_findings: []
-active_workers:
-  - role: backend-developer
-    work_unit: WU-P3-GW-OBS-EVID
-    branch: wu/WU-P3-GW-OBS-EVID
+active_workers: []
 staffing_proposal:
   default_roles:
   - backend-developer
@@ -437,4 +434,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-29T17:00:00+00:00'
+last_updated: '2026-08-29T17:14:00+00:00'

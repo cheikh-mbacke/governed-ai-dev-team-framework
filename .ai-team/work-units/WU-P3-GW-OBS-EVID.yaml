@@ -43,12 +43,32 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P3-GW-OBS-EVID
-status: in_progress
+status: done
 events:
   - EVT-20260829-170000-orchestrator-start
-evidence: []
+  - EVT-20260829-171000-backend-handoff
+  - EVT-20260829-171100-qa-pass
+  - EVT-20260829-171200-review-approved
+  - EVT-20260829-171300-security-approved
+evidence:
+  - id: EVD-WU-P3-GW-OBS-EVID-IMPL
+    type: implementation
+    commit_sha: 6ec198a
+    verified_by: backend-developer
+  - id: EVD-WU-P3-GW-OBS-EVID-QA
+    type: qa
+    commit_sha: 6ec198a
+    event: EVT-20260829-171100-qa-pass
+  - id: EVD-WU-P3-GW-OBS-EVID-REVIEW
+    type: review
+    commit_sha: 6ec198a
+    event: EVT-20260829-171200-review-approved
+  - id: EVD-WU-P3-GW-OBS-EVID-SECURITY
+    type: security_review
+    commit_sha: 6ec198a
+    event: EVT-20260829-171300-security-approved
 outcomes:
-  review_status: pending
+  review_status: approved
   audit_status: not_required
   critical_open_items: []
   defects: []
