@@ -1,0 +1,27 @@
+id: EVT-20260829-222100-wu-done
+type: STATUS
+work_unit: WU-P6-CLEANUP
+created_at: '2026-08-29T22:21:00+00:00'
+created_by_role: orchestrator
+summary: "WU-P6-CLEANUP terminee — derniere WU du plan migration ; increment INC-CLEANUP complet."
+details:
+  final_sha: 96bdda7bb335369ba7eddc1adbbc82389241d3f7
+  commits:
+    - 4cce1cfa4118e270de2a286207904cabed3d8d07
+    - 96bdda7bb335369ba7eddc1adbbc82389241d3f7
+  verification:
+    qa: pass
+    review: approved
+    security_review: not_required
+    audit: not_required
+  milestone: M-P6
+  increment: INC-CLEANUP
+  next_actions:
+    - "G4 acceptation increment INC-CLEANUP / release 0.6.0 si souhaitee"
+    - "Follow-up optionnel DEPRECATION_RECORD_GATE stale message"
+affected_nodes:
+  - WU-P6-CLEANUP
+  - M-P6
+  - INC-CLEANUP
+requires_human: true
+status: open
