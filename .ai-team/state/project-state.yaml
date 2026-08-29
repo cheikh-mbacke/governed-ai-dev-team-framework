@@ -202,7 +202,7 @@ work_units:
     milestone: M-P4
     risk: high
   WU-P4-CONFORMANCE:
-    status: ready
+    status: done
     milestone: M-P4
     risk: high
   WU-P5-INSTALL-RECORD:

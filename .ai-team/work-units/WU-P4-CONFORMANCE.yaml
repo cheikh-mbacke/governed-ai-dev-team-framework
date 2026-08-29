@@ -43,12 +43,13 @@ required_verification:
   audit: true
   human_acceptance: false
 context_package_ref: CTX-WU-P4-CONFORMANCE
-status: ready
+status: done
 events: []
 evidence: []
 outcomes:
-  review_status: pending
-  audit_status: pending
+  review_status: approved
+  audit_status: passed
+  security_review_status: approved
   critical_open_items: []
   defects: []
   audit_findings: []
