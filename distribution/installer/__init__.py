@@ -12,6 +12,7 @@ from distribution.installer.record import (
     is_v1_manifest,
     is_v2_record,
     load_installation_record,
+    managed_files_union,
     read_installation_manifest,
 )
 
@@ -24,6 +25,7 @@ __all__ = [
     "is_v1_manifest",
     "is_v2_record",
     "load_installation_record",
+    "managed_files_union",
     "migrate_v1_to_v2",
     "read_installation_manifest",
 ]

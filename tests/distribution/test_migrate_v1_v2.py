@@ -9,13 +9,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from distribution.installer.migrate_v1_v2 import MigrationError, migrate_v1_to_v2
-from distribution.installer.record import (
+from distribution.installer import (
     INSTALLATION_RECORD_FILE,
     LEGACY_VERSION_FILE,
+    MigrationError,
     is_v2_record,
     load_installation_record,
     managed_files_union,
+    migrate_v1_to_v2,
 )
 from distribution.installer.ownership import classify_managed_file
 
