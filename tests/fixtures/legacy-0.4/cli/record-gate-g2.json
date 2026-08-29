@@ -5,5 +5,5 @@
   "scenario": "record-gate-g2",
   "exit_code": 0,
   "stdout": "Recorded G2=not_required by baseline-test\n",
-  "stderr": ""
+  "stderr": "DEPRECATED: scripts/ai-team/record_gate.py will be removed; use scripts/ai-team/gov.py command with a Command Envelope.\n"
 }

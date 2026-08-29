@@ -5,5 +5,5 @@
   "scenario": "feedback-export-structured",
   "exit_code": 0,
   "stdout": "Export structured genere : export.json\n",
-  "stderr": ""
+  "stderr": "DEPRECATED: scripts/ai-team/feedback.py direct writes are replaced by the Command Gateway; this wrapper translates legacy arguments automatically.\n"
 }

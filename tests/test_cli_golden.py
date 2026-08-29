@@ -107,6 +107,8 @@ class CliGoldenCharacterizationTests(unittest.TestCase):
                     "baseline-test",
                     "--note",
                     "golden capture",
+                    "--authorization-id",
+                    "HAUTH-golden-g2",
                 ],
                 cwd=target,
             )

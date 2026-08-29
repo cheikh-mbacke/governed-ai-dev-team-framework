@@ -5,18 +5,39 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SRC_ROOT = _REPO_ROOT / "src"
+if _SRC_ROOT.is_dir() and str(_SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SRC_ROOT))
 
 try:
-    from feedback_common import ROOT
+    import yaml  # noqa: F401 — ensure feedback dependencies are present
 except ModuleNotFoundError:
-    print("Missing dependency: PyYAML and/or jsonschema. Install requirements first.")
-    raise SystemExit(1)
+    print("Missing dependency: PyYAML and/or jsonschema. Install requirements first.", file=sys.stderr)
+    raise SystemExit(1) from None
 
+from governed_ai.core.commands.errors import EXIT_CLI
+from governed_ai.core.commands.gateway import CommandGateway
+from governed_ai.core.commands.legacy_cli import (
+    DEPRECATION_FEEDBACK,
+    FeedbackExportArgs,
+    FeedbackRecordArgs,
+    FeedbackRetrospectiveArgs,
+    TranslationError,
+    format_feedback_export_stdout,
+    format_feedback_record_stdout,
+    format_feedback_retrospective_stdout,
+    translate_feedback_export,
+    translate_feedback_record,
+    translate_feedback_retrospective,
+)
 from governed_ai.core.workspace import Workspace
-from governed_ai.feedback import commands
 
 from i18n import project_language, t
 
+ROOT = Workspace.discover(Path.cwd()).root
 LANG = project_language(ROOT)
 WORKSPACE = Workspace.from_root(ROOT)
 
@@ -97,80 +118,105 @@ def build_parser() -> argparse.ArgumentParser:
     )
     export.add_argument("--include-project-id", action="store_true")
     export.add_argument("--output")
+    export.add_argument("--authorization-id", default="")
+    export.add_argument("--authorization-granted-by", default="")
+    export.add_argument("--authorization-scope", default="export:full")
     return parser
 
 
+def _execute(envelope: dict) -> tuple[dict, int]:
+    gateway = CommandGateway(WORKSPACE)
+    return gateway.execute_command(envelope)
+
+
+def _handle_gateway_failure(receipt: dict, exit_code: int) -> None:
+    errors = receipt.get("errors") or []
+    message = errors[0]["message"] if errors else "gateway rejected the command"
+    print(t(LANG, f"GATEWAY ERROR: {message}", f"ERREUR GATEWAY : {message}"), file=sys.stderr)
+    raise SystemExit(exit_code)
+
+
 def record_observation(args: argparse.Namespace) -> int:
-    result = commands.record_observation(
-        WORKSPACE,
-        commands.RecordObservationParams(
-            category=args.category,
-            symptom=args.symptom,
-            severity=args.severity,
-            origin=args.origin,
-            confidence=args.confidence,
-            work_unit=args.work_unit,
-            phase=args.phase,
-            recorded_by=args.recorded_by,
-            blocked_minutes=args.blocked_minutes,
-            rework_required=args.rework_required,
-            human_intervention=args.human_intervention,
-            affected_work_unit=tuple(args.affected_work_unit),
-            evidence_ref=tuple(args.evidence_ref),
-            workaround=args.workaround,
-            candidate_improvement=args.candidate_improvement,
-            recurrence_key=args.recurrence_key,
-            status=args.status,
-            resolution=args.resolution,
-        ),
-    )
-    print(
-        t(
-            LANG,
-            f"Recorded {result.observation_id}: {result.display_path}",
-            f"Enregistre {result.observation_id} : {result.display_path}",
+    print(DEPRECATION_FEEDBACK, file=sys.stderr)
+    try:
+        envelope = translate_feedback_record(
+            FeedbackRecordArgs(
+                category=args.category,
+                symptom=args.symptom,
+                severity=args.severity,
+                origin=args.origin,
+                confidence=args.confidence,
+                work_unit=args.work_unit,
+                phase=args.phase,
+                recorded_by=args.recorded_by,
+                blocked_minutes=args.blocked_minutes,
+                rework_required=args.rework_required,
+                human_intervention=args.human_intervention,
+                affected_work_unit=tuple(args.affected_work_unit),
+                evidence_ref=tuple(args.evidence_ref),
+                workaround=args.workaround,
+                candidate_improvement=args.candidate_improvement,
+                recurrence_key=args.recurrence_key,
+                status=args.status,
+                resolution=args.resolution,
+            )
         )
-    )
+    except TranslationError as exc:
+        print(t(LANG, f"WRAPPER TRANSLATION ERROR: {exc}", f"ERREUR TRADUCTION WRAPPER : {exc}"), file=sys.stderr)
+        return EXIT_CLI
+
+    receipt, exit_code = _execute(envelope)
+    if exit_code != 0:
+        _handle_gateway_failure(receipt, exit_code)
+    print(format_feedback_record_stdout(receipt, lang=LANG), end="")
     return 0
 
 
 def generate_retrospective(args: argparse.Namespace) -> int:
-    result = commands.generate_retrospective(
-        WORKSPACE,
-        commands.RetrospectiveParams(
-            work_unit=args.work_unit,
-            project=args.project,
-            notes=args.notes,
-            output=args.output,
-        ),
-    )
-    print(
-        t(
-            LANG,
-            f"Generated {result.retrospective_id}: {result.display_path}",
-            f"Genere {result.retrospective_id} : {result.display_path}",
+    print(DEPRECATION_FEEDBACK, file=sys.stderr)
+    try:
+        envelope = translate_feedback_retrospective(
+            FeedbackRetrospectiveArgs(
+                work_unit=args.work_unit,
+                project=args.project,
+                notes=args.notes,
+                output=args.output,
+            )
         )
-    )
+    except TranslationError as exc:
+        print(t(LANG, f"WRAPPER TRANSLATION ERROR: {exc}", f"ERREUR TRADUCTION WRAPPER : {exc}"), file=sys.stderr)
+        return EXIT_CLI
+
+    receipt, exit_code = _execute(envelope)
+    if exit_code != 0:
+        _handle_gateway_failure(receipt, exit_code)
+    print(format_feedback_retrospective_stdout(receipt, lang=LANG), end="")
     return 0
 
 
 def export_feedback(args: argparse.Namespace) -> int:
-    result = commands.export_feedback(
-        WORKSPACE,
-        commands.ExportParams(
-            detail_level=args.detail_level,
-            include_project_id=args.include_project_id,
-            output=args.output,
-        ),
-    )
-    print(
-        t(
-            LANG,
-            f"Exported {result.detail_level} feedback: {result.display_path}",
-            f"Export {result.detail_level} genere : {result.display_path}",
+    print(DEPRECATION_FEEDBACK, file=sys.stderr)
+    try:
+        envelope = translate_feedback_export(
+            FeedbackExportArgs(
+                detail_level=args.detail_level,
+                include_project_id=args.include_project_id,
+                output=args.output,
+                authorization_id=args.authorization_id,
+                authorization_granted_by=args.authorization_granted_by,
+                authorization_scope=args.authorization_scope,
+            )
         )
-    )
-    if result.show_full_warning:
+    except TranslationError as exc:
+        print(t(LANG, f"WRAPPER TRANSLATION ERROR: {exc}", f"ERREUR TRADUCTION WRAPPER : {exc}"), file=sys.stderr)
+        return EXIT_CLI
+
+    receipt, exit_code = _execute(envelope)
+    if exit_code != 0:
+        _handle_gateway_failure(receipt, exit_code)
+    line, show_full_warning = format_feedback_export_stdout(receipt, lang=LANG)
+    print(line, end="")
+    if show_full_warning:
         print(
             t(
                 LANG,
@@ -183,15 +229,11 @@ def export_feedback(args: argparse.Namespace) -> int:
 
 def main() -> int:
     args = build_parser().parse_args()
-    try:
-        if args.command == "record":
-            return record_observation(args)
-        if args.command == "retrospective":
-            return generate_retrospective(args)
-        return export_feedback(args)
-    except (OSError, ValueError) as exc:
-        print(t(LANG, f"ERROR: {exc}", f"ERREUR : {exc}"))
-        return 2
+    if args.command == "record":
+        return record_observation(args)
+    if args.command == "retrospective":
+        return generate_retrospective(args)
+    return export_feedback(args)
 
 
 if __name__ == "__main__":
