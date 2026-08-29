@@ -17,6 +17,7 @@ from governed_ai.contracts.validate_bundle import (
 BUNDLE_V1 = (
     Path(__file__).resolve().parents[2] / "src" / "governed_ai" / "contracts" / "bundles" / "v1"
 )
+ADAPTER_CURSOR_ROOT = Path(__file__).resolve().parents[2] / "adapters" / "cursor"
 PROCEDURES_DIR = BUNDLE_V1 / "procedures"
 MANIFEST_PATH = BUNDLE_V1 / "manifest.json"
 
@@ -125,10 +126,10 @@ def test_steps_are_agnostic(procedure_id: str) -> None:
 
 
 def test_adapter_compiler_notes_sidecar_exists() -> None:
-    sidecar = BUNDLE_V1 / "cursor-compiler-notes.yaml"
-    assert sidecar.is_file(), "adapter isolation sidecar required for WU-P4 compiler"
+    sidecar = ADAPTER_CURSOR_ROOT / "compiler-notes.yaml"
+    assert sidecar.is_file(), "adapter compiler sidecar required under adapters/cursor/"
     text = sidecar.read_text(encoding="utf-8")
     assert "implement-work-unit" in text
     assert "orchestrator" in text
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-    assert "cursor-compiler-notes.yaml" not in json.dumps(manifest)
+    assert "compiler-notes.yaml" not in json.dumps(manifest)

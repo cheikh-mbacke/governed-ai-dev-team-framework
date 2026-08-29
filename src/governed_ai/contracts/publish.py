@@ -8,7 +8,8 @@ Document 11 §4 layout::
 
 Only files listed in the manifest (``manifest.json`` plus ``roles`` /
 ``procedures`` paths) are copied. Adapter sidecars such as
-``cursor-compiler-notes.yaml`` stay in the source tree and are never published.
+adapter compiler sidecars (for example ``compiler-notes.yaml`` under an adapter
+package) stay in the source tree and are never published.
 """
 
 from __future__ import annotations

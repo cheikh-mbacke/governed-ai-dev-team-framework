@@ -8,6 +8,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 DEPRECATION_RECORD_GATE = (
     "DEPRECATED: scripts/ai-team/record_gate.py will be removed; "
     "use scripts/ai-team/gov.py command with a Command Envelope."
@@ -132,6 +134,23 @@ def _command_ids(prefix: str) -> tuple[str, str, str]:
     return command_id, f"idem-{prefix}-{suffix}", f"COR-{prefix}-{suffix}"
 
 
+def _resolve_active_adapter_id() -> str:
+    """Read active_adapter_id from the project profile when available."""
+    profile_path = Path.cwd() / ".ai-team" / "project-profile.yaml"
+    if not profile_path.is_file():
+        return "unspecified"
+    try:
+        data = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return "unspecified"
+    if not isinstance(data, dict):
+        return "unspecified"
+    adapter_id = data.get("active_adapter_id")
+    if isinstance(adapter_id, str) and adapter_id.strip():
+        return adapter_id.strip()
+    return "unspecified"
+
+
 def _base_envelope(*, command_type: str, prefix: str, actor_role: str) -> dict[str, Any]:
     command_id, idempotency_key, correlation_id = _command_ids(prefix)
     return {
@@ -146,7 +165,7 @@ def _base_envelope(*, command_type: str, prefix: str, actor_role: str) -> dict[s
             "execution_id": f"EXE-{prefix}",
             "role_id": actor_role,
             "bundle_version": "1.0.0",
-            "adapter_id": "cursor",
+            "adapter_id": _resolve_active_adapter_id(),
         },
     }
 

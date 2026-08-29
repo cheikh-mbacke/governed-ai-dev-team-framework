@@ -10,8 +10,8 @@ third_party_orchestration_skills:
     orchestration, autonomous subagent dispatch, or worktree/branch
     management is unknown by default and requires G2 approval before
     installation, not just before use — it competes with the
-    Orchestrator's Control Plane authority (see .cursor/skills/orchestrator/)
-    rather than extending a role's capability within it.
+    Orchestrator's Control Plane authority (see orchestrator procedure skill
+    under the active adapter) rather than extending a role's capability within it.
   does_not_apply_to: >
     Third-party Skills that perform a bounded analytical or testing task
     on request (e.g. static analysis, spec-to-code compliance, browser

@@ -147,8 +147,8 @@ def _load_bundle_procedures(bundle_dir: Path) -> dict[str, dict]:
     return procedures
 
 
-def _load_compiler_notes(bundle_dir: Path) -> dict[str, list[str]]:
-    sidecar = bundle_dir / "cursor-compiler-notes.yaml"
+def _load_compiler_notes() -> dict[str, list[str]]:
+    sidecar = Path(__file__).resolve().parents[2] / "adapters" / "cursor" / "compiler-notes.yaml"
     if not sidecar.is_file():
         return {}
     data = yaml.safe_load(sidecar.read_text(encoding="utf-8")) or {}
@@ -424,7 +424,7 @@ def check_semantic_parity(
     )
     roles = _load_bundle_roles(bundle_dir)
     procedures = _load_bundle_procedures(bundle_dir)
-    compiler_notes = _load_compiler_notes(bundle_dir)
+    compiler_notes = _load_compiler_notes()
 
     divergences: list[ParityDivergence] = []
     for role_id, role in sorted(roles.items()):

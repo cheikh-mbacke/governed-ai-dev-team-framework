@@ -21,7 +21,7 @@ from tests.contracts.bundle_fixtures import (
     write_minimal_bundle,
 )
 
-SIDECAR_NAME = "cursor-compiler-notes.yaml"
+SIDECAR_NAME = "adapter-compiler-notes.yaml"
 
 
 def test_publish_from_source_to_tmpdir_succeeds(tmp_path: Path) -> None:

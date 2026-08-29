@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CORE_ROOT = ROOT / "src" / "governed_ai" / "core"
 CONTRACTS_ROOT = ROOT / "src" / "governed_ai" / "contracts"
+CONSTITUTION_ROOT = ROOT / ".ai-team" / "constitution"
 FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures"
 
 # AC tokens plus Document 14 parity (Claude Code, Codex).
@@ -58,6 +59,13 @@ def test_contracts_have_no_named_tool_leaks() -> None:
     violations = find_named_tool_leaks(CONTRACTS_ROOT)
     assert violations == [], (
         "Forbidden named-tool tokens in contracts:\n" + "\n".join(violations)
+    )
+
+
+def test_constitution_has_no_named_tool_leaks() -> None:
+    violations = find_named_tool_leaks(CONSTITUTION_ROOT)
+    assert violations == [], (
+        "Forbidden named-tool tokens in constitution:\n" + "\n".join(violations)
     )
 
 

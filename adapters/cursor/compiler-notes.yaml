@@ -1,5 +1,5 @@
-# Sidecar for WU-P4 adapter compiler — NOT listed in manifest.json.
-# validate_bundle does not read this file. Full adapter paths are resolved at compile time.
+# Adapter compiler sidecar — NOT part of the Published Contract Bundle manifest.
+# validate_bundle does not read this file. Adapter artefact paths resolve at compile time.
 schema_version: 1
 bundle_version: "1.0.0"
 adapter_id: cursor
