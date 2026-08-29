@@ -902,7 +902,13 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                 record_path.unlink()
             acceptance = target / ".ai-team" / "acceptance" / "ACC-LEGACY.yaml"
             acceptance.write_text(
-                "id: ACC-LEGACY\nscenarios: []\nhuman_result:\n  status: accepted\n",
+                "id: ACC-LEGACY\n"
+                "revision: 1\n"
+                "created_at: '2026-01-01T00:00:00+00:00'\n"
+                "updated_at: '2026-01-01T00:00:00+00:00'\n"
+                "scenarios: []\n"
+                "human_result:\n"
+                "  status: accepted\n",
                 encoding="utf-8",
             )
             cli_path = target / ".cursor" / "cli.json"
@@ -947,7 +953,13 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                 record_path.unlink()
             acceptance = target / ".ai-team" / "acceptance" / "ACC-INVALID.yaml"
             acceptance.write_text(
-                "id: ACC-INVALID\nscenarios: []\nhuman_result:\n  status: invalid\n",
+                "id: ACC-INVALID\n"
+                "revision: 1\n"
+                "created_at: '2026-01-01T00:00:00+00:00'\n"
+                "updated_at: '2026-01-01T00:00:00+00:00'\n"
+                "scenarios: []\n"
+                "human_result:\n"
+                "  status: invalid\n",
                 encoding="utf-8",
             )
             cli_path = target / ".cursor" / "cli.json"

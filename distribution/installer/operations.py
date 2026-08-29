@@ -33,6 +33,7 @@ from distribution.installer.record import (
 from distribution.installer.snapshot import create_snapshot, rollback_paths
 from distribution.installer.source_files import (
     build_copy_plan,
+    bootstrap_adapter_imports,
     detect_obsolete_managed,
     iter_managed_source_files,
     materialize_cursor_dir,
@@ -234,11 +235,26 @@ def print_update_plan(target: Path, plan: UpdatePlan) -> None:
     )
 
 
-def build_update_plan(source_root: Path, target: Path) -> UpdatePlan:
+def _can_compile_cursor(source_root: Path) -> bool:
+    try:
+        bootstrap_adapter_imports(source_root)
+        import jsonschema  # noqa: F401
+
+        return True
+    except ModuleNotFoundError:
+        return False
+
+
+def build_update_plan(source_root: Path, target: Path, *, compile_cursor: bool | None = None) -> UpdatePlan:
     installed = read_installed_manifest(target)
     new_version = current_version(source_root)
     git_state, dirty_paths = target_git_status(target)
-    entries, managed_files = build_copy_plan(source_root, target)
+    cursor_compile = (
+        _can_compile_cursor(source_root) if compile_cursor is None else compile_cursor
+    )
+    entries, managed_files = build_copy_plan(
+        source_root, target, compile_cursor=cursor_compile
+    )
     old_managed = set(installed.get("managed_files") or [])
     obsolete = detect_obsolete_managed(old_managed, set(managed_files))
     migrations = load_migration_module(source_root)
@@ -367,10 +383,7 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
     touched.extend(change.path for change in plan.migration_changes)
     if plan.constitution_change:
         touched.append(state_path)
-    if record_path.exists():
-        touched.append(record_path)
-    if legacy_path.exists():
-        touched.append(legacy_path)
+    touched.extend([record_path, legacy_path])
 
     existing_record = load_installation_record(target)
     project_id = _project_id_from_target(target)
@@ -414,6 +427,15 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
                     )
                 state_path.write_text(state_text, encoding="utf-8")
 
+            finalize_installation_manifests(
+                target,
+                project_id=project_id,
+                version=plan.new_version,
+                managed_files=plan.managed_files,
+                active_adapter_id=active_adapter,
+                existing_record=existing_record,
+            )
+
             if validator is not None:
                 validation = subprocess.run(
                     [str(validator), "scripts/ai-team/validate.py"],
@@ -428,15 +450,6 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
                         + validation.stdout
                         + validation.stderr
                     )
-
-            finalize_installation_manifests(
-                target,
-                project_id=project_id,
-                version=plan.new_version,
-                managed_files=plan.managed_files,
-                active_adapter_id=active_adapter,
-                existing_record=existing_record,
-            )
         except Exception as exc:
             rollback_paths(touched, snapshot.existing_paths, target, backup_root)
             print(str(exc))

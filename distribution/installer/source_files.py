@@ -52,10 +52,27 @@ def iter_managed_source_files(
     source_root: Path,
     target: Path | None = None,
     project_id: str | None = None,
+    *,
+    compile_cursor: bool = True,
 ):
-    profile = compile_profile_for_target(source_root, target, project_id=project_id) if target else None
+    profile = (
+        compile_profile_for_target(source_root, target, project_id=project_id)
+        if target and compile_cursor
+        else None
+    )
     for item in COPY_ITEMS:
         if item == ".cursor":
+            if not compile_cursor:
+                if target is None:
+                    continue
+                cursor_root = target / ".cursor"
+                if not cursor_root.is_dir():
+                    continue
+                for path in sorted(cursor_root.rglob("*")):
+                    if path.is_file():
+                        relative = path.relative_to(target)
+                        yield relative, path
+                continue
             bootstrap_adapter_imports(source_root)
             from adapters.cursor.compiler.install_support import iter_compiled_cursor_files
 
@@ -103,10 +120,17 @@ class CopyPlanEntry:
     destination: Path
 
 
-def build_copy_plan(source_root: Path, target: Path) -> tuple[list[CopyPlanEntry], list[str]]:
+def build_copy_plan(
+    source_root: Path,
+    target: Path,
+    *,
+    compile_cursor: bool = True,
+) -> tuple[list[CopyPlanEntry], list[str]]:
     entries: list[CopyPlanEntry] = []
     managed: list[str] = []
-    for relative, source in iter_managed_source_files(source_root, target):
+    for relative, source in iter_managed_source_files(
+        source_root, target, compile_cursor=compile_cursor
+    ):
         rel_posix = relative.as_posix()
         managed.append(rel_posix)
         destination = target / relative
