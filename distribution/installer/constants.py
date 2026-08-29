@@ -9,6 +9,8 @@ COPY_ITEMS = [
     ".ai-team",
     "scripts",
     "docs/product",
+    "docs/operator",
+    "README.md",
     "AGENTS.md",
     "requirements.txt",
 ]

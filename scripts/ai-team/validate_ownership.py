@@ -40,6 +40,12 @@ def classify_owner(path: str) -> str:
         return "distribution"
     if p == "AGENTS.md":
         return "core"
+    if p == "README.md":
+        return "core"
+    if p.startswith("docs/product/"):
+        return "core"
+    if p.startswith("docs/operator/"):
+        return "core"
     if p.startswith("scripts/ai-team/"):
         return "core"
     if p.startswith("tests/fixtures/"):

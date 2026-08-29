@@ -34,6 +34,10 @@ def classify_managed_file(path: str | Path) -> str:
         return OWNER_DISTRIBUTION
     if normalized.startswith("docs/product/"):
         return OWNER_CORE
+    if normalized.startswith("docs/operator/"):
+        return OWNER_CORE
+    if normalized == "README.md":
+        return OWNER_CORE
     if normalized == "requirements.txt":
         return OWNER_CORE
     if normalized.startswith(".ai-team/contracts/"):
