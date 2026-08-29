@@ -190,7 +190,7 @@ work_units:
     milestone: M-P3
     risk: critical
   WU-P4-MANIFEST-COMPILER:
-    status: ready
+    status: done
     milestone: M-P4
     risk: high
   WU-P4-SHADOW-COMPILE:

@@ -1,0 +1,18 @@
+id: EVT-20260829-194000-orchestrator-start
+type: HANDOFF
+work_unit: WU-P4-MANIFEST-COMPILER
+created_at: '2026-08-29T19:40:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P4-MANIFEST-COMPILER au backend-developer sur branche wu/WU-P4-MANIFEST-COMPILER."
+details:
+  predecessor:
+    work_unit: WU-P3-TX-TESTS
+    status: done
+  assignment:
+    role: backend-developer
+    branch: wu/WU-P4-MANIFEST-COMPILER
+    context_package: CTX-WU-P4-MANIFEST-COMPILER
+affected_nodes:
+  - WU-P4-MANIFEST-COMPILER
+requires_human: false
+status: open
