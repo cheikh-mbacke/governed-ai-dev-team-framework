@@ -1,7 +1,7 @@
 id: RET-WITNESS-001
 generated_at: '2026-01-01T13:00:00+00:00'
 project_id: witness-legacy
-framework_version: 0.4.0
+framework_version: 0.6.0
 constitution_version: 1.1.0
 scope:
   type: work_unit

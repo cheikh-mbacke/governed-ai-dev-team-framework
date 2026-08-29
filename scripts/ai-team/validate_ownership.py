@@ -77,6 +77,7 @@ def classify_owner(path: str) -> str:
         ".ai-team/audits/",
         ".ai-team/releases/",
         ".ai-team/acceptance/",
+        ".ai-team/authorizations/",
         ".ai-team/context-packages/",
         ".ai-team/logs/",
         ".ai-team/metrics/",
@@ -93,6 +94,8 @@ def classify_owner(path: str) -> str:
 
 def should_skip(path: Path, root: Path | None = None) -> bool:
     if any(part in EXCLUDE_DIR_NAMES for part in path.parts):
+        return True
+    if ".transactions" in path.parts:
         return True
     if root is not None:
         try:
@@ -170,7 +173,7 @@ def generate_inventory(root: Path) -> dict:
     files = iter_scope_files(root)
     return {
         "schema_version": 1,
-        "framework_version": "0.4.0",
+        "framework_version": "0.6.0",
         "description": "File ownership inventory for delivered 0.4.x scope (Document 11 §4).",
         "owners": sorted(VALID_OWNERS),
         "scope_dirs": list(SCOPE_DIRS),

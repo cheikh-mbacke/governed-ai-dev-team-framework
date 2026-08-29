@@ -1,6 +1,6 @@
 {
-  "framework_version": "0.4.0",
-  "generated_at": "2026-08-29T21:50:41+00:00",
+  "framework_version": "0.6.0",
+  "generated_at": "2026-08-29T22:31:05+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -201,11 +201,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "e44ff97b0f907ff425623516a9bf13054c1d9fc3bc5d30a8b55986edc7cd804f"
+          "sha256": "16c897d01b7e96b81e85c560fc02d36b9f4ce71d8b61a40313dacf03ee643fa4"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "5a1c284d0e70c917630a3ca9d78e7ccc214fa687e91afc6f48b84958028f9fc7"
+          "sha256": "370c427601ca64b480e18b030920280579b590d927c438d780b0724a27594801"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -821,7 +821,7 @@
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "b1d2e18edbbcd79b1a322940280cb38f054e6a3c89853719cb8c0bcabbb9610a"
+          "sha256": "77eba7001a5a63e99252df1b400bd84f4cca8c089e4954f8019bba1a6852ce6f"
         },
         {
           "path": "src/governed_ai/__init__.py",
@@ -1408,11 +1408,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "1deec268cee029d0ccc00cc685f6ca14821880f3432911fdd2d72d362b11f96c"
+          "sha256": "87f8b8b6d42646b852e8756a66a025ef430517b4e1b6842be74eae6812ed89d0"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "09da94c915f5c96deb4c8030961ac1657061f1b812792c4b5750403a18c43e5e"
+          "sha256": "b46dce3448479814349d01c9d61d6b51c1505956f4a97e2bd1823bacfb003175"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1420,7 +1420,7 @@
         },
         {
           "path": ".ai-team/observations/OBS-WITNESS-001.yaml",
-          "sha256": "383378764da5d01be61d5b3d33773702503d1c28cca8e13ff2ec7011c4d05c2e"
+          "sha256": "da8eabc992ac588d24e3539b2d3bf52d45f9453cbb1cd785131cc1a7b4af2256"
         },
         {
           "path": ".ai-team/project-profile.yaml",
@@ -1428,7 +1428,7 @@
         },
         {
           "path": ".ai-team/retrospectives/RET-WITNESS-001.yaml",
-          "sha256": "a96d281b54d6e854aeeeb64435abd5be77380df3f54079a618f5a07df11de82e"
+          "sha256": "f8ec66d18ef8d7d6730dba2f3b62caa76b6d36ff5b4e58abd3370c53906e91ad"
         },
         {
           "path": ".ai-team/schemas/acceptance.schema.json",
@@ -2056,7 +2056,7 @@
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "b1d2e18edbbcd79b1a322940280cb38f054e6a3c89853719cb8c0bcabbb9610a"
+          "sha256": "77eba7001a5a63e99252df1b400bd84f4cca8c089e4954f8019bba1a6852ce6f"
         },
         {
           "path": "src/governed_ai/__init__.py",

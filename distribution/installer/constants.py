@@ -29,6 +29,7 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/audits/*",
     ".ai-team/releases/*",
     ".ai-team/acceptance/*",
+    ".ai-team/authorizations/*",
     ".ai-team/context-packages/*",
     ".ai-team/logs/*",
     ".ai-team/metrics/*",
@@ -44,6 +45,6 @@ FRESH_PROJECT_SEEDS = (
     ".ai-team/sources/source-registry.yaml",
 )
 
-SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0"}
+SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0", "0.6.0"}
 
 LEGACY_VERSION_REL = Path(".ai-team/framework-version.json")

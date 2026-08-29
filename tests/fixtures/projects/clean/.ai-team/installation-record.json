@@ -3,7 +3,7 @@
   "project_id": "witness-clean",
   "active_adapter_id": "cursor",
   "core": {
-    "version": "0.4.0",
+    "version": "0.6.0",
     "managed_files": [
       ".ai-team/constitution/00-authority.yaml",
       ".ai-team/constitution/10-project-strategy.yaml",
@@ -202,7 +202,7 @@
   "adapters": [
     {
       "id": "cursor",
-      "version": "0.4.0",
+      "version": "0.6.0",
       "managed_files": [
         ".cursor/.gitattributes",
         ".cursor/BUGBOT.md",
@@ -303,7 +303,7 @@
     }
   ],
   "distribution": {
-    "version": "0.4.0",
+    "version": "0.6.0",
     "managed_files": [
       ".ai-team/installation-record.json"
     ]

@@ -110,7 +110,7 @@ def test_legacy_adapter_form_sets_active_adapter_id(tmp_path: Path) -> None:
     profile_path = target / ".ai-team" / "project-profile.yaml"
     profile = _load_profile(target)
     profile.pop("active_adapter_id", None)
-    profile["adapter"] = {"id": "cursor", "version": "0.4.0"}
+    profile["adapter"] = {"id": "cursor", "version": "0.6.0"}
     profile_path.write_text(
         yaml.safe_dump(profile, sort_keys=False, allow_unicode=True),
         encoding="utf-8",

@@ -3,7 +3,7 @@
   "project_id": "framework-renov",
   "active_adapter_id": "cursor",
   "core": {
-    "version": "0.5.0",
+    "version": "0.6.0",
     "managed_files": [
       ".ai-team/constitution/00-authority.yaml",
       ".ai-team/constitution/10-project-strategy.yaml",
@@ -72,7 +72,7 @@
   "adapters": [
     {
       "id": "cursor",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "managed_files": [
         ".cursor/.gitattributes",
         ".cursor/BUGBOT.md",
@@ -118,13 +118,13 @@
     }
   ],
   "distribution": {
-    "version": "0.5.0",
+    "version": "0.6.0",
     "managed_files": [
       ".ai-team/installation-record.json"
     ]
   },
   "installed_at": "2026-08-29T20:30:00+00:00",
-  "last_updated_at": "2026-08-29T20:30:00+00:00",
+  "last_updated_at": "2026-08-29T22:30:00+00:00",
   "migration_receipt": {
     "from_schema_version": 1,
     "from_manifest_path": ".ai-team/framework-version.json",

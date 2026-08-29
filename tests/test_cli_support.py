@@ -413,7 +413,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual(manifest["version"], "0.4.0")
+            self.assertEqual(manifest["version"], "0.6.0")
             self.assertIn(".cursor/hooks.json", manifest["managed_files"])
 
     def test_propose_allowlist_derives_tokens_from_declared_commands_only(self):
@@ -940,7 +940,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual(manifest["version"], "0.4.0")
+            self.assertEqual(manifest["version"], "0.6.0")
 
     def test_failed_post_update_validation_rolls_back_all_touched_files(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:

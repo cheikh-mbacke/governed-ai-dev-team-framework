@@ -1,6 +1,6 @@
 project_id: framework-renov
 constitution_version: 1.1.0
-phase: execution
+phase: completed
 gates:
   G0:
     status: passed
@@ -17,7 +17,10 @@ gates:
   G3:
     status: not_required
   G4:
-    status: not_required
+    status: accepted
+    by: cheikh MBACKE
+    at: '2026-08-29T22:18:11.074665+00:00'
+    note: "Acceptation increment INC-CLEANUP — delegation autonomie equipe IA ; L0-L3 verts ; L4 Cursor reel not_run documente"
 milestones:
 - id: M-P0
   title: Phase 0 — Baseline et gel comportemental
@@ -103,7 +106,13 @@ increments:
   title: 0.6.0 — Dépréciations et nettoyage
   milestones:
   - M-P6
-releases: []
+releases:
+- id: REL-0.6.0
+  version: "0.6.0"
+  increment: INC-CLEANUP
+  accepted_at: '2026-08-29T22:30:00+00:00'
+  gate: G4
+  note: "Cloture migration Document 13 Phase 6 — deprecations et nettoyage ; acceptation G4 INC-CLEANUP"
 work_units:
   WU-P0-BASELINE:
     status: done
@@ -434,4 +443,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-29T22:21:00+00:00'
+last_updated: '2026-08-29T22:30:00+00:00'
