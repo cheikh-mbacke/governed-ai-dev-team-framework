@@ -142,7 +142,7 @@ work_units:
     milestone: M-P2
     risk: high
   WU-P2-PROCEDURES:
-    status: in_progress
+    status: done
     milestone: M-P2
     risk: high
   WU-P2-PUBLISH:
@@ -359,11 +359,7 @@ open_decisions: []
 open_blockers: []
 open_defects: []
 open_findings: []
-active_workers:
-- role: backend-developer
-  work_unit: WU-P2-PROCEDURES
-  branch: wu/WU-P2-PROCEDURES
-  started_at: '2026-08-29T05:05:00+00:00'
+active_workers: []
 staffing_proposal:
   default_roles:
   - backend-developer
@@ -438,4 +434,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-28T23:18:00+00:00'
+last_updated: '2026-08-29T05:05:00+00:00'

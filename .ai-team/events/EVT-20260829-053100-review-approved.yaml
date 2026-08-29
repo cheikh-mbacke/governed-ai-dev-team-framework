@@ -1,0 +1,17 @@
+id: EVT-20260829-053100-review-approved
+type: STATUS
+work_unit: WU-P2-PROCEDURES
+created_at: '2026-08-29T05:31:00+00:00'
+created_by_role: code-reviewer
+summary: "Revue approuvee avec notes — WU-P2-PROCEDURES SHA 6a2993f."
+details:
+  commit_sha: 6a2993f29d00f7c7b97513e80f2bda90120da468
+  disposition: APPROVED_WITH_NOTES
+  documented_reserves:
+    - "Invariant orchestrateur subagent silencieux incomplet"
+    - "human_checkpoint implement-work-unit non porté"
+    - "Test sidecar couverture 13 procédures à renforcer"
+affected_nodes:
+  - WU-P2-PROCEDURES
+requires_human: false
+status: closed

@@ -41,11 +41,27 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P2-PROCEDURES
-status: in_progress
-events: []
-evidence: []
+status: done
+events:
+  - EVT-20260829-050500-orchestrator-start
+  - EVT-20260829-052000-backend-handoff
+  - EVT-20260829-053000-qa-pass
+  - EVT-20260829-053100-review-approved
+evidence:
+  - id: EVD-WU-P2-PROCEDURES-IMPL
+    type: implementation
+    commit_sha: 6a2993f29d00f7c7b97513e80f2bda90120da468
+    verified_by: backend-developer
+  - id: EVD-WU-P2-PROCEDURES-QA
+    type: qa
+    commit_sha: 6a2993f29d00f7c7b97513e80f2bda90120da468
+    event: EVT-20260829-053000-qa-pass
+  - id: EVD-WU-P2-PROCEDURES-REVIEW
+    type: review
+    commit_sha: 6a2993f29d00f7c7b97513e80f2bda90120da468
+    event: EVT-20260829-053100-review-approved
 outcomes:
-  review_status: pending
+  review_status: approved_with_notes
   audit_status: not_required
   critical_open_items: []
   defects: []
