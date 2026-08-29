@@ -218,7 +218,7 @@ work_units:
     milestone: M-P6
     risk: medium
   WU-P6-DOCS:
-    status: ready
+    status: done
     milestone: M-P6
     risk: low
   WU-P6-CLEANUP:
