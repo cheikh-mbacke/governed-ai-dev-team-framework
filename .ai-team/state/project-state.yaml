@@ -194,7 +194,7 @@ work_units:
     milestone: M-P4
     risk: high
   WU-P4-SHADOW-COMPILE:
-    status: ready
+    status: done
     milestone: M-P4
     risk: high
   WU-P4-RUNTIME:

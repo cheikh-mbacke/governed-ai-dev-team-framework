@@ -1,0 +1,16 @@
+id: EVT-20260829-195600-qa-pass
+type: HANDOFF
+work_unit: WU-P4-SHADOW-COMPILE
+created_at: '2026-08-29T19:56:00+00:00'
+created_by_role: qa-test
+summary: "QA pass WU-P4-SHADOW-COMPILE — parité shadow compile OK, témoins régénérés, install compile golden."
+details:
+  checks:
+    shadow_compare: "0 divergences vs .cursor/ historique (normalisation LF)"
+    golden_compile: "40 artefacts figés dans tests/fixtures/cursor-compile/"
+    witness: "clean+legacy validate.py PASS après régénération"
+    pytest: "306 passed (core+contracts+adapters+witness)"
+affected_nodes:
+  - WU-P4-SHADOW-COMPILE
+requires_human: false
+status: open
