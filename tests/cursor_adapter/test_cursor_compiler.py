@@ -113,9 +113,10 @@ def test_ad012_rejects_manifest_path_outside_staging(staging_dir: Path) -> None:
         validate_pre_install(staging_dir, manifest)
 
 
-def test_cursor_adapter_spi_compile(staging_dir: Path) -> None:
+def test_cursor_adapter_spi_compile(staging_dir: Path, tmp_path: Path) -> None:
     bundle_manifest = json.loads((BUNDLE_V1 / "manifest.json").read_text(encoding="utf-8"))
     adapter = CursorAdapter(
+        project_root=tmp_path,
         bundle_dir=BUNDLE_V1,
         staging_dir=staging_dir,
         templates_root=TEMPLATES_ROOT,

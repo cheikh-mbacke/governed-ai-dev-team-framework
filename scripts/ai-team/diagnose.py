@@ -2,31 +2,36 @@
 """Answer 'is anything actually waiting on me, and what happened last?'
 
 Run this before stopping and restarting anything. It never modifies state.
+Core project diagnostics and Cursor hook diagnostics are separated.
 """
-from pathlib import Path
+from __future__ import annotations
+
+import sys
 from datetime import datetime, timezone
-import json
+from pathlib import Path
 
 try:
-    import yaml
+    import yaml  # noqa: F401 — dependency probe for PyYAML
 except ModuleNotFoundError:
     print("Missing dependency: PyYAML. Install it first, then re-run this command:")
     print("  pip install -r requirements.txt")
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
 
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+
+from adapters.cursor.runtime.checks import last_hook_activity
 from i18n import project_language, t
 
-ROOT = Path(__file__).resolve().parents[2]
-AI = ROOT / ".ai-team"
+from governed_ai.core.diagnostics import (
+    collect_in_flight_work_units,
+    collect_open_human_events,
+)
+
 LANG = project_language(ROOT)
-
-
-def load_yaml(p):
-    try:
-        return yaml.safe_load(p.read_text(encoding="utf-8"))
-    except Exception:
-        return None
 
 
 print(t(LANG, "Governed AI Team diagnosis", "Diagnostic Governed AI Team"))
@@ -46,17 +51,7 @@ print(t(
     "C'est la cause de blocage invisible la plus frequente ; verifiez-la en premier.",
 ))
 
-# 1. Anything explicitly waiting on a human?
-open_human_events = []
-events_dir = AI / "events"
-if events_dir.exists():
-    for p in sorted(events_dir.glob("*.yaml")):
-        ev = load_yaml(p)
-        if not ev:
-            continue
-        if ev.get("status") == "open" and ev.get("requires_human"):
-            open_human_events.append((p.name, ev))
-
+open_human_events = collect_open_human_events(ROOT)
 if open_human_events:
     print("\n" + t(LANG, "ACTION NEEDED — open events waiting on a human:", "ACTION REQUISE - evenements ouverts en attente d'un humain :"))
     for fname, ev in open_human_events:
@@ -72,59 +67,38 @@ else:
         "Si quelque chose semble quand meme bloque, c'est deja une information utile - voir plus bas.",
     ))
 
-# 2. Work Units that are neither ready nor done — where is the work actually sitting?
-wu_dir = AI / "work-units"
-in_flight = []
-if wu_dir.exists():
-    for p in sorted(wu_dir.glob("*.yaml")):
-        wu = load_yaml(p)
-        if not wu:
-            continue
-        status = wu.get("status")
-        if status not in ("done", "cancelled", "ready", None):
-            in_flight.append((p.stem, status))
-
+in_flight = collect_in_flight_work_units(ROOT)
 if in_flight:
     print("\n" + t(LANG, "Work Units currently in flight (not ready, not done):", "Work Units actuellement en cours (ni pretes, ni terminees) :"))
     for wu_id, status in in_flight:
         print(f"  {wu_id}: {status}")
 
-# 3. When did anything last actually happen?
-log_path = AI / "logs" / "cursor-events.jsonl"
-if log_path.exists():
-    last_line = None
-    with log_path.open(encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                last_line = line
-    if last_line:
-        try:
-            record = json.loads(last_line)
-            ts = record.get("timestamp")
-            if ts:
-                last_dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                delta = datetime.now(timezone.utc) - last_dt
-                minutes = int(delta.total_seconds() // 60)
-                print("\n" + t(
-                    LANG,
-                    f"Last recorded Cursor hook activity: {minutes} minute(s) ago ({ts}).",
-                    f"Derniere activite Cursor (hook) enregistree : il y a {minutes} minute(s) ({ts}).",
-                ))
-                event_kind = None
-                inner = record.get("event")
-                if isinstance(inner, dict):
-                    event_kind = inner.get("hook_event_name") or inner.get("event")
-                if event_kind:
-                    print("  " + t(LANG, f"(last event type: {event_kind})", f"(dernier type d'evenement : {event_kind})"))
-        except Exception:
-            print("\n" + t(LANG, "Could not parse the last log line's timestamp.", "Impossible d'analyser l'horodatage de la derniere ligne du journal."))
-else:
+record = last_hook_activity(ROOT)
+if record is None:
     print("\n" + t(
         LANG,
         "No .ai-team/logs/cursor-events.jsonl yet — no Cursor hook activity recorded.",
         "Pas encore de .ai-team/logs/cursor-events.jsonl - aucune activite Cursor (hook) enregistree.",
     ))
+elif record.get("parse_error"):
+    print("\n" + t(LANG, "Could not parse the last log line's timestamp.", "Impossible d'analyser l'horodatage de la derniere ligne du journal."))
+else:
+    ts = record.get("timestamp")
+    if ts:
+        last_dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+        delta = datetime.now(timezone.utc) - last_dt
+        minutes = int(delta.total_seconds() // 60)
+        print("\n" + t(
+            LANG,
+            f"Last recorded Cursor hook activity: {minutes} minute(s) ago ({ts}).",
+            f"Derniere activite Cursor (hook) enregistree : il y a {minutes} minute(s) ({ts}).",
+        ))
+        event_kind = None
+        inner = record.get("event")
+        if isinstance(inner, dict):
+            event_kind = inner.get("hook_event_name") or inner.get("event")
+        if event_kind:
+            print("  " + t(LANG, f"(last event type: {event_kind})", f"(dernier type d'evenement : {event_kind})"))
 
 print()
 if open_human_events:

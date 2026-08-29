@@ -1,9 +1,11 @@
-"""Cursor Adapter SPI implementation (compile path for WU-P4)."""
+"""Cursor Adapter SPI implementation."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
+
+from adapters.cursor.runtime.execute import collect_runtime_result, execute_runtime
 
 from governed_ai.adapters.cursor.compile import compile_manifest
 from governed_ai.adapters.spi import (
@@ -11,6 +13,7 @@ from governed_ai.adapters.spi import (
     AdapterSPIBase,
     ArtifactManifest,
     CompatibilityReport,
+    ExecutionRequest,
     ProcedureRevision,
     ProjectProfile,
     PublishedContractBundle,
@@ -22,17 +25,19 @@ _MANIFEST_PATH = Path(__file__).resolve().parents[4] / "adapters" / "cursor" / "
 
 
 class CursorAdapter(AdapterSPIBase):
-    """Compile bundle + profile into staged Cursor artefacts only."""
+    """Cursor bundle compiler and runtime harness."""
 
     def __init__(
         self,
         *,
-        bundle_dir: Path,
-        staging_dir: Path,
+        project_root: Path,
+        bundle_dir: Path | None = None,
+        staging_dir: Path | None = None,
         templates_root: Path | None = None,
     ) -> None:
-        self._bundle_dir = bundle_dir.resolve()
-        self._staging_dir = staging_dir.resolve()
+        self._project_root = project_root.resolve()
+        self._bundle_dir = bundle_dir.resolve() if bundle_dir else None
+        self._staging_dir = staging_dir.resolve() if staging_dir else None
         self._templates_root = templates_root.resolve() if templates_root else None
 
     def describe(self) -> AdapterDescriptor:
@@ -68,6 +73,8 @@ class CursorAdapter(AdapterSPIBase):
         bundle: PublishedContractBundle,
         project_profile: ProjectProfile,
     ) -> ArtifactManifest:
+        if self._bundle_dir is None or self._staging_dir is None:
+            raise RuntimeError("compile() requires bundle_dir and staging_dir")
         _ = bundle
         manifest = compile_manifest(
             self._bundle_dir,
@@ -82,8 +89,8 @@ class CursorAdapter(AdapterSPIBase):
             artifacts=list(manifest["artifacts"]),
         )
 
-    def execute(self, request: object) -> RuntimeResult:
-        raise NotImplementedError("Cursor execute() is implemented in WU-P4-RUNTIME")
+    def execute(self, request: ExecutionRequest) -> RuntimeResult:
+        return execute_runtime(self._project_root, request)
 
     def collect(self, execution_id: str) -> RuntimeResult:
-        raise NotImplementedError("Cursor collect() is implemented in WU-P4-RUNTIME")
+        return collect_runtime_result(self._project_root, execution_id)
