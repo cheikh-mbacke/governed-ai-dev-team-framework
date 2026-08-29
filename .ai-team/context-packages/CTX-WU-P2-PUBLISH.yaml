@@ -1,7 +1,7 @@
 id: CTX-WU-P2-PUBLISH
 work_unit: WU-P2-PUBLISH
 role: backend-developer
-assembled_at: null
+assembled_at: '2026-08-29T07:08:00+00:00'
 items:
 - level: L0_constitution
   source: .ai-team/constitution/constitution.yaml
