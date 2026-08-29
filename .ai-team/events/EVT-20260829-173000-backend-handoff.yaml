@@ -1,0 +1,19 @@
+id: EVT-20260829-173000-backend-handoff
+type: HANDOFF
+work_unit: WU-P3-GW-WU
+created_at: '2026-08-29T17:30:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P3-GW-WU — CreateWorkUnit, TransitionWorkUnit, machine à états normative, check_done wrapper."
+details:
+  branch: wu/WU-P3-GW-WU
+  components:
+    - src/governed_ai/core/domain/work_unit/
+    - src/governed_ai/core/commands/handlers/create_work_unit.py
+    - scripts/ai-team/check_done.py
+  checks:
+    work_unit_pytest: "tests/core/test_work_unit_handlers.py → 137 passed (parametrised transitions)"
+    core_pytest: "tests/core/ → 147 passed"
+affected_nodes:
+  - WU-P3-GW-WU
+requires_human: false
+status: open

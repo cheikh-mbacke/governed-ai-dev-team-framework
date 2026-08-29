@@ -1,0 +1,14 @@
+id: EVT-20260829-173100-qa-pass
+type: STATUS
+work_unit: WU-P3-GW-WU
+created_at: '2026-08-29T17:31:00+00:00'
+created_by_role: qa-test
+summary: "QA pass WU-P3-GW-WU — transitions normatives, CG-003 et garde done validés."
+details:
+  tests:
+    core: "147 passed"
+    transitions: "permitted + forbidden generated from NORMATIVE_TRANSITIONS"
+affected_nodes:
+  - WU-P3-GW-WU
+requires_human: false
+status: open
