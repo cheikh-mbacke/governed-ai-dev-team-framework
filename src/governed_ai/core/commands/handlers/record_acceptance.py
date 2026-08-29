@@ -40,7 +40,10 @@ def handle_record_acceptance(
 
     document = dict(payload)
     document["id"] = acceptance_id
-    document["created_at"] = datetime.now(UTC).isoformat()
+    now = datetime.now(UTC).isoformat()
+    document["revision"] = 1
+    document["created_at"] = now
+    document["updated_at"] = now
 
     validate_against_schema(
         workspace_root.ai_team,

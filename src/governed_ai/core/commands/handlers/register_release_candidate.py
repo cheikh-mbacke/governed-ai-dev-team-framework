@@ -40,7 +40,10 @@ def handle_register_release_candidate(
     document = dict(payload)
     document["id"] = candidate_id
     document.setdefault("status", "draft")
-    document["created_at"] = datetime.now(UTC).isoformat()
+    now = datetime.now(UTC).isoformat()
+    document["revision"] = 1
+    document["created_at"] = now
+    document["updated_at"] = now
 
     validate_against_schema(
         workspace_root.ai_team,

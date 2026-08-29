@@ -57,7 +57,10 @@ def handle_register_finding(
     document = dict(payload)
     document.setdefault("status", "open")
     document.setdefault("remediation_required", False)
-    document["created_at"] = datetime.now(UTC).isoformat()
+    now = datetime.now(UTC).isoformat()
+    document["revision"] = 1
+    document["created_at"] = now
+    document["updated_at"] = now
 
     validate_against_schema(
         workspace_root.ai_team,

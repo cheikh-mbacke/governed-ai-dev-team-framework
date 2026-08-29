@@ -9,7 +9,10 @@
     "included_work_units",
     "rollback_plan",
     "target_environment",
-    "g3"
+    "g3",
+    "revision",
+    "created_at",
+    "updated_at"
   ],
   "properties": {
     "id": {
@@ -45,6 +48,18 @@
     },
     "g3": {
       "type": "object"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "additionalProperties": true

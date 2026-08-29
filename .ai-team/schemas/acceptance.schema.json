@@ -5,7 +5,10 @@
   "required": [
     "id",
     "scenarios",
-    "human_result"
+    "human_result",
+    "revision",
+    "created_at",
+    "updated_at"
   ],
   "properties": {
     "id": {
@@ -41,6 +44,18 @@
           ]
         }
       }
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "additionalProperties": true
