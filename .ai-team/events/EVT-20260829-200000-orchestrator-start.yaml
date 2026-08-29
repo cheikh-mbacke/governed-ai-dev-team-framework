@@ -1,0 +1,18 @@
+id: EVT-20260829-200000-orchestrator-start
+type: HANDOFF
+work_unit: WU-P4-RUNTIME
+created_at: '2026-08-29T20:00:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P4-RUNTIME au backend-developer sur branche wu/WU-P4-RUNTIME."
+details:
+  predecessor:
+    work_unit: WU-P4-SHADOW-COMPILE
+    status: done
+  assignment:
+    role: backend-developer
+    branch: wu/WU-P4-RUNTIME
+    context_package: CTX-WU-P4-RUNTIME
+affected_nodes:
+  - WU-P4-RUNTIME
+requires_human: false
+status: open
