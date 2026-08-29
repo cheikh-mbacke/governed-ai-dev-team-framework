@@ -8,20 +8,10 @@ from typing import Any
 import yaml
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
+from governed_ai.core.domain.work_unit.done import missing_done_prerequisites
+from governed_ai.core.domain.work_unit.revision import RevisionError, current_revision
+from governed_ai.core.domain.work_unit.state_machine import is_transition_allowed
 from governed_ai.core.persistence.transaction import Transaction
-
-ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
-    "ready": frozenset({"in_progress"}),
-    "in_progress": frozenset({"verification", "ready"}),
-    "verification": frozenset({"done", "in_progress"}),
-}
-
-
-def _current_revision(document: dict[str, Any]) -> int:
-    revision = document.get("revision", 1)
-    if not isinstance(revision, int):
-        raise GatewayError(ErrorCode.INVALID_SCHEMA, "revision must be integer", "/revision")
-    return revision
 
 
 def handle_transition_work_unit(
@@ -51,25 +41,36 @@ def handle_transition_work_unit(
             "/target/id",
         )
 
-    current_revision = _current_revision(document)
-    if expected_revision != current_revision:
+    try:
+        current = current_revision(document)
+    except RevisionError as exc:
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, str(exc), "/revision") from exc
+    if expected_revision != current:
         raise GatewayError(
             ErrorCode.CONFLICT,
-            f"expected revision {expected_revision}, found {current_revision}",
+            f"expected revision {expected_revision}, found {current}",
             "/target/expected_revision",
         )
 
     current_status = document.get("status")
-    allowed = ALLOWED_TRANSITIONS.get(current_status, frozenset())
-    if to_status not in allowed:
+    if not is_transition_allowed(current_status, to_status):
         raise GatewayError(
             ErrorCode.INVALID_TRANSITION,
             f"transition {current_status!r} -> {to_status!r} not allowed",
             "/payload/to_status",
         )
 
+    if to_status == "done":
+        missing = missing_done_prerequisites(document)
+        if missing:
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                f"done prerequisites not satisfied: {', '.join(missing)}",
+                "/payload/to_status",
+            )
+
     document["status"] = to_status
-    document["revision"] = current_revision + 1
+    document["revision"] = current + 1
     document["updated_at"] = datetime.now(UTC).isoformat()
     transaction.plan_yaml_write(work_unit_path, document)
 

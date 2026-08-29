@@ -78,7 +78,7 @@ class CommandGateway:
         messages = recover_transactions(self._transactions_root, self._workspace.root)
         return {"status": "ok", "messages": messages}
 
-    def query(self, name: str) -> dict[str, Any]:
+    def query(self, name: str, *, args: dict[str, Any] | None = None) -> dict[str, Any]:
         if name == "project-state":
             path = self._ai_team / "state" / "project-state.yaml"
             if not path.is_file():
@@ -86,6 +86,37 @@ class CommandGateway:
             import yaml
 
             return {"name": name, "data": yaml.safe_load(path.read_text(encoding="utf-8"))}
+        if name == "work-unit-done":
+            query_args = args or {}
+            work_unit_id = query_args.get("work_unit_id")
+            if not work_unit_id:
+                raise GatewayError(
+                    ErrorCode.INVALID_SCHEMA,
+                    "work_unit_id is required",
+                    "/query/work_unit_id",
+                )
+            from governed_ai.core.domain.work_unit.done import missing_done_prerequisites
+            from governed_ai.core.domain.work_unit.paths import find_work_unit_path
+
+            path, ambiguity = find_work_unit_path(self._ai_team / "work-units", work_unit_id)
+            if ambiguity:
+                raise GatewayError(ErrorCode.INVALID_SCHEMA, ambiguity, "/query/work_unit_id")
+            if path is None:
+                raise GatewayError(
+                    ErrorCode.NOT_FOUND,
+                    f"work unit {work_unit_id!r} not found",
+                    "/query/work_unit_id",
+                )
+            import yaml
+
+            document = yaml.safe_load(path.read_text(encoding="utf-8"))
+            missing = missing_done_prerequisites(document)
+            return {
+                "name": name,
+                "work_unit_id": work_unit_id,
+                "done": not missing,
+                "missing": missing,
+            }
         raise GatewayError(ErrorCode.INVALID_SCHEMA, f"unknown query {name!r}", "/query")
 
     def validate_gateway(self) -> dict[str, Any]:

@@ -66,7 +66,9 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
             "/type",
         )
 
-    if raw["type"] == "TransitionWorkUnit":
+    if raw["type"] == "CreateWorkUnit":
+        _validate_create_work_unit(raw)
+    elif raw["type"] == "TransitionWorkUnit":
         _validate_transition_work_unit(raw)
     elif raw["type"] == "RecordObservation":
         _validate_record_observation(raw)
@@ -87,6 +89,35 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         )
 
     return raw
+
+
+def _validate_create_work_unit(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "work_unit":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "CreateWorkUnit target.kind must be work_unit",
+            "/target/kind",
+        )
+    if "expected_revision" in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision must not be set on create",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id is required",
+            "/payload/id",
+        )
+    if payload["id"] != target["id"]:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id must match target.id",
+            "/payload/id",
+        )
 
 
 def _validate_transition_work_unit(raw: dict[str, Any]) -> None:
