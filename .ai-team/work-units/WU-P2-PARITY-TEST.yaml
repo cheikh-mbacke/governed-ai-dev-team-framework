@@ -42,8 +42,9 @@ required_verification:
   audit: false
   human_acceptance: false
 context_package_ref: CTX-WU-P2-PARITY-TEST
-status: ready
-events: []
+status: in_progress
+events:
+  - EVT-20260829-162400-orchestrator-start
 evidence: []
 outcomes:
   review_status: pending
