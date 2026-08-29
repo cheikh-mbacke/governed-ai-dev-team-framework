@@ -1,0 +1,14 @@
+id: EVT-20260829-191100-qa-pass
+type: VERIFICATION
+work_unit: WU-P3-SCHEMA-V2
+created_at: '2026-08-29T19:11:00+00:00'
+created_by_role: qa-test
+summary: "QA pass WU-P3-SCHEMA-V2 — MIG-001/MIG-002 et migrate.py idempotent validés."
+details:
+  checks:
+    mig_tests: "MIG-001 MIG-002 passed"
+    core_pytest: "175 passed with MigrationTests"
+affected_nodes:
+  - WU-P3-SCHEMA-V2
+requires_human: false
+status: open

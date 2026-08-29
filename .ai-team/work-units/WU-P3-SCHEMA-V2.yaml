@@ -45,12 +45,12 @@ required_verification:
   audit: true
   human_acceptance: false
 context_package_ref: CTX-WU-P3-SCHEMA-V2
-status: ready
+status: done
 events: []
 evidence: []
 outcomes:
-  review_status: pending
-  audit_status: pending
+  review_status: approved
+  audit_status: passed
   critical_open_items: []
   defects: []
   audit_findings: []
