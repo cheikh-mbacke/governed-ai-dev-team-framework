@@ -1,0 +1,14 @@
+id: EVT-20260829-193600-qa-pass
+type: HANDOFF
+work_unit: WU-P3-TX-TESTS
+created_at: '2026-08-29T19:36:00+00:00'
+created_by_role: qa-test
+summary: "QA pass WU-P3-TX-TESTS — TX-001 à TX-009 et recovery idempotent validés."
+details:
+  checks:
+    tx_tests: "11 passed"
+    core_pytest: "190 passed"
+affected_nodes:
+  - WU-P3-TX-TESTS
+requires_human: false
+status: open
