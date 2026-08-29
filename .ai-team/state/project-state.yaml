@@ -170,7 +170,7 @@ work_units:
     milestone: M-P3
     risk: high
   WU-P3-GW-GATE-ACC:
-    status: ready
+    status: in_progress
     milestone: M-P3
     risk: critical
   WU-P3-GW-RETRO:
@@ -361,8 +361,8 @@ open_defects: []
 open_findings: []
 active_workers:
   - role: backend-developer
-    work_unit: WU-P3-GW-DEC-FIND
-    branch: wu/WU-P3-GW-DEC-FIND
+    work_unit: WU-P3-GW-GATE-ACC
+    branch: wu/WU-P3-GW-GATE-ACC
 staffing_proposal:
   default_roles:
   - backend-developer

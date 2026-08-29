@@ -60,6 +60,7 @@ class CommandGateway:
                     status="accepted",
                     affected=result.get("affected", []),
                     domain_events=domain_events,
+                    details=result.get("details"),
                 )
                 self._idempotency.store(
                     envelope["idempotency_key"],

@@ -46,7 +46,7 @@ required_verification:
   audit: true
   human_acceptance: false
 context_package_ref: CTX-WU-P3-GW-GATE-ACC
-status: ready
+status: in_progress
 events: []
 evidence: []
 outcomes:

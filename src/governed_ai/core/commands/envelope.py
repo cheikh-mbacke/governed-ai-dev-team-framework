@@ -81,12 +81,11 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
     elif raw["type"] == "RegisterFinding":
         _validate_register_finding(raw)
     elif raw["type"] == "RecordGateDecision":
-        if "human_authorization" not in raw:
-            raise GatewayError(
-                ErrorCode.HUMAN_AUTH_REQUIRED,
-                "human_authorization required for gate decisions",
-                "/human_authorization",
-            )
+        _validate_record_gate_decision(raw)
+    elif raw["type"] == "RecordAcceptance":
+        _validate_record_acceptance(raw)
+    elif raw["type"] == "RegisterReleaseCandidate":
+        _validate_register_release_candidate(raw)
     elif raw["type"] in GATE_COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
         raise GatewayError(
             ErrorCode.HUMAN_AUTH_REQUIRED,
@@ -250,6 +249,80 @@ def _validate_register_finding(raw: dict[str, Any]) -> None:
         raise GatewayError(
             ErrorCode.INVALID_SCHEMA,
             "RegisterFinding target.kind must be finding",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id is required",
+            "/payload/id",
+        )
+    if payload["id"] != raw["target"]["id"]:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id must match target.id",
+            "/payload/id",
+        )
+
+
+def _validate_record_gate_decision(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "gate_decision":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "RecordGateDecision target.kind must be gate_decision",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("gate") or not payload.get("status"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.gate and payload.status are required",
+            "/payload/gate",
+        )
+    if not payload.get("by"):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload.by is required", "/payload/by")
+    if "human_authorization" not in raw:
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            "human_authorization required for gate decisions",
+            "/human_authorization",
+        )
+
+
+def _validate_record_acceptance(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "acceptance":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "RecordAcceptance target.kind must be acceptance",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id is required",
+            "/payload/id",
+        )
+    if payload["id"] != raw["target"]["id"]:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id must match target.id",
+            "/payload/id",
+        )
+    if "human_authorization" not in raw:
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            "human_authorization required",
+            "/human_authorization",
+        )
+
+
+def _validate_register_release_candidate(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "release_candidate":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "RegisterReleaseCandidate target.kind must be release_candidate",
             "/target/kind",
         )
     payload = raw["payload"]
