@@ -1,0 +1,16 @@
+id: EVT-20260829-201800-backend-handoff
+type: HANDOFF
+work_unit: WU-P5-INSTALL-RECORD
+created_at: '2026-08-29T20:18:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P5-INSTALL-RECORD — migration v1→v2, classification managed_files et backup migration-backups/."
+details:
+  branch: wu/WU-P5-INSTALL-RECORD
+  commit_sha: a1e597d
+  checks:
+    distribution_pytest: "tests/distribution/test_migrate_v1_v2.py → 9 passed"
+    suite_pytest: "tests/distribution/ + adapters/core/architecture/contracts → 317 passed"
+affected_nodes:
+  - WU-P5-INSTALL-RECORD
+requires_human: false
+status: open

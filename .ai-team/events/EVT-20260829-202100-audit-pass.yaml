@@ -1,0 +1,12 @@
+id: EVT-20260829-202100-audit-pass
+type: HANDOFF
+work_unit: WU-P5-INSTALL-RECORD
+created_at: '2026-08-29T20:21:00+00:00'
+created_by_role: auditor
+summary: "Audit pass WU-P5-INSTALL-RECORD — aucun managed_file perdu, chemin non classable bloque sans mutation v2."
+details:
+  findings: []
+affected_nodes:
+  - WU-P5-INSTALL-RECORD
+requires_human: false
+status: open

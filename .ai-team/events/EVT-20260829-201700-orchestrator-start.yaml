@@ -1,0 +1,15 @@
+id: EVT-20260829-201700-orchestrator-start
+type: STATUS
+work_unit: WU-P5-INSTALL-RECORD
+created_at: '2026-08-29T20:17:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P5-INSTALL-RECORD au backend-developer sur branche wu/WU-P5-INSTALL-RECORD."
+details:
+  delegation:
+    role: backend-developer
+    branch: wu/WU-P5-INSTALL-RECORD
+    context_package: CTX-WU-P5-INSTALL-RECORD
+affected_nodes:
+  - WU-P5-INSTALL-RECORD
+requires_human: false
+status: open
