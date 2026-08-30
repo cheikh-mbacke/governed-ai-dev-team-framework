@@ -8,7 +8,7 @@
       "paths": [
         ".cursor/agents/*.md"
       ],
-      "explanation": "Compiled agent frontmatter uses LF line endings; historical .cursor/agents may retain CRLF on Windows until cleanup WU-P6."
+      "explanation": "Compiled agent frontmatter uses LF line endings; historical .cursor/agents may retain CRLF on Windows until normalized on the next compile sync."
     }
   ],
   "artifacts": [
@@ -54,6 +54,16 @@
     },
     {
       "kind": "agent",
+      "path": ".cursor/agents/integration-steward.md",
+      "sha256": "sha256:db81685c95a7710f71a19f3b14f9574176996e0143226d5f93a92d0c871acaac"
+    },
+    {
+      "kind": "agent",
+      "path": ".cursor/agents/mandate-matcher.md",
+      "sha256": "sha256:fe3c364b1df849cb00087f799c3a6ce4cd8c936b498b5614178c524bd103a4f3"
+    },
+    {
+      "kind": "agent",
       "path": ".cursor/agents/product-analyst.md",
       "sha256": "sha256:b1579bba0161daecce55e81549cac03c5122a9eee7362a921ad71db5d038f18d"
     },
@@ -69,8 +79,18 @@
     },
     {
       "kind": "agent",
+      "path": ".cursor/agents/requirements-challenger.md",
+      "sha256": "sha256:6dd2e61b8c19348037dd69ece5535a5a4bb2b32d2785f33d6e212a3824d77a38"
+    },
+    {
+      "kind": "agent",
       "path": ".cursor/agents/security-reviewer.md",
       "sha256": "sha256:7d73d682bdec60970c728887832863d18737f1db557e74e21af8119cadc675a7"
+    },
+    {
+      "kind": "agent",
+      "path": ".cursor/agents/test-strategist.md",
+      "sha256": "sha256:41f426842b3736019acf74f7c3836dfa818c4233d4c2ad34d3a4cb1e07118d6a"
     },
     {
       "kind": "cli_config",
@@ -95,7 +115,7 @@
     {
       "kind": "hook",
       "path": ".cursor/hooks/guard_shell.py",
-      "sha256": "sha256:69d5123ba149ac39ccb248286eb4fd73723d7ea1d0a0d8ad437e6dd38d8f364c"
+      "sha256": "sha256:845009174e3f47e7fc3f836baa3c7df2186c48868d8d105fec05029d168a1a3b"
     },
     {
       "kind": "hook",
@@ -154,8 +174,18 @@
     },
     {
       "kind": "skill",
+      "path": ".cursor/skills/challenge-requirements/SKILL.md",
+      "sha256": "sha256:7f325924852b8a01a8c078a1a86be622f5b8744ecddb7ba6633005ebd2670a21"
+    },
+    {
+      "kind": "skill",
       "path": ".cursor/skills/compile-project/SKILL.md",
       "sha256": "sha256:36fe39f87bc3077d01eb77f8bca001f42b2154a6a7b7330a017805e8884f4a74"
+    },
+    {
+      "kind": "skill",
+      "path": ".cursor/skills/design-verification/SKILL.md",
+      "sha256": "sha256:e266ae2f06892ee125c4ae0792353bb02b72f1ae2c753180689334e8a68e9e00"
     },
     {
       "kind": "adapter_file",
@@ -176,6 +206,16 @@
       "kind": "skill",
       "path": ".cursor/skills/impact-analysis/SKILL.md",
       "sha256": "sha256:4d60cf2ffb90ff028d00a07ec70cba834e89c80363c9bc6082b7024dde1e9b78"
+    },
+    {
+      "kind": "skill",
+      "path": ".cursor/skills/integrate-work-units/SKILL.md",
+      "sha256": "sha256:90ff23de9841b62047eef57de18bcfdb7e72c58aee344bc9ee2e99a8edda68dd"
+    },
+    {
+      "kind": "skill",
+      "path": ".cursor/skills/match-mandate/SKILL.md",
+      "sha256": "sha256:30413cf243ceef95fac8baaed101fc53e951282845c6a01b4853282c45401a9d"
     },
     {
       "kind": "skill",

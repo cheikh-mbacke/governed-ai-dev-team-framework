@@ -92,7 +92,7 @@ def test_ad009_runtime_result_has_required_identities(tmp_path: Path) -> None:
     assert result["adapter"]["id"] == "cursor"
     assert result["contract"]["role_id"] == "backend-developer"
     assert result["contract"]["procedure_id"] == "implement-work-unit"
-    assert result["status"] == "succeeded"
+    assert result["status"] == "blocked"
     assert result["started_at"]
     assert result["finished_at"]
     assert result["artifacts"]
@@ -107,7 +107,7 @@ def test_cg012_succeeded_without_commands_leaves_business_state_unchanged(tmp_pa
     result = execute_runtime(tmp_path, request)
     after = _business_state_digest(tmp_path)
 
-    assert result["status"] == "succeeded"
+    assert result["status"] == "blocked"
     assert result.get("requested_commands") == []
     assert before == after
 

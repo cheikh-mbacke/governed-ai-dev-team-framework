@@ -132,7 +132,13 @@ class CursorAdapter(AdapterSPIBase):
             raise UnsupportedContractError(code, message)
 
         validate_requested_commands(request, role)
-        return execute_runtime(self._project_root, request)
+        execution_workspace = request.get("execution_workspace")
+        project_root = (
+            Path(str(execution_workspace)).resolve()
+            if execution_workspace
+            else self._project_root
+        )
+        return execute_runtime(project_root, request)
 
     def collect(self, execution_id: str) -> RuntimeResult:
         return collect_runtime_result(self._project_root, execution_id)

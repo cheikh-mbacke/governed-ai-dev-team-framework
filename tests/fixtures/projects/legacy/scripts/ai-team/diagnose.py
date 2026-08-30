@@ -6,24 +6,26 @@ Core project diagnostics and Cursor hook diagnostics are separated.
 """
 from __future__ import annotations
 
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 try:
     import yaml  # noqa: F401 — dependency probe for PyYAML
 except ModuleNotFoundError:
+    _root = Path(__file__).resolve().parents[2]
+    from install_paths import requirements_install_hint
+
     print("Missing dependency: PyYAML. Install it first, then re-run this command:")
-    print("  pip install -r requirements.txt")
+    print(f"  {requirements_install_hint(_root)}")
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
 
 ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "src"))
+from install_paths import bootstrap_runtime, import_adapters_cursor
 
-from adapters.cursor.runtime.checks import last_hook_activity
+bootstrap_runtime(ROOT)
+_checks = import_adapters_cursor("runtime.checks")
+last_hook_activity = _checks.last_hook_activity
 from i18n import project_language, t
 
 from governed_ai.core.diagnostics import (

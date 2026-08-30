@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionAttempt",
+  "type": "object",
+  "required": [
+    "id",
+    "revision",
+    "run_id",
+    "work_unit_id",
+    "worker_lease_id",
+    "epoch",
+    "step",
+    "status",
+    "started_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^ATTEMPT-[A-Za-z0-9._-]+$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^RUN-[A-Za-z0-9._-]+$"
+    },
+    "work_unit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worker_lease_id": {
+      "type": "string",
+      "pattern": "^LEASE-[A-Za-z0-9._-]+$"
+    },
+    "epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "step": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "started",
+        "succeeded",
+        "failed",
+        "blocked",
+        "cancelled",
+        "timed_out"
+      ],
+      "description": "started is Core-side bookkeeping; the other five mirror AdapterSPI's RuntimeStatus verbatim."
+    },
+    "started_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ended_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "workspace": {
+      "type": "object"
+    },
+    "contract": {
+      "type": "object"
+    },
+    "requested_commands": {
+      "type": "array"
+    },
+    "usage": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

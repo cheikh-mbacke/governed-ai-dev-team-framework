@@ -1,0 +1,11 @@
+{
+  "role_id": "integration-steward",
+  "revision": "1.0.0",
+  "mandate": "Review cross-Work-Unit coherence and supervise the bounded integration merge queue.",
+  "writes": {"product": {"level": "none", "paths": []}, "authoritative_governance_commands": ["RecordIntegrationMerge"], "non_authoritative_signal_commands": ["RecordObservation"]},
+  "capabilities": {"repository_read": true, "shell": "scoped", "network": "deny_by_default", "external_tools": []},
+  "approval_policy": {"mode": "constitution", "cannot_relax": true},
+  "procedure_refs": [{"procedure_id": "integrate-work-units", "revision": "1.0.0"}],
+  "model_preference": "inherit",
+  "isolation": "required_for_concurrent_product_write"
+}

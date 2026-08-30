@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionCeilingEscalation",
+  "type": "object",
+  "required": [
+    "id",
+    "run_id",
+    "work_unit_id",
+    "dimension",
+    "previous_state",
+    "new_state",
+    "reason",
+    "escalated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^ESCALATION-[A-Za-z0-9._-]+$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^RUN-[A-Za-z0-9._-]+$"
+    },
+    "work_unit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dimension": {
+      "type": "string",
+      "minLength": 1
+    },
+    "previous_state": {
+      "enum": ["allowed", "conditional", "forbidden"]
+    },
+    "new_state": {
+      "enum": ["allowed", "conditional", "forbidden"]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "escalated_at": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

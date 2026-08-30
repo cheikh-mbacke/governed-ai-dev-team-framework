@@ -133,6 +133,11 @@ class ExecutionRequest(TypedDict, total=False):
     resolved_scope: list[str]
     approvals: list[object]
     requested_at: str
+    execution_workspace: str
+    work_unit_snapshot: dict[str, object]
+    kill_switch_path: str
+    allowed_shell_commands: list[str]
+    allowed_paths: list[str]
 
 
 class RuntimeCheck(TypedDict, total=False):
@@ -185,6 +190,7 @@ class RuntimeResult(TypedDict, total=False):
     summary: str
     limitations: list[str]
     requested_commands: list[object]
+    usage: dict[str, object]
 
 
 @runtime_checkable

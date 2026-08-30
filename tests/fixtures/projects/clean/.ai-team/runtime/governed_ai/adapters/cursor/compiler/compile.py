@@ -27,6 +27,10 @@ BUNDLE_ROLE_AGENT = {
     "qa-test",
     "release-agent",
     "security-reviewer",
+    "requirements-challenger",
+    "mandate-matcher",
+    "test-strategist",
+    "integration-steward",
 }
 
 

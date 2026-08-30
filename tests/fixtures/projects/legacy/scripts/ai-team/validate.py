@@ -4,21 +4,25 @@ import sys
 import json
 import subprocess
 
+_ROOT = Path(__file__).resolve().parents[2]
+
 try:
     import yaml
     from jsonschema import Draft202012Validator
 except ModuleNotFoundError:
+    from install_paths import requirements_install_hint
+
     print(
         "Missing dependency: PyYAML and/or jsonschema. "
         "Install them first, then re-run this command:"
     )
-    print("  pip install -r requirements.txt")
+    print(f"  {requirements_install_hint(_ROOT)}")
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
 
 from i18n import project_language, t
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = _ROOT
 AI = ROOT / ".ai-team"
 LANG = project_language(ROOT)
 

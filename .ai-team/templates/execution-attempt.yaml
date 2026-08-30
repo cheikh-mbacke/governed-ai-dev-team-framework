@@ -1,0 +1,10 @@
+id: ATTEMPT-XXX
+run_id: RUN-XXX
+work_unit_id: WU-XXX
+worker_lease_id: LEASE-XXX
+epoch: 1
+step: ""
+status: started
+started_at: ""
+ended_at: null
+summary: null

@@ -8,9 +8,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from adapters.cursor.compiler.compile import ADAPTER_ID, ADAPTER_VERSION
-from adapters.cursor.compiler.staging import sha256_bytes
 from governed_ai.adapters.spi import ExecutionRequest, RuntimeResult
+
+from ..compiler.compile import ADAPTER_ID, ADAPTER_VERSION
+from ..compiler.staging import sha256_bytes
 
 RUNTIME_RESULTS_DIR = ".ai-team/runtime-results"
 EXECUTION_ID_RE = re.compile(r"^EXE-[A-Za-z0-9-]+$")
@@ -99,6 +100,8 @@ def build_runtime_result(
     limitations: list[str] | None = None,
     requested_commands: list[object] | None = None,
     result_sha: str | None = None,
+    artifacts: list[dict[str, Any]] | None = None,
+    usage: dict[str, Any] | None = None,
 ) -> RuntimeResult:
     contract = request["contract"]
     started = utc_now_iso()
@@ -129,10 +132,11 @@ def build_runtime_result(
         },
         workspace=workspace,
         checks=checks or [],
-        artifacts=[],
+        artifacts=artifacts or [],
         summary=summary,
         limitations=limitations or [],
         requested_commands=requested_commands or [],
+        usage=usage or {},
     )
 
 
@@ -144,7 +148,7 @@ def persist_runtime_result(project_root: Path, result: RuntimeResult) -> Path:
     body = (json.dumps(payload, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
     path.write_bytes(body)
     digest = sha256_bytes(body)
-    payload["artifacts"] = [
+    payload["artifacts"] = list(payload.get("artifacts") or []) + [
         {
             "kind": "runtime_result",
             "path": path.relative_to(project_root).as_posix(),

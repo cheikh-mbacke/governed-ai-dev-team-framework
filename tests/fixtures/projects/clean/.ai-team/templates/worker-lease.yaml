@@ -1,0 +1,10 @@
+id: LEASE-XXX
+run_id: RUN-XXX
+work_unit_id: WU-XXX
+worker_id: ""
+epoch: 1
+status: active
+heartbeat_at: ""
+stalled_after_minutes: 15
+created_at: ""
+superseded_by: null

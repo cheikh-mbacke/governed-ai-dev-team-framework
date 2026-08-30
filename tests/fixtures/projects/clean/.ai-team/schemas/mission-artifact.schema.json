@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MissionArtifact",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "revision",
+    "authored_by_role",
+    "content",
+    "challenge_status",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "mission_contract",
+        "acceptance_oracle",
+        "decision_menu",
+        "tradeoff_policy",
+        "execution_envelope",
+        "delivery_contract"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "authored_by_role": {
+      "type": "string",
+      "minLength": 1
+    },
+    "content": {
+      "type": "object"
+    },
+    "challenge_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "changes_requested"
+      ]
+    },
+    "challenged_by_role": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "challenged_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "challenge_findings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

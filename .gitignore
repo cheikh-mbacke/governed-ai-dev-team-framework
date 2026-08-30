@@ -3,6 +3,7 @@
 .ai-team/tmp/
 .ai-team/cache/
 .ai-team/.transactions/
+.ai-team/worktrees/
 .ai-team/migration-backups/*
 !.ai-team/migration-backups/.gitignore
 

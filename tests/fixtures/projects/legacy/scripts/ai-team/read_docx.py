@@ -20,17 +20,21 @@ import sys
 
 from i18n import project_language, t
 
+_ROOT = Path(__file__).resolve().parents[2]
+
 try:
     import docx
     from docx.table import Table
     from docx.text.paragraph import Paragraph
 except ModuleNotFoundError:
+    from install_paths import requirements_install_hint
+
     print("Missing dependency: python-docx. Install it first, then re-run this command:")
-    print("  pip install -r requirements.txt")
+    print(f"  {requirements_install_hint(_ROOT)}")
     print("(or: pip install python-docx)")
     raise SystemExit(1)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = _ROOT
 LANG = project_language(ROOT)
 
 

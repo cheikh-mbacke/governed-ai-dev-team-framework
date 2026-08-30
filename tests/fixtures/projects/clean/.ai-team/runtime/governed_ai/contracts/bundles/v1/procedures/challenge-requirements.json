@@ -1,0 +1,7 @@
+{
+  "procedure_id": "challenge-requirements", "revision": "1.0.0", "intent": "Find ambiguity, contradictions, uncovered forks and unverifiable acceptance criteria before unattended G1.", "invocation_mode": "explicit_only",
+  "required_inputs": ["mission_artifacts", "target_preset"],
+  "steps": ["Read every mission artifact and its declared boundaries", "Cross-check scenarios, invariants, forks and forbidden outcomes", "Return findings and an approval recommendation without rewriting the artifacts"],
+  "required_outputs": ["challenge_findings", "challenge_disposition"],
+  "invariants": ["The challenger cannot be the artifact author", "Approval never replaces human G1 authority"]
+}

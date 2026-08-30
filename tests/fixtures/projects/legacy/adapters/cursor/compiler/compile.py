@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from adapters.cursor.compiler.agents import render_agent_from_role
-from adapters.cursor.compiler.staging import (
+from .agents import render_agent_from_role
+from .staging import (
     artifact_kind,
     sha256_bytes,
     validate_pre_install,
@@ -27,6 +27,10 @@ BUNDLE_ROLE_AGENT = {
     "qa-test",
     "release-agent",
     "security-reviewer",
+    "requirements-challenger",
+    "mandate-matcher",
+    "test-strategist",
+    "integration-steward",
 }
 
 

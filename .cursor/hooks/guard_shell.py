@@ -5,17 +5,17 @@ This is a project-level safety net, not a complete security boundary.
 """
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 # Read stdin once (utf-8-sig strips a BOM). Do not json.load then re-read:
 # a failed parse consumes the stream and yields an empty payload.
 try:
     raw = sys.stdin.buffer.read().decode("utf-8-sig", errors="replace")
     payload = json.loads(raw) if raw.strip() else {}
-except Exception:
+except (OSError, UnicodeError, json.JSONDecodeError):
     print(json.dumps({"permission": "allow"}))
     raise SystemExit(0)
 
@@ -32,14 +32,61 @@ def deny(message):
     raise SystemExit(2)
 
 
+def env_json_list(name):
+    try:
+        value = json.loads(os.environ.get(name, "[]"))
+    except json.JSONDecodeError:
+        deny(f"Invalid governed unattended configuration: {name}.")
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        deny(f"Invalid governed unattended configuration: {name}.")
+    return value
+
+
+if os.environ.get("GOVERNED_AI_UNATTENDED_RUN") == "1":
+    allowed_commands = env_json_list("GOVERNED_AI_ALLOWED_SHELL_COMMANDS")
+    normalized_command = " ".join(command.strip().split())
+    normalized_allowed = {" ".join(item.strip().split()) for item in allowed_commands}
+    if normalized_command not in normalized_allowed:
+        deny(
+            "Shell command is outside the human-approved execution-envelope "
+            "allowlist for this unattended Run."
+        )
+
+    allowed_paths = env_json_list("GOVERNED_AI_ALLOWED_PATHS")
+    if not allowed_paths:
+        deny("No writable path was approved for this unattended Run.")
+    # Shell commands containing parent traversal are never accepted. Absolute
+    # paths are confined to the actual Cursor workspace; finer relative-path
+    # scoping remains enforced by the Work Unit scope and isolated worktree.
+    if re.search(r"(^|[\\/\s])\.\.([\\/\s]|$)", command):
+        deny("Parent-directory traversal is forbidden in unattended shell commands.")
+    project_root_for_scope = Path(os.environ.get("CURSOR_PROJECT_DIR", ".")).resolve()
+    absolute_tokens = re.findall(
+        r"(?<![A-Za-z0-9_.-])(?:[A-Za-z]:[\\/][^\s\"']+|/[^\s\"']+)", command
+    )
+    for token in absolute_tokens:
+        try:
+            Path(token).resolve().relative_to(project_root_for_scope)
+        except (OSError, ValueError):
+            deny("Out-of-workspace absolute path is forbidden in unattended commands.")
+
+
 def current_branch(project_root):
     try:
         result = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            [
+                "git",
+                "-c",
+                f"safe.directory={project_root}",
+                "rev-parse",
+                "--abbrev-ref",
+                "HEAD",
+            ],
             cwd=project_root,
             text=True,
             capture_output=True,
             timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return None
