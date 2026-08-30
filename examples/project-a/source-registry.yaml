@@ -1,0 +1,10 @@
+registry_version: "1.0"
+sources:
+  - id: password-reset-requirements-v1
+    type: human_construction_material
+    path: docs/product/requirements.md
+    authority: human
+    scope: capability/password-reset
+    version: "1.0"
+    status: active
+    owner: product

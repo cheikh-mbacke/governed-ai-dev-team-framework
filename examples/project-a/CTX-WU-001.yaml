@@ -1,0 +1,22 @@
+id: CTX-WU-001
+work_unit: WU-001
+role: backend-developer
+assembled_at: "2026-08-23T12:00:00Z"
+items:
+  - level: L0_constitution
+    source: .ai-team/constitution/00-authority.yaml
+    provenance: authoritative
+    reason: "Prevents product-rule invention and defines authority."
+  - level: L0_constitution
+    source: .ai-team/constitution/40-test-strategy.yaml
+    provenance: authoritative
+    reason: "Defines evidence for authentication-sensitive behavior."
+  - level: L2_relevant_zone
+    source: docs/product/requirements.md
+    provenance: authoritative
+    reason: "Contains the 30-minute expiry rule."
+  - level: L3_work_unit
+    source: .ai-team/work-units/WU-001.yaml
+    provenance: derived
+    reason: "Defines exact scope and acceptance criteria."
+open_context_requests: []

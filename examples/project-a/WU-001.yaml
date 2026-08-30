@@ -1,0 +1,39 @@
+id: WU-001
+title: Reject expired password reset token
+objective:
+  result: "The reset operation rejects a token more than 30 minutes after issuance."
+  rationale: "Enforce the authoritative reset-token expiry rule."
+scope:
+  include: [password reset token validation, reset endpoint]
+  exclude: [email transport, login session invalidation]
+zone:
+  area: backend
+  capabilities: [password-reset]
+  components: [ResetTokenService, password-reset endpoint]
+expected_behavior: "Given an expired token, when reset is attempted, the request is rejected and no password change occurs."
+applicable_rules_requirements: [password-reset-requirements-v1]
+acceptance_criteria:
+  - "Expired token is rejected."
+  - "Password is unchanged."
+dependencies: []
+risk:
+  class: high
+  reasons: [authentication, credential_change]
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: true
+  audit: true
+  human_acceptance: true
+context_package_ref: CTX-WU-001
+status: ready
+events: []
+evidence: []
+outcomes:
+  defects: []
+  audit_findings: []
+  human_acceptance: null
