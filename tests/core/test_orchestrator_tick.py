@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -18,11 +19,24 @@ import pytest
 import yaml
 
 from governed_ai.core.commands.gateway import CommandGateway
+from governed_ai.core.orchestrator.git_workspace import head_sha
 from governed_ai.core.orchestrator.tick import run_scheduling_tick
 from governed_ai.core.workspace import Workspace
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_GRANT_ID = "GRANT-DEFAULT"
+
+
+def _git(root: Path, *args: str) -> None:
+    completed = subprocess.run(
+        ["git", "-c", f"safe.directory={root}", *args],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def _seed_grant(workspace: Workspace, grant_id: str, *, work_unit_ids: list[str]) -> None:
@@ -70,12 +84,18 @@ def workspace(tmp_path: Path) -> Workspace:
     return ws
 
 
-def _seed_work_unit(workspace: Workspace, work_unit_id: str, *, status: str) -> None:
+def _seed_work_unit(
+    workspace: Workspace,
+    work_unit_id: str,
+    *,
+    status: str,
+    scope_include: list[str] | None = None,
+) -> None:
     document = {
         "id": work_unit_id,
         "title": "Test work unit",
         "objective": {"result": "test"},
-        "scope": {"include": [], "exclude": []},
+        "scope": {"include": scope_include or [], "exclude": []},
         "expected_behavior": "test behavior",
         "acceptance_criteria": ["ok"],
         "dependencies": [],
@@ -308,6 +328,89 @@ def test_tick_dispatches_execution_and_advances_on_success(workspace: Workspace)
 
     heartbeat_after = yaml.safe_load(lease_path.read_text(encoding="utf-8"))["heartbeat_at"]
     assert heartbeat_after != heartbeat_before
+
+
+def test_out_of_scope_write_stops_the_whole_run(workspace: Workspace) -> None:
+    """Document 6 §9.5 — a write outside a Work Unit's declared scope is one of
+    the fixed conditions that stops the whole Run, not just this Work Unit.
+    Before this fix, `_implementation_boundary_error` detected the violation
+    but only failed the single attempt, leaving the Run active."""
+    root = workspace.root
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.email", "l4@example.test")
+    _git(root, "config", "user.name", "L4 Test")
+    (root / "README.md").write_text("base\n", encoding="utf-8")
+    _git(root, "add", "README.md")
+    _git(root, "commit", "-m", "test: base")
+
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-BOUNDARY-001", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress", scope_include=["src/**"])
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-BOUNDARY-1"},
+            payload={
+                "id": "LEASE-BOUNDARY-1",
+                "run_id": "RUN-BOUNDARY-001",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="acquire-boundary-1",
+        )
+    )
+
+    class OutOfScopeAdapter:
+        def describe(self):
+            return {"capabilities": {"isolated_worktree": True}}
+
+        def check_compatibility(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def compile(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def collect(self, execution_id: str):  # pragma: no cover
+            raise NotImplementedError
+
+        def execute(self, request: dict) -> dict:
+            worker_root = Path(request["execution_workspace"])
+            outside = worker_root / "unrelated" / "escape.txt"
+            outside.parent.mkdir(parents=True, exist_ok=True)
+            outside.write_text("outside scope\n", encoding="utf-8")
+            _git(worker_root, "add", "unrelated/escape.txt")
+            _git(worker_root, "commit", "-m", "feat(WU-A): out-of-scope write")
+            result = _succeeded_result()
+            result["workspace"] = {"result_sha": head_sha(worker_root)}
+            return result
+
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-BOUNDARY-001",
+        adapter=OutOfScopeAdapter(),
+        worker_id="w1",
+    )
+
+    assert result.action == "run_stopped"
+    assert result.details["stop_condition"] == "out_of_workspace_write"
+    run_document = yaml.safe_load(
+        (workspace.ai_team / "runs" / "RUN-BOUNDARY-001.yaml").read_text(encoding="utf-8")
+    )
+    assert run_document["status"] == "stopped"
+    assert run_document["stop_condition"] == "out_of_workspace_write"
+
+    attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
+    attempt = yaml.safe_load(next(attempts_dir.glob("*.yaml")).read_text(encoding="utf-8"))
+    assert attempt["status"] == "failed"
+    assert "out-of-scope writes detected" in attempt["summary"]
+
+    lease = yaml.safe_load(
+        (workspace.ai_team / "runs" / "leases" / "LEASE-BOUNDARY-1.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert lease["status"] == "revoked"
 
 
 def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(

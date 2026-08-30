@@ -52,12 +52,20 @@ def validate_execution_ceiling(ceiling: dict[str, Any]) -> str | None:
 
 
 def capability_for_step(step: str) -> str | None:
-    """Return the ceiling dimension a step name refers to, or None for an ordinary step."""
+    """Return the ceiling dimension a step name refers to, or None for an ordinary step.
+
+    "integration_review" (the orchestrator's real dispatch step name, see
+    DISPATCH_CONTRACTS in orchestrator/tick.py) governs the same capability as
+    the "integration_branch_merge" ceiling dimension itself — both must resolve
+    to the same dimension so the ceiling actually gates the real dispatch path,
+    not just direct-by-dimension-name requests.
+    """
     workflow_capabilities = {
         "review": "verification",
         "security_review": "verification",
         "audit": "verification",
         "remediation": "sandbox_implementation",
+        "integration_review": "integration_branch_merge",
     }
     return step if step in CEILING_DIMENSIONS else workflow_capabilities.get(step)
 
@@ -67,7 +75,11 @@ def is_step_permitted(ceiling: dict[str, Any], step: str) -> tuple[bool, str | N
 
     A step outside the ceiling vocabulary (e.g. "implement", "remediation") is
     always permitted at this layer — the ceiling only governs the seven named
-    capabilities, never ordinary implementation work.
+    capabilities, never ordinary implementation work. "conditional" is never
+    auto-approved for any dimension, integration_branch_merge included — only
+    "allowed" passes; a human must explicitly raise a Work Unit's ceiling to
+    "allowed" (via execution-envelope.yaml at G1) for its integration merges
+    to be dispatchable unattended.
     """
     dimension = capability_for_step(step)
     if dimension is None:

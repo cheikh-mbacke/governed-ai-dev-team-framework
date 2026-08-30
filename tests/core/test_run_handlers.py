@@ -1315,6 +1315,91 @@ def test_record_execution_attempt_allows_step_within_ceiling(run_workspace: Work
     assert exit_code == 0
 
 
+def test_record_execution_attempt_gates_integration_review_by_ceiling_default(
+    run_workspace: Workspace,
+) -> None:
+    """The orchestrator's real dispatch step is "integration_review", not the
+    ceiling dimension name "integration_branch_merge" — it must resolve to the
+    same dimension and be rejected under the default "conditional" state, same
+    as a direct request for the dimension itself already is."""
+    gateway = CommandGateway(run_workspace)
+    gateway.execute_command(_open_run("RUN-CEIL-008", work_unit_ids=["WU-A"]))
+    gateway.execute_command(
+        _acquire_lease("LEASE-CEIL-4", run_id="RUN-CEIL-008", work_unit_id="WU-A", worker_id="w1")
+    )
+    receipt, exit_code = gateway.execute_command(
+        _record_attempt(
+            "ATTEMPT-CEIL-4",
+            run_id="RUN-CEIL-008",
+            work_unit_id="WU-A",
+            lease_id="LEASE-CEIL-4",
+            epoch=1,
+            step="integration_review",
+        )
+    )
+    assert exit_code == 4
+    assert receipt["errors"][0]["code"] == ErrorCode.UNAUTHORIZED.value
+
+
+def test_record_execution_attempt_rejects_integration_review_when_ceiling_forbidden(
+    run_workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(run_workspace)
+    gateway.execute_command(
+        _open_run(
+            "RUN-CEIL-009",
+            work_unit_ids=["WU-A"],
+            execution_ceilings_by_work_unit={
+                "WU-A": {"integration_branch_merge": "forbidden"}
+            },
+        )
+    )
+    gateway.execute_command(
+        _acquire_lease("LEASE-CEIL-5", run_id="RUN-CEIL-009", work_unit_id="WU-A", worker_id="w1")
+    )
+    receipt, exit_code = gateway.execute_command(
+        _record_attempt(
+            "ATTEMPT-CEIL-5",
+            run_id="RUN-CEIL-009",
+            work_unit_id="WU-A",
+            lease_id="LEASE-CEIL-5",
+            epoch=1,
+            step="integration_review",
+        )
+    )
+    assert exit_code == 4
+    assert receipt["errors"][0]["code"] == ErrorCode.UNAUTHORIZED.value
+
+
+def test_record_execution_attempt_allows_integration_review_when_ceiling_allowed(
+    run_workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(run_workspace)
+    gateway.execute_command(
+        _open_run(
+            "RUN-CEIL-010",
+            work_unit_ids=["WU-A"],
+            execution_ceilings_by_work_unit={
+                "WU-A": {"integration_branch_merge": "allowed"}
+            },
+        )
+    )
+    gateway.execute_command(
+        _acquire_lease("LEASE-CEIL-6", run_id="RUN-CEIL-010", work_unit_id="WU-A", worker_id="w1")
+    )
+    receipt, exit_code = gateway.execute_command(
+        _record_attempt(
+            "ATTEMPT-CEIL-6",
+            run_id="RUN-CEIL-010",
+            work_unit_id="WU-A",
+            lease_id="LEASE-CEIL-6",
+            epoch=1,
+            step="integration_review",
+        )
+    )
+    assert exit_code == 0
+
+
 def test_tighten_execution_ceiling_escalates_successfully(run_workspace: Workspace) -> None:
     """Document 6 §7.3 — escalation is automatic and requires no human authorization."""
     gateway = CommandGateway(run_workspace)

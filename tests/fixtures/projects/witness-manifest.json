@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-08-30T20:15:33+00:00",
+  "generated_at": "2026-08-30T21:21:06+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -241,7 +241,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "46e7e1fb85c4f9e9a80ed97ae913b42d994074d69b45de791e61e76fd79ac71f"
+          "sha256": "b7bb9559b05d63125dad78945db75a723da0efea537c2905afac3581573ed0c9"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -905,7 +905,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/domain/run/execution_ceiling.py",
-          "sha256": "6941a1659e5c47cb31c64ce05de5700a3418499a008af2e6fab58830c0df6a9a"
+          "sha256": "b2eed16c37062fba1c74c073d0b89d42cf68de7442f38d76a6628701faf0a061"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/domain/run/fencing.py",
@@ -973,7 +973,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-          "sha256": "176c00013789b463dfc555de2b40d9852c333935907040dcf942cf4d9b015193"
+          "sha256": "f85f5e1069b1038790520f2e27fbcfcbcc59f49be7ab8867027ac526425e574e"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -1704,7 +1704,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "f026af97206b3a23a8c7ca349413d679562d0fe47495fa8a6e423db2633a5e87"
+          "sha256": "195e4a6e623ab9412a8626ad5a92094d7f07693a4f51a5d7e239a1b53d2a8ee3"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2812,7 +2812,7 @@
         },
         {
           "path": "src/governed_ai/core/domain/run/execution_ceiling.py",
-          "sha256": "6941a1659e5c47cb31c64ce05de5700a3418499a008af2e6fab58830c0df6a9a"
+          "sha256": "b2eed16c37062fba1c74c073d0b89d42cf68de7442f38d76a6628701faf0a061"
         },
         {
           "path": "src/governed_ai/core/domain/run/fencing.py",
@@ -2880,7 +2880,7 @@
         },
         {
           "path": "src/governed_ai/core/orchestrator/tick.py",
-          "sha256": "176c00013789b463dfc555de2b40d9852c333935907040dcf942cf4d9b015193"
+          "sha256": "f85f5e1069b1038790520f2e27fbcfcbcc59f49be7ab8867027ac526425e574e"
         },
         {
           "path": "src/governed_ai/core/persistence/__init__.py",

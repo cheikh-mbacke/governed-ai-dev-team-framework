@@ -396,33 +396,40 @@ def _implementation_boundary_error(
     wu_document: dict[str, Any],
     run_document: dict[str, Any],
     allowed_paths: list[str],
-) -> str | None:
+) -> tuple[str, str | None] | None:
+    """Return (message, global_stop_condition) for a boundary violation, else None.
+
+    Document 6 §9.5 — a write outside the authorized workspace (scope or
+    execution envelope) is one of the fixed conditions that stops the whole
+    Run, not just this Work Unit; it is distinct from ordinary budget/tooling
+    failures below, which stay Work-Unit-scoped.
+    """
     if base_sha is None:
-        return "isolated implementation workspace has no base commit"
+        return "isolated implementation workspace has no base commit", None
     try:
         actual_sha = head_sha(execution_root)
     except GitWorkspaceError as exc:
-        return f"cannot verify worker Git result: {exc}"
+        return f"cannot verify worker Git result: {exc}", None
     claimed_sha = (result.get("workspace") or {}).get("result_sha")
     if claimed_sha != actual_sha:
-        return f"claimed result SHA {claimed_sha!r} does not match worker HEAD {actual_sha!r}"
+        return f"claimed result SHA {claimed_sha!r} does not match worker HEAD {actual_sha!r}", None
     try:
         files = changed_files(execution_root, base_sha, actual_sha)
     except GitWorkspaceError as exc:
-        return f"cannot inspect worker diff: {exc}"
+        return f"cannot inspect worker diff: {exc}", None
+    scope_paths = [str(item) for item in (wu_document.get("scope") or {}).get("include") or []]
+    outside_scope = [path for path in files if scope_paths and not _path_is_allowed(path, scope_paths)]
+    outside_envelope = [path for path in files if allowed_paths and not _path_is_allowed(path, allowed_paths)]
+    if outside_scope:
+        return f"out-of-scope writes detected: {outside_scope}", "out_of_workspace_write"
+    if outside_envelope:
+        return f"out-of-envelope writes detected: {outside_envelope}", "out_of_workspace_write"
     policy_budgets = (run_document.get("effective_autonomy_policy") or {}).get("budgets") or {}
     maximum = int(policy_budgets.get("maximum_changed_files_per_work_unit", 30))
     if (wu_document.get("risk") or {}).get("class") == "critical":
         maximum = int(policy_budgets.get("maximum_changed_files_per_critical_work_unit", 10))
     if len(files) > maximum:
-        return f"changed-file budget exceeded ({len(files)} > {maximum})"
-    scope_paths = [str(item) for item in (wu_document.get("scope") or {}).get("include") or []]
-    outside_scope = [path for path in files if scope_paths and not _path_is_allowed(path, scope_paths)]
-    outside_envelope = [path for path in files if allowed_paths and not _path_is_allowed(path, allowed_paths)]
-    if outside_scope:
-        return f"out-of-scope writes detected: {outside_scope}"
-    if outside_envelope:
-        return f"out-of-envelope writes detected: {outside_envelope}"
+        return f"changed-file budget exceeded ({len(files)} > {maximum})", None
     dependency_files = {
         "requirements.txt",
         "pyproject.toml",
@@ -441,7 +448,7 @@ def _implementation_boundary_error(
         path for path in files if path.rsplit("/", 1)[-1].lower() in dependency_files
     ]
     if maximum_dependencies == 0 and touched_dependency_files:
-        return f"dependency changes are forbidden: {touched_dependency_files}"
+        return f"dependency changes are forbidden: {touched_dependency_files}", None
     return None
 
 
@@ -754,12 +761,13 @@ def run_scheduling_tick(
                 status = "failed"
                 result = dict(result)
                 result["summary"] = f"{result.get('summary') or ''} Evidence gate: {evidence_error}".strip()
+        boundary_stop_condition: str | None = None
         if (
             status == "succeeded"
             and step == "sandbox_implementation"
             and isolated_worktree
         ):
-            boundary_error = _implementation_boundary_error(
+            boundary_violation = _implementation_boundary_error(
                 execution_root=execution_root,
                 base_sha=base_sha,
                 result=result,
@@ -767,7 +775,8 @@ def run_scheduling_tick(
                 run_document=run_document,
                 allowed_paths=allowed_paths,
             )
-            if boundary_error:
+            if boundary_violation:
+                boundary_error, boundary_stop_condition = boundary_violation
                 status = "failed"
                 result = dict(result)
                 result["summary"] = (
@@ -860,6 +869,34 @@ def run_scheduling_tick(
                 action="attempt_recording_failed",
                 work_unit_id=work_unit_id,
                 details={"errors": attempt_receipt.get("errors")},
+            )
+
+        if boundary_stop_condition:
+            # Document 6 §9.5 — a write outside the authorized workspace stops
+            # the whole Run, not just this Work Unit. The failed attempt above
+            # is already durably recorded; this closes the Run around it.
+            stop_receipt, stop_exit = gateway.execute_command(
+                _envelope(
+                    "CloseRun",
+                    target={
+                        "kind": "run",
+                        "id": run_id,
+                        "expected_revision": run_document["revision"],
+                    },
+                    payload={
+                        "status": "stopped",
+                        "reason": f"run-reliability-controller: {boundary_error}",
+                        "stop_condition": boundary_stop_condition,
+                    },
+                )
+            )
+            return TickResult(
+                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+                work_unit_id=work_unit_id,
+                details={
+                    "stop_condition": boundary_stop_condition,
+                    "errors": stop_receipt.get("errors"),
+                },
             )
 
         if integration_merge is not None:
