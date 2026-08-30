@@ -10,7 +10,7 @@ from pathlib import Path
 
 import yaml
 
-from distribution.installer.record import INSTALLATION_RECORD_FILE, is_v2_record
+from distribution.installer.record import INSTALLATION_RECORD_FILE, is_installation_record
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALL = REPO_ROOT / "tools" / "install.py"
@@ -52,12 +52,16 @@ def test_di001_fresh_install_writes_v2_record_last(tmp_path: Path) -> None:
     record_path = target / INSTALLATION_RECORD_FILE
     assert record_path.is_file()
     record = json.loads(record_path.read_text(encoding="utf-8"))
-    assert is_v2_record(record)
+    assert is_installation_record(record)
+    assert record["schema_version"] == 3
     assert record["active_adapter_id"] == "cursor"
     assert record["core"]["version"]
     assert record["adapters"][0]["id"] == "cursor"
-    assert record["distribution"]["managed_files"]
-    assert INSTALLATION_RECORD_FILE.as_posix() in record["distribution"]["managed_files"]
+    distribution_paths = record["distribution"]["managed_files"]
+    distribution_path_strings = [
+        entry if isinstance(entry, str) else entry["path"] for entry in distribution_paths
+    ]
+    assert INSTALLATION_RECORD_FILE.as_posix() in distribution_path_strings
 
     profile = yaml.safe_load((target / ".ai-team/project-profile.yaml").read_text(encoding="utf-8"))
     assert profile.get("active_adapter_id") == "cursor"

@@ -1,4 +1,4 @@
-"""Build and persist Installation Record v2."""
+"""Build and persist Installation Record v2/v3."""
 
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ from distribution.installer.ownership import (
     OWNER_CORE,
     OWNER_CURSOR,
     OWNER_DISTRIBUTION,
-    UnclassifiableManagedFileError,
     partition_managed_files,
 )
 from distribution.installer.record import INSTALLATION_RECORD_FILE, LEGACY_VERSION_FILE, normalize_path
+from distribution.installer.hashes import sha256_file
 
 KNOWN_ADAPTER_IDS = frozenset({"cursor"})
 
@@ -31,6 +31,15 @@ def _finalize_distribution_files(distribution_files: list[str]) -> list[str]:
     return sorted(files)
 
 
+def _hash_entries(paths: list[str], target: Path) -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+    for path in sorted(set(normalize_path(p) for p in paths)):
+        file_path = target / path
+        digest = sha256_file(file_path) if file_path.is_file() else "sha256:" + "0" * 64
+        entries.append({"path": path, "installed_sha256": digest})
+    return entries
+
+
 def build_installation_record(
     *,
     project_id: str,
@@ -39,6 +48,8 @@ def build_installation_record(
     active_adapter_id: str = "cursor",
     installed_at: str,
     last_updated_at: str,
+    target: Path | None = None,
+    schema_version: int = 3,
     migration_receipt: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     managed = [
@@ -54,24 +65,35 @@ def build_installation_record(
     if active_adapter_id not in KNOWN_ADAPTER_IDS:
         raise ValueError(f"unknown active_adapter_id: {active_adapter_id}")
 
+    distribution_paths = _finalize_distribution_files(buckets[OWNER_DISTRIBUTION])
+
+    if schema_version >= 3 and target is not None:
+        core_files = _hash_entries(buckets[OWNER_CORE], target)
+        cursor_files = _hash_entries(buckets[OWNER_CURSOR], target)
+        distribution_files = _hash_entries(distribution_paths, target)
+    else:
+        core_files = buckets[OWNER_CORE]
+        cursor_files = buckets[OWNER_CURSOR]
+        distribution_files = distribution_paths
+
     record: dict[str, Any] = {
-        "schema_version": 2,
+        "schema_version": schema_version,
         "project_id": project_id,
         "active_adapter_id": active_adapter_id,
         "core": {
             "version": version,
-            "managed_files": buckets[OWNER_CORE],
+            "managed_files": core_files,
         },
         "adapters": [
             {
                 "id": "cursor",
                 "version": version,
-                "managed_files": buckets[OWNER_CURSOR],
+                "managed_files": cursor_files,
             }
         ],
         "distribution": {
             "version": version,
-            "managed_files": _finalize_distribution_files(buckets[OWNER_DISTRIBUTION]),
+            "managed_files": distribution_files,
         },
         "installed_at": installed_at,
         "last_updated_at": last_updated_at,
@@ -114,8 +136,9 @@ def finalize_installation_manifests(
     installed_at: str | None = None,
     last_updated_at: str | None = None,
     existing_record: dict[str, Any] | None = None,
+    schema_version: int = 3,
 ) -> dict[str, Any]:
-    """Write legacy v1 manifest then v2 record (v2 last). Returns the v2 record."""
+    """Write legacy v1 manifest then v2/v3 record (record last). Returns the record."""
     now = utc_now_iso()
     installed = installed_at or (existing_record or {}).get("installed_at") or now
     updated = last_updated_at or now
@@ -126,17 +149,20 @@ def finalize_installation_manifests(
         active_adapter_id=active_adapter_id,
         installed_at=installed,
         last_updated_at=updated,
+        target=target,
+        schema_version=schema_version,
         migration_receipt=(existing_record or {}).get("migration_receipt"),
     )
-    union = sorted(
-        set(managed_files)
-        | set(record["core"]["managed_files"])
-        | set(record["distribution"]["managed_files"])
-        | set(record["adapters"][0]["managed_files"])
-    )
+    union = sorted(managed_files_union_from_record(record))
     write_legacy_manifest(target, version, union)
     write_installation_record(target, record)
     return record
+
+
+def managed_files_union_from_record(record: dict[str, Any]) -> set[str]:
+    from distribution.installer.record import managed_files_union
+
+    return managed_files_union(record)
 
 
 class InstallationValidationError(ValueError):

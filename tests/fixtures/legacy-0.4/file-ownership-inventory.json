@@ -475,6 +475,7 @@
     "scripts/ai-team/feedback.py": "core",
     "scripts/ai-team/gov.py": "core",
     "scripts/ai-team/i18n.py": "core",
+    "scripts/ai-team/install_paths.py": "core",
     "scripts/ai-team/migrate.py": "core",
     "scripts/ai-team/preflight.py": "core",
     "scripts/ai-team/propose_allowlist.py": "core",

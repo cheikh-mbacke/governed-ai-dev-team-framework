@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "managed_files": [
     ".ai-team/constitution/00-authority.yaml",
     ".ai-team/constitution/10-project-strategy.yaml",

@@ -1,4 +1,4 @@
-"""Managed file ownership classification for Installation Record v2."""
+"""Managed file ownership classification for Installation Record."""
 
 from __future__ import annotations
 
@@ -32,6 +32,13 @@ def classify_managed_file(path: str | Path) -> str:
 
     if normalized == ".ai-team/installation-record.json":
         return OWNER_DISTRIBUTION
+    if normalized == ".ai-team/requirements.txt":
+        return OWNER_CORE
+    if normalized.startswith(".ai-team/runtime/governed_ai/adapters/cursor/"):
+        return OWNER_CURSOR
+    if normalized.startswith(".ai-team/runtime/governed_ai/"):
+        return OWNER_CORE
+    # Legacy installed layout (pre-0.7.0) — still classifiable during migration.
     if normalized.startswith("docs/product/"):
         return OWNER_CORE
     if normalized.startswith("docs/operator/"):

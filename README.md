@@ -2,7 +2,7 @@
 
 Framework de développement multi-agents gouverné par l'humain : gates, Work Units, preuves, revue et audit indépendants.
 
-**Version cible de cette refonte :** `0.5.0` (noyau agnostique + Adaptateur Cursor + Installation Record v2).
+**Version cible de cette refonte :** `0.7.0` (noyau agnostique + Adaptateur Cursor + Installation Record v3).
 
 ## Démarrage rapide
 

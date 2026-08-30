@@ -2,22 +2,18 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import shutil
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from distribution.installer.build_record import utc_now_iso
+from distribution.installer.hashes import sha256_file
 
 
-def sha256_bytes(data: bytes) -> str:
-    return "sha256:" + hashlib.sha256(data).hexdigest()
-
-
-def sha256_file(path: Path) -> str:
-    return sha256_bytes(path.read_bytes())
+def utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 @dataclass(frozen=True)

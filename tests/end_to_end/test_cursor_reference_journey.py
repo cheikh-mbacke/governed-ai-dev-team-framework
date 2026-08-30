@@ -90,7 +90,7 @@ def test_l3_fresh_install_preflight_validate_and_record_v2(tmp_path: Path) -> No
     record_path = target / ".ai-team" / "installation-record.json"
     assert record_path.is_file()
     record = json.loads(record_path.read_text(encoding="utf-8"))
-    assert record["schema_version"] == 2
+    assert record["schema_version"] == 3
     assert record["active_adapter_id"] == "cursor"
     assert record_path.stat().st_mtime >= (target / ".ai-team" / "framework-version.json").stat().st_mtime
 

@@ -21,7 +21,14 @@ def parse_args():
     parser.add_argument("--target", required=True)
     parser.add_argument("--project-id")
     parser.add_argument("--project-name")
-    parser.add_argument("--force", action="store_true")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Fresh install: proceed despite path collisions with existing project files. "
+            "With --update: proceed despite locally modified managed files (local drift)."
+        ),
+    )
     parser.add_argument(
         "--update",
         action="store_true",
@@ -67,8 +74,6 @@ def parse_args():
             "--dry-run, --allow-dirty, --skip-validation and --force-constitution-update "
             "require --update"
         )
-    if args.update and args.force:
-        parser.error("--update and --force are mutually exclusive")
     if not args.update and (not args.project_id or not args.project_name):
         parser.error("--project-id and --project-name are required for a fresh install")
     return args

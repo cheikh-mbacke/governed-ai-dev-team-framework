@@ -113,19 +113,29 @@ def apply_acceptance_changes(target: Path, changes: list[MigrationChange]) -> Pa
     return backup_root
 
 
-def _load_mutable_v2_module():
-    import importlib.util
-    import sys
-
-    module_path = (
-        DEFAULT_ROOT
-        / "src"
+def _mutable_v2_module_path(root: Path) -> Path:
+    candidates = [
+        root
+        / ".ai-team"
+        / "runtime"
         / "governed_ai"
         / "core"
         / "persistence"
         / "migrations"
-        / "mutable_v2.py"
-    )
+        / "mutable_v2.py",
+        root / "src" / "governed_ai" / "core" / "persistence" / "migrations" / "mutable_v2.py",
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    raise RuntimeError("unable to locate mutable_v2 migration module")
+
+
+def _load_mutable_v2_module():
+    import importlib.util
+    import sys
+
+    module_path = _mutable_v2_module_path(DEFAULT_ROOT)
     module_name = "governed_ai_mutable_v2_migration"
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:

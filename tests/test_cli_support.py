@@ -392,6 +392,9 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             cli_path.write_text(json.dumps(cli_config), encoding="utf-8")
             self.initialize_git(target)
 
+            # .cursor/ is fully generated/compiler-owned output (never hand-edited
+            # per its own documentation); a local edit is therefore local drift,
+            # which --update now refuses by default unless --force is passed.
             update = self.run_command(
                 [
                     sys.executable,
@@ -399,6 +402,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     "--target",
                     str(target),
                     "--update",
+                    "--force",
                 ]
             )
             self.assertEqual(update.returncode, 0, update.stderr + update.stdout)
@@ -413,7 +417,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual(manifest["version"], "0.6.0")
+            self.assertEqual(manifest["version"], "0.7.0")
             self.assertIn(".cursor/hooks.json", manifest["managed_files"])
 
     def test_propose_allowlist_derives_tokens_from_declared_commands_only(self):
@@ -733,15 +737,20 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             self.initialize_git(target)
+            # Dirty the worktree via a non-managed, project-owned file so this
+            # test exercises the git-dirty guard in isolation from the
+            # separate local-drift guard (which fires first, with its own
+            # message, when the edited file is itself framework-managed).
+            marker_path = target / "app_notes.txt"
+            marker_path.write_text("local notes\n", encoding="utf-8")
             cli_path = target / ".cursor" / "cli.json"
             original = cli_path.read_text(encoding="utf-8")
-            cli_path.write_text(original + "\n", encoding="utf-8")
             result = self.run_command(
                 [sys.executable, "tools/install.py", "--target", str(target), "--update"]
             )
             self.assertEqual(result.returncode, 2, result.stderr + result.stdout)
             self.assertIn("target must be a clean", result.stdout)
-            self.assertEqual(cli_path.read_text(encoding="utf-8"), original + "\n")
+            self.assertEqual(cli_path.read_text(encoding="utf-8"), original)
 
     def test_update_rejects_unknown_future_version_before_writing(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
@@ -940,7 +949,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual(manifest["version"], "0.6.0")
+            self.assertEqual(manifest["version"], "0.7.0")
 
     def test_failed_post_update_validation_rolls_back_all_touched_files(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:

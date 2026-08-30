@@ -9,9 +9,9 @@ import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_SRC_ROOT = _REPO_ROOT / "src"
-if _SRC_ROOT.is_dir() and str(_SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SRC_ROOT))
+from install_paths import bootstrap_runtime
+
+bootstrap_runtime(_REPO_ROOT)
 
 from governed_ai.core.commands.errors import (
     EXIT_CLI,

@@ -14,19 +14,36 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from distribution.installer.apply import apply_copy_entries, collect_changed_destinations
 from distribution.installer.build_record import (
     InstallationValidationError,
     finalize_installation_manifests,
     validate_installation_record,
     validate_update_path,
 )
-from distribution.installer.constants import COPY_ITEMS, FRESH_PROJECT_SEEDS, LEGACY_VERSION_REL, PROJECT_OWNED_PATTERNS
+from distribution.installer.collisions import (
+    format_collision_report,
+    scan_fresh_install_collisions,
+    scan_local_drift_collisions,
+)
+from distribution.installer.constants import FRESH_PROJECT_SEEDS, PROJECT_OWNED_PATTERNS
+from distribution.installer.migrate_layout import (
+    apply_layout_migration,
+    iter_legacy_migration_destination_files,
+    plan_layout_migration,
+    remove_migrated_legacy_paths,
+)
 from distribution.installer.migrate_v1_v2 import MigrationError, ensure_installation_record_v2
+from distribution.installer.migrate_v2_v3 import (
+    MigrationError as MigrationErrorV2V3,
+    ensure_installation_record_v3,
+)
 from distribution.installer.record import (
     INSTALLATION_RECORD_FILE,
     LEGACY_VERSION_FILE,
-    is_v2_record,
+    is_installation_record,
     load_installation_record,
+    managed_file_hashes,
     managed_files_union,
     read_installation_manifest,
 )
@@ -35,8 +52,6 @@ from distribution.installer.source_files import (
     build_copy_plan,
     bootstrap_adapter_imports,
     detect_obsolete_managed,
-    iter_managed_source_files,
-    materialize_cursor_dir,
 )
 
 
@@ -91,10 +106,10 @@ def read_installed_manifest(target: Path) -> dict:
     record_path = target / INSTALLATION_RECORD_FILE
     if record_path.is_file():
         payload = read_installation_manifest(target)
-        if is_v2_record(payload):
+        if is_installation_record(payload):
             validate_installation_record(payload)
             return {
-                "schema_version": 2,
+                "schema_version": payload.get("schema_version"),
                 "version": str(payload["core"]["version"]),
                 "managed_files": sorted(managed_files_union(payload)),
                 "installation_record": payload,
@@ -152,6 +167,9 @@ def validation_python(target: Path) -> Path | None:
         target / ".venv" / "Scripts" / "python.exe",
         Path(sys.executable),
     ]
+    req = target / ".ai-team" / "requirements.txt"
+    if not req.is_file():
+        req = target / "requirements.txt"
     seen = set()
     for candidate in candidates:
         key = str(candidate.resolve()) if candidate.exists() else str(candidate)
@@ -179,8 +197,8 @@ def write_forced_constitution_event(
     path = events_dir / f"{event_id}.yaml"
     summary = (
         f"Constitution force-updated {old_version} -> {new_version} via "
-        f"'tools/install.py --update --force-constitution-update' while project phase "
-        f"was '{phase}', bypassing freeze_policy."
+        f"'tools/install.py --update --force-constitution-update' while project phase was "
+        f"'{phase}', bypassing freeze_policy."
     )
     content = (
         f"id: {event_id}\n"
@@ -235,9 +253,9 @@ def print_update_plan(target: Path, plan: UpdatePlan) -> None:
     )
 
 
-def _can_compile_cursor(source_root: Path) -> bool:
+def _can_compile_cursor(source_root: Path, target: Path | None = None) -> bool:
     try:
-        bootstrap_adapter_imports(source_root)
+        bootstrap_adapter_imports(source_root, target)
         import jsonschema  # noqa: F401
 
         return True
@@ -250,7 +268,7 @@ def build_update_plan(source_root: Path, target: Path, *, compile_cursor: bool |
     new_version = current_version(source_root)
     git_state, dirty_paths = target_git_status(target)
     cursor_compile = (
-        _can_compile_cursor(source_root) if compile_cursor is None else compile_cursor
+        _can_compile_cursor(source_root, target) if compile_cursor is None else compile_cursor
     )
     entries, managed_files = build_copy_plan(
         source_root, target, compile_cursor=cursor_compile
@@ -287,8 +305,20 @@ def _project_id_from_target(target: Path) -> str:
 
 
 def _active_adapter_id(target: Path) -> str:
-    profile = _yaml_module().safe_load((target / ".ai-team" / "project-profile.yaml").read_text(encoding="utf-8"))
+    profile = _yaml_module().safe_load(
+        (target / ".ai-team" / "project-profile.yaml").read_text(encoding="utf-8")
+    )
     return str(profile.get("active_adapter_id", "cursor"))
+
+
+def _needs_layout_migration(target: Path) -> bool:
+    # Presence-based, not a version-string match: any pre-0.7.0 install —
+    # 0.6.0, 0.5.0, or older — left src/governed_ai and/or adapters/cursor
+    # at the target root, regardless of what its recorded version string
+    # says. Reacting to the actual legacy layout, not to "== 0.6.0", means
+    # this keeps working even for versions this exact check was never
+    # updated for.
+    return bool(plan_layout_migration(target).moved)
 
 
 def run_update(source_root: Path, args: Namespace, target: Path) -> int:
@@ -300,17 +330,6 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
         return 2
 
     new_version = current_version(source_root)
-    try:
-        migration = ensure_installation_record_v2(target, target_version=new_version)
-    except MigrationError as exc:
-        print(f"Installation record migration blocked: {exc}")
-        return 2
-    if migration is not None:
-        print(
-            "Migrated legacy framework-version.json to "
-            f".ai-team/installation-record.json (backup: "
-            f"{migration.backup_path.relative_to(target).as_posix()})."
-        )
 
     try:
         installed = read_installed_manifest(target)
@@ -355,10 +374,52 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
         )
 
     plan = build_update_plan(source_root, target)
+
+    existing_record = load_installation_record(target)
+    if existing_record is None and not args.dry_run:
+        legacy = target / LEGACY_VERSION_FILE
+        if legacy.is_file():
+            existing_record = read_installation_manifest(target)
+
+    installed_hashes = managed_file_hashes(existing_record or {})
+    drift = scan_local_drift_collisions(target, plan.entries, installed_hashes)
+    if drift and not args.force:
+        print(format_collision_report(drift))
+        print("Update aborted: pass --force to overwrite locally modified managed files.")
+        return 2
+
     print_update_plan(target, plan)
     if args.dry_run:
         print("DRY-RUN: no file was modified.")
         return 0
+
+    try:
+        migration = ensure_installation_record_v2(target, target_version=new_version)
+    except MigrationError as exc:
+        print(f"Installation record migration blocked: {exc}")
+        return 2
+    if migration is not None:
+        print(
+            "Migrated legacy framework-version.json to "
+            f".ai-team/installation-record.json (backup: "
+            f"{migration.backup_path.relative_to(target).as_posix()})."
+        )
+        existing_record = migration.record
+
+    try:
+        v3_migration = ensure_installation_record_v3(target)
+    except MigrationErrorV2V3 as exc:
+        print(f"Installation record migration blocked: {exc}")
+        return 2
+    if v3_migration is not None:
+        print(
+            "Migrated installation-record.json to schema v3 (content hashes; backup: "
+            f"{v3_migration.backup_path.relative_to(target).as_posix()}). Local drift on "
+            "managed files could not be checked for this transition update — it will be "
+            "detected on the next one."
+        )
+        existing_record = v3_migration.record
+
     if plan.git_state != "clean" and not args.allow_dirty:
         print(
             "Update aborted before writing files: target must be a clean standalone Git "
@@ -379,36 +440,56 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
     record_path = target / INSTALLATION_RECORD_FILE
     legacy_path = target / LEGACY_VERSION_FILE
     state_path = target / ".ai-team" / "state" / "project-state.yaml"
-    touched = [entry.destination for entry in changed_entries]
+    touched = collect_changed_destinations(changed_entries)
     touched.extend(change.path for change in plan.migration_changes)
     if plan.constitution_change:
         touched.append(state_path)
     touched.extend([record_path, legacy_path])
 
-    existing_record = load_installation_record(target)
+    needs_layout_migration = _needs_layout_migration(target)
+    pending_layout_moves: list[tuple[str, str]] = []
+    if needs_layout_migration:
+        # These paths do not exist yet (the migration hasn't run); include
+        # them so a failure anywhere in this transaction unwinds the
+        # freshly-copied new layout via the normal file-level rollback,
+        # not just the legacy directories (which apply_layout_migration
+        # itself never deletes until the transaction fully succeeds).
+        touched.extend(iter_legacy_migration_destination_files(target))
+        # Computed up front (read-only) so the except-block cleanup below
+        # knows which destination directories to remove even if the
+        # migration call itself raises before returning a result.
+        pending_layout_moves = plan_layout_migration(target).moved
+
     project_id = _project_id_from_target(target)
     active_adapter = _active_adapter_id(target)
 
+    layout_result = None
     with tempfile.TemporaryDirectory(prefix="governed-ai-update-") as temp_dir:
         backup_root = Path(temp_dir)
         snapshot = create_snapshot(target, touched, backup_root)
         migration_backup = None
         try:
-            cursor_changes = [
-                entry
-                for entry in changed_entries
-                if entry.relative.parts and entry.relative.parts[0] == ".cursor"
-            ]
-            file_changes = [
-                entry
-                for entry in changed_entries
-                if not entry.relative.parts or entry.relative.parts[0] != ".cursor"
-            ]
-            for entry in file_changes:
-                entry.destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(entry.source, entry.destination)
-            if cursor_changes:
-                materialize_cursor_dir(source_root, target)
+            if needs_layout_migration:
+                layout_result = apply_layout_migration(
+                    target,
+                    version_from=plan.installed_version or "0.6.0",
+                    version_to=plan.new_version,
+                )
+                if layout_result.moved:
+                    print(f"Layout migration: moved {len(layout_result.moved)} path(s).")
+                for event in layout_result.forensic_events:
+                    print(
+                        f"Recorded forensic review event: "
+                        f"{event.relative_to(target).as_posix()}"
+                    )
+
+            apply_copy_entries(
+                source_root,
+                target,
+                changed_entries,
+                project_id=project_id,
+            )
+
             migrations = load_migration_module(source_root)
             migration_backup = migrations.apply_acceptance_changes(target, plan.migration_changes)
             if plan.constitution_change:
@@ -434,6 +515,7 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
                 managed_files=plan.managed_files,
                 active_adapter_id=active_adapter,
                 existing_record=existing_record,
+                schema_version=3,
             )
 
             if validator is not None:
@@ -452,9 +534,16 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
                     )
         except Exception as exc:
             rollback_paths(touched, snapshot.existing_paths, target, backup_root)
+            for _src_prefix, dest_prefix in pending_layout_moves:
+                dest_dir = target / dest_prefix
+                if dest_dir.is_dir():
+                    shutil.rmtree(dest_dir, ignore_errors=True)
             print(str(exc))
             print("Update rolled back; target files and installation manifests were restored.")
             return 1
+
+    if layout_result is not None and layout_result.moved:
+        remove_migrated_legacy_paths(target, layout_result.moved)
 
     print(f"Update complete: framework {plan.new_version} installed.")
     if plan.migration_changes:
@@ -480,21 +569,11 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
         print("Post-update validation: PASS")
     else:
         print("WARNING: post-update validation was explicitly skipped.")
-    print("Before Cursor CLI, run python scripts/ai-team/preflight.py.")
+    print("Before Cursor CLI, run: python scripts/ai-team/preflight.py.")
     return 0
 
 
-def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
-    try:
-        import yaml as _yaml
-    except ModuleNotFoundError:
-        print("Missing dependency: PyYAML. Install it first, then re-run this command:")
-        print("  pip install -r requirements.txt")
-        return 1
-
-    _ = _yaml
-    target.mkdir(parents=True, exist_ok=True)
-
+def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> None:
     for rel in FRESH_PROJECT_SEEDS:
         src = source_root / rel
         if not src.is_file():
@@ -509,8 +588,7 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
 
     profile_path = target / ".ai-team" / "project-profile.yaml"
     if not profile_path.is_file():
-        print(f"Missing seed file: {profile_path}", file=sys.stderr)
-        return 1
+        raise FileNotFoundError(f"Missing seed file: {profile_path}")
     profile_text = profile_path.read_text(encoding="utf-8")
     substitutions = [
         ("  id: framework-template", f"  id: {args.project_id}"),
@@ -541,7 +619,8 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
             "Complete commands, paths and human authorities before production use."
         )
         profile_path.write_text(
-            _yaml_module().safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
+            _yaml_module().safe_dump(profile, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
         )
 
     profile = _yaml_module().safe_load(profile_path.read_text(encoding="utf-8"))
@@ -570,23 +649,58 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
         _yaml_module().safe_dump(state, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
 
-    managed_files: list[str] = []
-    for relative, source in iter_managed_source_files(
-        source_root, target, project_id=args.project_id
-    ):
-        destination = target / relative
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, destination)
-        managed_files.append(relative.as_posix())
-    managed_files = sorted(set(managed_files))
+
+def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
+    try:
+        import yaml as _yaml
+    except ModuleNotFoundError:
+        print("Missing dependency: PyYAML. Install it first, then re-run this command:")
+        print("  pip install -r requirements.txt")
+        return 1
+
+    _ = _yaml
+    target.mkdir(parents=True, exist_ok=True)
+
+    entries, managed_files = build_copy_plan(source_root, target, project_id=args.project_id)
+    seed_destinations = [target / rel for rel in FRESH_PROJECT_SEEDS]
+    copy_destinations = collect_changed_destinations(entries)
+    collision_destinations = seed_destinations + copy_destinations
+
+    collisions = scan_fresh_install_collisions(target, collision_destinations)
+    if collisions and not args.force:
+        print(format_collision_report(collisions))
+        print("Install aborted: pass --force to overwrite conflicting paths.")
+        return 2
+
+    record_path = target / INSTALLATION_RECORD_FILE
+    legacy_path = target / LEGACY_VERSION_FILE
+    touched = list(collision_destinations) + [record_path, legacy_path]
     version = current_version(source_root)
-    finalize_installation_manifests(
-        target,
-        project_id=args.project_id,
-        version=version,
-        managed_files=managed_files,
-        active_adapter_id="cursor",
-    )
+
+    with tempfile.TemporaryDirectory(prefix="governed-ai-install-") as temp_dir:
+        backup_root = Path(temp_dir)
+        snapshot = create_snapshot(target, touched, backup_root)
+        try:
+            _write_project_seeds(source_root, target, args)
+            apply_copy_entries(
+                source_root,
+                target,
+                entries,
+                project_id=args.project_id,
+            )
+            finalize_installation_manifests(
+                target,
+                project_id=args.project_id,
+                version=version,
+                managed_files=managed_files,
+                active_adapter_id="cursor",
+                schema_version=3,
+            )
+        except Exception as exc:
+            rollback_paths(touched, snapshot.existing_paths, target, backup_root)
+            print(str(exc))
+            print("Install rolled back; target files and installation manifests were restored.")
+            return 1
 
     print(f"Installed governed AI team framework {version} into {target}")
     print("Next:")

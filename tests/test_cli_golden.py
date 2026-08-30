@@ -132,7 +132,7 @@ class CliGoldenCharacterizationTests(unittest.TestCase):
         manifest = json.loads(
             (FIXTURES_DIR.parent / "baseline-manifest.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(manifest["framework_version"], "0.6.0")
+        self.assertEqual(manifest["framework_version"], "0.4.0")
         self.assertEqual(manifest["baseline_tag"], "v0.4.0-baseline")
         for tool in (
             "validate.py",

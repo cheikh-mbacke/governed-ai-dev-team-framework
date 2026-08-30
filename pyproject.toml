@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "governed-ai-dev-team-framework"
-version = "0.4.0"
+version = "0.7.0"
 description = "Human-governed multi-agent software development framework for Cursor UI and CLI"
 requires-python = ">=3.10"
 dependencies = [

@@ -30,6 +30,12 @@ def classify_owner(path: str) -> str:
     """Map a delivered path to its unique owner (0.4.x classification rules)."""
     p = normalize_path(path)
 
+    if p.startswith(".ai-team/runtime/governed_ai/adapters/cursor/"):
+        return "adapter:cursor"
+    if p.startswith(".ai-team/runtime/governed_ai/"):
+        return "core"
+    if p == ".ai-team/requirements.txt":
+        return "core"
     if p.startswith(".cursor/"):
         return "adapter:cursor"
     if p == "tools/install.py":

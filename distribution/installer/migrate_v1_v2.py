@@ -27,7 +27,6 @@ from distribution.installer.record import (
     INSTALLATION_RECORD_FILE,
     LEGACY_VERSION_FILE,
     is_v1_manifest,
-    is_v2_record,
     load_installation_record,
     load_legacy_manifest,
     managed_files_union,
@@ -240,6 +239,7 @@ def ensure_installation_record_v2(
     target: Path,
     *,
     target_version: str | None = None,
+    write_files: bool = True,
 ) -> MigrationResult | None:
     """Migrate legacy v1 manifest when v2 record is absent."""
     if load_installation_record(target) is not None:
@@ -247,4 +247,4 @@ def ensure_installation_record_v2(
     legacy_path = target / LEGACY_VERSION_FILE
     if not legacy_path.is_file():
         return None
-    return migrate_v1_to_v2(target, target_version=target_version)
+    return migrate_v1_to_v2(target, target_version=target_version, write_files=write_files)

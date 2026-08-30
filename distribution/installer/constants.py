@@ -4,16 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+# Installed-target copy map (Document 11 §4). Framework repo layout unchanged.
 COPY_ITEMS = [
     ".cursor",
     ".ai-team",
-    "adapters/cursor",
-    "src",
     "scripts",
-    "docs/product",
-    "docs/operator",
-    "README.md",
     "AGENTS.md",
+    "src/governed_ai",
+    "adapters/cursor",
     "requirements.txt",
 ]
 
@@ -45,6 +43,16 @@ FRESH_PROJECT_SEEDS = (
     ".ai-team/sources/source-registry.yaml",
 )
 
-SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0", "0.6.0"}
+SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0", "0.6.0", "0.7.0"}
 
 LEGACY_VERSION_REL = Path(".ai-team/framework-version.json")
+
+# Marker files indicating a prior framework installation (not collisions on fresh install).
+FRAMEWORK_INSTALL_MARKERS = frozenset(
+    {
+        ".ai-team/installation-record.json",
+        ".ai-team/framework-version.json",
+        ".ai-team/project-profile.yaml",
+        ".ai-team/state/project-state.yaml",
+    }
+)

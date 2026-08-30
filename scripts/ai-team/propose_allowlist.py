@@ -9,24 +9,27 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 try:
     import yaml  # noqa: F401 — dependency probe for PyYAML
 except ModuleNotFoundError:
+    _root = Path(__file__).resolve().parents[2]
+    from install_paths import requirements_install_hint
+
     print(
         "Missing dependency: PyYAML. Install it first, then re-run this command:"
     )
-    print("  pip install -r requirements.txt")
+    print(f"  {requirements_install_hint(_root)}")
     raise SystemExit(1)
 
 ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "src"))
+from install_paths import bootstrap_runtime, import_adapters_cursor
 
-from adapters.cursor.runtime.checks import build_allowlist_proposals, load_cursor_json
+bootstrap_runtime(ROOT)
+_checks = import_adapters_cursor("runtime.checks")
+build_allowlist_proposals = _checks.build_allowlist_proposals
+load_cursor_json = _checks.load_cursor_json
 
 from governed_ai.core.diagnostics import declared_profile_commands
 
