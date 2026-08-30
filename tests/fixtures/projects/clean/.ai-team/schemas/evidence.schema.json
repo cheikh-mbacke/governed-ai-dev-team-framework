@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evidence",
+  "type": "object",
+  "required": [
+    "id",
+    "type",
+    "command_or_observation",
+    "result",
+    "demonstrates",
+    "limitations"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "work_unit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "type": {
+      "type": "string"
+    },
+    "code_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "command_or_observation": {
+      "type": "string"
+    },
+    "result": {
+      "type": "object",
+      "required": [
+        "status"
+      ]
+    },
+    "demonstrates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifacts": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true
+}

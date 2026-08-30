@@ -1,0 +1,70 @@
+id: WU-P2-PARITY-TEST
+title: "Test comparaison sémantique bundle vs artefacts Cursor"
+objective:
+  result: "Un test compare le contenu sémantique du bundle aux fichiers .cursor/agents et .cursor/skills et signale les divergences."
+  rationale: "Document 13 Phase 2 compatibilité — détecter la dérive sémantique avant bascule compilateur."
+scope:
+  include:
+    - tests/contracts/
+    - .cursor/agents/
+    - .cursor/skills/
+    - src/governed_ai/contracts/
+  exclude:
+    - adapters/cursor/compiler/
+zone:
+  area: backend
+  capabilities:
+    - semantic-parity-check
+  components:
+    - tests/contracts/test_bundle.py
+expected_behavior: "Le test de parité sémantique passe ou produit un rapport de divergences explicites et actionnables."
+applicable_rules_requirements:
+  - "Document 13 §5 Phase 2 compatibilité"
+  - "Document 13 §12 risque dérive sémantique"
+acceptance_criteria:
+  - "Test de comparaison sémantique bundle ↔ .cursor/agents/skills implémenté"
+  - "Divergences reportées avec identifiants rôle/procédure"
+  - "Test intégré CI L1"
+dependencies:
+  - WU-P2-PUBLISH
+risk:
+  class: medium
+  reasons:
+    - "Test de détection sans mutation"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P2-PARITY-TEST
+status: done
+events:
+  - EVT-20260829-162400-orchestrator-start
+  - EVT-20260829-163000-backend-handoff
+  - EVT-20260829-163100-qa-pass
+  - EVT-20260829-163200-review-approved
+evidence:
+  - id: EVD-WU-P2-PARITY-TEST-IMPL
+    type: implementation
+    commit_sha: e2fea44
+    verified_by: backend-developer
+  - id: EVD-WU-P2-PARITY-TEST-QA
+    type: qa
+    commit_sha: e2fea44
+    event: EVT-20260829-163100-qa-pass
+  - id: EVD-WU-P2-PARITY-TEST-REVIEW
+    type: review
+    commit_sha: e2fea44
+    event: EVT-20260829-163200-review-approved
+outcomes:
+  review_status: approved
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

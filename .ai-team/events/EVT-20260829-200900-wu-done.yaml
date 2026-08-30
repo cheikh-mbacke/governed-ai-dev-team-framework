@@ -1,0 +1,14 @@
+id: EVT-20260829-200900-wu-done
+type: STATUS
+work_unit: WU-P4-RUNTIME
+created_at: '2026-08-29T20:09:00+00:00'
+created_by_role: orchestrator
+summary: "WU-P4-RUNTIME terminée — prochaine WU-P4-CONFORMANCE."
+details:
+  next_ready:
+    - WU-P4-CONFORMANCE
+affected_nodes:
+  - WU-P4-RUNTIME
+  - WU-P4-CONFORMANCE
+requires_human: false
+status: open

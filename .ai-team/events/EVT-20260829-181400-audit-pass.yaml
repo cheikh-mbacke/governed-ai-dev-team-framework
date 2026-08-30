@@ -1,0 +1,13 @@
+id: EVT-20260829-181400-audit-pass
+type: STATUS
+work_unit: WU-P3-GW-GATE-ACC
+created_at: '2026-08-29T18:14:00+00:00'
+created_by_role: auditor
+summary: "Audit pass WU-P3-GW-GATE-ACC — SM-001/SM-002 et intégrité transactionnelle gate validés."
+details:
+  scope: "SM-001, SM-002, gate naming, G4 preconditions"
+  findings: []
+affected_nodes:
+  - WU-P3-GW-GATE-ACC
+requires_human: false
+status: open

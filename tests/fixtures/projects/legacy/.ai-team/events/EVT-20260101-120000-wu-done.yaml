@@ -1,0 +1,11 @@
+id: EVT-20260101-120000-wu-done
+type: STATUS
+work_unit: WU-WITNESS-DONE
+created_at: '2026-01-01T12:00:00+00:00'
+created_by_role: orchestrator
+summary: Witness done Work Unit marked complete.
+details: {}
+affected_nodes:
+- WU-WITNESS-DONE
+requires_human: false
+status: open

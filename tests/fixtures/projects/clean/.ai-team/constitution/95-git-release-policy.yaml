@@ -1,0 +1,69 @@
+policy: git_release_rollback
+version: "1.1.0"
+git:
+  developer_uses_isolated_working_branch_or_worktree: true
+  developer_direct_protected_branch_write: false
+  merge_requires_definition_of_done_and_risk_approvals: true
+  shared_contract_or_structural_migration_requires_impact_analysis: true
+  candidate_commit_or_artifact_must_be_stably_identified_in_evidence: true
+commit_policy:
+  principle: "A commit is a recoverable technical checkpoint on an isolated Work Unit branch; merge and release remain separately governed actions."
+  working_branch_autonomy:
+    agent_may_commit_without_human_confirmation: true
+    conditions:
+      - current_branch_is_not_protected
+      - work_unit_is_approved_and_ready_or_in_progress
+      - staged_diff_is_limited_to_the_work_unit_and_contains_no_unrelated_changes
+      - change_is_coherent_enough_to_describe_and_review
+      - required_developer_checks_were_run_or_failures_are_explicitly_recorded
+  required_commit_points:
+    implementation_handoff: "Commit before QA/review so verification targets a stable revision."
+    remediation_handoff: "Create a new commit before re-verification after requested changes."
+  interrupted_work:
+    wip_commit_allowed: true
+    requirements:
+      - isolated_non_protected_branch
+      - message_clearly_marks_wip
+      - blockers_or_missing_decisions_are_recorded
+      - commit_is_not_presented_as_verified_evidence
+  granularity:
+    rule: "Prefer one commit per coherent state; a Work Unit may contain implementation, test, and remediation commits."
+    unrelated_work_units_in_one_commit: false
+  message:
+    work_unit_id_required: true
+    reference_format: "type(WU-ID): concise description"
+    wip_reference_format: "wip(WU-ID): concise checkpoint description"
+  evidence:
+    developer_handoff_includes_commit_sha: true
+    qa_review_and_audit_target_exact_sha: true
+    change_after_evidence_invalidates_affected_evidence: true
+    new_sha_requires_reverification: true
+  history_rewrite:
+    amend_or_rebase_after_evidence: prohibited
+    exception_requires:
+      - explicit_human_authorization
+      - evidence_invalidation_recorded
+      - affected_checks_rerun_on_new_sha
+  push:
+    separate_from_commit: true
+    follows_auto_push_working_branches_setting: true
+  merge:
+    separate_from_commit: true
+    protected_branch_requires_definition_of_done_and_applicable_approvals: true
+release:
+  release_candidate_contains: [commits, migrations, evidence, open_findings, approval_status]
+  production_deployment_gate: G3
+  lower_environments_may_be_automated: true
+  auto_push_working_branches:
+    default: false
+    when_enabled: >
+      An agent's own working branch (never protected_branch, from
+      project-profile.yaml) may be pushed to "origin" as a backup after a
+      subagent finishes, if "origin" is configured. This is a data-safety
+      convenience, not a merge or release action: it never authorizes
+      direct_protected_branch_merge or production_deploy, which remain
+      denied per 70-permissions-policy.yaml regardless of this setting.
+rollback:
+  significant_risk_requires_rollback_or_restore_plan_before_release: true
+  automatic_rollback_allowed_only_for_pre_authorized_observable_conditions: true
+  post_rollback_project_state_records: [cause, restored_version, remediation_work_units]

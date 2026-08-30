@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Dependency-free preflight for Cursor UI/CLI governance hooks.
+
+Generic Python/platform checks stay in this script; Cursor-specific probes
+live in ``adapters.cursor.runtime``.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from adapters.cursor.runtime.checks import collect_preflight_report
+from i18n import project_language, t
+
+LANG = project_language(ROOT)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Check Cursor CLI governance prerequisites")
+    parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    args = parser.parse_args()
+    report = collect_preflight_report(ROOT)
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(t(LANG, "Governed AI Team preflight", "Verification prealable Governed AI Team"))
+        print("=" * 26)
+        print(f"platform: {report['platform']}")
+        for name, result in report.items():
+            if name == "platform":
+                continue
+            print(f"{result['status'].upper():8} {name}: {result['detail']}")
+    blocking = {"fail", "blocked"}
+    return 1 if any(
+        isinstance(result, dict) and result.get("status") in blocking
+        for result in report.values()
+    ) else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

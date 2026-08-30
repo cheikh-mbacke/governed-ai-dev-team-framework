@@ -1,0 +1,15 @@
+{
+  "adapter_id": "cursor",
+  "adapter_version": "0.5.0",
+  "protocol_versions": ["1.0"],
+  "bundle_version_range": ">=1.0.0,<2.0.0",
+  "platforms": ["windows", "linux", "macos"],
+  "capabilities": {
+    "per_role_readonly": true,
+    "per_role_product_scope": "partial",
+    "mediated_core_commands": true,
+    "hooks": true,
+    "mcp": true,
+    "isolated_worktree": true
+  }
+}

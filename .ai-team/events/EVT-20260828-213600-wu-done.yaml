@@ -1,0 +1,19 @@
+id: EVT-20260828-213600-wu-done
+type: STATUS
+work_unit: WU-P1-FEEDBACK-MOD
+created_at: '2026-08-28T21:36:00+00:00'
+created_by_role: orchestrator
+summary: "WU-P1-FEEDBACK-MOD terminee — QA + revue approuvee avec notes, Definition of Done satisfaite."
+details:
+  commit_sha: f835600fa3d82025ad46630fe5ba9775f15fe5fd
+  retrospective: RET-20260828T213629149140Z-8f708b
+  next_ready: WU-P1-ARCH-TEST
+  documented_reserves:
+    - "test_record_retrospective echec preexistant (glob non deterministe)"
+    - "Wrappers feedback requierent runtime Core / src/"
+    - "Witness fixtures feedback.py non regeneres"
+affected_nodes:
+  - WU-P1-FEEDBACK-MOD
+  - WU-P1-ARCH-TEST
+requires_human: false
+status: closed

@@ -1,0 +1,55 @@
+project:
+  id: witness-legacy
+  name: Witness Legacy
+  repository_kind: existing_or_greenfield_project
+  primary_language: python
+  package_manager: pip
+communication:
+  language: français
+autonomy:
+  level: 3
+paths:
+  product_docs: docs/product
+  source_roots:
+  - scripts
+  - .cursor/hooks
+  test_roots:
+  - tests
+  config_roots:
+  - .ai-team
+  - .cursor
+commands:
+  setup: python -m pip install -r requirements.txt
+  build: null
+  lint: python -m ruff check scripts/
+  typecheck: null
+  unit_test: python -m pytest tests/ -q
+  integration_test: null
+  e2e_test: null
+runtime_environments:
+  development:
+    protected: false
+  test:
+    protected: false
+  staging:
+    protected: true
+  production:
+    protected: true
+release:
+  protected_branch: main
+  production_requires_g3: true
+  auto_push_working_branches: false
+human_authorities:
+  product: cheikh MBACKE
+  engineering_constitution: cheikh MBACKE
+  production_release: cheikh MBACKE
+  final_acceptance: cheikh MBACKE
+setup_status:
+  template: false
+  cursor_compile_opt_in: true
+  note: Witness legacy fixture — user customized setup note after install.
+active_adapter_id: cursor
+extensions:
+  witness:
+    operator: fixture-generator
+    purpose: Simulates user-edited project-owned profile metadata.

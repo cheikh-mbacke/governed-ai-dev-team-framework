@@ -1,0 +1,16 @@
+id: EVT-20260829-181000-backend-handoff
+type: HANDOFF
+work_unit: WU-P3-GW-GATE-ACC
+created_at: '2026-08-29T18:10:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P3-GW-GATE-ACC — RecordGateDecision, RecordAcceptance, RegisterReleaseCandidate opérationnels."
+details:
+  branch: wu/WU-P3-GW-GATE-ACC
+  commit_sha: 2879750
+  checks:
+    gate_pytest: "tests/core/test_gate_acceptance_handlers.py → 8 passed"
+    core_pytest: "tests/core/ → 164 passed"
+affected_nodes:
+  - WU-P3-GW-GATE-ACC
+requires_human: false
+status: open

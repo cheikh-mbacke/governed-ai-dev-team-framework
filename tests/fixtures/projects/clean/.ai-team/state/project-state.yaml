@@ -1,0 +1,22 @@
+project_id: witness-clean
+constitution_version: 1.1.0
+phase: not_compiled
+gates:
+  G0:
+    status: not_required
+  G1:
+    status: not_required
+  G2:
+    status: not_required
+  G3:
+    status: not_required
+  G4:
+    status: not_required
+work_units: {}
+dependency_edges: []
+active_workers: []
+open_decisions: []
+open_blockers: []
+open_defects: []
+open_findings: []
+last_updated: '2026-01-01T00:00:00+00:00'

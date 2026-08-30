@@ -1,0 +1,15 @@
+id: EVT-20260829-203300-review-approved
+type: STATUS
+work_unit: WU-P5-INSTALL-UPDATE
+created_at: '2026-08-29T20:33:00+00:00'
+created_by_role: code-reviewer
+summary: "Review approved WU-P5-INSTALL-UPDATE — operations/snapshot isolent install et update ; tools/install.py wrapper mince ; record v2 apres validation."
+details:
+  notes:
+    - "Snapshot manifeste path/sha256/owner avant update ; rollback restaure fichiers et manifestes"
+    - "Chemins project-owned exclus du plan de copie ; refuse git sale sans --allow-dirty"
+    - "finalize_installation_manifests ecrit legacy v1 puis v2 en dernier"
+affected_nodes:
+  - WU-P5-INSTALL-UPDATE
+requires_human: false
+status: open

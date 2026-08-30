@@ -1,0 +1,33 @@
+policy: risk_strategy
+version: "1.0.0"
+principle: "Risk is assigned before execution when known and may be re-evaluated only as a traced Project State event."
+classes:
+  low:
+    reference_criteria:
+      - localized reversible change
+      - no sensitive data or authorization impact
+      - no shared contract or migration
+    verification_effect: baseline
+  medium:
+    reference_criteria:
+      - normal feature behavior across one or more components
+      - moderate regression surface
+      - externally visible behavior without critical side effects
+    verification_effect: qa_and_review
+  high:
+    reference_criteria:
+      - authentication_or_authorization
+      - payment_or_financial_side_effect
+      - sensitive_data
+      - shared_contract_or_structural_migration
+      - significant_operational_or_security_impact
+    verification_effect: strengthened_review_security_when_relevant_and_audit
+  critical:
+    reference_criteria:
+      - production_infrastructure_or_data_integrity
+      - irreversible_or_broad_blast_radius
+      - compliance_critical_behavior
+      - safety_or_business_critical_path_with_high_consequence
+    verification_effect: maximum_depth_single_high_risk_wip_human_gates
+implementation_default: true
+rule: "If uncertain between two classes, choose the higher class until evidence supports reduction."

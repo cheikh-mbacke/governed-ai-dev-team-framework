@@ -1,0 +1,25 @@
+id: OBS-WITNESS-001
+recorded_at: '2026-01-01T09:00:00+00:00'
+recorded_by: witness-operator
+project_id: witness-legacy
+framework_version: 0.6.0
+constitution_version: 1.1.0
+work_unit: WU-WITNESS-ACTIVE
+phase: execution
+category: tooling
+severity: low
+symptom: Witness legacy observation for migration baseline.
+classification:
+  origin: framework
+  confidence: confirmed
+impact:
+  blocked_minutes: 0
+  rework_required: false
+  human_intervention: false
+  affected_work_units: []
+evidence_refs: []
+workaround: null
+candidate_improvement: null
+recurrence_key: null
+status: open
+resolution: null

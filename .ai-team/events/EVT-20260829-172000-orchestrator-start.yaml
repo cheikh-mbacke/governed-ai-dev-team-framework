@@ -1,0 +1,29 @@
+id: EVT-20260829-172000-orchestrator-start
+type: STATUS
+work_unit: WU-P3-GW-WU
+created_at: '2026-08-29T17:20:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P3-GW-WU au backend-developer sur branche wu/WU-P3-GW-WU."
+details:
+  gates:
+    G0: passed
+    G1: approved
+  phase: execution
+  milestone: M-P3
+  predecessor:
+    work_unit: WU-P3-GW-OBS-EVID
+    commit_sha: ec5f4dd
+  staffing:
+    primary: backend-developer
+    support:
+      - architect
+      - qa-test
+      - code-reviewer
+  branch: wu/WU-P3-GW-WU
+  context_package: CTX-WU-P3-GW-WU
+  scope_summary: "Handlers CreateWorkUnit et TransitionWorkUnit, machine à états normative, check_done wrapper."
+  note: "Tests transitions générés depuis table normative ; CG-003 obligatoire."
+affected_nodes:
+  - WU-P3-GW-WU
+requires_human: false
+status: open

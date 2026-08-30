@@ -1,0 +1,29 @@
+id: EVT-20260828-185400-orchestrator-start
+type: STATUS
+work_unit: WU-P1-SCAFFOLD
+created_at: '2026-08-28T18:54:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P1-SCAFFOLD au backend-developer sur branche wu/WU-P1-SCAFFOLD."
+details:
+  gates:
+    G0: passed
+    G1: approved
+  phase: execution
+  milestone: M-P1
+  predecessor:
+    work_unit: WU-P0-WITNESS
+    commit_sha: e42099f
+  staffing:
+    primary: backend-developer
+    support:
+      - architect
+      - qa-test
+      - code-reviewer
+  branch: wu/WU-P1-SCAFFOLD
+  context_package: CTX-WU-P1-SCAFFOLD
+  scope_summary: "Arborescence src/governed_ai (core, feedback, contracts, adapters/spi.py) sans adapters/cursor ni distribution."
+  note: "Phase 0 complète ; golden tests Phase 0 doivent rester identiques."
+affected_nodes:
+  - WU-P1-SCAFFOLD
+requires_human: false
+status: open

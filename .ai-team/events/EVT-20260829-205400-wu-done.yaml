@@ -1,0 +1,17 @@
+id: EVT-20260829-205400-wu-done
+type: STATUS
+work_unit: WU-P6-DOCS
+created_at: '2026-08-29T20:54:00+00:00'
+created_by_role: orchestrator
+summary: "WU-P6-DOCS terminée — acceptation humaine documentation pending ; prochaine WU-P6-CLEANUP ou WU-E2E-CONFORMITY."
+details:
+  next_ready:
+    - WU-P6-CLEANUP
+    - WU-E2E-CONFORMITY
+  human_acceptance: pending
+affected_nodes:
+  - WU-P6-DOCS
+  - WU-P6-CLEANUP
+  - WU-E2E-CONFORMITY
+requires_human: true
+status: open

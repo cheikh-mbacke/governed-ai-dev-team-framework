@@ -1,0 +1,60 @@
+id: G1-EXEC-PLAN-2026-08-28
+type: GATE_DECISION_REQUEST
+gate: G1
+question: "Approuver le plan d'exécution de la refonte framework-renov (31 Work Units, 8 milestones, 4 increments) et autoriser l'activation runtime à partir de WU-P0-BASELINE ?"
+why_human_authority_is_required: "G1 exige l'approbation humaine du Project State et du plan proposé avant toute implémentation produit."
+source_investigation:
+  - ".ai-team/state/project-state.yaml"
+  - ".ai-team/work-units/WU-P0-BASELINE.yaml through WU-E2E-CONFORMITY.yaml"
+  - "docs/product/architecture-and-constraints/13-plan-de-migration.md"
+  - "docs/product/acceptance-criteria/14-tests-de-conformite.md"
+plan_summary:
+  work_units_count: 31
+  milestones: [M-P0, M-P1, M-P2, M-P3, M-P4, M-P5, M-P6, M-CONFORMITY]
+  increments: [INC-ALPHA, INC-BETA, INC-RELEASE, INC-CLEANUP]
+  critical_path_length: 28
+  risk_distribution:
+    low: 1
+    medium: 8
+    high: 17
+    critical: 5
+  first_work_unit: WU-P0-BASELINE
+  target_release: "0.5.0"
+readiness:
+  g0_status: passed
+  blocking_ambiguities: none
+  open_g2_decisions:
+    - DEC-001
+    - DEC-002
+proposed_allowlist_diff: |
+  Proposed allowlist additions (derived from project-profile.yaml commands)
+  ==========================================================================
+
+  .cursor/permissions.json -> terminalAllowlist (add):
+    "python -m pip install -r requirements.txt",
+
+  .cursor/cli.json -> permissions.allow (add):
+    "Shell(python:-m pip install -r requirements.txt*)",
+
+  Note: review and apply manually — agents cannot write permissions.json or cli.json.
+  Additional commands (unit_test, lint) to be proposed when DEC-001 is resolved.
+staffing_proposal:
+  see: ".ai-team/state/project-state.yaml#staffing_proposal"
+options:
+  - id: approve
+    label: "Approuver le plan tel quel et activer WU-P0-BASELINE"
+  - id: approve_with_amendments
+    label: "Approuver avec amendements (préciser dans le champ scope)"
+  - id: reject
+    label: "Rejeter — retour compilation ou clarification sources"
+impact_by_option:
+  approve: "Phase passe à execution ; WU-P0-BASELINE activable ; DEC-001/DEC-002 restent ouverts sans bloquer Phase 0."
+  approve_with_amendments: "Phase passe à execution après mise à jour project-state ; Work Units affectées repassent en draft si nécessaire."
+  reject: "Phase reste awaiting_g1_approval ou readiness_blocked ; aucune implémentation."
+recommended_option: approve
+status: decided
+decision:
+  selected_option: approve
+  scope: "Plan tel quel — 31 WU, 8 milestones, 4 increments, activation WU-P0-BASELINE"
+  decided_by: cheikh MBACKE
+  decided_at: "2026-08-28T17:03:00Z"

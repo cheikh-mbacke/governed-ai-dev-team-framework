@@ -1,0 +1,12 @@
+id: EVT-20260829-211900-security-approved
+type: STATUS
+work_unit: WU-E2E-CONFORMITY
+created_at: '2026-08-29T21:19:00+00:00'
+created_by_role: security-reviewer
+summary: "Security review pass WU-E2E-CONFORMITY — install/update preserve project-owned, rollback manifestes, pas d'elevation permissions."
+details:
+  findings: []
+affected_nodes:
+  - WU-E2E-CONFORMITY
+requires_human: false
+status: open

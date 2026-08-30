@@ -1,0 +1,76 @@
+id: WU-P3-GW-OBS-EVID
+title: "Handlers RecordObservation et RegisterEvidence"
+objective:
+  result: "RecordObservation et RegisterEvidence passent par le Gateway avec port médié pour rôles readonly."
+  rationale: "Document 13 Phase 3 ordre 2 — handlers à faible couplage en premier."
+scope:
+  include:
+    - src/governed_ai/core/commands/
+    - src/governed_ai/feedback/commands/
+  exclude:
+    - adapters/cursor/runtime/
+zone:
+  area: backend
+  capabilities:
+    - observation-recording
+    - evidence-registration
+  components:
+    - src/governed_ai/core/commands/handlers
+expected_behavior: "Un rôle product_write=none peut soumettre RecordObservation via le port médié ; Evidence est create-exclusive sans commande update (CG-011)."
+applicable_rules_requirements:
+  - "Document 11 §8 sécurité port médié readonly"
+  - "Document 11 §7.2 immuable Evidence"
+  - "Document 14 CG-011"
+acceptance_criteria:
+  - "Handler RecordObservation opérationnel via gov.py command"
+  - "Handler RegisterEvidence create-exclusive"
+  - "Tentative update Evidence rejetée (CG-011)"
+  - "Rôle readonly enregistre observation sans élargissement de capacité"
+dependencies:
+  - WU-P3-GW-INFRA
+risk:
+  class: high
+  reasons:
+    - "Autorisation readonly — risque d'élargissement silencieux"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: true
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P3-GW-OBS-EVID
+status: done
+events:
+  - EVT-20260829-170000-orchestrator-start
+  - EVT-20260829-171000-backend-handoff
+  - EVT-20260829-171100-qa-pass
+  - EVT-20260829-171200-review-approved
+  - EVT-20260829-171300-security-approved
+evidence:
+  - id: EVD-WU-P3-GW-OBS-EVID-IMPL
+    type: implementation
+    commit_sha: 6ec198a
+    verified_by: backend-developer
+  - id: EVD-WU-P3-GW-OBS-EVID-QA
+    type: qa
+    commit_sha: 6ec198a
+    event: EVT-20260829-171100-qa-pass
+  - id: EVD-WU-P3-GW-OBS-EVID-REVIEW
+    type: review
+    commit_sha: 6ec198a
+    event: EVT-20260829-171200-review-approved
+  - id: EVD-WU-P3-GW-OBS-EVID-SECURITY
+    type: security_review
+    commit_sha: 6ec198a
+    event: EVT-20260829-171300-security-approved
+outcomes:
+  review_status: approved
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

@@ -1,0 +1,10 @@
+id: CTX-WU-WITNESS-ACTIVE
+work_unit: WU-WITNESS-ACTIVE
+role: backend-developer
+assembled_at: '2026-01-01T10:00:00+00:00'
+items:
+- level: L3_work_unit
+  source: .ai-team/work-units/WU-WITNESS-ACTIVE.yaml
+  provenance: derived
+  reason: Active witness Work Unit context
+open_context_requests: []

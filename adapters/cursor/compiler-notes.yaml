@@ -1,0 +1,95 @@
+# Adapter compiler sidecar — NOT part of the Published Contract Bundle manifest.
+# validate_bundle does not read this file. Adapter artefact paths resolve at compile time.
+schema_version: 1
+bundle_version: "1.0.0"
+adapter_id: cursor
+note: "Maps agnostic procedure steps to adapter-specific skills, agents and hooks."
+procedures:
+  implement-work-unit:
+    adapter_sources:
+      - agents/backend-developer.md
+    adapter_only_steps:
+      - agnostic_step: "Create a coherent commit on the isolated Work Unit branch referencing the Work Unit identifier"
+        adapter_artefacts:
+          - agents/backend-developer.md
+        adapter_notes: "Agent frontmatter readonly and model preference come from role bundle"
+  orchestrator:
+    adapter_sources:
+      - skills/orchestrator/SKILL.md
+    adapter_only_steps:
+      - agnostic_step: "Delegate implementation to the appropriate role with isolated environments for concurrent writers when available"
+        adapter_notes: "Dispatch subagents; use isolated worktrees when available"
+      - agnostic_step: "Record structured observations when execution exposes reusable friction or framework limitations"
+        adapter_artefacts:
+          - scripts/ai-team/feedback.py
+        adapter_notes: "Invoke feedback record command"
+      - agnostic_step: "Generate a work-unit or project retrospective when a Work Unit reaches a terminal state or when requested"
+        adapter_artefacts:
+          - scripts/ai-team/feedback.py
+        adapter_notes: "Invoke feedback retrospective command"
+      - agnostic_step: "Emit a blocker or clarification request event before stopping when progress cannot continue"
+        adapter_artefacts:
+          - hooks/session hooks
+        adapter_notes: "Write BLOCKER or CLARIFICATION_REQUEST to events directory per communication policy"
+  build-context:
+    adapter_sources:
+      - skills/build-context/SKILL.md
+  impact-analysis:
+    adapter_sources:
+      - skills/impact-analysis/SKILL.md
+  verify-work-unit:
+    adapter_sources:
+      - skills/verify-work-unit/SKILL.md
+  audit-release:
+    adapter_sources:
+      - skills/audit-release/SKILL.md
+    adapter_only_steps:
+      - agnostic_step: "Delegate measurement to the auditor role with clean, sufficient context containing authoritative intent, repository revision, evidence and runtime observations"
+        adapter_notes: "Dispatch auditor subagent"
+  prepare-acceptance:
+    adapter_sources:
+      - skills/prepare-acceptance/SKILL.md
+  propose-profile:
+    adapter_sources:
+      - skills/propose-profile/SKILL.md
+    adapter_only_steps:
+      - agnostic_step: "Propose allowlist changes as a diff for human review; do not apply allowlist changes automatically"
+        adapter_notes: "compile-project proposes allowlist via propose_allowlist script; propose-profile does not touch adapter permission files"
+  retrospective:
+    adapter_sources:
+      - skills/capture-feedback/SKILL.md
+    adapter_only_steps:
+      - agnostic_step: "Record an observation when execution exposes unexpected rework, delay, manual intervention, or governance, context, staffing, permissions, tooling, verification or environment limitations"
+        adapter_artefacts:
+          - scripts/ai-team/feedback.py
+      - agnostic_step: "Generate a work-unit retrospective by aggregating recorded objects for the specified Work Unit"
+        adapter_artefacts:
+          - scripts/ai-team/feedback.py
+      - agnostic_step: "Export structured feedback with default privacy-preserving detail level"
+        adapter_artefacts:
+          - scripts/ai-team/feedback.py
+  compile-project:
+    adapter_sources:
+      - skills/compile-project/SKILL.md
+    adapter_only_steps:
+      - agnostic_step: "Propose allowlist changes as a diff for human review; do not apply allowlist changes automatically"
+        adapter_artefacts:
+          - scripts/ai-team/propose_allowlist.py
+        adapter_notes: "Attach output to execution plan gate package; never edit adapter permission or CLI config directly"
+  frontend-design:
+    adapter_sources:
+      - skills/frontend-design/SKILL.md
+  webapp-testing:
+    adapter_sources:
+      - skills/webapp-testing/SKILL.md
+    adapter_only_steps:
+      - agnostic_step: "When the server is not running, use a server lifecycle helper to start required services before automation"
+        adapter_notes: "Fetch or vendor with_server helper from upstream skill package when absent"
+      - agnostic_step: "Write automation scripts using a headless browser in synchronous mode"
+        adapter_notes: "Playwright Python bindings; install browser binaries on first use"
+  security-review:
+    adapter_sources:
+      - agents/security-reviewer.md
+    adapter_only_steps:
+      - agnostic_step: "Return findings with evidence, severity, exploit preconditions, affected scope and recommended remediation"
+        adapter_notes: "Dispatch security-reviewer subagent with readonly agent frontmatter"

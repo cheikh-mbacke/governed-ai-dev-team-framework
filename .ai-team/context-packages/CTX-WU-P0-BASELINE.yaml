@@ -1,0 +1,54 @@
+id: CTX-WU-P0-BASELINE
+work_unit: WU-P0-BASELINE
+role: backend-developer
+assembled_at: '2026-08-28T17:06:00+00:00'
+items:
+- level: L0_constitution
+  source: .ai-team/constitution/constitution.yaml
+  provenance: authoritative
+  reason: Contexte projet refonte — constitution
+- level: L1_project
+  source: docs/product/vision-and-scope/00-vision-et-objectifs.md
+  provenance: authoritative
+  reason: Contexte projet refonte — vision
+- level: L1_project
+  source: docs/product/architecture-and-constraints/11-architecture-cible.md
+  provenance: authoritative
+  reason: Contexte projet refonte — arch
+- level: L1_project
+  source: docs/product/architecture-and-constraints/13-plan-de-migration.md
+  provenance: authoritative
+  reason: Contexte projet refonte — migration
+- level: L1_project
+  source: docs/product/acceptance-criteria/14-tests-de-conformite.md
+  provenance: authoritative
+  reason: Contexte projet refonte — conformity
+- level: L3_work_unit
+  source: docs/product/architecture-and-constraints/13-plan-de-migration.md
+  provenance: authoritative
+  reason: Phase 0 baseline
+- level: L3_work_unit
+  source: .ai-team/work-units/WU-P0-BASELINE.yaml
+  provenance: derived
+  reason: Work Unit courante
+- level: L2_relevant_zone
+  source: scripts/ai-team/
+  provenance: observed
+  reason: CLI cibles de caractérisation golden
+- level: L2_relevant_zone
+  source: workspace/governed-ai-dev-team-framework/tests/
+  provenance: observed
+  reason: Suite de tests 0.4.x existante à porter/vérifier
+- level: L2_relevant_zone
+  source: workspace/governed-ai-dev-team-framework/tools/install.py
+  provenance: observed
+  reason: Installateur à caractériser
+- level: L0_constitution
+  source: .ai-team/constitution/40-test-strategy.yaml
+  provenance: authoritative
+  reason: Stratégie de tests pour baseline et golden fixtures
+- level: L0_constitution
+  source: .ai-team/constitution/95-git-release-policy.yaml
+  provenance: authoritative
+  reason: Branche isolée et politique de commit
+open_context_requests: []

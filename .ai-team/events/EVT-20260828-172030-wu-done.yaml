@@ -1,0 +1,21 @@
+id: EVT-20260828-172030-wu-done
+type: STATUS
+work_unit: WU-P0-BASELINE
+created_at: '2026-08-28T17:20:30+00:00'
+created_by_role: orchestrator
+summary: "WU-P0-BASELINE terminée — QA + revue approuvée, Definition of Done satisfaite."
+details:
+  commit_sha: b704f7da5dbdf2b62c35f4ea62cb9683ed47be9d
+  tag: v0.4.0-baseline
+  tag_verified: true
+  retrospective: RET-20260828T171941510938Z-845bae
+  next_ready: WU-P0-FIXTURES
+  documented_reserves:
+    - "M1: fixtures golden win32-only"
+    - "M2: install frais copie .ai-team complet"
+    - "M3: golden check-done couplé à état WU source"
+affected_nodes:
+  - WU-P0-BASELINE
+  - WU-P0-FIXTURES
+requires_human: false
+status: closed

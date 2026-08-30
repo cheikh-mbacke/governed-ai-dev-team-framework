@@ -1,0 +1,58 @@
+policy: skills_permissions_least_privilege
+version: "1.1.0"
+skill_statuses:
+  approved: "May be used by explicitly authorized roles/resources."
+  restricted: "Requires a condition, environment restriction or human approval."
+  unknown: "May be proposed but not used before approval."
+third_party_orchestration_skills:
+  rule: >
+    A third-party Skill or subagent that provides its own task
+    orchestration, autonomous subagent dispatch, or worktree/branch
+    management is unknown by default and requires G2 approval before
+    installation, not just before use — it competes with the
+    Orchestrator's Control Plane authority (see orchestrator procedure skill
+    under the active adapter) rather than extending a role's capability within it.
+  does_not_apply_to: >
+    Third-party Skills that perform a bounded analytical or testing task
+    on request (e.g. static analysis, spec-to-code compliance, browser
+    testing) and do not decide when they run or claim authority over
+    Work Unit completion. These may be approved directly for the relevant
+    read-only role (security-reviewer, auditor, qa-test) under the normal
+    skill_statuses process above.
+roles:
+  product-analyst:
+    allow: [read_authoritative_sources, read_repository, propose_requirements, propose_acceptance, emit_questions]
+    deny: [product_decision, product_code_write, production_deploy]
+  architect:
+    allow: [read_repository, analyze_architecture, propose_architecture, propose_contract_change, impact_analysis]
+    deny: [product_decision, production_deploy, silent_contract_change]
+  backend-developer:
+    allow: [read, write_working_branch, commit_working_branch, run_nonproduction_tests, produce_evidence]
+    deny: [direct_protected_branch_merge, history_rewrite, production_deploy, product_decision]
+  frontend-developer:
+    allow: [read, write_working_branch, commit_working_branch, run_nonproduction_tests, produce_evidence]
+    deny: [direct_protected_branch_merge, history_rewrite, production_deploy, product_decision]
+  qa-test:
+    allow: [read, write_tests_and_qa_artifacts, commit_working_branch, run_nonproduction_tests, produce_defects, produce_evidence]
+    deny: [history_rewrite, production_deploy, protected_branch_bypass, product_decision]
+  code-reviewer:
+    allow: [read_diff, read_repository, read_evidence, approve_or_reject, produce_findings]
+    deny: [modify_evaluated_code, production_deploy]
+  security-reviewer:
+    allow: [read_repository, read_evidence, security_assessment, produce_findings]
+    deny: [modify_evaluated_code, production_deploy]
+  auditor:
+    allow: [read_repository, read_evidence, read_runtime_evidence, produce_audit_findings]
+    deny: [remediate_during_measurement, production_deploy]
+  release-agent:
+    allow: [read_approved_content, assemble_release_candidate, prepare_deployment_plan, prepare_rollback_plan]
+    deny: [bypass_gates, autonomous_production_deploy_in_reference_profile]
+high_impact_actions:
+  require_explicit_human_authorization:
+    - permission_or_iam_change
+    - secret_or_credential_change
+    - critical_infrastructure_change
+    - production_data_mutation
+    - production_deployment
+logging:
+  sensitive_access_and_action_must_be_traceable_to_project_state: true

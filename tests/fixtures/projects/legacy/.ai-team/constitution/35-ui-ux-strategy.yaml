@@ -1,0 +1,165 @@
+policy: ui_ux_strategy
+version: "1.0.0"
+
+applies_to:
+  # Work Units where zone.area is one of these. A Work Unit outside these
+  # areas is not required to satisfy this policy.
+  work_unit_zones: [frontend, fullstack, mobile]
+
+principle: >
+  A Work Unit is not "done" because it renders something. It's done when a
+  real user, on a real device, in a degraded state (empty, slow, wrong),
+  can still understand where they are and what to do - and when someone
+  who cannot see a screen or use a mouse can still complete the task.
+
+1_discovery:
+  # Section 1: Comprendre le besoin. This is human input, not something an
+  # agent should invent. If any of these are silent in the authoritative
+  # sources for a UI-facing feature, raise a CLARIFICATION_REQUEST rather
+  # than guessing - the Product Analyst / Project Compiler should surface
+  # this gap during compilation, not the Developer mid-implementation.
+  required_before_implementation:
+    - target_users
+    - primary_goal
+    - context_of_use
+    - priority_actions
+    - target_devices  # mobile / desktop / tablet, or explicitly "all"
+
+2_information_architecture:
+  requirements:
+    - navigation_and_menus_are_explicit_in_the_design_or_spec
+    - clear_titles_and_sections
+    - search_or_filters_when_the_content_set_warrants_it
+    - visual_hierarchy_reflects_actual_priority
+    - the_primary_user_journey_is_traceable_end_to_end
+    - the_most_important_content_is_immediately_visible
+
+3_components:
+  principle: >
+    Every interactive component (button, form field, list/table, card, tab,
+    dropdown, modal, notification, loading indicator, error/confirmation
+    message, pagination) must have one clear function and behave the same
+    way everywhere it appears in this product.
+  reviewer_check: >
+    Flag a component whose behavior differs from its other uses in the
+    same product without a documented reason.
+
+4_visual_presentation:
+  requirements:
+    - color_typography_spacing_icons_are_consistent_with_the_rest_of_the_product
+    - grid_and_alignment_are_deliberate_not_accidental
+    - every_interactive_element_defines_its_states: [normal, hover, selected, disabled, error]
+    - contrast_and_size_prioritize_legibility_over_decoration
+
+5_usability_principles:
+  # Section 5. Applied by code-reviewer for any in-scope Work Unit.
+  checklist:
+    - the_primary_action_is_visually_unambiguous
+    - wording_is_simple_and_precise
+    - the_number_of_steps_is_minimized
+    - conventions_are_consistent_with_the_rest_of_the_product
+    - every_user_action_produces_visible_feedback
+    - errors_are_prevented_where_feasible_not_just_caught_after
+    - the_user_can_undo_or_correct_a_mistake
+    - only_necessary_information_is_requested
+
+6_required_states:
+  # Section 6 - the single most concretely checkable item in this policy.
+  # A UI Work Unit's acceptance criteria and QA verification must cover
+  # these unless a state is explicitly out of scope (e.g. "no offline
+  # mode in v1") - silence is not an acceptable reason for a state to be
+  # unhandled.
+  states:
+    - initial_state
+    - loading
+    - content_available
+    - no_results_empty_state
+    - error
+    - connection_interrupted
+    - access_denied
+    - action_succeeded
+    - content_very_short_or_very_long
+  qa_instruction: >
+    For each state above that applies to this Work Unit, verify it was
+    actually exercised (observed, not asserted) before marking QA passed.
+    A Work Unit whose acceptance criteria only describe the happy path is
+    not adequately specified - raise a CLARIFICATION_REQUEST for the
+    missing states rather than inventing what "should" happen.
+  writing_note: >
+    For empty/error/access-denied states specifically, the copy is part
+    of the interface, not an afterthought - see
+    frontend-design procedure skill § "More on writing in design"
+    (an empty state is an invitation to act; an error explains what
+    happened and how to fix it, without apologizing or being vague).
+
+7_accessibility:
+  requirements:
+    - operable_by_keyboard_alone_with_a_visible_focus_indicator
+    - compatible_with_a_screen_reader: [explicit_labels, meaningful_reading_order]
+    - never_relies_on_color_alone_to_convey_meaning
+    - usable_at_significant_zoom_levels
+    - sufficient_contrast
+    - click_or_tap_targets_are_large_enough
+    - respects_prefers_reduced_motion
+  verification: >
+    required_verification.accessibility_check (see work-unit.schema.json)
+    should be true for any Work Unit in applies_to.work_unit_zones unless
+    the risk/staffing policy explicitly waives it for that Work Unit's
+    risk class. Prefer a real tool run over a manual checklist as
+    evidence when one is available — webapp-testing procedure skill
+    (screenshots, DOM inspection) is the concrete evidence source this
+    framework wires in for sections 6 and 7; see frontend-developer.md,
+    qa-test.md and code-reviewer.md.
+
+8_responsive_and_devices:
+  requirements:
+    - mobile_navigation_works_without_relying_on_a_wide_viewport
+    - text_and_touch_targets_are_appropriately_sized_on_small_screens
+    - tables_have_a_defined_small_screen_behavior_not_silent_overflow
+    - forms_remain_usable_on_a_small_screen
+    - touch_interactions_are_considered_where_target_devices_include_touch
+    - both_portrait_and_landscape_are_considered_when_relevant
+  scope_note: >
+    "Desktop only" or "mobile only" is an acceptable, explicit product
+    decision (see 1_discovery.target_devices) - this section requires that
+    decision to be made and written down, not that every product must
+    support every device.
+
+9_performance_and_trust:
+  requirements:
+    - images_and_animations_are_reasonably_optimized
+    - long_running_operations_show_progress_or_a_clear_waiting_state
+    - personal_data_handling_follows_security-and-compliance/
+    - an_irreversible_action_requires_confirmation
+    - a_requested_permission_or_piece_of_information_explains_why_its_needed
+
+definition_of_done_addition:
+  # Referenced from definition-of-done.yaml for Work Units in
+  # applies_to.work_unit_zones: a UI Work Unit is not DONE if any state in
+  # 6_required_states that applies to it was left unverified, or if
+  # 7_accessibility.verification is unresolved for its risk class.
+
+precedence_over_frontend_design_skill:
+  # frontend-design adapter skill package (vendored from Anthropic) is
+  # general-purpose creative-brief guidance, not written for this
+  # framework's governance model. Two of its defaults conflict with this
+  # policy if followed literally; this Constitution wins both times:
+  - conflict: >
+      frontend-design says to invent the subject/audience/goal yourself
+      if a brief doesn't specify one ("pin it yourself").
+    resolution: >
+      Never invent target users, primary goal, or context of use (see
+      1_discovery). If authoritative sources are silent, raise a
+      CLARIFICATION_REQUEST, per frontend-developer.md. frontend-design's
+      guidance applies to aesthetic execution once these facts are
+      already established by an approved Work Unit — not to establishing
+      them.
+  - conflict: >
+      frontend-design treats "responsive down to mobile" as an
+      unconditional quality floor.
+    resolution: >
+      Target devices are whatever 1_discovery.target_devices says. If the
+      human has explicitly scoped a Work Unit to desktop only (see
+      8_responsive_and_devices.scope_note), that explicit decision wins;
+      frontend-design's default applies only when devices haven't been
+      explicitly scoped otherwise.

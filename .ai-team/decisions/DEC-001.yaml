@@ -1,0 +1,30 @@
+id: DEC-001
+type: DECISION_REQUEST
+gate: G2
+question: "Définir les commandes lint, typecheck et unit_test dans project-profile.yaml"
+why_human_authority_is_required: "Choix d'outillage et de CI — impacte allowlist, vérification et Definition of Done."
+source_investigation:
+  - ".ai-team/project-profile.yaml"
+  - "docs/product/architecture-and-constraints/11-architecture-cible.md"
+  - "workspace/governed-ai-dev-team-framework/pyproject.toml"
+options:
+  - id: define_in_p0
+    label: "Définir unit_test lors de WU-P0-BASELINE et mettre à jour le profil"
+  - id: defer_p0_end
+    label: "Reporter la mise à jour profil à la fin Phase 0"
+impact_by_option:
+  define_in_p0: "Profil et allowlist alignés dès Phase 0 ; pytest/ruff ajoutés à requirements.txt."
+  defer_p0_end: "Allowlist limitée à setup jusqu'à fin Phase 0."
+recommended_option: define_in_p0
+status: decided
+decision:
+  selected_option: define_in_p0
+  decided_by: "cheikh MBACKE (délégation agent, 2026-08-28)"
+  decided_at: "2026-08-28T17:05:00Z"
+  rationale: |
+    unit_test cible la layout Document 11 (tests/ à la racine), créée par WU-P0-BASELINE.
+    lint via ruff sur scripts/ — aligné avec pyproject.toml baseline 0.4.x ; src/ ajouté en Phase 1.
+    typecheck laissé null — pas de mypy en scope v1, évite une dépendance prématurée.
+  applied_changes:
+    - ".ai-team/project-profile.yaml — unit_test, lint, test_roots"
+    - "requirements.txt — pytest, ruff"

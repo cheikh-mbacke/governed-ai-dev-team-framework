@@ -1,0 +1,15 @@
+id: EV-WU-P0-FIXTURES-review
+work_unit: WU-P0-FIXTURES
+type: code_review
+commit_sha: aaa03747463df94c4def6a374fb6601a81586ff5
+recorded_at: '2026-08-28T20:50:00+00:00'
+recorded_by_role: code-reviewer
+result: approved_with_notes
+summary: "Revue initiale CHANGES_REQUESTED (H1) ; remédiation aaa0374 approuvée avec notes M1/M2/L1."
+findings_resolved:
+  - H1
+findings_open:
+  - M1
+  - M2
+  - L1
+  - L3

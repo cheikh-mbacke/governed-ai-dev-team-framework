@@ -1,0 +1,23 @@
+# AI-team ephemeral/runtime scratch
+.ai-team/logs/*.jsonl
+.ai-team/tmp/
+.ai-team/cache/
+.ai-team/.transactions/
+.ai-team/migration-backups/*
+!.ai-team/migration-backups/.gitignore
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.test-runtime/
+.pytest_cache/
+.ruff_cache/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+
+# Local workspace copy and temp install dirs
+workspace/
+tmp*/

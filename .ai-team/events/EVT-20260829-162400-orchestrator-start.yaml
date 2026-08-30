@@ -1,0 +1,28 @@
+id: EVT-20260829-162400-orchestrator-start
+type: STATUS
+work_unit: WU-P2-PARITY-TEST
+created_at: '2026-08-29T16:24:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P2-PARITY-TEST au backend-developer sur branche wu/WU-P2-PARITY-TEST."
+details:
+  gates:
+    G0: passed
+    G1: approved
+  phase: execution
+  milestone: M-P2
+  predecessor:
+    work_unit: WU-P2-PUBLISH
+    commit_sha: 24016fc
+  staffing:
+    primary: backend-developer
+    support:
+      - qa-test
+      - code-reviewer
+  branch: wu/WU-P2-PARITY-TEST
+  context_package: CTX-WU-P2-PARITY-TEST
+  scope_summary: "Test parité sémantique bundle v1 ↔ .cursor/agents/skills avec rapport de divergences actionnable."
+  note: "Document 13 §5 Phase 2 compatibilité ; corriger toute dérive détectée dans le scope WU."
+affected_nodes:
+  - WU-P2-PARITY-TEST
+requires_human: false
+status: open

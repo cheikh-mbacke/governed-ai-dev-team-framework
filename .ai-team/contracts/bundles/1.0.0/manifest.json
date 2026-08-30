@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "bundle_version": "1.0.0",
+  "created_at": "2026-08-28T22:52:00Z",
+  "content_hash": "sha256:c28683695114bd7f1df92748a7928abb1bd350ae6aea33ed81b2dcb79c92c85a",
+  "roles": [
+    "roles/architect.json",
+    "roles/auditor.json",
+    "roles/backend-developer.json",
+    "roles/code-reviewer.json",
+    "roles/control-plane.json",
+    "roles/frontend-developer.json",
+    "roles/product-analyst.json",
+    "roles/qa-test.json",
+    "roles/release-agent.json",
+    "roles/security-reviewer.json"
+  ],
+  "procedures": [
+    "procedures/audit-release.json",
+    "procedures/build-context.json",
+    "procedures/compile-project.json",
+    "procedures/frontend-design.json",
+    "procedures/impact-analysis.json",
+    "procedures/implement-work-unit.json",
+    "procedures/orchestrator.json",
+    "procedures/prepare-acceptance.json",
+    "procedures/propose-profile.json",
+    "procedures/retrospective.json",
+    "procedures/security-review.json",
+    "procedures/verify-work-unit.json",
+    "procedures/webapp-testing.json"
+  ]
+}

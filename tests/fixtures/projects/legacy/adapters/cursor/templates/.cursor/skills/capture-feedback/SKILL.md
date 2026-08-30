@@ -1,0 +1,39 @@
+---
+name: capture-feedback
+description: Record structured framework frictions, generate deterministic retrospectives, and export privacy-conscious feedback for cross-project analysis.
+disable-model-invocation: true
+icon: activity
+color: blue
+---
+# Capture framework feedback
+
+Use this Skill when the human asks for a retrospective, when a Work Unit reaches
+a terminal state, or when execution exposes unexpected rework, delay, manual
+intervention, or a limitation in governance, context, staffing, permissions,
+tooling, verification, or the environment.
+
+## Record an observation
+
+Use `python scripts/ai-team/feedback.py record --help` to select explicit fields.
+Record the observed symptom and evidence. Do not infer that the framework is the
+cause merely because the problem happened while the framework was running: use
+`--origin unknown` until evidence supports another classification.
+
+Link the observation to a Work Unit and evidence/event identifiers when
+available. Record an operational BLOCKER, DEFECT, or DECISION_REQUEST separately
+when the current execution also requires one.
+
+## Generate a retrospective
+
+- Work Unit: `python scripts/ai-team/feedback.py retrospective --work-unit WU-ID`
+- Project: `python scripts/ai-team/feedback.py retrospective --project`
+
+The command only aggregates recorded objects. Its output is a derived snapshot,
+not an assertion that every underlying observation is correctly classified.
+
+## Export
+
+Use `python scripts/ai-team/feedback.py export` for the default structured export.
+It excludes project identifiers and free-text details. Use `--detail-level full`
+only after reviewing the resulting data-handling risk; full exports may contain
+project-sensitive text and evidence references.

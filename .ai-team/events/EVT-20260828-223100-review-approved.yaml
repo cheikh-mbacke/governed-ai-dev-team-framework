@@ -1,0 +1,17 @@
+id: EVT-20260828-223100-review-approved
+type: STATUS
+work_unit: WU-P2-BUNDLE-SCHEMA
+created_at: '2026-08-28T22:31:00+00:00'
+created_by_role: code-reviewer
+summary: "Revue approuvee avec notes — WU-P2-BUNDLE-SCHEMA SHA 55238e0."
+details:
+  commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
+  disposition: APPROVED_WITH_NOTES
+  documented_reserves:
+    - "F-02: chemins erreur cross-ref non JSON Pointer"
+    - "F-04: CT-007 manifest x-* non testé"
+    - "F-07: incompatibilité capacité procédure↔rôle différée"
+affected_nodes:
+  - WU-P2-BUNDLE-SCHEMA
+requires_human: false
+status: closed

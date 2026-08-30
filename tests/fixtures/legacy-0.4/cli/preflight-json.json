@@ -1,0 +1,9 @@
+{
+  "framework_version": "0.4.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenario": "preflight-json",
+  "exit_code": 0,
+  "stdout": "{\n  \"platform\": \"windows-native\",\n  \"python\": {\n    \"status\": \"pass\",\n    \"detail\": \"<PATH>\"\n  },\n  \"cursor_agent\": {\n    \"status\": \"pass\",\n    \"detail\": \"<PATH>\"\n  },\n  \"hooks_config\": {\n    \"status\": \"pass\",\n    \"detail\": \"11 hook commands use the portable runner\"\n  },\n  \"guard_hook\": {\n    \"status\": \"pass\",\n    \"detail\": \"permission=allow\"\n  },\n  \"project_cli\": {\n    \"status\": \"pass\",\n    \"detail\": \"project permissions valid; whoami is not pre-authorized\"\n  },\n  \"global_allowlist\": {\n    \"status\": \"manual\",\n    \"detail\": \"confirm Approval mode=Allowlist and Shell(whoami) absent in /config\"\n  },\n  \"execution_surface\": {\n    \"status\": \"manual\",\n    \"detail\": \"run the authorization smoke from agent --workspace, not IDE Agent chat\"\n  },\n  \"readonly_sandbox\": {\n    \"status\": \"skip\",\n    \"detail\": \"Cursor workspace_readonly unavailable on native Windows; use WSL/Linux\"\n  },\n  \"allowlist_smoke\": {\n    \"status\": \"ready\",\n    \"detail\": \"use auth-smoke; this does not replace the architect readonly integration smoke\"\n  }\n}\n",
+  "stderr": ""
+}

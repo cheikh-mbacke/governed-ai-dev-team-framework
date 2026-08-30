@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GateDecisionRecord",
+  "description": "A record of an already-made human gate decision (G0-G4), written by the Command Gateway (RecordGateDecision). Distinct from decision.schema.json's DecisionRequest, which represents a question with options still awaiting a human answer.",
+  "type": "object",
+  "required": ["id", "gate", "status", "by", "at"],
+  "properties": {
+    "id": { "type": "string" },
+    "gate": { "enum": ["G0", "G1", "G2", "G3", "G4"] },
+    "status": {
+      "enum": [
+        "approved", "rejected", "changes_requested",
+        "passed", "failed", "partial", "partially_accepted",
+        "not_required", "accepted", "remediation_required"
+      ]
+    },
+    "by": { "type": "string", "minLength": 1 },
+    "at": { "type": "string" },
+    "note": { "type": "string" }
+  },
+  "additionalProperties": true
+}

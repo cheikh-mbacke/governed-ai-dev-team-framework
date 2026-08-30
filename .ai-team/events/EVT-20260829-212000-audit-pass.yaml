@@ -1,0 +1,12 @@
+id: EVT-20260829-212000-audit-pass
+type: HANDOFF
+work_unit: WU-E2E-CONFORMITY
+created_at: '2026-08-29T21:20:00+00:00'
+created_by_role: auditor
+summary: "Audit pass WU-E2E-CONFORMITY — conformite Document 14 §2 et §16, L4 Cursor reel not_run jamais compte reussi."
+details:
+  findings: []
+affected_nodes:
+  - WU-E2E-CONFORMITY
+requires_human: false
+status: open

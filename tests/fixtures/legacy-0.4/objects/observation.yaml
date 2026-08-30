@@ -1,0 +1,25 @@
+id: OBS-GOLDEN-FIXTURE-001
+recorded_at: '2026-01-01T00:00:00+00:00'
+recorded_by: fixture-operator
+project_id: golden-fixture-project
+framework_version: 0.4.0
+constitution_version: 1.1.0
+work_unit: WU-GOLDEN-FIXTURE
+phase: execution
+category: tooling
+severity: low
+symptom: Golden fixture observation for schema validation baseline.
+classification:
+  origin: framework
+  confidence: confirmed
+impact:
+  blocked_minutes: 0
+  rework_required: false
+  human_intervention: false
+  affected_work_units: []
+evidence_refs: []
+workaround: null
+candidate_improvement: null
+recurrence_key: null
+status: open
+resolution: null

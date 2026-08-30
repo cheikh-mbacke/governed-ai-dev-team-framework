@@ -1,0 +1,53 @@
+id: UAT-INC-CLEANUP-001
+release_or_increment: INC-CLEANUP
+environment: development
+revision: 1
+created_at: '2026-08-29T22:25:00+00:00'
+updated_at: '2026-08-29T22:30:00+00:00'
+preconditions:
+  - "Toutes les WU de l'increment INC-CLEANUP ont status=done"
+  - "Suite pytest et validate.py vertes sur branche wu/WU-P6-CLEANUP"
+  - "WU-E2E-CONFORMITY evidence et revue/audit/securite completes"
+scenarios:
+  - id: SCN-PYTEST-FULL
+    title: "Suite pytest complete"
+    purpose: nominal
+    steps:
+      - "PYTHONPATH=src python -m pytest tests/ -q"
+    expected: "Tous les tests passent (skips connus acceptables)"
+    evidence_to_capture: "Sortie pytest avec compteur passed/skipped"
+  - id: SCN-VALIDATE
+    title: "Validation gouvernance validate.py"
+    purpose: nominal
+    steps:
+      - "python scripts/ai-team/validate.py"
+    expected: "validate.py termine sans erreur"
+    evidence_to_capture: "Sortie validate.py"
+  - id: SCN-WITNESS-VERIFY
+    title: "Verification projets temoin"
+    purpose: regression
+    steps:
+      - "python tests/generate_witness_projects.py --verify"
+    expected: "PASS — projets temoin conformes aux fixtures attendues"
+    evidence_to_capture: "Sortie verify"
+  - id: SCN-MIGRATION-PLAN
+    title: "Completion plan migration 0.6.0"
+    purpose: nominal
+    steps:
+      - "Verifier milestone M-P6 et increment INC-CLEANUP done dans project-state"
+      - "Verifier core.version 0.6.0 dans installation-record.json"
+    expected: "Plan migration Document 13 Phase 6 complete ; version cible 0.6.0"
+    evidence_to_capture: "project-state milestones et installation-record"
+  - id: SCN-L4-CURSOR-REAL
+    title: "L4 Cursor reel (Document 14 §15)"
+    purpose: regression
+    steps:
+      - "Execution manuelle parcours Cursor reel hors CI (non automatise)"
+    expected: "NOT RUN — deviation documentee per Document 14 §15 ; L4 jamais compte reussi sans execution reelle"
+    evidence_to_capture: "Statut not_run consigne dans notes UAT et EVT project-completed"
+human_result:
+  status: passed
+  executed_by: cheikh MBACKE
+  executed_at: '2026-08-29T22:30:00+00:00'
+  notes: "Acceptation deleguee (autonomie equipe IA complete) par cheikh MBACKE — L0-L3 verts ; L4 Cursor reel not_run documente conformement Document 14 §15 ; delegation explicite pour cloture increment INC-CLEANUP et migration 0.6.0."
+  defects: []

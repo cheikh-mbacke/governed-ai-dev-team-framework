@@ -1,0 +1,68 @@
+id: WU-P2-BUNDLE-SCHEMA
+title: "Schémas Published Contract Bundle v1"
+objective:
+  result: "Schémas JSON Schema pour manifest, RoleDefinitionRevision et ProcedureRevision conformes au Document 12."
+  rationale: "Document 13 Phase 2 — fondation du bundle atomique versionné."
+scope:
+  include:
+    - src/governed_ai/contracts/schemas/
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - contract-schemas
+  components:
+    - src/governed_ai/contracts/schemas
+expected_behavior: "Les schémas valident les exemples Document 12 §2 et rejettent les payloads invalides avec codes attendus."
+applicable_rules_requirements:
+  - "Document 12 §2 Published Contract Bundle"
+  - "Document 14 CT-001 à CT-007"
+acceptance_criteria:
+  - "Schémas manifest, RoleDefinitionRevision, ProcedureRevision sous contracts/schemas/"
+  - "Tests CT-001 bundle minimal valide passent"
+  - "Tests CT-002 à CT-007 passent (duplicata, référence absente, hash, lint frontière, champs inconnus, extensions)"
+  - "additionalProperties false sauf extensions namespacées"
+dependencies:
+  - WU-P1-ARCH-TEST
+risk:
+  class: high
+  reasons:
+    - "Contrat partagé publié — impacte Core et Adaptateur"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P2-BUNDLE-SCHEMA
+status: done
+events:
+  - EVT-20260828-220600-orchestrator-start
+  - EVT-20260828-222000-backend-handoff
+  - EVT-20260828-223000-qa-pass
+  - EVT-20260828-223100-review-approved
+evidence:
+  - id: EVD-WU-P2-BUNDLE-SCHEMA-IMPL
+    type: implementation
+    commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
+    verified_by: backend-developer
+  - id: EVD-WU-P2-BUNDLE-SCHEMA-QA
+    type: qa
+    commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
+    event: EVT-20260828-223000-qa-pass
+  - id: EVD-WU-P2-BUNDLE-SCHEMA-REVIEW
+    type: review
+    commit_sha: 55238e03478bf48d1a44b53e84059c692735c427
+    event: EVT-20260828-223100-review-approved
+outcomes:
+  review_status: approved_with_notes
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

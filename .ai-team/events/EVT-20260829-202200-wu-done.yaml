@@ -1,0 +1,14 @@
+id: EVT-20260829-202200-wu-done
+type: STATUS
+work_unit: WU-P5-INSTALL-RECORD
+created_at: '2026-08-29T20:22:00+00:00'
+created_by_role: orchestrator
+summary: "WU-P5-INSTALL-RECORD terminée — prochaine WU-P5-INSTALL-UPDATE."
+details:
+  next_ready:
+    - WU-P5-INSTALL-UPDATE
+affected_nodes:
+  - WU-P5-INSTALL-RECORD
+  - WU-P5-INSTALL-UPDATE
+requires_human: false
+status: open

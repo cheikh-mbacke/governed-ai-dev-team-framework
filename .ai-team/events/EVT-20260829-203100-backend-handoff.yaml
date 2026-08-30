@@ -1,0 +1,16 @@
+id: EVT-20260829-203100-backend-handoff
+type: HANDOFF
+work_unit: WU-P5-INSTALL-UPDATE
+created_at: '2026-08-29T20:31:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P5-INSTALL-UPDATE — install/update/dry-run/rollback multi-composants, snapshot manifeste et record v2 en dernier."
+details:
+  branch: wu/WU-P5-INSTALL-UPDATE
+  commit_sha: 508a370
+  checks:
+    distribution_pytest: "tests/distribution/ → 15 passed (DI-001 à DI-011, rollback §11)"
+    suite_pytest: "tests/distribution/ + adapters/core/architecture/contracts → 323 passed"
+affected_nodes:
+  - WU-P5-INSTALL-UPDATE
+requires_human: false
+status: open

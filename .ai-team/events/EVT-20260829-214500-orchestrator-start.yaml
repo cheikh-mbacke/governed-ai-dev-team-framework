@@ -1,0 +1,16 @@
+id: EVT-20260829-214500-orchestrator-start
+type: STATUS
+work_unit: WU-P6-CLEANUP
+created_at: '2026-08-29T21:45:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P6-CLEANUP au backend-developer sur branche wu/WU-P6-CLEANUP."
+details:
+  delegation:
+    role: backend-developer
+    branch: wu/WU-P6-CLEANUP
+    context_package: CTX-WU-P6-CLEANUP
+    base_sha: dec5f86
+affected_nodes:
+  - WU-P6-CLEANUP
+requires_human: false
+status: open

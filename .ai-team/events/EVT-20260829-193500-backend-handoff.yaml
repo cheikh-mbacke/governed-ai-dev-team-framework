@@ -1,0 +1,16 @@
+id: EVT-20260829-193500-backend-handoff
+type: HANDOFF
+work_unit: WU-P3-TX-TESTS
+created_at: '2026-08-29T19:35:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P3-TX-TESTS — failpoints étapes 5–8 et tests TX-001 à TX-009."
+details:
+  branch: wu/WU-P3-TX-TESTS
+  commit_sha: fcda557
+  checks:
+    tx_pytest: "tests/core/test_transactions.py + test_recovery.py → 11 passed"
+    core_pytest: "tests/core/ → 190 passed"
+affected_nodes:
+  - WU-P3-TX-TESTS
+requires_human: false
+status: open

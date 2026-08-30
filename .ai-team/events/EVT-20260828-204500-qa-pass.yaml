@@ -1,0 +1,17 @@
+id: EVT-20260828-204500-qa-pass
+type: STATUS
+work_unit: WU-P1-COMMON
+created_at: '2026-08-28T20:45:00+00:00'
+created_by_role: qa-test
+summary: "QA WU-P1-COMMON — 4 AC satisfaits au SHA bb84d42, aucune régression vs baseline bdd297a."
+details:
+  commit_sha: bb84d42e9db1793272bb77e205355b18f14eee26
+  baseline_sha: bdd297a
+  pytest: "59 passed, 13 failed, 2 skipped (identique baseline)"
+  ruff_src: pass
+  imports: pass
+  defects: []
+affected_nodes:
+  - WU-P1-COMMON
+requires_human: false
+status: closed

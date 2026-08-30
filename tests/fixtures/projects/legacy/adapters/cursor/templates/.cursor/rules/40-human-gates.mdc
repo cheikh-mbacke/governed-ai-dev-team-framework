@@ -1,0 +1,13 @@
+---
+description: Human validation gates and escalation policy.
+alwaysApply: true
+---
+# Human gates
+
+G0 — Readiness: insufficient or ambiguous authoritative inputs.
+G1 — Execution plan: Project State and proposed plan must be approved before activating runtime.
+G2 — Reserved decision: product decision, policy change, sensitive permission, or source conflict.
+G3 — Release / production: protected environment deployment authorization.
+G4 — Acceptance: human accepts, rejects, partially accepts, or requests remediation.
+
+Batch non-urgent human questions where possible, including options, impact and evidence.

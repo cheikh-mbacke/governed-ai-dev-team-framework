@@ -1,0 +1,26 @@
+{
+  "framework_version": "0.6.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenarios": [
+    "check-done-in-progress",
+    "check-done-missing",
+    "diagnose-clean",
+    "feedback-export-structured",
+    "feedback-record",
+    "install-fresh",
+    "install-missing-target",
+    "preflight-json",
+    "status-clean",
+    "validate-clean"
+  ],
+  "cli_tools": [
+    "validate.py",
+    "feedback.py",
+    "check_done.py",
+    "preflight.py",
+    "diagnose.py",
+    "status.py",
+    "tools/install.py"
+  ]
+}

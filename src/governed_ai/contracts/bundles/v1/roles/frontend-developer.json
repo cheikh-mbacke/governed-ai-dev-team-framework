@@ -1,0 +1,29 @@
+{
+  "role_id": "frontend-developer",
+  "revision": "1.0.0",
+  "mandate": "Implement UI, state, interactions and client integration with visual evidence.",
+  "writes": {
+    "product": {
+      "level": "scoped",
+      "paths": ["<work-unit-scope>"]
+    },
+    "authoritative_governance_commands": [],
+    "non_authoritative_signal_commands": ["RecordObservation"]
+  },
+  "capabilities": {
+    "repository_read": true,
+    "shell": "scoped",
+    "network": "deny_by_default",
+    "external_tools": []
+  },
+  "approval_policy": {
+    "mode": "constitution",
+    "cannot_relax": true
+  },
+  "procedure_refs": [
+    {"procedure_id": "frontend-design", "revision": "1.0.0"},
+    {"procedure_id": "webapp-testing", "revision": "1.0.0"}
+  ],
+  "model_preference": "inherit",
+  "isolation": "required_for_concurrent_product_write"
+}

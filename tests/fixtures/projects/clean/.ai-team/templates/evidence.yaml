@@ -1,0 +1,13 @@
+id: EV-XXX
+work_unit: WU-XXX
+type: test_execution
+code_revision: null
+performed_at: null
+performed_by_role: null
+command_or_observation: ""
+result:
+  status: unknown
+  details: {}
+demonstrates: []
+limitations: []
+artifacts: []

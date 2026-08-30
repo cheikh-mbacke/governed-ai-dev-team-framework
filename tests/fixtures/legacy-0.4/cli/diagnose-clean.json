@@ -1,0 +1,9 @@
+{
+  "framework_version": "0.4.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenario": "diagnose-clean",
+  "exit_code": 0,
+  "stdout": "Diagnostic Governed AI Team\n==========================\n\nAvant toute chose : remontez dans le chat Cursor et cherchez une\ninvite d'autorisation de commande en attente (un bouton 'Run' / 'Approve'\nqui attend un clic). Ce script ne peut pas voir cet etat - Cursor suspend\nl'agent avant qu'il puisse ecrire quoi que ce soit que ce script pourrait lire.\nC'est la cause de blocage invisible la plus frequente ; verifiez-la en premier.\n\nAucun evenement ouvert n'est marque comme requerant explicitement un humain.\nSi quelque chose semble quand meme bloque, c'est deja une information utile - voir plus bas.\n\nPas encore de .ai-team/logs/cursor-events.jsonl - aucune activite Cursor (hook) enregistree.\n\nRien ne semble en cours ni en attente de votre part.\n",
+  "stderr": ""
+}

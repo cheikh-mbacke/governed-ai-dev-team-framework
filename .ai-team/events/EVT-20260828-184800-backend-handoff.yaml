@@ -1,0 +1,25 @@
+id: EVT-20260828-184800-backend-handoff
+type: HANDOFF
+work_unit: WU-P0-WITNESS
+created_at: '2026-08-28T18:48:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P0-WITNESS — projets témoins clean/legacy, générateur déterministe et 10 tests d'intégration."
+details:
+  commit_sha: e3a6c03c91f9d8a569b7bbd88165d425f6e2da01
+  branch: wu/WU-P0-WITNESS
+  files_created:
+    - tests/fixtures/projects/clean/
+    - tests/fixtures/projects/legacy/
+    - tests/fixtures/projects/README.md
+    - tests/fixtures/projects/witness-manifest.json
+    - tests/generate_witness_projects.py
+    - tests/test_witness_projects.py
+  tests_run: "python -m pytest tests/test_witness_projects.py -q → 10 passed; python tests/generate_witness_projects.py --verify → PASS"
+  acceptance_criteria_met: true
+  limitations:
+    - "Arborescences témoins incluent copie complète install 0.4.x (volume élevé, cohérent avec baseline)"
+    - "Fichier obsolète simulé via managed_files étendu localement dans le témoin legacy"
+affected_nodes:
+  - WU-P0-WITNESS
+requires_human: false
+status: open

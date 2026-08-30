@@ -1,0 +1,78 @@
+id: WU-P2-PUBLISH
+title: "Publication bundle v1.0.0 avec hash canonique"
+objective:
+  result: "bundle_version 1.0.0 publié, immuable, avec validation atomique et hash reproductible."
+  rationale: "Document 13 Phase 2 sortie — bundle valide et immuable."
+scope:
+  include:
+    - src/governed_ai/contracts/
+    - .ai-team/contracts/
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - bundle-publication
+  components:
+    - src/governed_ai/contracts/compatibility.py
+expected_behavior: "Publier le bundle calcule un hash canonique ; toute modification post-hash est rejetée ; les références croisées sont vérifiées avant publication."
+applicable_rules_requirements:
+  - "Document 12 §2.4 validation bundle"
+  - "Document 14 CT-001 CT-004"
+acceptance_criteria:
+  - "bundle_version 1.0.0 publié sous .ai-team/contracts/bundles/"
+  - "Hash canonique reproductible (CT-001, CT-004)"
+  - "Aucun rôle ne référence une procédure absente"
+  - "Handoff inclut identités bundle/rôle/procédure exactes"
+dependencies:
+  - WU-P2-PROCEDURES
+risk:
+  class: high
+  reasons:
+    - "Artefact immuable — erreur nécessite nouvelle révision"
+required_verification:
+  unit_tests: true
+  integration_tests: false
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P2-PUBLISH
+status: done
+events:
+  - EVT-20260829-070800-orchestrator-start
+  - EVT-20260829-072000-backend-handoff
+  - EVT-20260829-073000-qa-fail
+  - DEF-WU-P2-PUBLISH-001
+  - EVT-20260829-074000-qa-pass
+  - EVT-20260829-074100-review-approved
+evidence:
+  - id: EVD-WU-P2-PUBLISH-IMPL
+    type: implementation
+    commit_sha: 123f9401d47d90a45f68d07b7a95e0da310b4e67
+    verified_by: backend-developer
+  - id: EVD-WU-P2-PUBLISH-REMEDIATION
+    type: remediation
+    commit_sha: dcdf37d14644752a5f5e19c8cbc144216b4a1b91
+    note: "HANDOFF versionné pour AC4"
+  - id: EVD-WU-P2-PUBLISH-QA
+    type: qa
+    commit_sha: dcdf37d14644752a5f5e19c8cbc144216b4a1b91
+    event: EVT-20260829-074000-qa-pass
+  - id: EVD-WU-P2-PUBLISH-REVIEW
+    type: review
+    commit_sha: 123f9401d47d90a45f68d07b7a95e0da310b4e67
+    event: EVT-20260829-074100-review-approved
+outcomes:
+  review_status: approved_with_notes
+  defects:
+    - DEF-WU-P2-PUBLISH-001
+  critical_open_items: []
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

@@ -1,0 +1,19 @@
+id: EVT-20260829-222000-qa-pass
+type: STATUS
+work_unit: WU-P6-CLEANUP
+created_at: '2026-08-29T22:20:00+00:00'
+created_by_role: qa-test
+summary: "QA PASS WU-P6-CLEANUP @ 96bdda7 — 405 passed, 2 skipped ; 4/4 AC verifies."
+details:
+  commit_sha: 96bdda7bb335369ba7eddc1adbbc82389241d3f7
+  command: PYTHONPATH=src python -m pytest tests/ -q
+  result: "405 passed, 2 skipped"
+  acceptance_criteria:
+    consumer_search: pass
+    cursor_duplications: pass
+    deprecated_wrappers: pass
+    no_claude_codex_stubs: pass
+affected_nodes:
+  - WU-P6-CLEANUP
+requires_human: false
+status: open

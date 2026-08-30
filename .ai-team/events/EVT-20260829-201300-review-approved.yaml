@@ -1,0 +1,14 @@
+id: EVT-20260829-201300-review-approved
+type: STATUS
+work_unit: WU-P4-CONFORMANCE
+created_at: '2026-08-29T20:13:00+00:00'
+created_by_role: code-reviewer
+summary: "Review approved WU-P4-CONFORMANCE — harness universel reutilisable, garde-fous autorite avant execute."
+details:
+  notes:
+    - "check_compatibility delegue a negotiate_compatibility"
+    - "execute bloque CT-008/009 avant persistance RuntimeResult"
+affected_nodes:
+  - WU-P4-CONFORMANCE
+requires_human: false
+status: open

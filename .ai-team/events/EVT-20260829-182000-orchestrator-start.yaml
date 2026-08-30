@@ -1,0 +1,30 @@
+id: EVT-20260829-182000-orchestrator-start
+type: STATUS
+work_unit: WU-P3-GW-RETRO
+created_at: '2026-08-29T18:20:00+00:00'
+created_by_role: orchestrator
+summary: "Activation runtime — délégation WU-P3-GW-RETRO au backend-developer sur branche wu/WU-P3-GW-RETRO."
+details:
+  gates:
+    G0: passed
+    G1: approved
+  phase: execution
+  milestone: M-P3
+  predecessor:
+    work_unit: WU-P3-GW-GATE-ACC
+    commit_sha: 761aeef
+  staffing:
+    primary: backend-developer
+    support:
+      - architect
+      - qa-test
+      - code-reviewer
+      - security-reviewer
+  branch: wu/WU-P3-GW-RETRO
+  context_package: CTX-WU-P3-GW-RETRO
+  scope_summary: "GenerateRetrospective et ExportFeedback via Gateway avec human_authorization pour export full."
+  note: "security_review requis ; logs sans contenu complet d'export."
+affected_nodes:
+  - WU-P3-GW-RETRO
+requires_human: false
+status: open

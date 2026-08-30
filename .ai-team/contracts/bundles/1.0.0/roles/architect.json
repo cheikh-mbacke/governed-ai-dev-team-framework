@@ -1,0 +1,28 @@
+{
+  "role_id": "architect",
+  "revision": "1.0.0",
+  "mandate": "Analyze architecture, contracts and impact; propose options without acquiring product authority.",
+  "writes": {
+    "product": {
+      "level": "none",
+      "paths": []
+    },
+    "authoritative_governance_commands": [],
+    "non_authoritative_signal_commands": ["RecordObservation"]
+  },
+  "capabilities": {
+    "repository_read": true,
+    "shell": "readonly",
+    "network": "deny_by_default",
+    "external_tools": []
+  },
+  "approval_policy": {
+    "mode": "constitution",
+    "cannot_relax": true
+  },
+  "procedure_refs": [
+    {"procedure_id": "impact-analysis", "revision": "1.0.0"}
+  ],
+  "model_preference": "inherit",
+  "isolation": "not_required"
+}

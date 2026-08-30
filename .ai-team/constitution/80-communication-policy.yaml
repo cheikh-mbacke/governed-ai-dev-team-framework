@@ -1,0 +1,59 @@
+policy: structured_communication
+version: "1.0.1"
+event_types:
+  STATUS: "Describe an execution result or state."
+  CONTEXT_REQUEST: "Request precisely delimited additional context."
+  CLARIFICATION_REQUEST: "Report ambiguous or insufficient information."
+  DECISION_REQUEST: "Request human authority for an uncovered decision."
+  BLOCKER: "Describe a blockage and the nodes actually affected."
+  CONTRACT_CHANGE: "Notify a shared interface or contract change."
+  REVIEW_REQUEST: "Submit a change for review."
+  DEFECT: "Document a deviation observed during verification or acceptance."
+  SKILL_REQUEST: "Request authorization for a new capability/access."
+  HANDOFF: "Transfer a Work Unit, evidence or artifact to another role."
+requirements:
+  attach_events_to_project_state_objects: true
+  important_decisions_must_not_exist_only_in_chat: true
+  batch_nonurgent_human_decisions_when_possible: true
+  never_stop_silently: >
+    Before any agent (orchestrator or subagent) stops without having
+    completed its assigned step - whether due to an error, a missing
+    tool, an ambiguity, or genuinely waiting on something - it must write
+    a BLOCKER or CLARIFICATION_REQUEST event to .ai-team/events/ (see
+    templates/event.yaml) with requires_human set appropriately, before
+    stopping. A silent stop with no recorded reason is itself a defect in
+    the run, not just an inconvenience: it leaves the human with nothing
+    to act on except guessing and restarting. See
+    scripts/ai-team/diagnose.py for what a human should check first.
+
+details_conventions:
+  # Optional structured fields any agent may add under a STATUS/HANDOFF
+  # event's free-form `details` object. Not part of event.schema.json
+  # (details stays schema-free by design) - documented here so every
+  # agent that emits one follows the same shape and the same restraint.
+  human_checkpoint:
+    purpose: >
+      Point the human at a moment worth opening a browser themselves -
+      the product UI or an admin/operational console of an integrated
+      dependency (e.g. Keycloak, Mailpit, pgAdmin, a queue dashboard) -
+      instead of leaving them to guess when something is worth a look.
+    shape:
+      command: "exact command/URL to reach it"
+      why: "one line: what is now observable"
+      states_to_check: "optional list, when applicable (e.g. required UI states)"
+    who_emits_it: >
+      Whichever agent's Work Unit stood up or materially changed the
+      inspectable surface - qa-test for product UI (tied to its own
+      independent verification, see qa-test.md), backend-developer (or
+      any implementer) for an admin/operational console of a dependency
+      it configured. Never as a substitute for that agent's own required
+      verification - it is a pointer for the human, not a delegation of it.
+    restraint: >
+      At most one open human_checkpoint per Work Unit per distinct
+      surface at a time. Before emitting, check .ai-team/events/ for an
+      already-open event on this work_unit carrying human_checkpoint for
+      the same surface; skip if nothing changed since. Re-emit only when
+      a CONTRACT_CHANGE affecting that surface landed since the last one,
+      or when it newly became reachable/complete. status.py surfaces open
+      ones deduped by work_unit - this convention exists to keep that
+      list worth reading, not to log every step.

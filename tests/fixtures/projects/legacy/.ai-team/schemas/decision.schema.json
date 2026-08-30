@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DecisionRequest",
+  "type": "object",
+  "required": [
+    "id",
+    "question",
+    "why_human_authority_is_required",
+    "options",
+    "status",
+    "revision",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "why_human_authority_is_required": {
+      "type": "string"
+    },
+    "source_investigation": {
+      "type": "array"
+    },
+    "options": {
+      "type": "array",
+      "minItems": 1
+    },
+    "impact_by_option": {
+      "type": "object"
+    },
+    "status": {
+      "enum": [
+        "pending_human",
+        "decided",
+        "cancelled"
+      ]
+    },
+    "decision": {
+      "type": "object"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

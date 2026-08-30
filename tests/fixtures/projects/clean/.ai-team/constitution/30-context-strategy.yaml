@@ -1,0 +1,21 @@
+policy: context_strategy
+version: "1.0.0"
+principle: minimum_sufficient_traceable_context_with_targeted_pull
+levels:
+  L0_constitution: "Global/system rules relevant to the mission and role."
+  L1_project: "Vision, scope, architecture, constraints and conventions."
+  L2_relevant_zone: "Requirements, contracts, decisions and components relevant to the mission."
+  L3_work_unit: "Objective, acceptance criteria, dependencies, files, symbols and tests concerned."
+context_package_may_include:
+  - objective_scope_expected_behavior_acceptance
+  - business_rules_requirements_human_decisions
+  - architecture_interfaces_constraints
+  - dependencies_adjacent_nodes_planning_decisions
+  - files_symbols_tests_configuration_history
+  - prior_evidence_findings
+requirements:
+  preserve_provenance: true
+  track_reason_for_inclusion: true
+  allow_targeted_context_request: true
+  avoid_full_repo_dump_by_default: true
+  unknowns_are_not_filled_by_guessing: true

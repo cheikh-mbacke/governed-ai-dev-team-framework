@@ -1,0 +1,25 @@
+id: OBS-XXX
+recorded_at: null
+recorded_by: null
+project_id: null
+framework_version: null
+constitution_version: null
+work_unit: null
+phase: null
+category: other
+severity: medium
+symptom: ""
+classification:
+  origin: unknown
+  confidence: low
+impact:
+  blocked_minutes: 0
+  rework_required: false
+  human_intervention: false
+  affected_work_units: []
+evidence_refs: []
+workaround: null
+candidate_improvement: null
+recurrence_key: null
+status: open
+resolution: null

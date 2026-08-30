@@ -1,0 +1,48 @@
+id: WU-WITNESS-DONE
+title: Witness completed Work Unit
+objective:
+  result: Witness legacy scenario for WU-WITNESS-DONE.
+  rationale: Document 13 Phase 0 witness project fixture.
+scope:
+  include:
+  - witness-scenario
+  exclude: []
+expected_behavior: Static witness fixture for migration and distribution tests.
+applicable_rules_requirements:
+- Document 13 §3 Phase 0
+acceptance_criteria:
+- Fixture validates and represents intended scenario.
+dependencies: []
+risk:
+  class: low
+  reasons:
+  - Static fixture
+required_verification:
+  unit_tests: false
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: false
+  review: false
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: null
+status: done
+revision: 1
+created_at: '2026-01-01T00:00:00+00:00'
+updated_at: '2026-01-01T00:00:00+00:00'
+events:
+- EVT-20260101-100000-orchestrator-start
+- EVT-20260101-110000-backend-handoff
+- EVT-20260101-120000-wu-done
+evidence:
+- id: EV-WITNESS-DONE-001
+  type: test_execution
+outcomes:
+  review_status: approved
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

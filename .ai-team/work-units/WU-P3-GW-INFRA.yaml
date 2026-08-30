@@ -1,0 +1,87 @@
+id: WU-P3-GW-INFRA
+title: "Infrastructure Command Gateway"
+objective:
+  result: "gov.py command/query/validate/recover opérationnels avec reçus, idempotence, verrou projet et récupération transaction."
+  rationale: "Document 13 Phase 3 ordre 1 — infrastructure command avant handlers métier."
+scope:
+  include:
+    - scripts/ai-team/gov.py
+    - src/governed_ai/core/commands/
+    - src/governed_ai/core/persistence/
+  exclude:
+    - adapters/cursor/
+zone:
+  area: backend
+  capabilities:
+    - command-gateway
+    - transactional-persistence
+  components:
+    - src/governed_ai/core/commands
+    - src/governed_ai/core/persistence
+expected_behavior: "gov.py command valide schéma et autorité avant mutation ; query est sans effet de bord ; recover termine ou annule une transaction interrompue de façon déterministe."
+applicable_rules_requirements:
+  - "Document 11 §6 Command Gateway"
+  - "Document 11 §7 persistance transactionnelle"
+  - "Document 12 §11 codes de sortie"
+  - "Document 14 CG-001 à CG-005 CG-010"
+acceptance_criteria:
+  - "CLI gov.py command, query, validate, recover fonctionnels"
+  - "Reçus JSON sur stdout, diagnostics sur stderr (CG-010)"
+  - "Idempotence same key same payload (CG-004) et mismatch (CG-005)"
+  - "Verrou projet exclusif et journal sous .ai-team/.transactions/"
+  - "Tests CG-001 à CG-005 et CG-010 verts"
+dependencies:
+  - WU-P2-PARITY-TEST
+risk:
+  class: critical
+  reasons:
+    - "Intégrité des données autoritaires"
+    - "Point unique de mutation — blast radius maximal"
+    - "Autorisation et idempotence"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: true
+  e2e: false
+  qa: true
+  review: true
+  security_review: true
+  audit: true
+  human_acceptance: false
+context_package_ref: CTX-WU-P3-GW-INFRA
+status: done
+events:
+  - EVT-20260829-164000-orchestrator-start
+  - EVT-20260829-165000-backend-handoff
+  - EVT-20260829-165100-qa-pass
+  - EVT-20260829-165200-review-approved
+  - EVT-20260829-165300-security-approved
+  - EVT-20260829-165400-audit-pass
+evidence:
+  - id: EVD-WU-P3-GW-INFRA-IMPL
+    type: implementation
+    commit_sha: cd445f4
+    verified_by: backend-developer
+  - id: EVD-WU-P3-GW-INFRA-QA
+    type: qa
+    commit_sha: cd445f4
+    event: EVT-20260829-165100-qa-pass
+  - id: EVD-WU-P3-GW-INFRA-REVIEW
+    type: review
+    commit_sha: cd445f4
+    event: EVT-20260829-165200-review-approved
+  - id: EVD-WU-P3-GW-INFRA-SECURITY
+    type: security_review
+    commit_sha: cd445f4
+    event: EVT-20260829-165300-security-approved
+  - id: EVD-WU-P3-GW-INFRA-AUDIT
+    type: audit
+    commit_sha: cd445f4
+    event: EVT-20260829-165400-audit-pass
+outcomes:
+  review_status: approved
+  audit_status: pass
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

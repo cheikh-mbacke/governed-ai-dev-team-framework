@@ -1,0 +1,62 @@
+id: WU-P6-CLEANUP
+title: "Suppression code mort et chemins dépréciés post-release"
+objective:
+  result: "Code mort et duplications historiques supprimés après recherche consommateurs et release stable 0.5.0."
+  rationale: "Document 13 Phase 6 et version 0.6.0 dépréciations."
+scope:
+  include:
+    - scripts/ai-team/
+    - .cursor/
+    - adapters/cursor/
+  exclude:
+    - src/governed_ai/core/
+zone:
+  area: backend
+  capabilities:
+    - deprecation-cleanup
+  components:
+    - scripts/ai-team
+expected_behavior: "record_gate.py et chemins dépréciés supprimés ou marqués selon télémétrie ; aucun stub Claude/Codex fonctionnel ajouté."
+applicable_rules_requirements:
+  - "Document 13 §9 Phase 6"
+  - "Document 13 §2 version 0.6.0"
+acceptance_criteria:
+  - "Recherche consommateurs documentée avant suppression"
+  - "Duplications historiques .cursor supprimées post parité"
+  - "Wrappers dépréciés retirés ou annoncés avec échéance"
+  - "Aucun stub Adaptateur Claude/Codex prétendant être fonctionnel"
+dependencies:
+  - WU-P6-DOCS
+  - WU-E2E-CONFORMITY
+risk:
+  class: medium
+  reasons:
+    - "Suppression irréversible après release"
+required_verification:
+  unit_tests: true
+  integration_tests: true
+  contract_tests: false
+  e2e: false
+  qa: true
+  review: true
+  security_review: false
+  audit: false
+  human_acceptance: false
+context_package_ref: CTX-WU-P6-CLEANUP
+status: done
+events: []
+evidence:
+  - sha: 96bdda7bb335369ba7eddc1adbbc82389241d3f7
+    type: qa_pass
+    command: PYTHONPATH=src python -m pytest tests/ -q
+    result: "405 passed, 2 skipped"
+  - sha: 4cce1cfa4118e270de2a286207904cabed3d8d07
+    type: implementation
+    summary: "Suppression record_gate.py, common.py, feedback_common.py"
+outcomes:
+  review_status: approved
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

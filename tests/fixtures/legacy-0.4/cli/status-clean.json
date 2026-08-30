@@ -1,0 +1,9 @@
+{
+  "framework_version": "0.4.0",
+  "baseline_tag": "v0.4.0-baseline",
+  "platform": "win32",
+  "scenario": "status-clean",
+  "exit_code": 0,
+  "stdout": "Projet : golden-baseline\nPhase :   not_compiled\nGates :\n  G0: not_required\n  G1: not_required\n  G2: not_required\n  G3: not_required\n  G4: not_required\nUnites de travail : aucune\nDecisions ouvertes : 0\nDefauts ouverts :    0\nConstats ouverts :   0\nAgents actifs :      0\nConstats d'apprentissage ouverts : 0\nPoints de controle visuels disponibles : 0\n",
+  "stderr": ""
+}

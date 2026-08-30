@@ -1,0 +1,24 @@
+id: EVT-20260829-201200-qa-pass
+type: STATUS
+work_unit: WU-P4-CONFORMANCE
+created_at: '2026-08-29T20:12:00+00:00'
+created_by_role: qa-test
+summary: "QA pass WU-P4-CONFORMANCE — AD-001 a AD-010 verts, auth-smoke hors bundle, CT-008 sans execution."
+details:
+  tests:
+    - AD-001
+    - AD-002
+    - AD-003
+    - AD-004
+    - AD-005
+    - AD-006
+    - AD-007
+    - AD-008
+    - AD-009
+    - AD-010
+    - CT-008
+    - CT-009
+affected_nodes:
+  - WU-P4-CONFORMANCE
+requires_human: false
+status: open

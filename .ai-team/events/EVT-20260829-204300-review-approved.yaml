@@ -1,0 +1,14 @@
+id: EVT-20260829-204300-review-approved
+type: STATUS
+work_unit: WU-P6-DECOUPLE
+created_at: '2026-08-29T20:43:00+00:00'
+created_by_role: code-reviewer
+summary: "Review approved WU-P6-DECOUPLE — compiler-notes sous adapters/cursor ; legacy_cli resolve active_adapter_id depuis profil."
+details:
+  notes:
+    - "Bundle agnostique v1 sans sidecar adapter ; validate_bundle conserve lint frontiere par concatenation"
+    - "Constitution reference procedures/skills agnostiques au lieu de chemins .cursor"
+affected_nodes:
+  - WU-P6-DECOUPLE
+requires_human: false
+status: open

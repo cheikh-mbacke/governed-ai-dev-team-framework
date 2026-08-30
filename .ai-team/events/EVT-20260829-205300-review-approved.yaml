@@ -1,0 +1,14 @@
+id: EVT-20260829-205300-review-approved
+type: STATUS
+work_unit: WU-P6-DOCS
+created_at: '2026-08-29T20:53:00+00:00'
+created_by_role: code-reviewer
+summary: "Review approved WU-P6-DOCS — docs/operator agnostiques outil, pas de garantie non prouvee, ownership core pour install."
+details:
+  notes:
+    - "Section upgrading alignee migration v1→v2 et Document 13 §11 rollback"
+    - "human_acceptance requis avant declaration release — pending"
+affected_nodes:
+  - WU-P6-DOCS
+requires_human: false
+status: open

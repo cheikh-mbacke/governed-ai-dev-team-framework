@@ -1,0 +1,16 @@
+id: EVT-20260829-200500-backend-handoff
+type: HANDOFF
+work_unit: WU-P4-RUNTIME
+created_at: '2026-08-29T20:05:00+00:00'
+created_by_role: backend-developer
+summary: "Handoff WU-P4-RUNTIME — execute/collect RuntimeResult, diagnostics Core/Cursor separes, CG-012."
+details:
+  branch: wu/WU-P4-RUNTIME
+  commit_sha: 86489c4
+  checks:
+    runtime_pytest: "tests/adapters/cursor/test_runtime.py → 6 passed"
+    core_pytest: "tests/core/ + tests/architecture/ → 195 passed"
+affected_nodes:
+  - WU-P4-RUNTIME
+requires_human: false
+status: open

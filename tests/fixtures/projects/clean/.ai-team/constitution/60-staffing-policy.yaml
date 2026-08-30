@@ -1,0 +1,44 @@
+policy: dynamic_staffing
+version: "1.0.0"
+principle: "Roles are activated by mission, risk, dependencies, required permissions and WIP limits; they are not all permanently active."
+defaults:
+  implementation_default: true
+  maximum_active_role_instances: 6
+  maximum_code_writers: 2
+  primary_writer_per_work_unit: 1
+activation_rules:
+  - when:
+      area: frontend
+      risk_in: [low]
+    require: [frontend-developer, qa-test]
+  - when:
+      area: frontend
+      risk_in: [medium, high, critical]
+    require: [frontend-developer, qa-test, code-reviewer]
+  - when:
+      area: backend
+      risk_in: [low]
+    require: [backend-developer, qa-test]
+  - when:
+      area: backend
+      risk_in: [medium, high, critical]
+    require: [backend-developer, qa-test, code-reviewer]
+  - when:
+      touches_any: [authentication, authorization, secrets, permissions, sensitive_data, payment, external_trust_boundary]
+    add: [security-reviewer]
+  - when:
+      structural_change: true
+    add: [architect, code-reviewer]
+  - when:
+      shared_contract_change: true
+    add: [architect, code-reviewer]
+  - when:
+      risk_in: [high, critical]
+    add: [auditor]
+  - when:
+      production_release: true
+    add: [release-agent, auditor]
+    require_gate: G3
+reassignment:
+  blocked_worker_may_be_reassigned: true
+  rule: "Reassignment must not violate role permissions, Work Unit ownership, or WIP limits."

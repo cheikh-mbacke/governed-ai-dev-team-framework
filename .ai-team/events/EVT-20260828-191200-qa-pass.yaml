@@ -1,0 +1,17 @@
+id: EVT-20260828-191200-qa-pass
+type: STATUS
+work_unit: WU-P1-SCAFFOLD
+created_at: '2026-08-28T19:12:00+00:00'
+created_by_role: qa-test
+summary: "QA WU-P1-SCAFFOLD — 4 AC satisfaits au SHA 5b66fc2, aucune régression vs baseline 064c8f2."
+details:
+  commit_sha: 5b66fc236a2efb4a762cce0b2437b418c35f6859
+  baseline_sha: 064c8f236a2efb4a762cce0b2437b418c35f6859
+  pytest: "61 passed, 11 failed, 2 skipped (identique baseline)"
+  ruff_src: pass
+  imports: pass
+  defects: []
+affected_nodes:
+  - WU-P1-SCAFFOLD
+requires_human: false
+status: closed
