@@ -995,3 +995,71 @@ def test_unmatched_decision_blocks_only_dependent_subgraph_and_morning_answer_re
     )
     assert resumed.action == "reacquired_work_unit"
     assert resumed.work_unit_id == "WU-A"
+
+
+def test_decision_proposal_from_adapter_is_validated_by_core(workspace: Workspace) -> None:
+    _seed_grant(workspace, "GRANT-DECISION", work_unit_ids=["WU-A"])
+    grant_path = workspace.ai_team / "run-authorization-grants" / "GRANT-DECISION.json"
+    grant = json.loads(grant_path.read_text(encoding="utf-8"))
+    grant["decision_menu"] = [
+        {
+            "id": "DM-PROP",
+            "trigger": {
+                "type": "dependency_choice",
+                "package_category": "logging",
+                "conditions": {"production_runtime": False},
+            },
+            "authorized_option": {"option_id": "use_existing"},
+            "scope": {"work_units": ["WU-A"]},
+            "required_evidence": ["license_check"],
+            "maximum_uses": 1,
+            "uses_count": 0,
+        }
+    ]
+    grant_path.write_text(json.dumps(grant), encoding="utf-8")
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(
+        _open_run("RUN-DECISION", work_unit_ids=["WU-A"], grant_id="GRANT-DECISION")
+    )
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-DECISION"},
+            payload={
+                "id": "LEASE-DECISION",
+                "run_id": "RUN-DECISION",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="decision-lease",
+        )
+    )
+    adapter = FakeAdapter(
+        [
+            {
+                "status": "blocked",
+                "summary": "fork encountered",
+                "checks": [],
+                "artifacts": [],
+                "decision_proposal": {
+                    "trigger": {
+                        "type": "dependency_choice",
+                        "package_category": "logging",
+                        "conditions": {"production_runtime": False},
+                    },
+                    "proposed_entry_id": "DM-PROP",
+                    "evidence": ["license_check"],
+                },
+            }
+        ]
+    )
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-DECISION",
+        adapter=adapter,
+        worker_id="w1",
+    )
+    assert result.action == "decision_resolved"
+    assert result.details["resolved"] is True

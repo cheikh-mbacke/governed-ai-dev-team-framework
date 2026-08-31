@@ -184,9 +184,44 @@ def _kill_switch_reason(path: Path) -> str | None:
     if grant.get("revoked_at"):
         return "authorization grant was revoked"
     expires_at = grant.get("expires_at")
-    if expires_at and datetime.now(UTC) >= datetime.fromisoformat(str(expires_at)):
-        return "authorization grant expired"
+    if expires_at:
+        try:
+            expiry = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=UTC)
+        except ValueError:
+            return "authorization grant expiry became invalid"
+        if datetime.now(UTC) >= expiry:
+            return "authorization grant expired"
     return None
+
+
+def _sanitized_process_env(accessible_secrets: list[str]) -> dict[str, str]:
+    """Expose only host essentials plus secret names explicitly approved by the grant."""
+    essentials = {
+        "PATH",
+        "PATHEXT",
+        "SYSTEMROOT",
+        "WINDIR",
+        "COMSPEC",
+        "TEMP",
+        "TMP",
+        "TMPDIR",
+        "HOME",
+        "USERPROFILE",
+        "LOCALAPPDATA",
+        "APPDATA",
+        "LANG",
+        "LC_ALL",
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+    }
+    approved = {str(name) for name in accessible_secrets}
+    return {
+        key: value
+        for key, value in os.environ.items()
+        if key.upper() in essentials or key in approved
+    }
 
 
 def _run_agent_process(
@@ -197,9 +232,10 @@ def _run_agent_process(
     kill_switch_path: Path,
     allowed_shell_commands: list[str],
     allowed_paths: list[str],
+    accessible_secrets: list[str] | None = None,
 ) -> tuple[subprocess.CompletedProcess[str] | None, str | None]:
     """Run the CLI with a bounded watchdog that observes grant revocation."""
-    process_env = os.environ.copy()
+    process_env = _sanitized_process_env(accessible_secrets or [])
     process_env["GOVERNED_AI_UNATTENDED_RUN"] = "1"
     process_env["GOVERNED_AI_ALLOWED_SHELL_COMMANDS"] = json.dumps(allowed_shell_commands)
     process_env["GOVERNED_AI_ALLOWED_PATHS"] = json.dumps(allowed_paths)
@@ -276,6 +312,9 @@ def invoke_agent_cli(
                     str(item) for item in request.get("allowed_shell_commands") or []
                 ],
                 allowed_paths=[str(item) for item in request.get("allowed_paths") or []],
+                accessible_secrets=[
+                    str(item) for item in request.get("accessible_secrets") or []
+                ],
             )
             if cancellation_reason is not None:
                 return AgentInvocationOutcome(

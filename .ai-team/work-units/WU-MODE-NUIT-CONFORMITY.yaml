@@ -1,0 +1,45 @@
+id: WU-MODE-NUIT-CONFORMITY
+title: Conformité exhaustive mode nuit (Document 6)
+objective:
+  result: Le Control Plane non supervisé est aligné sur autonomie-avancee-mode-nuit-spec.md et exécutable sans écart bloquant.
+scope:
+  include:
+    - src/governed_ai/core/domain/run/
+    - src/governed_ai/core/commands/
+    - src/governed_ai/core/orchestrator/
+    - adapters/cursor/runtime/
+    - scripts/ai-team/
+    - .ai-team/constitution/
+    - .ai-team/schemas/
+    - tests/core/
+  exclude:
+    - tests/fixtures/
+expected_behavior: >
+  OpenRun refuse les gaps de readiness et le préflight manual; le tick importe,
+  fence, résout les decision_proposal via le Core, persiste le rapport matinal;
+  le profil expose un preset nommé.
+acceptance_criteria:
+  - tests/core/test_run_handlers.py et tests/core/test_orchestrator_tick.py verts
+  - resolve_project_preset consommé; preset déclaré dans project-profile
+  - IndentationError tick.py corrigé
+dependencies: []
+risk:
+  class: medium
+  reasons:
+    - Control Plane et autorisations de run
+required_verification:
+  unit_tests: true
+context_package_ref: null
+status: in_progress
+revision: 1
+created_at: "2026-08-31T20:00:00+00:00"
+updated_at: "2026-08-31T20:00:00+00:00"
+events: []
+evidence: []
+outcomes:
+  review_status: pending
+  audit_status: not_required
+  critical_open_items: []
+  defects: []
+  audit_findings: []
+  human_acceptance: null

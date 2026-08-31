@@ -7,6 +7,10 @@ project:
 communication:
   language: français
 autonomy:
+  # Named preset is authoritative (Document 6 §4). Legacy level is kept only
+  # for schema compatibility; resolve_project_preset never lets new code read
+  # level directly when preset is present.
+  preset: supervised_copilots
   level: 3
 paths:
   product_docs: docs/product

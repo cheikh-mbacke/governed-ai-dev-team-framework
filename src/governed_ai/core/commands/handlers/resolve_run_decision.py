@@ -83,6 +83,10 @@ def handle_resolve_run_decision(
         "trigger": trigger,
         "proposed_entry_id": proposed_entry_id,
         "evidence": evidence,
+        "decision_menu_version": grant_document.get("decision_menu_version"),
+        "authorized_option_id": (
+            (entry.get("authorized_option") or {}).get("option_id") if resolved else None
+        ),
         "resolved": resolved,
         "rejection_reason": reason,
         "resolved_at": now,

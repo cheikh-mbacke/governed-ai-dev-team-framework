@@ -353,18 +353,17 @@ def _issue_grant(
     if mission_artifact_ids is not None:
         payload["mission_artifact_ids"] = mission_artifact_ids
     if autonomy_preset is not None:
+        from governed_ai.core.commands.run_authorization import REQUIRED_UNATTENDED_COMMANDS
+
+        allowed_commands = sorted(REQUIRED_UNATTENDED_COMMANDS)
+        if autonomy_preset in {"unattended_extended", "unattended_maximal", "custom"}:
+            allowed_commands.append("RecordIntegrationMerge")
+        if autonomy_preset in {"unattended_maximal", "custom"}:
+            allowed_commands.append("RegisterReleaseCandidate")
         payload.update(
             {
                 "autonomy_preset": autonomy_preset,
-                "allowed_commands": [
-                    "OpenRun",
-                    "AcquireWorkerLease",
-                    "RecordExecutionAttempt",
-                    "WriteCheckpoint",
-                    "CloseRun",
-                    "RecordWorkerHeartbeat",
-                    "ReleaseWorkerLease",
-                ],
+                "allowed_commands": allowed_commands,
                 "allowed_environments": ["development", "test"],
                 "maximum_duration_hours": 8,
                 "maximum_tokens": 1000,
@@ -677,6 +676,11 @@ def test_close_run_happy_path(run_workspace: Workspace) -> None:
     assert document["status"] == "completed"
     assert document["revision"] == 2
     assert document["closed_at"] is not None
+    report_path = run_workspace.ai_team / "runs" / "morning-reports" / "RUN-007.json"
+    assert report_path.is_file()
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["run_id"] == "RUN-007"
+    assert report["status"] == "completed"
 
 
 def test_close_run_rejects_stale_revision(run_workspace: Workspace) -> None:
@@ -1024,6 +1028,41 @@ def test_issue_grant_with_decision_menu_entry(run_workspace: Workspace) -> None:
         )
     )
     assert document["decision_menu"][0]["uses_count"] == 0
+
+
+def test_trigger_matches_top_level_fields_and_nested_conditions() -> None:
+    from governed_ai.core.domain.run.decision_menu import trigger_matches
+
+    entry = {
+        "type": "dependency_choice",
+        "package_category": "logging",
+        "conditions": {"production_runtime": False, "license_in": ["MIT", "Apache-2.0"]},
+    }
+    assert trigger_matches(
+        entry,
+        {
+            "type": "dependency_choice",
+            "package_category": "logging",
+            "conditions": {"production_runtime": False, "license_in": ["MIT", "Apache-2.0"]},
+        },
+    )
+    assert trigger_matches(
+        entry,
+        {
+            "type": "dependency_choice",
+            "package_category": "logging",
+            "production_runtime": False,
+            "license_in": ["MIT", "Apache-2.0"],
+        },
+    )
+    assert not trigger_matches(
+        entry,
+        {
+            "type": "dependency_choice",
+            "package_category": "metrics",
+            "conditions": {"production_runtime": False, "license_in": ["MIT", "Apache-2.0"]},
+        },
+    )
 
 
 def test_issue_grant_rejects_duplicate_decision_menu_entry_ids(run_workspace: Workspace) -> None:

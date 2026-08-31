@@ -27,6 +27,8 @@ import yaml
 
 from governed_ai.adapters.spi import AdapterSPI, ExecutionRequest
 from governed_ai.core.commands.gateway import CommandGateway
+from governed_ai.core.domain.run.autonomy_policy import effective_policy_hash
+from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
     changed_files,
@@ -237,6 +239,7 @@ def _dispatch_step(workspace: Workspace, run_id: str, work_unit_id: str, status:
     if run_document.get("autonomy_preset") in {
         "unattended_extended",
         "unattended_maximal",
+        "custom",
     }:
         return "integration_review"
     return "audit"
@@ -323,15 +326,62 @@ def _global_stop_condition(
     grant_path = workspace.ai_team / "run-authorization-grants" / f"{grant_id}.json"
     if not grant_path.is_file():
         return "state_corruption"
-    grant = json.loads(_read_text(grant_path))
+    try:
+        grant = json.loads(_read_text(grant_path))
+    except (OSError, json.JSONDecodeError):
+        return "state_corruption"
+    policy = run_document.get("effective_autonomy_policy")
+    if policy is not None:
+        expected_policy_hash = effective_policy_hash(policy)
+        if (
+            run_document.get("effective_autonomy_policy_hash") != expected_policy_hash
+            or grant.get("effective_autonomy_policy_hash") != expected_policy_hash
+        ):
+            return "state_corruption"
+    for artifact_id, expected_hash in (grant.get("mission_artifact_hashes") or {}).items():
+        artifact_path = workspace.ai_team / "mission-artifacts" / f"{artifact_id}.json"
+        try:
+            artifact = json.loads(_read_text(artifact_path))
+        except (OSError, json.JSONDecodeError):
+            return "state_corruption"
+        if compute_artifact_hash(artifact) != expected_hash:
+            return "state_corruption"
+    active_by_work_unit: dict[str, list[str]] = {}
+    leases_dir = workspace.ai_team / "runs" / "leases"
+    if leases_dir.is_dir():
+        for lease_path in leases_dir.glob("*.yaml"):
+            try:
+                lease = _read_yaml(lease_path) or {}
+            except (OSError, yaml.YAMLError):
+                return "state_corruption"
+            if lease.get("run_id") == run_document.get("id") and lease.get("status") == "active":
+                active_by_work_unit.setdefault(str(lease.get("work_unit_id")), []).append(
+                    str(lease.get("id"))
+                )
+    if any(len(ids) > 1 for ids in active_by_work_unit.values()):
+        return "fencing_conflict"
+    if set(active_by_work_unit) != set(run_document.get("leases_by_work_unit") or {}):
+        return "fencing_conflict"
+    for work_unit_id, lease_ref in (run_document.get("leases_by_work_unit") or {}).items():
+        if active_by_work_unit.get(work_unit_id) != [str(lease_ref.get("lease_id"))]:
+            return "fencing_conflict"
     if grant.get("revoked_at"):
         return "kill_switch"
     expires_at = grant.get("expires_at")
-    if expires_at and now >= datetime.fromisoformat(expires_at):
-        return "authorization_violation"
+    if expires_at:
+        try:
+            expiry = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=UTC)
+        except ValueError:
+            return "state_corruption"
+        if now >= expiry:
+            return "authorization_violation"
     duration = grant.get("maximum_duration_hours")
     if duration is not None and run_document.get("created_at"):
-        opened = datetime.fromisoformat(run_document["created_at"])
+        opened = datetime.fromisoformat(str(run_document["created_at"]).replace("Z", "+00:00"))
+        if opened.tzinfo is None:
+            opened = opened.replace(tzinfo=UTC)
         if (now - opened).total_seconds() >= float(duration) * 3600:
             return "budget_exhausted"
     maximum_spend = grant.get("maximum_spend")
@@ -358,27 +408,19 @@ def _global_stop_condition(
 
 def _execution_envelope_constraints(
     workspace: Workspace, run_document: dict[str, Any]
-) -> tuple[list[str], list[str]]:
+) -> tuple[list[str], list[str], list[str]]:
     grant_id = run_document.get("run_authorization_grant_id")
     if not grant_id:
-        return [], []
+        return [], [], []
     grant_path = workspace.ai_team / "run-authorization-grants" / f"{grant_id}.json"
     if not grant_path.is_file():
-        return [], []
+        return [], [], []
     grant = json.loads(_read_text(grant_path))
-    for artifact_id in grant.get("mission_artifact_ids") or []:
-        artifact_path = workspace.ai_team / "mission-artifacts" / f"{artifact_id}.json"
-        if not artifact_path.is_file():
-            continue
-        artifact = json.loads(_read_text(artifact_path))
-        if artifact.get("kind") != "execution_envelope":
-            continue
-        content = artifact.get("content") or {}
-        return (
-            [str(item) for item in content.get("allowed_commands") or []],
-            [str(item) for item in content.get("allowed_paths") or []],
-        )
-    return [], []
+    return (
+        [str(item) for item in grant.get("allowed_shell_commands") or []],
+        [str(item) for item in grant.get("allowed_paths") or []],
+        [str(item) for item in grant.get("accessible_secrets") or []],
+    )
 
 
 def _path_is_allowed(path: str, patterns: list[str]) -> bool:
@@ -586,7 +628,11 @@ def run_scheduling_tick(
                         "id": work_unit_id,
                         "expected_revision": wu_document["revision"],
                     },
-                    payload={"to_status": "in_progress", "reason": "orchestrator started work"},
+                    payload={
+                        "run_id": run_id,
+                        "to_status": "in_progress",
+                        "reason": "orchestrator started work",
+                    },
                 )
             )
             if transition_exit != 0:
@@ -808,11 +854,12 @@ def run_scheduling_tick(
                 / f"{run_document['run_authorization_grant_id']}.json"
             ),
         }
-        allowed_shell_commands, allowed_paths = _execution_envelope_constraints(
+        allowed_shell_commands, allowed_paths, accessible_secrets = _execution_envelope_constraints(
             workspace, run_document
         )
         request["allowed_shell_commands"] = allowed_shell_commands
         request["allowed_paths"] = allowed_paths
+        request["accessible_secrets"] = accessible_secrets
         if base_sha is not None:
             request["base_sha"] = base_sha
         try:
@@ -1128,6 +1175,7 @@ def run_scheduling_tick(
                             "expected_revision": wu_document["revision"],
                         },
                         payload={
+                            "run_id": run_id,
                             "to_status": next_status,
                             "reason": f"orchestrator: {step} succeeded",
                         },
@@ -1159,6 +1207,54 @@ def run_scheduling_tick(
                     details={"attempt_id": attempt_id, "from": current_status, "to": next_status},
                 )
         else:
+            decision_proposal = result.get("decision_proposal")
+            if (
+                isinstance(decision_proposal, dict)
+                and decision_proposal.get("trigger")
+                and decision_proposal.get("proposed_entry_id")
+            ):
+                decision_id = f"DECISION-{uuid.uuid4().hex[:12].upper()}"
+                decision_receipt, decision_exit = gateway.execute_command(
+                    _envelope(
+                        "ResolveRunDecision",
+                        target={"kind": "run_decision", "id": decision_id},
+                        payload={
+                            "run_id": run_id,
+                            "work_unit_id": work_unit_id,
+                            "trigger": decision_proposal.get("trigger"),
+                            "proposed_entry_id": decision_proposal.get("proposed_entry_id"),
+                            "evidence": decision_proposal.get("evidence") or [],
+                            "environment": decision_proposal.get("environment"),
+                        },
+                        actor_role_id="mandate-matcher",
+                    )
+                )
+                if decision_exit != 0:
+                    return TickResult(
+                        action="decision_resolution_failed",
+                        work_unit_id=work_unit_id,
+                        details={"errors": decision_receipt.get("errors")},
+                    )
+                resolved = bool((decision_receipt.get("details") or {}).get("resolved"))
+                if not resolved:
+                    _release_lease(
+                        gateway,
+                        run_id=run_id,
+                        work_unit_id=work_unit_id,
+                        lease_ref=lease_ref,
+                        reason="decision requires human authority",
+                    )
+                return TickResult(
+                    action="decision_resolved" if resolved else "paused_awaiting_human",
+                    work_unit_id=work_unit_id,
+                    details={
+                        "decision_id": decision_id,
+                        "resolved": resolved,
+                        "rejection_reason": (decision_receipt.get("details") or {}).get(
+                            "rejection_reason"
+                        ),
+                    },
+                )
             if status == "blocked":
                 blocked_status = (
                     "blocked"
@@ -1174,6 +1270,7 @@ def run_scheduling_tick(
                             "expected_revision": wu_document["revision"],
                         },
                         payload={
+                            "run_id": run_id,
                             "to_status": blocked_status,
                             "reason": f"orchestrator paused blocked step: {result.get('summary')}",
                         },
@@ -1216,6 +1313,7 @@ def run_scheduling_tick(
                                 "expected_revision": wu_document["revision"],
                             },
                             payload={
+                                "run_id": run_id,
                                 "to_status": next_status,
                                 "reason": f"orchestrator: convergence exhausted ({exhaustion_reason})",
                             },

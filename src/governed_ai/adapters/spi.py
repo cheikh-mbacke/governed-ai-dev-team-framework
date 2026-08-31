@@ -138,6 +138,7 @@ class ExecutionRequest(TypedDict, total=False):
     kill_switch_path: str
     allowed_shell_commands: list[str]
     allowed_paths: list[str]
+    accessible_secrets: list[str]
 
 
 class RuntimeCheck(TypedDict, total=False):
@@ -191,6 +192,9 @@ class RuntimeResult(TypedDict, total=False):
     limitations: list[str]
     requested_commands: list[object]
     usage: dict[str, object]
+    # Document 6 §5.3 — adapter/mandate-matcher may propose a typed menu match;
+    # only ResolveRunDecision (Core) can accept it.
+    decision_proposal: dict[str, object]
 
 
 @runtime_checkable

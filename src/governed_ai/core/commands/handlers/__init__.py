@@ -6,6 +6,7 @@ from governed_ai.core.commands.handlers.acquire_worker_lease import handle_acqui
 from governed_ai.core.commands.handlers.close_run import handle_close_run
 from governed_ai.core.commands.handlers.create_decision_request import handle_create_decision_request
 from governed_ai.core.commands.handlers.create_work_unit import handle_create_work_unit
+from governed_ai.core.commands.handlers.escalate_work_unit_risk import handle_escalate_work_unit_risk
 from governed_ai.core.commands.handlers.export_feedback import handle_export_feedback
 from governed_ai.core.commands.handlers.generate_retrospective import handle_generate_retrospective
 from governed_ai.core.commands.handlers.issue_run_authorization_grant import (
@@ -45,6 +46,7 @@ from governed_ai.core.commands.handlers.write_checkpoint import handle_write_che
 
 HANDLERS = {
     "CreateWorkUnit": handle_create_work_unit,
+    "EscalateWorkUnitRisk": handle_escalate_work_unit_risk,
     "TransitionWorkUnit": handle_transition_work_unit,
     "CreateDecisionRequest": handle_create_decision_request,
     "ResolveDecisionRequest": handle_resolve_decision_request,
