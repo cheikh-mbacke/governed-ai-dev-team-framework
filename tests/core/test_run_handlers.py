@@ -206,6 +206,26 @@ def _tighten_ceiling(
     )
 
 
+def _escalate_risk(
+    run_id: str,
+    *,
+    expected_revision: int,
+    work_unit_id: str,
+    new_risk_class: str,
+    reason: str = "secret exposure suspected",
+) -> dict:
+    return _envelope(
+        "EscalateWorkUnitRisk",
+        target={"kind": "run", "id": run_id, "expected_revision": expected_revision},
+        payload={
+            "work_unit_id": work_unit_id,
+            "new_risk_class": new_risk_class,
+            "reason": reason,
+        },
+        key=f"escalate-risk-{run_id}-{expected_revision}-{work_unit_id}-{new_risk_class}",
+    )
+
+
 def _record_integration_merge(
     merge_id: str,
     *,
@@ -1055,6 +1075,23 @@ def test_trigger_matches_top_level_fields_and_nested_conditions() -> None:
             "license_in": ["MIT", "Apache-2.0"],
         },
     )
+    # Document 6 §5.2 — license_in is an allow-list; a scalar observed license matches.
+    assert trigger_matches(
+        entry,
+        {
+            "type": "dependency_choice",
+            "package_category": "logging",
+            "conditions": {"production_runtime": False, "license_in": "MIT"},
+        },
+    )
+    assert not trigger_matches(
+        entry,
+        {
+            "type": "dependency_choice",
+            "package_category": "logging",
+            "conditions": {"production_runtime": False, "license_in": "GPL-3.0"},
+        },
+    )
     assert not trigger_matches(
         entry,
         {
@@ -1063,6 +1100,16 @@ def test_trigger_matches_top_level_fields_and_nested_conditions() -> None:
             "conditions": {"production_runtime": False, "license_in": ["MIT", "Apache-2.0"]},
         },
     )
+
+
+def test_resolve_project_preset_prefers_named_preset_over_legacy_level() -> None:
+    from governed_ai.core.domain.run.autonomy_policy import resolve_project_preset
+
+    assert resolve_project_preset({"preset": "supervised_copilots", "level": 3}) == (
+        "supervised_copilots"
+    )
+    assert resolve_project_preset({"level": 3}) == "unattended_conservative"
+    assert resolve_project_preset({"preset": "unattended_maximal"}) == "unattended_maximal"
 
 
 def test_issue_grant_rejects_duplicate_decision_menu_entry_ids(run_workspace: Workspace) -> None:
@@ -1552,6 +1599,109 @@ def test_tighten_execution_ceiling_rejects_loosening(run_workspace: Workspace) -
     )
     assert exit_code == 3
     assert receipt["errors"][0]["code"] == ErrorCode.INVARIANT_VIOLATION.value
+
+
+def test_escalate_work_unit_risk_moves_strictly_upward(run_workspace: Workspace) -> None:
+    """Document 6 §7.3 — risk escalation is automatic and one-way."""
+    gateway = CommandGateway(run_workspace)
+    _seed_work_unit(run_workspace, "WU-A", status="in_progress")
+    gateway.execute_command(_open_run("RUN-RISK-001", work_unit_ids=["WU-A"]))
+    receipt, exit_code = gateway.execute_command(
+        _escalate_risk(
+            "RUN-RISK-001",
+            expected_revision=1,
+            work_unit_id="WU-A",
+            new_risk_class="high",
+        )
+    )
+    assert exit_code == 0
+    assert receipt["details"]["previous_risk_class"] == "low"
+    assert receipt["details"]["new_risk_class"] == "high"
+    assert receipt["details"]["paused"] is False
+    wu = yaml.safe_load(
+        (run_workspace.ai_team / "work-units" / "WU-A.yaml").read_text(encoding="utf-8")
+    )
+    assert wu["risk"]["class"] == "high"
+    assert wu["status"] == "in_progress"
+
+
+def test_escalate_work_unit_risk_rejects_de_escalation(run_workspace: Workspace) -> None:
+    gateway = CommandGateway(run_workspace)
+    _seed_work_unit(run_workspace, "WU-A", status="in_progress")
+    path = run_workspace.ai_team / "work-units" / "WU-A.yaml"
+    wu = yaml.safe_load(path.read_text(encoding="utf-8"))
+    wu["risk"]["class"] = "high"
+    path.write_text(yaml.safe_dump(wu), encoding="utf-8")
+    gateway.execute_command(_open_run("RUN-RISK-002", work_unit_ids=["WU-A"]))
+    receipt, exit_code = gateway.execute_command(
+        _escalate_risk(
+            "RUN-RISK-002",
+            expected_revision=1,
+            work_unit_id="WU-A",
+            new_risk_class="medium",
+        )
+    )
+    assert exit_code == 3
+    assert receipt["errors"][0]["code"] == ErrorCode.INVARIANT_VIOLATION.value
+
+
+def test_escalate_to_critical_pauses_when_another_critical_wu_is_active(
+    run_workspace: Workspace,
+) -> None:
+    """Document 6 §11 — maximum_parallel_critical_wu=1 across the Run batch."""
+    gateway = CommandGateway(run_workspace)
+    _seed_work_unit(run_workspace, "WU-A", status="in_progress")
+    _seed_work_unit(run_workspace, "WU-NIGHT-001", status="verification")
+    other = run_workspace.ai_team / "work-units" / "WU-NIGHT-001.yaml"
+    other_doc = yaml.safe_load(other.read_text(encoding="utf-8"))
+    other_doc["risk"]["class"] = "critical"
+    other.write_text(yaml.safe_dump(other_doc), encoding="utf-8")
+    gateway.execute_command(
+        _open_run("RUN-RISK-003", work_unit_ids=["WU-A", "WU-NIGHT-001"])
+    )
+    receipt, exit_code = gateway.execute_command(
+        _escalate_risk(
+            "RUN-RISK-003",
+            expected_revision=1,
+            work_unit_id="WU-A",
+            new_risk_class="critical",
+        )
+    )
+    assert exit_code == 0
+    assert receipt["details"]["paused"] is True
+    wu = yaml.safe_load(
+        (run_workspace.ai_team / "work-units" / "WU-A.yaml").read_text(encoding="utf-8")
+    )
+    assert wu["risk"]["class"] == "critical"
+    assert wu["status"] == "waiting_decision"
+
+
+def test_escalate_pauses_when_exceeding_preset_maximum_risk_class(
+    run_workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(run_workspace)
+    _seed_work_unit(run_workspace, "WU-A", status="in_progress")
+    gateway.execute_command(_open_run("RUN-RISK-004", work_unit_ids=["WU-A"]))
+    run_path = run_workspace.ai_team / "runs" / "RUN-RISK-004.yaml"
+    run_doc = yaml.safe_load(run_path.read_text(encoding="utf-8"))
+    run_doc["effective_autonomy_policy"] = {
+        "eligibility": {"maximum_risk_class": "medium"}
+    }
+    run_path.write_text(yaml.safe_dump(run_doc), encoding="utf-8")
+    receipt, exit_code = gateway.execute_command(
+        _escalate_risk(
+            "RUN-RISK-004",
+            expected_revision=1,
+            work_unit_id="WU-A",
+            new_risk_class="high",
+        )
+    )
+    assert exit_code == 0
+    assert receipt["details"]["paused"] is True
+    wu = yaml.safe_load(
+        (run_workspace.ai_team / "work-units" / "WU-A.yaml").read_text(encoding="utf-8")
+    )
+    assert wu["status"] == "waiting_decision"
 
 
 def test_tighten_execution_ceiling_rejects_holding_same_state(run_workspace: Workspace) -> None:

@@ -1063,3 +1063,61 @@ def test_decision_proposal_from_adapter_is_validated_by_core(workspace: Workspac
     )
     assert result.action == "decision_resolved"
     assert result.details["resolved"] is True
+
+
+def test_risk_escalation_from_adapter_pauses_when_critical_wip_conflict(
+    workspace: Workspace,
+) -> None:
+    """Document 6 §7.3/§11 — adapter-reported escalation is Core-applied; WIP=1 pauses."""
+    _seed_grant(workspace, "GRANT-RISK-TICK", work_unit_ids=["WU-A", "WU-B"])
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(
+        _open_run(
+            "RUN-RISK-TICK",
+            work_unit_ids=["WU-A", "WU-B"],
+            grant_id="GRANT-RISK-TICK",
+        )
+    )
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    _seed_work_unit(workspace, "WU-B", status="verification")
+    other = workspace.ai_team / "work-units" / "WU-B.yaml"
+    other_doc = yaml.safe_load(other.read_text(encoding="utf-8"))
+    other_doc["risk"]["class"] = "critical"
+    other.write_text(yaml.safe_dump(other_doc), encoding="utf-8")
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-RISK"},
+            payload={
+                "id": "LEASE-RISK",
+                "run_id": "RUN-RISK-TICK",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="risk-lease",
+        )
+    )
+    adapter = FakeAdapter(
+        [
+            {
+                **_succeeded_result("found secret exposure"),
+                "risk_escalation": {
+                    "new_risk_class": "critical",
+                    "reason": "secret exposure discovered mid-implementation",
+                },
+            }
+        ]
+    )
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-RISK-TICK",
+        adapter=adapter,
+        worker_id="w1",
+    )
+    assert result.action == "paused_for_risk_escalation"
+    wu = yaml.safe_load(
+        (workspace.ai_team / "work-units" / "WU-A.yaml").read_text(encoding="utf-8")
+    )
+    assert wu["risk"]["class"] == "critical"
+    assert wu["status"] == "waiting_decision"

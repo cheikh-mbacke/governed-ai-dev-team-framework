@@ -1152,6 +1152,116 @@ def run_scheduling_tick(
                 details={"errors": checkpoint_receipt.get("errors")},
             )
 
+        # Document 6 §7.3 — escalation is automatic and immediate; process
+        # before any advancement so a discovered higher risk can pause the WU
+        # even when the attempt itself succeeded.
+        risk_escalation = result.get("risk_escalation")
+        if isinstance(risk_escalation, dict) and risk_escalation.get("new_risk_class"):
+            run_document = yaml.safe_load(
+                (workspace.ai_team / "runs" / f"{run_id}.yaml").read_text(encoding="utf-8")
+            )
+            escalate_receipt, escalate_exit = gateway.execute_command(
+                _envelope(
+                    "EscalateWorkUnitRisk",
+                    target={
+                        "kind": "run",
+                        "id": run_id,
+                        "expected_revision": run_document["revision"],
+                    },
+                    payload={
+                        "work_unit_id": work_unit_id,
+                        "new_risk_class": risk_escalation["new_risk_class"],
+                        "reason": risk_escalation.get("reason")
+                        or "adapter reported higher risk during execution",
+                    },
+                )
+            )
+            if escalate_exit != 0:
+                return TickResult(
+                    action="risk_escalation_failed",
+                    work_unit_id=work_unit_id,
+                    details={"errors": escalate_receipt.get("errors")},
+                )
+            wu_document = yaml.safe_load(
+                (workspace.ai_team / "work-units" / f"{work_unit_id}.yaml").read_text(
+                    encoding="utf-8"
+                )
+            )
+            if (escalate_receipt.get("details") or {}).get("paused"):
+                # EscalateWorkUnitRisk already released any active lease when
+                # pausing (§7.3) — do not issue a second ReleaseWorkerLease.
+                return TickResult(
+                    action="paused_for_risk_escalation",
+                    work_unit_id=work_unit_id,
+                    details={
+                        "attempt_id": attempt_id,
+                        "new_risk_class": risk_escalation["new_risk_class"],
+                        "paused": True,
+                    },
+                )
+
+        # Document 6 §5.3/§12.2 — mandate-matcher proposes; Core validates.
+        # Handled for any attempt status: an unresolved fork pauses the WU
+        # even if the underlying step otherwise succeeded.
+        decision_proposal = result.get("decision_proposal")
+        if (
+            isinstance(decision_proposal, dict)
+            and decision_proposal.get("trigger")
+            and decision_proposal.get("proposed_entry_id")
+        ):
+            decision_id = f"DECISION-{uuid.uuid4().hex[:12].upper()}"
+            decision_receipt, decision_exit = gateway.execute_command(
+                _envelope(
+                    "ResolveRunDecision",
+                    target={"kind": "run_decision", "id": decision_id},
+                    payload={
+                        "run_id": run_id,
+                        "work_unit_id": work_unit_id,
+                        "trigger": decision_proposal.get("trigger"),
+                        "proposed_entry_id": decision_proposal.get("proposed_entry_id"),
+                        "evidence": decision_proposal.get("evidence") or [],
+                        "environment": decision_proposal.get("environment"),
+                    },
+                    actor_role_id="mandate-matcher",
+                )
+            )
+            if decision_exit != 0:
+                return TickResult(
+                    action="decision_resolution_failed",
+                    work_unit_id=work_unit_id,
+                    details={"errors": decision_receipt.get("errors")},
+                )
+            resolved = bool((decision_receipt.get("details") or {}).get("resolved"))
+            if not resolved:
+                _release_lease(
+                    gateway,
+                    run_id=run_id,
+                    work_unit_id=work_unit_id,
+                    lease_ref=lease_ref,
+                    reason="decision requires human authority",
+                )
+                return TickResult(
+                    action="paused_awaiting_human",
+                    work_unit_id=work_unit_id,
+                    details={
+                        "decision_id": decision_id,
+                        "resolved": False,
+                        "rejection_reason": (decision_receipt.get("details") or {}).get(
+                            "rejection_reason"
+                        ),
+                    },
+                )
+            if status != "succeeded":
+                return TickResult(
+                    action="decision_resolved",
+                    work_unit_id=work_unit_id,
+                    details={
+                        "decision_id": decision_id,
+                        "resolved": True,
+                        "rejection_reason": None,
+                    },
+                )
+
         # Document 6 §9.3/orchestrator.json — a success always advances the
         # Work Unit, even if this same attempt also happened to hit the
         # numeric attempt cap: there is no reason to demote a step that just
@@ -1207,54 +1317,6 @@ def run_scheduling_tick(
                     details={"attempt_id": attempt_id, "from": current_status, "to": next_status},
                 )
         else:
-            decision_proposal = result.get("decision_proposal")
-            if (
-                isinstance(decision_proposal, dict)
-                and decision_proposal.get("trigger")
-                and decision_proposal.get("proposed_entry_id")
-            ):
-                decision_id = f"DECISION-{uuid.uuid4().hex[:12].upper()}"
-                decision_receipt, decision_exit = gateway.execute_command(
-                    _envelope(
-                        "ResolveRunDecision",
-                        target={"kind": "run_decision", "id": decision_id},
-                        payload={
-                            "run_id": run_id,
-                            "work_unit_id": work_unit_id,
-                            "trigger": decision_proposal.get("trigger"),
-                            "proposed_entry_id": decision_proposal.get("proposed_entry_id"),
-                            "evidence": decision_proposal.get("evidence") or [],
-                            "environment": decision_proposal.get("environment"),
-                        },
-                        actor_role_id="mandate-matcher",
-                    )
-                )
-                if decision_exit != 0:
-                    return TickResult(
-                        action="decision_resolution_failed",
-                        work_unit_id=work_unit_id,
-                        details={"errors": decision_receipt.get("errors")},
-                    )
-                resolved = bool((decision_receipt.get("details") or {}).get("resolved"))
-                if not resolved:
-                    _release_lease(
-                        gateway,
-                        run_id=run_id,
-                        work_unit_id=work_unit_id,
-                        lease_ref=lease_ref,
-                        reason="decision requires human authority",
-                    )
-                return TickResult(
-                    action="decision_resolved" if resolved else "paused_awaiting_human",
-                    work_unit_id=work_unit_id,
-                    details={
-                        "decision_id": decision_id,
-                        "resolved": resolved,
-                        "rejection_reason": (decision_receipt.get("details") or {}).get(
-                            "rejection_reason"
-                        ),
-                    },
-                )
             if status == "blocked":
                 blocked_status = (
                     "blocked"

@@ -195,6 +195,9 @@ class RuntimeResult(TypedDict, total=False):
     # Document 6 §5.3 — adapter/mandate-matcher may propose a typed menu match;
     # only ResolveRunDecision (Core) can accept it.
     decision_proposal: dict[str, object]
+    # Document 6 §7.3 — adapter may report a discovered higher risk class;
+    # only EscalateWorkUnitRisk (Core) applies the one-way ratchet.
+    risk_escalation: dict[str, object]
 
 
 @runtime_checkable

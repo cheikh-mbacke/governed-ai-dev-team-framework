@@ -17,11 +17,14 @@ scope:
 expected_behavior: >
   OpenRun refuse les gaps de readiness et le préflight manual; le tick importe,
   fence, résout les decision_proposal via le Core, persiste le rapport matinal;
-  le profil expose un preset nommé.
+  le profil expose un preset nommé. EscalateWorkUnitRisk applique le ratchet
+  one-way et pause sur WIP critique / dépassement de plafond. license_in accepte
+  un scalaire membre de la liste.
 acceptance_criteria:
   - tests/core/test_run_handlers.py et tests/core/test_orchestrator_tick.py verts
   - resolve_project_preset consommé; preset déclaré dans project-profile
   - IndentationError tick.py corrigé
+  - EscalateWorkUnitRisk + membership license_in + câblage tick risk_escalation
 dependencies: []
 risk:
   class: medium
@@ -30,12 +33,25 @@ risk:
 required_verification:
   unit_tests: true
 context_package_ref: null
-status: in_progress
-revision: 1
+status: verification
+revision: 2
 created_at: "2026-08-31T20:00:00+00:00"
-updated_at: "2026-08-31T20:00:00+00:00"
-events: []
-evidence: []
+updated_at: "2026-08-31T20:55:19Z"
+events:
+  - type: IMPLEMENTATION
+    at: "2026-08-31T20:55:19Z"
+    summary: >
+      Écarts Document 6 corrigés — membership license_in, EscalateWorkUnitRisk
+      WIP critique sur tout le lot, câblage tick risk_escalation, commentaire
+      permissions auditor aligné.
+evidence:
+  - kind: unit_tests
+    at: "2026-08-31T20:55:19Z"
+    command: python -m pytest tests/core/test_run_handlers.py tests/core/test_orchestrator_tick.py -q
+    result: 106 passed
+    limitations:
+      - Preuve L4 réelle (run multi-heures / kill OS process) non acquise — voir mode-nuit-preuve-resilience-couverture.md
+      - Alertes immédiates = événements BLOCKER in-repo, pas de transport email/Slack
 outcomes:
   review_status: pending
   audit_status: not_required

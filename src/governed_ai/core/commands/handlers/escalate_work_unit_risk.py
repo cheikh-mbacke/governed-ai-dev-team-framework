@@ -11,6 +11,10 @@ from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.persistence.transaction import Transaction
 
 RISK_ORDER = {"low": 0, "medium": 1, "high": 2, "critical": 3}
+# Statuses that consume critical WIP (Document 6 §11 maximum_parallel_critical_wu).
+_ACTIVE_CRITICAL_STATUSES = frozenset(
+    {"in_progress", "verification", "review", "audit", "remediation_required"}
+)
 
 
 def handle_escalate_work_unit_risk(
@@ -53,12 +57,24 @@ def handle_escalate_work_unit_risk(
         "maximum_risk_class", "critical"
     )
     exceeds_maximum = RISK_ORDER[new_class] > RISK_ORDER.get(str(maximum), 3)
-    critical_conflict = new_class == "critical" and any(
-        other_id != work_unit_id
-        and ((yaml.safe_load((workspace_root.ai_team / "work-units" / f"{other_id}.yaml").read_text(encoding="utf-8")) or {}).get("risk") or {}).get("class") == "critical"
-        for other_id in (run.get("leases_by_work_unit") or {})
-        if (workspace_root.ai_team / "work-units" / f"{other_id}.yaml").is_file()
-    )
+    # WIP=1 for critical applies to the whole Run batch, not only currently
+    # leased WUs — a critical WU already active without a lease (or held by
+    # another worker) must still force this escalation into pause (§7.3 / §11).
+    leases = run.get("leases_by_work_unit") or {}
+    critical_conflict = False
+    if new_class == "critical":
+        for other_id in run.get("work_unit_ids") or []:
+            if other_id == work_unit_id:
+                continue
+            other_path = workspace_root.ai_team / "work-units" / f"{other_id}.yaml"
+            if not other_path.is_file():
+                continue
+            other = yaml.safe_load(other_path.read_text(encoding="utf-8")) or {}
+            if (other.get("risk") or {}).get("class") != "critical":
+                continue
+            if other.get("status") in _ACTIVE_CRITICAL_STATUSES or other_id in leases:
+                critical_conflict = True
+                break
     paused = exceeds_maximum or critical_conflict
     if paused and work_unit.get("status") not in {"done", "cancelled"}:
         work_unit["status"] = "waiting_decision"

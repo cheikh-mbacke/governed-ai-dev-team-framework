@@ -37,12 +37,25 @@ def trigger_matches(entry_trigger: dict[str, Any], observed_trigger: dict[str, A
     for key, expected in conditions.items():
         observed_conditions = observed_trigger.get("conditions")
         if isinstance(observed_conditions, dict) and key in observed_conditions:
-            if observed_conditions.get(key) != expected:
+            if not _condition_value_matches(expected, observed_conditions.get(key)):
                 return False
             continue
-        if observed_trigger.get(key) != expected:
+        if not _condition_value_matches(expected, observed_trigger.get(key)):
             return False
     return True
+
+
+def _condition_value_matches(expected: Any, observed: Any) -> bool:
+    """Match a typed condition mechanically (Document 6 §5.2).
+
+    List-valued conditions such as ``license_in: [MIT, Apache-2.0]`` accept
+    either the same list (exact) or a scalar that is a member of that list —
+    so an observed license ``MIT`` validates against the allow-list without
+    requiring the agent to restate the whole set.
+    """
+    if isinstance(expected, list) and not isinstance(observed, list):
+        return observed in expected
+    return observed == expected
 
 
 def _scope_covers(patterns: list[str] | None, value: str | None) -> bool:

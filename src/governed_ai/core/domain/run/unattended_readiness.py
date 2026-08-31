@@ -1,12 +1,12 @@
 """Definition of Unattended-Ready — the hardened G1 dashboard for night-mode
 sessions (Document 6 §6.3).
 
-Mirrors the posture of the existing Definition of Ready
-(`.ai-team/constitution/definition-of-ready.yaml`): nothing in Core
-mechanically blocks a command on that checklist either — it is a
-human-facing readiness dashboard that informs the G1 decision, not a
-handler-level gate. `build_unattended_readiness_report` is read-only and
-side-effect-free; it can be called before a Run/grant even exist.
+`build_unattended_readiness_report` is read-only and side-effect-free; it can
+be called before a Run/grant even exist (e.g. via the Gateway
+``unattended-readiness`` query). OpenRun additionally refuses to start an
+unattended Run while any gap remains — the dashboard is both human-facing
+preparation evidence and a mechanical gate at session open
+(``.ai-team/constitution/definition-of-unattended-ready.yaml``).
 """
 
 from __future__ import annotations
