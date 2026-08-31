@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RunDecision",
+  "type": "object",
+  "required": [
+    "id",
+    "run_id",
+    "work_unit_id",
+    "trigger",
+    "proposed_entry_id",
+    "evidence",
+    "resolved",
+    "rejection_reason",
+    "resolved_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^DECISION-[A-Za-z0-9._-]+$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^RUN-[A-Za-z0-9._-]+$"
+    },
+    "work_unit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trigger": {
+      "type": "object"
+    },
+    "proposed_entry_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "resolved": {
+      "type": "boolean"
+    },
+    "rejection_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "resolved_at": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

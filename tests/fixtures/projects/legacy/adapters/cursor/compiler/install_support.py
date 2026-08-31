@@ -9,16 +9,27 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from adapters.cursor.compiler.compile import compile_manifest
-from adapters.cursor.compiler.parity import resolve_bundle_dir
+from .compile import compile_manifest
+from .parity import resolve_bundle_dir
 
 
-def _ensure_import_paths(source_root: Path) -> None:
-    root = str(source_root.resolve())
-    src = str((source_root / "src").resolve())
-    for entry in (root, src):
+def _ensure_import_paths(source_root: Path, target: Path | None = None) -> None:
+    from distribution.installer.paths import adapter_compiler_import_root, is_installed_runtime_layout
+
+    root = source_root.resolve()
+    import_root = adapter_compiler_import_root(root, target)
+    entries = [str(root), str(import_root)]
+    if not is_installed_runtime_layout(root):
+        entries.append(str(root / "src"))
+    for entry in entries:
         if entry not in sys.path:
             sys.path.insert(0, entry)
+
+
+def _templates_root(source_root: Path, target: Path | None = None) -> Path:
+    from distribution.installer.paths import adapter_templates_root
+
+    return adapter_templates_root(source_root, target)
 
 
 def minimal_project_profile(
@@ -56,13 +67,15 @@ def compile_cursor_tree(
     source_root: Path,
     destination_cursor: Path,
     project_profile: dict[str, Any] | None = None,
+    *,
+    target: Path | None = None,
 ) -> dict[str, Any]:
     """Compile bundle + profile and copy staged ``.cursor/`` to ``destination_cursor``."""
-    _ensure_import_paths(source_root)
+    _ensure_import_paths(source_root, target)
     source_root = source_root.resolve()
     destination_cursor = destination_cursor.resolve()
-    bundle_dir = resolve_bundle_dir(source_root)
-    templates_root = source_root / "adapters" / "cursor" / "templates"
+    bundle_dir = resolve_bundle_dir(source_root, target=target)
+    templates_root = _templates_root(source_root, target)
     profile = project_profile or minimal_project_profile()
 
     with tempfile.TemporaryDirectory(prefix="cursor-compile-") as temp_dir:
@@ -83,12 +96,14 @@ def compile_cursor_tree(
 def iter_compiled_cursor_files(
     source_root: Path,
     project_profile: dict[str, Any] | None = None,
+    *,
+    target: Path | None = None,
 ) -> Iterator[tuple[Path, Path]]:
     """Yield ``(relative_path, absolute_source_file)`` for a compiled ``.cursor/`` tree."""
-    _ensure_import_paths(source_root)
+    _ensure_import_paths(source_root, target)
     source_root = source_root.resolve()
-    bundle_dir = resolve_bundle_dir(source_root)
-    templates_root = source_root / "adapters" / "cursor" / "templates"
+    bundle_dir = resolve_bundle_dir(source_root, target=target)
+    templates_root = _templates_root(source_root, target)
     profile = project_profile or minimal_project_profile()
 
     with tempfile.TemporaryDirectory(prefix="cursor-compile-") as temp_dir:

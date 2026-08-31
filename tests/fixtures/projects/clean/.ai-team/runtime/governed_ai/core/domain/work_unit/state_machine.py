@@ -24,7 +24,7 @@ NORMATIVE_TRANSITIONS: dict[str, frozenset[str]] = {
     "human_test": frozenset(
         {"done", "remediation_required", "verification", "cancelled"}
     ),
-    "remediation_required": frozenset({"in_progress", "cancelled"}),
+    "remediation_required": frozenset({"in_progress", "blocked", "verification", "cancelled"}),
     "done": frozenset(),
     "cancelled": frozenset(),
 }

@@ -335,7 +335,7 @@ def run_ad007_mediated_record_observation(
     before = business_state_digest(tmp_path)
     result = adapter.execute(allowed)
     after = business_state_digest(tmp_path)
-    assert result["status"] == "succeeded"
+    assert result["status"] == "blocked"
     assert before == after
 
 
@@ -385,8 +385,9 @@ def run_ad010_agent_done_claim_leaves_core_unchanged(
     request = sample_execution_request(execution_id="EXE-AD010")
     result = adapter.execute(request)
     after = business_state_digest(tmp_path)
-    assert result["status"] == "succeeded"
-    assert "done" in result["summary"].lower() or result["status"] == "succeeded"
+    # A disabled/native-missing runtime may never fabricate a successful
+    # completion claim. The authoritative Core state remains unchanged.
+    assert result["status"] == "blocked"
     assert result.get("requested_commands") == []
     assert before == after
 

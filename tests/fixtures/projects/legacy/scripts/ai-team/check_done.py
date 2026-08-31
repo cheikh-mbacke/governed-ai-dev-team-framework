@@ -7,25 +7,27 @@ This intentionally errs on the side of NOT DONE when evidence is ambiguous.
 from pathlib import Path
 import sys
 
+_ROOT = Path(__file__).resolve().parents[2]
+
 try:
     import yaml
 except ModuleNotFoundError:
+    from install_paths import requirements_install_hint
+
     print("Missing dependency: PyYAML. Install it first, then re-run this command:")
-    print("  pip install -r requirements.txt")
+    print(f"  {requirements_install_hint(_ROOT)}")
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
 
 from i18n import project_language, t
+from install_paths import bootstrap_runtime
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-_SRC_ROOT = _REPO_ROOT / "src"
-if _SRC_ROOT.is_dir() and str(_SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SRC_ROOT))
+bootstrap_runtime(_ROOT)
 
 from governed_ai.core.domain.work_unit.done import missing_done_prerequisites
 from governed_ai.core.domain.work_unit.paths import find_work_unit_path
 
-ROOT = _REPO_ROOT
+ROOT = _ROOT
 AI = ROOT / ".ai-team"
 LANG = project_language(ROOT)
 

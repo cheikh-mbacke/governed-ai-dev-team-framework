@@ -21,8 +21,25 @@ third_party_orchestration_skills:
     skill_statuses process above.
 roles:
   product-analyst:
-    allow: [read_authoritative_sources, read_repository, propose_requirements, propose_acceptance, emit_questions]
-    deny: [product_decision, product_code_write, production_deploy]
+    # Document 6 §6.1: also drafts the mission artifacts a night-mode grant
+    # depends on (mission-contract, acceptance-oracle, tradeoff-policy,
+    # execution-envelope, delivery-contract). Drafting is not deciding —
+    # §6.2 requires an independent challenge (see auditor below) before any
+    # of these can back a grant.
+    allow: [read_authoritative_sources, read_repository, propose_requirements, propose_acceptance, emit_questions, propose_mission_artifacts]
+    deny: [product_decision, product_code_write, production_deploy, approve_own_mission_artifact]
+  requirements-challenger:
+    allow: [read_authoritative_sources, read_mission_artifacts, challenge_mission_artifacts, produce_findings]
+    deny: [draft_challenged_artifact, approve_own_mission_artifact, product_decision, product_code_write, constitution_change, production_deploy]
+  mandate-matcher:
+    allow: [read_decision_menu, read_work_unit, propose_typed_clause_match, attach_required_evidence]
+    deny: [resolve_decision_semantically, invent_default_answer, product_decision, constitution_change, production_deploy]
+  test-strategist:
+    allow: [read_acceptance_oracle, read_repository, design_test_plan, write_tests_and_qa_artifacts, produce_evidence]
+    deny: [approve_own_acceptance_criteria, remove_required_risk_checks, product_decision, production_deploy]
+  integration-steward:
+    allow: [read_repository, read_evidence, assess_cross_work_unit_coherence, supervise_integration_merge, block_integration_merge]
+    deny: [invent_shared_contract, direct_protected_branch_merge, history_rewrite, constitution_change, production_deploy]
   architect:
     allow: [read_repository, analyze_architecture, propose_architecture, propose_contract_change, impact_analysis]
     deny: [product_decision, production_deploy, silent_contract_change]
@@ -42,15 +59,35 @@ roles:
     allow: [read_repository, read_evidence, security_assessment, produce_findings]
     deny: [modify_evaluated_code, production_deploy]
   auditor:
-    allow: [read_repository, read_evidence, read_runtime_evidence, produce_audit_findings]
-    deny: [remediate_during_measurement, production_deploy]
+    # Document 6 §6.2: also the mandatory independent adversarial reviewer
+    # of mission artifacts before G1 — no separate "requirements-challenger"
+    # role exists; the Core mechanically enforces that the reviewer's role
+    # can never equal the artifact's authored_by_role (see can_challenge in
+    # core/domain/run/mission_artifact.py), which the auditor/product-analyst
+    # role split already guarantees.
+    allow: [read_repository, read_evidence, read_runtime_evidence, produce_audit_findings, challenge_mission_artifacts]
+    deny: [remediate_during_measurement, production_deploy, challenge_self_authored_mission_artifact]
   release-agent:
     allow: [read_approved_content, assemble_release_candidate, prepare_deployment_plan, prepare_rollback_plan]
     deny: [bypass_gates, autonomous_production_deploy_in_reference_profile]
+  run-reliability-controller:
+    # Document 6 §10.2/§10.3: mechanical Core component for unattended Run /
+    # WorkerLease / ExecutionAttempt / Checkpoint lifecycle and epoch fencing.
+    # Not a judgment-bearing role — it never diagnoses or decides, only
+    # enforces deterministic rules. Exercised through the control-plane actor
+    # identity (see SUPPLEMENTAL_ROLE_COMMANDS in core/commands/authorization.py);
+    # listed here on its own so its scope is explicit rather than folded
+    # silently into control-plane's broader mandate.
+    allow: [read, manage_run_lifecycle, manage_worker_leases, record_checkpoints]
+    deny: [product_decision, production_deploy, protected_branch_bypass, constitution_change, resolve_decision_request_semantically, issue_run_authorization_grant_without_human_authorization]
 high_impact_actions:
   require_explicit_human_authorization:
     - permission_or_iam_change
     - secret_or_credential_change
+    # Document 6 §8: issuing or revoking a RunAuthorizationGrant authorizes an
+    # entire unattended session, not a single decision — same human-gate tier
+    # as a gate decision, enforced via GATE_COMMANDS_REQUIRING_HUMAN_AUTH.
+    - unattended_run_authorization_grant_issuance_or_revocation
     - critical_infrastructure_change
     - production_data_mutation
     - production_deployment

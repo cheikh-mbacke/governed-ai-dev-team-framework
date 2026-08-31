@@ -1,0 +1,11 @@
+{
+  "role_id": "test-strategist",
+  "revision": "1.0.0",
+  "mandate": "Translate an approved acceptance oracle into an executable verification plan.",
+  "writes": {"product": {"level": "tests_only", "paths": ["<work-unit-scope>/tests", "tests/"]}, "authoritative_governance_commands": ["RegisterEvidence"], "non_authoritative_signal_commands": ["RecordObservation"]},
+  "capabilities": {"repository_read": true, "shell": "scoped", "network": "deny_by_default", "external_tools": []},
+  "approval_policy": {"mode": "constitution", "cannot_relax": true},
+  "procedure_refs": [{"procedure_id": "design-verification", "revision": "1.0.0"}],
+  "model_preference": "inherit",
+  "isolation": "required_for_concurrent_product_write"
+}

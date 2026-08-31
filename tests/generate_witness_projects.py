@@ -21,6 +21,9 @@ except ModuleNotFoundError:
     raise SystemExit(1)
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 FIXTURES_DIR = ROOT / "tests" / "fixtures" / "projects"
 CLEAN_DIR = FIXTURES_DIR / "clean"
 LEGACY_DIR = FIXTURES_DIR / "legacy"
@@ -251,9 +254,70 @@ def work_unit_base(wu_id: str, title: str, status: str) -> dict:
     }
 
 
+LEGACY_LAYOUT_VERSION = "0.6.0"
+
+
+def downgrade_to_legacy_layout(target: Path) -> None:
+    """Reconstruct what a pre-0.7.0 install looked like (Document 11 §4).
+
+    The 0.7.0 layout migration moved `src/governed_ai` and `adapters/cursor`
+    (framework-root trees, mirrored verbatim into every installed project)
+    into `.ai-team/runtime/governed_ai`. `distribution/installer/migrate_layout.py`
+    needs a fixture that still has the *old* layout to migrate from — so this
+    reverses `install_target()`'s runtime-isolated output back to the old
+    layout, using the framework's own relocation enumeration
+    (`distribution.installer.source_files._iter_relocated_prefix_files`)
+    rather than re-deriving the old path from the new one: the two old trees
+    merge into one new-layout directory (`adapters/cursor/__init__.py` and
+    `src/governed_ai/adapters/cursor/__init__.py` both land at
+    `.ai-team/runtime/governed_ai/adapters/cursor/__init__.py`), which makes
+    reversing the new path ambiguous. The enumerator instead hands back each
+    live source file directly, so the old relative path is simply that file's
+    path relative to the framework root — no reconstruction needed.
+    """
+    from distribution.installer.paths import RELOCATED_COPY_FILES
+    from distribution.installer.source_files import _iter_relocated_prefix_files
+
+    runtime_root = target / ".ai-team" / "runtime"
+    if runtime_root.is_dir():
+        shutil.rmtree(runtime_root)
+
+    old_managed: set[str] = set()
+    for item in ("src/governed_ai", "adapters/cursor"):
+        for _new_relative, source in _iter_relocated_prefix_files(ROOT, item):
+            old_relative = source.relative_to(ROOT).as_posix()
+            destination = target / old_relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+            old_managed.add(old_relative)
+
+    installed_requirements = target / ".ai-team" / "requirements.txt"
+    if installed_requirements.is_file():
+        installed_requirements.unlink()
+    for src_file, _dest_file in RELOCATED_COPY_FILES:
+        shutil.copy2(ROOT / src_file, target / src_file)
+        old_managed.add(src_file)
+
+    version_path = target / ".ai-team" / "framework-version.json"
+    version_payload = json.loads(version_path.read_text(encoding="utf-8"))
+    version_payload["version"] = LEGACY_LAYOUT_VERSION
+    relocated_new_prefix = ".ai-team/runtime/"
+    relocated_new_files = {dest for _src, dest in RELOCATED_COPY_FILES}
+    kept = [
+        rel
+        for rel in version_payload["managed_files"]
+        if not rel.startswith(relocated_new_prefix) and rel not in relocated_new_files
+    ]
+    version_payload["managed_files"] = sorted(set(kept) | old_managed)
+    version_path.write_text(
+        json.dumps(version_payload, indent=2) + "\n", encoding="utf-8"
+    )
+
+
 def apply_legacy_mutations(target: Path, project_id: str) -> None:
     ai = target / ".ai-team"
     finalize_clean_witness(target, project_id)
+    downgrade_to_legacy_layout(target)
 
     # User modification — custom project-profile note and extension field.
     profile_path = ai / "project-profile.yaml"

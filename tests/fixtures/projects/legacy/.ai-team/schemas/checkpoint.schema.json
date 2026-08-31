@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Checkpoint",
+  "type": "object",
+  "required": [
+    "work_unit_id",
+    "run_id",
+    "worker_lease_id",
+    "epoch",
+    "executed_commands",
+    "artifacts",
+    "next_step",
+    "updated_at"
+  ],
+  "properties": {
+    "work_unit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^RUN-[A-Za-z0-9._-]+$"
+    },
+    "worker_lease_id": {
+      "type": "string",
+      "pattern": "^LEASE-[A-Za-z0-9._-]+$"
+    },
+    "epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "last_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_validated_workflow_state": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "executed_commands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pending_decision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "next_step": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,3 +1,4 @@
+<!-- governed-ai:start -->
 # Governed AI Team Instructions
 
 This repository uses the Engineering Constitution under `.ai-team/constitution/`.
@@ -20,3 +21,4 @@ Before making product changes:
    QA/review, include the Work Unit ID in the message, and hand off the exact SHA.
    Never stage or commit on a protected branch, and never rewrite history after
    evidence without explicit human authorization and re-verification.
+<!-- governed-ai:end -->

@@ -6,13 +6,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-from adapters.cursor.compiler.agents import render_agent_from_role
-from adapters.cursor.compiler.staging import (
+from governed_ai.contracts.validate_bundle import validate_bundle
+
+from .agents import render_agent_from_role
+from .staging import (
     artifact_kind,
     sha256_bytes,
     validate_pre_install,
 )
-from governed_ai.contracts.validate_bundle import validate_bundle
 
 ADAPTER_ID = "cursor"
 ADAPTER_VERSION = "0.5.0"
@@ -27,6 +28,10 @@ BUNDLE_ROLE_AGENT = {
     "qa-test",
     "release-agent",
     "security-reviewer",
+    "requirements-challenger",
+    "mandate-matcher",
+    "test-strategist",
+    "integration-steward",
 }
 
 
@@ -101,6 +106,11 @@ def compile_manifest(
     artifacts: list[dict[str, str]] = []
     for src_path in sorted(template_cursor.rglob("*")):
         if not src_path.is_file():
+            continue
+        # Runtime/compiler cache files are never adapter source artifacts.
+        # Ignoring them here keeps compilation deterministic even when a
+        # developer has run ``compileall`` inside the template tree.
+        if "__pycache__" in src_path.parts or src_path.suffix in {".pyc", ".pyo"}:
             continue
 
         rel_under_cursor = src_path.relative_to(template_cursor).as_posix()

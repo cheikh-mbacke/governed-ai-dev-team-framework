@@ -2,17 +2,21 @@
 from pathlib import Path
 from collections import Counter
 
+_ROOT = Path(__file__).resolve().parents[2]
+
 try:
     import yaml
 except ModuleNotFoundError:
+    from install_paths import requirements_install_hint
+
     print("Missing dependency: PyYAML. Install it first, then re-run this command:")
-    print("  pip install -r requirements.txt")
+    print(f"  {requirements_install_hint(_ROOT)}")
     print("(or: pip install PyYAML jsonschema)")
     raise SystemExit(1)
 
 from i18n import project_language, t
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = _ROOT
 AI = ROOT / ".ai-team"
 LANG = project_language(ROOT)
 state = yaml.safe_load((AI / "state" / "project-state.yaml").read_text(encoding="utf-8"))

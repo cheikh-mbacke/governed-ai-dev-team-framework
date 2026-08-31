@@ -9,18 +9,64 @@ from typing import Any
 
 from governed_ai.contracts.compatibility import resolve_active_bundle_dir
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
+from governed_ai.core.commands.run_authorization import authorize_run_grant
 
 # Commands granted beyond bundle writes (findings, release prep, evidence from implementers).
 SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
     "control-plane": frozenset(
-        {"ResolveDecisionRequest", "RecordGateDecision", "RecordAcceptance", "ExportFeedback"}
+        {
+            "ResolveDecisionRequest",
+            "RecordGateDecision",
+            "RecordAcceptance",
+            "ExportFeedback",
+            # Document 6 §10.2 — run-reliability-controller is a mechanical Core
+            # component, not a distinct judgment-bearing role; it is exercised
+            # through the control-plane actor identity.
+            "OpenRun",
+            "AcquireWorkerLease",
+            "RecordExecutionAttempt",
+            "WriteCheckpoint",
+            "CloseRun",
+            # Document 6 §8 — grant issuance/revocation is a human-gated act,
+            # exercised through the control-plane actor identity.
+            "IssueRunAuthorizationGrant",
+            "RevokeRunAuthorizationGrant",
+            # Document 6 §5.3/§10.1 — mandate-matcher only *proposes*; the
+            # deterministic validation happens in the handler, never in the
+            # actor issuing the command. Exercised through control-plane
+            # pending a dedicated, adapter-compiled mandate-matcher role.
+            "ResolveRunDecision",
+            # Document 6 §7.3 — escalation only; the Core enforces the
+            # one-way ratchet, not the actor requesting it.
+            "TightenExecutionCeiling",
+            # Document 6 §9.8 — integration-steward supervises the merge
+            # queue; the Core enforces the bounded conflict-resolution limit
+            # and the mandatory revalidation, not the actor recording it.
+            # Exercised through control-plane pending a dedicated,
+            # adapter-compiled integration-steward role.
+            "RecordIntegrationMerge",
+            # Orchestrator prerequisite — heartbeat refresh is mechanical
+            # bookkeeping, fencing-checked by the handler, not a judgment call.
+            "RecordWorkerHeartbeat",
+            "ReleaseWorkerLease",
+        }
     ),
     "backend-developer": frozenset({"RegisterEvidence"}),
     "qa-test": frozenset({"RegisterEvidence"}),
-    "auditor": frozenset({"RegisterFinding"}),
+    # The auditor remains an eligible independent reviewer, but the dedicated
+    # Document 6 roles are first-class actors rather than decorative bundle
+    # entries.
+    "auditor": frozenset({"RegisterFinding", "RecordMissionArtifactChallenge"}),
+    "requirements-challenger": frozenset({"RecordMissionArtifactChallenge"}),
+    "mandate-matcher": frozenset({"ResolveRunDecision"}),
+    "integration-steward": frozenset(
+        {"RecordExecutionAttempt", "RecordIntegrationMerge"}
+    ),
     "code-reviewer": frozenset({"RegisterFinding"}),
     "security-reviewer": frozenset({"RegisterFinding"}),
     "release-agent": frozenset({"RegisterReleaseCandidate"}),
+    # Document 6 §6.1 — the Product Analyst drafts mission artifacts.
+    "product-analyst": frozenset({"RegisterMissionArtifact"}),
 }
 
 
@@ -69,6 +115,10 @@ def authorize_command(envelope: dict[str, Any], workspace_ai_team: Path) -> None
             f"role {role_id!r} cannot invoke {command_type!r}",
             "/type",
         )
+
+    # Document 6 §8 — mechanical Core check, shared choke point, cannot be
+    # bypassed by any handler.
+    authorize_run_grant(envelope, workspace_ai_team)
 
     if envelope.get("human_authorization"):
         auth = envelope["human_authorization"]

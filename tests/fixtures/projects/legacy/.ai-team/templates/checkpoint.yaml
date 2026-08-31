@@ -1,0 +1,11 @@
+work_unit_id: WU-XXX
+run_id: RUN-XXX
+worker_lease_id: LEASE-XXX
+epoch: 1
+last_commit: null
+last_validated_workflow_state: null
+executed_commands: []
+artifacts: []
+pending_decision: null
+next_step: null
+updated_at: ""

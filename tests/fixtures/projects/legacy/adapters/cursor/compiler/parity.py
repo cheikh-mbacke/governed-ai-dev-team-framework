@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from adapters.cursor.compiler.compile import compile_manifest
-from adapters.cursor.compiler.staging import sha256_bytes
+from .compile import compile_manifest
+from .staging import sha256_bytes
 
 DiffKind = Literal["missing_in_compile", "extra_in_compile", "content_mismatch"]
 
@@ -33,7 +33,7 @@ def normalize_for_compare(path: str, data: bytes) -> bytes:
     return data
 
 
-def resolve_bundle_dir(source_root: Path) -> Path:
+def resolve_bundle_dir(source_root: Path, *, target: Path | None = None) -> Path:
     """Prefer published bundle under .ai-team, fall back to dev bundle v1."""
     source_root = source_root.resolve()
     pointer = source_root / ".ai-team" / "contracts" / "active-bundle.json"
@@ -47,9 +47,15 @@ def resolve_bundle_dir(source_root: Path) -> Path:
     published = source_root / ".ai-team" / "contracts" / "bundles" / "1.0.0"
     if published.is_dir() and (published / "manifest.json").is_file():
         return published
+    runtime_dev = (
+        source_root / ".ai-team" / "runtime" / "governed_ai" / "contracts" / "bundles" / "v1"
+    )
+    if runtime_dev.is_dir() and (runtime_dev / "manifest.json").is_file():
+        return runtime_dev
     dev = source_root / "src" / "governed_ai" / "contracts" / "bundles" / "v1"
     if dev.is_dir() and (dev / "manifest.json").is_file():
         return dev
+    _ = target
     raise FileNotFoundError(f"no Published Contract Bundle found under {source_root}")
 
 

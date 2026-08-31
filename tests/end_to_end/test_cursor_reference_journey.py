@@ -178,7 +178,7 @@ def test_l3_reference_journey_g1_runtime_observation_without_core_mutation(tmp_p
         bundle_dir=REPO_ROOT / "src" / "governed_ai" / "contracts" / "bundles" / "v1",
     )
     runtime_result = adapter.execute(_sample_execution_request())
-    assert runtime_result["status"] == "succeeded"
+    assert runtime_result["status"] == "blocked"
     assert (target / ".ai-team/runtime-results/EXE-JOURNEY-001.json").is_file()
 
     execute_runtime(target, _sample_execution_request("EXE-JOURNEY-002"))

@@ -1,0 +1,11 @@
+{
+  "role_id": "mandate-matcher",
+  "revision": "1.0.0",
+  "mandate": "Propose typed decision-menu matches without deciding or interpreting product intent.",
+  "writes": {"product": {"level": "none", "paths": []}, "authoritative_governance_commands": ["ResolveRunDecision"], "non_authoritative_signal_commands": ["RecordObservation"]},
+  "capabilities": {"repository_read": true, "shell": "readonly", "network": "deny_by_default", "external_tools": []},
+  "approval_policy": {"mode": "constitution", "cannot_relax": true},
+  "procedure_refs": [{"procedure_id": "match-mandate", "revision": "1.0.0"}],
+  "model_preference": "inherit",
+  "isolation": "not_required"
+}

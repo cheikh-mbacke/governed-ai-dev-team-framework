@@ -11,6 +11,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .agent_cli import is_real_agent_launch_enabled
+
 COMPOUND_MARKERS = ("&&", "||", ";", "|", ">", "<")
 COMMAND_FIELDS = (
     "setup",
@@ -132,7 +134,11 @@ def check_hooks_config(project_root: Path) -> tuple[bool, str]:
     return True, f"{len(commands)} hook commands use the portable runner"
 
 
-def collect_preflight_report(project_root: Path) -> dict[str, Any]:
+def collect_preflight_report(
+    project_root: Path,
+    *,
+    unattended: bool = False,
+) -> dict[str, Any]:
     profile = platform_profile()
     hook_config_ok, hook_config_detail = check_hooks_config(project_root)
     cli_ok, cli_detail = check_project_cli(project_root)
@@ -151,7 +157,7 @@ def collect_preflight_report(project_root: Path) -> dict[str, Any]:
             "detail": "run the architect integration smoke to verify this host",
         }
     )
-    return {
+    report: dict[str, Any] = {
         "platform": profile,
         "python": {"status": "pass", "detail": sys.executable},
         "cursor_agent": {
@@ -185,6 +191,17 @@ def collect_preflight_report(project_root: Path) -> dict[str, Any]:
             ),
         },
     }
+    if unattended:
+        launch_enabled = is_real_agent_launch_enabled()
+        report["real_agent_launch"] = {
+            "status": "pass" if launch_enabled else "fail",
+            "detail": (
+                "native Cursor agent execution explicitly enabled"
+                if launch_enabled
+                else "set GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1 before unattended preflight"
+            ),
+        }
+    return report
 
 
 def last_hook_activity(project_root: Path) -> dict[str, Any] | None:

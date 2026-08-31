@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Run",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "revision",
+    "created_at",
+    "opened_by",
+    "work_unit_ids",
+    "preflight",
+    "run_authorization_grant_id",
+    "execution_ceilings_by_work_unit",
+    "integration_branch"
+  ],
+  "properties": {
+    "integration_branch": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Document 6 §9.8 — dedicated to this Run, distinct from individual Work Unit branches. Merging to a protected branch (main) is never done through this Control Plane; execution_ceiling.protected_branch_merge stays forbidden regardless."
+    },
+    "autonomy_preset": {
+      "type": "string"
+    },
+    "effective_autonomy_policy": {
+      "type": ["object", "null"]
+    },
+    "effective_autonomy_policy_hash": {
+      "type": ["string", "null"]
+    },
+    "execution_ceilings_by_work_unit": {
+      "type": "object",
+      "description": "Document 6 §7.1 — per-Work-Unit action-capability ceiling, independent of risk class. protected_branch_merge and production_action are always forbidden.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "analysis",
+          "sandbox_implementation",
+          "verification",
+          "integration_branch_merge",
+          "protected_branch_merge",
+          "staging_deployment",
+          "production_action"
+        ],
+        "properties": {
+          "analysis": {"enum": ["allowed", "conditional", "forbidden"]},
+          "sandbox_implementation": {"enum": ["allowed", "conditional", "forbidden"]},
+          "verification": {"enum": ["allowed", "conditional", "forbidden"]},
+          "integration_branch_merge": {"enum": ["allowed", "conditional", "forbidden"]},
+          "protected_branch_merge": {"const": "forbidden"},
+          "staging_deployment": {"const": "forbidden"},
+          "production_action": {"const": "forbidden"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "run_authorization_grant_id": {
+      "type": "string",
+      "pattern": "^GRANT-[A-Za-z0-9._-]+$",
+      "description": "Document 6 §8 — the grant bound at open time; every later command on this Run is checked against this same grant, never a freshly supplied one."
+    },
+    "preflight": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Document 6 §9.6 — invisible-blocking preflight report attached at open time; a check left in fail/blocked/manual blocks unattended execution."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^RUN-[A-Za-z0-9._-]+$"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "active",
+        "completed",
+        "stopped",
+        "failed"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "opened_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "work_unit_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "leases_by_work_unit": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "lease_id",
+          "epoch"
+        ],
+        "properties": {
+          "lease_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "epoch": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "closed_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "closed_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "stop_condition": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Document 6 §9.5/§11 — set only when status is stopped/failed, one of the fixed global_stop_conditions codes."
+    },
+    "maximum_attempts_per_step": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Document 6 §9.3 — bounded convergence loop cap per (work unit, step)."
+    },
+    "maximum_remediation_cycles": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Document 6 §9.3 — bounded convergence loop cap for the remediation step specifically."
+    },
+    "maximum_parallel_workers": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Document 6 §11 — how many workers may hold distinct active leases on this Run at once. Enforced by the orchestrator's dispatch loop, not by AcquireWorkerLease itself (each Work Unit still has exactly one active lease regardless of this cap)."
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

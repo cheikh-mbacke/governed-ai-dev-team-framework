@@ -9,14 +9,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+from install_paths import bootstrap_runtime, import_adapters_cursor
 
-from adapters.cursor.runtime.checks import collect_preflight_report
+bootstrap_runtime(ROOT)
+_checks = import_adapters_cursor("runtime.checks")
+collect_preflight_report = _checks.collect_preflight_report
 from i18n import project_language, t
 
 LANG = project_language(ROOT)
@@ -25,8 +25,13 @@ LANG = project_language(ROOT)
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check Cursor CLI governance prerequisites")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    parser.add_argument(
+        "--unattended",
+        action="store_true",
+        help="include checks required specifically for unattended execution",
+    )
     args = parser.parse_args()
-    report = collect_preflight_report(ROOT)
+    report = collect_preflight_report(ROOT, unattended=args.unattended)
     if args.json:
         print(json.dumps(report, indent=2))
     else:
