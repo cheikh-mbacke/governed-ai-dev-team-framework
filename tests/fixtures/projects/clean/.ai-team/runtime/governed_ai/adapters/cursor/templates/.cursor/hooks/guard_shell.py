@@ -16,6 +16,12 @@ try:
     raw = sys.stdin.buffer.read().decode("utf-8-sig", errors="replace")
     payload = json.loads(raw) if raw.strip() else {}
 except (OSError, UnicodeError, json.JSONDecodeError):
+    if os.environ.get("GOVERNED_AI_UNATTENDED_RUN") == "1":
+        print(json.dumps({
+            "permission": "deny",
+            "message": "Malformed hook payload during governed unattended execution.",
+        }))
+        raise SystemExit(2)
     print(json.dumps({"permission": "allow"}))
     raise SystemExit(0)
 

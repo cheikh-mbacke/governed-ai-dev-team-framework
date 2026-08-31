@@ -144,6 +144,10 @@ def test_preflight_report_structure_from_runtime_module() -> None:
     assert "platform" in report
     assert "hooks_config" in report
     assert "project_cli" in report
+    assert "real_agent_launch" not in report
+
+    unattended_report = collect_preflight_report(REPO_ROOT, unattended=True)
+    assert "real_agent_launch" in unattended_report
 
 
 def test_core_diagnostics_separate_from_cursor(tmp_path: Path) -> None:

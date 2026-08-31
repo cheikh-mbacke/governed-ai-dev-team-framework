@@ -28,7 +28,6 @@ from __future__ import annotations
 import argparse
 import sys
 import threading
-import time
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -94,11 +93,30 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    from adapters.cursor.runtime.agent_cli import is_real_agent_launch_enabled
+
     from governed_ai.adapters.cursor.adapter import CursorAdapter
     from governed_ai.contracts.compatibility import resolve_active_bundle_dir
 
     workspace = Workspace.discover(Path.cwd())
     gateway = CommandGateway(workspace)
+    run_path = workspace.ai_team / "runs" / f"{args.run_id}.yaml"
+    if not run_path.is_file():
+        print(f"Run not found: {run_path}", file=sys.stderr)
+        return 2
+    import yaml
+
+    run_document = yaml.safe_load(run_path.read_text(encoding="utf-8")) or {}
+    if (
+        str(run_document.get("autonomy_preset", "")).startswith("unattended_")
+        and not is_real_agent_launch_enabled()
+    ):
+        print(
+            "Unattended orchestration refused: native Cursor agent launch is disabled. "
+            "Set GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1 and regenerate a passing preflight.",
+            file=sys.stderr,
+        )
+        return 3
     bundle_dir = resolve_active_bundle_dir(workspace.ai_team / "contracts")
     adapter = CursorAdapter(project_root=workspace.root, bundle_dir=bundle_dir)
 

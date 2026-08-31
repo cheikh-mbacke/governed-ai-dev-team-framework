@@ -56,6 +56,7 @@ REQUIRED_CONTENT_FIELDS_BY_KIND: dict[str, tuple[str, ...]] = {
         "allowed_paths",
         "allowed_commands",
         "budgets",
+        "execution_ceilings_by_work_unit",
     ),
     "delivery_contract": (
         "deliverable_definition",

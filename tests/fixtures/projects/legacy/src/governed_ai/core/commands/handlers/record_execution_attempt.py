@@ -112,13 +112,21 @@ def handle_record_execution_attempt(
                 )
 
     # Document 6 §7.1/§15 — an attempt beyond a Work Unit's execution_ceiling is
-    # rejected by the Core, not merely discouraged. "conditional" capabilities
-    # (e.g. integration_branch_merge, pending integration-steward approval) are
-    # not auto-approved here either — only "allowed" passes.
+    # rejected by the Core, not merely discouraged.  The sole conditional path
+    # implemented by the reference workflow is an integration review issued by
+    # the integration-steward itself (Document 6 §7.1/§10.1).
     ceiling = (run_document.get("execution_ceilings_by_work_unit") or {}).get(
         work_unit_id, DEFAULT_EXECUTION_CEILING
     )
-    permitted, ceiling_state = is_step_permitted(ceiling, step)
+    conditional_authorized = (
+        step == "integration_review"
+        and envelope["actor"]["role_id"] == "integration-steward"
+    )
+    permitted, ceiling_state = is_step_permitted(
+        ceiling,
+        step,
+        conditional_authorized=conditional_authorized,
+    )
     if not permitted:
         raise GatewayError(
             ErrorCode.UNAUTHORIZED,

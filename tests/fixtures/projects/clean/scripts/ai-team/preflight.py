@@ -25,8 +25,13 @@ LANG = project_language(ROOT)
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check Cursor CLI governance prerequisites")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    parser.add_argument(
+        "--unattended",
+        action="store_true",
+        help="include checks required specifically for unattended execution",
+    )
     args = parser.parse_args()
-    report = collect_preflight_report(ROOT)
+    report = collect_preflight_report(ROOT, unattended=args.unattended)
     if args.json:
         print(json.dumps(report, indent=2))
     else:

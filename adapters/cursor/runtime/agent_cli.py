@@ -203,6 +203,7 @@ def _run_agent_process(
     process_env["GOVERNED_AI_UNATTENDED_RUN"] = "1"
     process_env["GOVERNED_AI_ALLOWED_SHELL_COMMANDS"] = json.dumps(allowed_shell_commands)
     process_env["GOVERNED_AI_ALLOWED_PATHS"] = json.dumps(allowed_paths)
+    process_env["CURSOR_PROJECT_DIR"] = str(project_root.resolve())
     process = subprocess.Popen(
         command,
         cwd=str(project_root),

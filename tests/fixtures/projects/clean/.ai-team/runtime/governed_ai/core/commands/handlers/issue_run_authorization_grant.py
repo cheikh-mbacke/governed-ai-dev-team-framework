@@ -23,36 +23,11 @@ from governed_ai.core.domain.run.mission_artifact import (
 from governed_ai.core.persistence.transaction import Transaction
 
 
-def handle_issue_run_authorization_grant(
-    envelope: dict[str, Any],
-    *,
-    workspace_root,
-    transaction: Transaction,
-) -> tuple[dict[str, Any], list[str]]:
-    target = envelope["target"]
-    grant_id = target["id"]
-    payload = envelope["payload"]
-
-    grant_path = workspace_root.ai_team / "run-authorization-grants" / f"{grant_id}.json"
-    if grant_path.is_file():
-        raise GatewayError(
-            ErrorCode.ALREADY_EXISTS,
-            f"run authorization grant {grant_id!r} already exists",
-            "/target/id",
-        )
-
-    excluded_actions = set(payload.get("excluded_actions") or [])
-    if not MINIMUM_EXCLUDED_ACTIONS.issubset(excluded_actions):
-        raise GatewayError(
-            ErrorCode.INVARIANT_VIOLATION,
-            f"excluded_actions must include at least {sorted(MINIMUM_EXCLUDED_ACTIONS)}",
-            "/payload/excluded_actions",
-        )
-
-    # Document 6 §5.2 — every entry is typed and machine-verifiable, never free text.
+def _normalized_decision_menu(raw_entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Validate and initialize the grant's deterministic decision clauses."""
     decision_menu = []
     seen_entry_ids: set[str] = set()
-    for index, raw_entry in enumerate(payload.get("decision_menu") or []):
+    for index, raw_entry in enumerate(raw_entries):
         entry_id = raw_entry.get("id")
         if not entry_id:
             raise GatewayError(
@@ -71,6 +46,38 @@ def handle_issue_run_authorization_grant(
         entry.setdefault("scope", {})
         entry["uses_count"] = 0
         decision_menu.append(entry)
+    return decision_menu
+
+
+def handle_issue_run_authorization_grant(
+    envelope: dict[str, Any],
+    *,
+    workspace_root,
+    transaction: Transaction,
+) -> tuple[dict[str, Any], list[str]]:
+    target = envelope["target"]
+    grant_id = target["id"]
+    payload = envelope["payload"]
+    autonomy_preset = payload.get("autonomy_preset")
+
+    grant_path = workspace_root.ai_team / "run-authorization-grants" / f"{grant_id}.json"
+    if grant_path.is_file():
+        raise GatewayError(
+            ErrorCode.ALREADY_EXISTS,
+            f"run authorization grant {grant_id!r} already exists",
+            "/target/id",
+        )
+
+    excluded_actions = set(payload.get("excluded_actions") or [])
+    if not MINIMUM_EXCLUDED_ACTIONS.issubset(excluded_actions):
+        raise GatewayError(
+            ErrorCode.INVARIANT_VIOLATION,
+            f"excluded_actions must include at least {sorted(MINIMUM_EXCLUDED_ACTIONS)}",
+            "/payload/excluded_actions",
+        )
+
+    # Document 6 §5.2 — every entry is typed and machine-verifiable, never free text.
+    decision_menu = _normalized_decision_menu(payload.get("decision_menu") or [])
 
     # Document 6 §6.2/§8 — an artifact can only back a grant once it has
     # survived an independent adversarial review; the Core checks this from
@@ -86,7 +93,13 @@ def handle_issue_run_authorization_grant(
                 "/payload/mission_artifact_ids",
             )
         artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
-        if not is_approved(artifact):
+        challenge_required = autonomy_preset != "unattended_conservative"
+        # Document 6 §6.2 starts the independent challenger requirement at
+        # extended, not conservative.  Conservative artifacts still receive
+        # explicit human approval through the authorization consumed by this
+        # very command; they are simply not forced through the extra agent
+        # challenge stage.
+        if challenge_required and not is_approved(artifact):
             raise GatewayError(
                 ErrorCode.INVARIANT_VIOLATION,
                 f"mission artifact {artifact_id!r} has not been approved by an "
@@ -95,7 +108,42 @@ def handle_issue_run_authorization_grant(
             )
         mission_artifacts.append(artifact)
 
-    autonomy_preset = payload.get("autonomy_preset")
+    decision_artifact = next(
+        (artifact for artifact in mission_artifacts if artifact.get("kind") == "decision_menu"),
+        None,
+    )
+    if decision_artifact is not None:
+        artifact_entries = (decision_artifact.get("content") or {}).get("entries") or []
+        supplied_entries = payload.get("decision_menu")
+        if supplied_entries is not None and supplied_entries != artifact_entries:
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                "grant decision_menu differs from the approved decision-menu artifact",
+                "/payload/decision_menu",
+            )
+        decision_menu = _normalized_decision_menu(artifact_entries)
+
+    execution_artifact = next(
+        (
+            artifact
+            for artifact in mission_artifacts
+            if artifact.get("kind") == "execution_envelope"
+        ),
+        None,
+    )
+    if execution_artifact is not None:
+        artifact_ceilings = (
+            (execution_artifact.get("content") or {}).get("execution_ceilings_by_work_unit")
+            or {}
+        )
+        missing_ceilings = sorted(set(payload["work_unit_ids"]) - set(artifact_ceilings))
+        if missing_ceilings:
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                f"execution envelope has no ceiling for work units: {missing_ceilings}",
+                "/payload/mission_artifact_ids",
+            )
+
     effective_policy = None
     policy_hash = None
     if autonomy_preset is not None:

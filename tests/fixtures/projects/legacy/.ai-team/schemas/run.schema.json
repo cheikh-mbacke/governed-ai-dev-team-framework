@@ -49,7 +49,7 @@
           "verification": {"enum": ["allowed", "conditional", "forbidden"]},
           "integration_branch_merge": {"enum": ["allowed", "conditional", "forbidden"]},
           "protected_branch_merge": {"const": "forbidden"},
-          "staging_deployment": {"enum": ["allowed", "conditional", "forbidden"]},
+          "staging_deployment": {"const": "forbidden"},
           "production_action": {"const": "forbidden"}
         },
         "additionalProperties": false

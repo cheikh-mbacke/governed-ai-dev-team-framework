@@ -23,8 +23,14 @@ CEILING_DIMENSIONS = (
 
 CEILING_STATES = frozenset({"allowed", "conditional", "forbidden"})
 
-# Document 6 §2.4/§7.1/§9.8 — never relaxed, for any preset, no exception.
-ALWAYS_FORBIDDEN_DIMENSIONS = frozenset({"protected_branch_merge", "production_action"})
+# Document 6 §2.4/§7.1/§9.5/§9.8 — protected environments and protected
+# branches are never unattended execution targets.  Keeping staging pinned
+# here as well as in ``EffectiveAutonomyPolicy.environments`` prevents a
+# caller from bypassing the environment policy by expressing the operation as
+# an execution-ceiling step without an ``environment`` payload.
+ALWAYS_FORBIDDEN_DIMENSIONS = frozenset(
+    {"protected_branch_merge", "staging_deployment", "production_action"}
+)
 
 _STATE_RANK = {"allowed": 0, "conditional": 1, "forbidden": 2}
 
@@ -70,22 +76,27 @@ def capability_for_step(step: str) -> str | None:
     return step if step in CEILING_DIMENSIONS else workflow_capabilities.get(step)
 
 
-def is_step_permitted(ceiling: dict[str, Any], step: str) -> tuple[bool, str | None]:
+def is_step_permitted(
+    ceiling: dict[str, Any],
+    step: str,
+    *,
+    conditional_authorized: bool = False,
+) -> tuple[bool, str | None]:
     """Return (permitted, blocking_state) for `step` against `ceiling`.
 
     A step outside the ceiling vocabulary (e.g. "implement", "remediation") is
     always permitted at this layer — the ceiling only governs the seven named
-    capabilities, never ordinary implementation work. "conditional" is never
-    auto-approved for any dimension, integration_branch_merge included — only
-    "allowed" passes; a human must explicitly raise a Work Unit's ceiling to
-    "allowed" (via execution-envelope.yaml at G1) for its integration merges
-    to be dispatchable unattended.
+    capabilities, never ordinary implementation work.  A conditional
+    capability passes only when the caller supplies a mechanically verified
+    condition.  The current condition is the Document 6 §7.1/§10.1
+    ``integration-steward`` supervision of ``integration_review``; arbitrary
+    actors cannot turn ``conditional`` into ``allowed``.
     """
     dimension = capability_for_step(step)
     if dimension is None:
         return True, None
     state = ceiling.get(dimension, "forbidden")
-    return state == "allowed", state
+    return state == "allowed" or (state == "conditional" and conditional_authorized), state
 
 
 def can_tighten(current_state: str, new_state: str) -> bool:

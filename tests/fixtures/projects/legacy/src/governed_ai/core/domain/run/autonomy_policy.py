@@ -7,6 +7,10 @@ from copy import deepcopy
 from typing import Any
 
 from governed_ai.contracts.bundle_hash import canonical_json_bytes
+from governed_ai.core.domain.run.execution_ceiling import (
+    DEFAULT_EXECUTION_CEILING,
+    validate_execution_ceiling,
+)
 
 UNATTENDED_PRESETS = frozenset(
     {"unattended_conservative", "unattended_extended", "unattended_maximal"}
@@ -42,8 +46,25 @@ def resolve_effective_policy(
             },
         },
         "decision_menu": {
+            "ref": "decision-menu.yaml",
+            "coverage_required": (
+                "exhaustive_for_anticipated_forks"
+                if preset == "unattended_maximal"
+                else "substantial_for_anticipated_forks"
+                if preset == "unattended_extended"
+                else "bounded_for_anticipated_forks"
+            ),
             "unmatched_or_unvalidated_fork_behavior": "block_dependent_subgraph",
             "resolution_mode": "agent_proposes_core_validates",
+        },
+        "execution_ceiling_default": deepcopy(DEFAULT_EXECUTION_CEILING),
+        "decisions": {
+            "reversible_technical_choices": "delegated",
+            "shared_contract_changes": "bounded",
+            "product_decisions": "human_only",
+            "constitution_changes": "human_only",
+            "production_actions": "human_only",
+            "ambiguity": "block_dependent_subgraph",
         },
         "roles": {
             "agents": {
@@ -94,6 +115,7 @@ def resolve_effective_policy(
             "repeated_systemic_failure",
             "worker_isolation_unguaranteed",
         ],
+        "global_stop_behavior": "immediate_alert_plus_stop",
         "completion": {
             "target": (
                 "verified_release_candidate"
@@ -137,6 +159,17 @@ def _validate_invariants(policy: dict[str, Any]) -> None:
         raise ValueError("worker lease fencing is required")
     if execution.get("maximum_parallel_critical_wu") != 1:
         raise ValueError("critical Work Unit parallelism must remain one")
+    ceiling_violation = validate_execution_ceiling(
+        policy.get("execution_ceiling_default") or {}
+    )
+    if ceiling_violation is not None:
+        raise ValueError(ceiling_violation)
+    decisions = policy.get("decisions") or {}
+    for field in ("product_decisions", "constitution_changes", "production_actions"):
+        if decisions.get(field) != "human_only":
+            raise ValueError(f"decisions.{field} must remain human_only")
+    if policy.get("global_stop_behavior") != "immediate_alert_plus_stop":
+        raise ValueError("global stop behavior must remain immediate_alert_plus_stop")
 
 
 def effective_policy_hash(policy: dict[str, Any]) -> str:

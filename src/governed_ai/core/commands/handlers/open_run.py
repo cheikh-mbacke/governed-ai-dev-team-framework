@@ -8,6 +8,7 @@ from typing import Any
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
+from governed_ai.core.domain.run.autonomy_policy import UNATTENDED_PRESETS
 from governed_ai.core.domain.run.convergence import (
     DEFAULT_MAXIMUM_ATTEMPTS_PER_STEP,
     DEFAULT_MAXIMUM_REMEDIATION_CYCLES,
@@ -16,10 +17,9 @@ from governed_ai.core.domain.run.execution_ceiling import (
     DEFAULT_EXECUTION_CEILING,
     validate_execution_ceiling,
 )
+from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
 from governed_ai.core.domain.run.parallelism import DEFAULT_MAXIMUM_PARALLEL_WORKERS
 from governed_ai.core.domain.run.preflight import blocking_preflight_checks
-from governed_ai.core.domain.run.autonomy_policy import UNATTENDED_PRESETS
-from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
 from governed_ai.core.domain.run.unattended_readiness import build_unattended_readiness_report
 from governed_ai.core.persistence.transaction import Transaction
 
@@ -138,6 +138,25 @@ def handle_open_run(
                     "/run_authorization/grant_id",
                 )
             mission_artifacts.append(artifact)
+        execution_artifact = next(
+            (
+                artifact
+                for artifact in mission_artifacts
+                if artifact.get("kind") == "execution_envelope"
+            ),
+            None,
+        )
+        authorized_ceilings = (
+            (execution_artifact.get("content") or {}).get("execution_ceilings_by_work_unit")
+            if execution_artifact is not None
+            else None
+        )
+        if authorized_ceilings is None or requested_ceilings != authorized_ceilings:
+            raise GatewayError(
+                ErrorCode.UNAUTHORIZED,
+                "Run execution ceilings must exactly match the hashed execution-envelope artifact",
+                "/payload/execution_ceilings_by_work_unit",
+            )
         readiness = build_unattended_readiness_report(
             preset=autonomy_preset,
             work_unit_documents=work_units,

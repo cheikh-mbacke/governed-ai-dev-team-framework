@@ -158,6 +158,7 @@ def _open_run(
     grant_id: str | None = DEFAULT_GRANT_ID,
     execution_ceilings_by_work_unit: dict | None = None,
     maximum_parallel_workers: int | None = None,
+    autonomy_preset: str | None = None,
 ) -> dict:
     payload = {
         "id": run_id,
@@ -170,6 +171,8 @@ def _open_run(
         payload["execution_ceilings_by_work_unit"] = execution_ceilings_by_work_unit
     if maximum_parallel_workers is not None:
         payload["maximum_parallel_workers"] = maximum_parallel_workers
+    if autonomy_preset is not None:
+        payload["autonomy_preset"] = autonomy_preset
     envelope = _envelope(
         "OpenRun",
         target={"kind": "run", "id": run_id},
@@ -263,6 +266,7 @@ def _record_attempt(
     status: str = "succeeded",
     step: str = "implement",
     summary: str | None = None,
+    role_id: str = "control-plane",
 ) -> dict:
     payload = {
         "run_id": run_id,
@@ -279,6 +283,7 @@ def _record_attempt(
         target={"kind": "execution_attempt", "id": attempt_id},
         payload=payload,
         key=f"attempt-{attempt_id}",
+        role_id=role_id,
     )
 
 
@@ -326,6 +331,7 @@ def _issue_grant(
     decision_menu: list[dict] | None = None,
     mission_artifact_ids: list[str] | None = None,
     auth_id: str | None = None,
+    autonomy_preset: str | None = None,
 ) -> dict:
     payload = {
         "id": grant_id,
@@ -346,6 +352,24 @@ def _issue_grant(
         payload["decision_menu"] = decision_menu
     if mission_artifact_ids is not None:
         payload["mission_artifact_ids"] = mission_artifact_ids
+    if autonomy_preset is not None:
+        payload.update(
+            {
+                "autonomy_preset": autonomy_preset,
+                "allowed_commands": [
+                    "OpenRun",
+                    "AcquireWorkerLease",
+                    "RecordExecutionAttempt",
+                    "WriteCheckpoint",
+                    "CloseRun",
+                    "RecordWorkerHeartbeat",
+                    "ReleaseWorkerLease",
+                ],
+                "allowed_environments": ["development", "test"],
+                "maximum_duration_hours": 8,
+                "maximum_tokens": 1000,
+            }
+        )
     return _envelope(
         "IssueRunAuthorizationGrant",
         target={"kind": "run_authorization_grant", "id": grant_id},
@@ -1251,6 +1275,21 @@ def test_open_run_rejects_execution_ceiling_permitting_production_action(
     assert receipt["errors"][0]["code"] == ErrorCode.INVARIANT_VIOLATION.value
 
 
+def test_open_run_rejects_execution_ceiling_permitting_staging_deployment(
+    run_workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _open_run(
+            "RUN-CEIL-STAGING",
+            work_unit_ids=["WU-A"],
+            execution_ceilings_by_work_unit={"WU-A": {"staging_deployment": "allowed"}},
+        )
+    )
+    assert exit_code == 3
+    assert receipt["errors"][0]["code"] == ErrorCode.INVARIANT_VIOLATION.value
+
+
 def test_record_execution_attempt_rejects_step_beyond_forbidden_ceiling(
     run_workspace: Workspace,
 ) -> None:
@@ -1339,6 +1378,42 @@ def test_record_execution_attempt_gates_integration_review_by_ceiling_default(
     )
     assert exit_code == 4
     assert receipt["errors"][0]["code"] == ErrorCode.UNAUTHORIZED.value
+
+
+def test_integration_steward_satisfies_conditional_integration_ceiling(
+    run_workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(run_workspace)
+    gateway.execute_command(_open_run("RUN-CEIL-STEWARD", work_unit_ids=["WU-A"]))
+    gateway.execute_command(
+        _acquire_lease(
+            "LEASE-CEIL-STEWARD",
+            run_id="RUN-CEIL-STEWARD",
+            work_unit_id="WU-A",
+            worker_id="w1",
+        )
+    )
+    receipt, exit_code = gateway.execute_command(
+        _record_attempt(
+            "ATTEMPT-CEIL-STEWARD",
+            run_id="RUN-CEIL-STEWARD",
+            work_unit_id="WU-A",
+            lease_id="LEASE-CEIL-STEWARD",
+            epoch=1,
+            step="integration_review",
+            role_id="integration-steward",
+        )
+    )
+    assert exit_code == 0, receipt
+
+
+def test_plain_manual_preflight_value_is_rejected(run_workspace: Workspace) -> None:
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _open_run("RUN-PREFLIGHT-PLAIN", preflight={"global_allowlist": "manual"})
+    )
+    assert exit_code == 3
+    assert receipt["errors"][0]["code"] == ErrorCode.INVARIANT_VIOLATION.value
 
 
 def test_record_execution_attempt_rejects_integration_review_when_ceiling_forbidden(
@@ -1937,6 +2012,31 @@ def test_issue_grant_rejects_unapproved_mission_artifact(run_workspace: Workspac
     ).exists()
 
 
+def test_conservative_grant_does_not_require_independent_challenge(
+    run_workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(run_workspace)
+    gateway.execute_command(_register_mission_artifact("MA-CONSERVATIVE-PENDING"))
+
+    receipt, exit_code = gateway.execute_command(
+        _issue_grant(
+            "GRANT-CONSERVATIVE-PENDING",
+            work_unit_ids=["WU-A"],
+            mission_artifact_ids=["MA-CONSERVATIVE-PENDING"],
+            autonomy_preset="unattended_conservative",
+        )
+    )
+    assert exit_code == 0, receipt
+    document = json.loads(
+        (
+            run_workspace.ai_team
+            / "run-authorization-grants"
+            / "GRANT-CONSERVATIVE-PENDING.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert document["autonomy_preset"] == "unattended_conservative"
+
+
 def test_issue_grant_rejects_unknown_mission_artifact(run_workspace: Workspace) -> None:
     gateway = CommandGateway(run_workspace)
     receipt, exit_code = gateway.execute_command(
@@ -2016,6 +2116,7 @@ def test_unattended_readiness_conservative_preset_passes_with_minimal_artifacts(
                 "allowed_paths": ["src/"],
                 "allowed_commands": [],
                 "budgets": {"maximum_duration_hours": 8},
+                "execution_ceilings_by_work_unit": {"WU-READY-1": {}},
             },
             "delivery_contract": {
                 "deliverable_definition": "a merged, green working branch",
@@ -2053,6 +2154,94 @@ def test_unattended_readiness_conservative_preset_passes_with_minimal_artifacts(
     report = result["data"]
     assert report["gaps"] == []
     assert report["ready"] is True
+
+
+def test_conservative_open_run_uses_ceilings_from_hashed_execution_envelope(
+    run_workspace: Workspace,
+) -> None:
+    _seed_work_unit(run_workspace, "WU-CONSERVATIVE", status="ready", scope_include=["src/"])
+    gateway = CommandGateway(run_workspace)
+    ceilings = {
+        "WU-CONSERVATIVE": {
+            "analysis": "allowed",
+            "sandbox_implementation": "allowed",
+            "verification": "allowed",
+            "integration_branch_merge": "conditional",
+            "protected_branch_merge": "forbidden",
+            "staging_deployment": "forbidden",
+            "production_action": "forbidden",
+        }
+    }
+    artifacts = {
+        "MA-CONSERVATIVE-CONTRACT": (
+            "mission_contract",
+            _mission_contract_content(),
+        ),
+        "MA-CONSERVATIVE-ENV": (
+            "execution_envelope",
+            {
+                "environments": ["development", "test"],
+                "network": "deny_by_default",
+                "allowed_dependencies": [],
+                "accessible_secrets": [],
+                "allowed_paths": ["src/"],
+                "allowed_commands": ["python -m pytest tests/ -q"],
+                "budgets": {"maximum_duration_hours": 8, "maximum_tokens": 1000},
+                "execution_ceilings_by_work_unit": ceilings,
+            },
+        ),
+        "MA-CONSERVATIVE-DELIVERY": (
+            "delivery_contract",
+            {
+                "deliverable_definition": "verified Work Unit branch",
+                "rollback_criteria": ["discard the isolated branch"],
+                "required_evidence": ["tests"],
+            },
+        ),
+    }
+    for artifact_id, (kind, content) in artifacts.items():
+        receipt, exit_code = gateway.execute_command(
+            _register_mission_artifact(artifact_id, kind=kind, content=content)
+        )
+        assert exit_code == 0, receipt
+
+    artifact_ids = list(artifacts)
+    receipt, exit_code = gateway.execute_command(
+        _issue_grant(
+            "GRANT-CONSERVATIVE-OPEN",
+            work_unit_ids=["WU-CONSERVATIVE"],
+            mission_artifact_ids=artifact_ids,
+            autonomy_preset="unattended_conservative",
+            maximum_uses=2,
+        )
+    )
+    assert exit_code == 0, receipt
+
+    receipt, exit_code = gateway.execute_command(
+        _open_run(
+            "RUN-CONSERVATIVE-OPEN",
+            work_unit_ids=["WU-CONSERVATIVE"],
+            grant_id="GRANT-CONSERVATIVE-OPEN",
+            execution_ceilings_by_work_unit=ceilings,
+            autonomy_preset="unattended_conservative",
+            status="active",
+        )
+    )
+    assert exit_code == 0, receipt
+
+    tampered = {"WU-CONSERVATIVE": {**ceilings["WU-CONSERVATIVE"], "verification": "forbidden"}}
+    receipt, exit_code = gateway.execute_command(
+        _open_run(
+            "RUN-CONSERVATIVE-TAMPERED",
+            work_unit_ids=["WU-CONSERVATIVE"],
+            grant_id="GRANT-CONSERVATIVE-OPEN",
+            execution_ceilings_by_work_unit=tampered,
+            autonomy_preset="unattended_conservative",
+            status="active",
+        )
+    )
+    assert exit_code == 4
+    assert receipt["errors"][0]["code"] == ErrorCode.UNAUTHORIZED.value
 
 
 def test_unattended_readiness_extended_preset_requires_acceptance_oracle(

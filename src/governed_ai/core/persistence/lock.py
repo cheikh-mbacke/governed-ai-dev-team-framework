@@ -12,6 +12,9 @@ from pathlib import Path
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 
+_WINDOWS_IO_RETRY_ATTEMPTS = 200
+_WINDOWS_IO_RETRY_DELAY_SECONDS = 0.01
+
 
 @dataclass(slots=True)
 class ProjectLock:
@@ -19,13 +22,23 @@ class ProjectLock:
     token: str
 
     def release(self) -> None:
-        if self.path.is_file():
+        for attempt in range(_WINDOWS_IO_RETRY_ATTEMPTS):
+            if not self.path.exists():
+                return
             try:
                 payload = json.loads(self.path.read_text(encoding="utf-8"))
+                if payload.get("token") != self.token:
+                    return
+                self.path.unlink(missing_ok=True)
+                return
+            except PermissionError:
+                if attempt == _WINDOWS_IO_RETRY_ATTEMPTS - 1:
+                    raise
+                time.sleep(_WINDOWS_IO_RETRY_DELAY_SECONDS)
             except (OSError, json.JSONDecodeError):
                 payload = {}
-            if payload.get("token") == self.token:
-                self.path.unlink(missing_ok=True)
+                if payload.get("token") != self.token:
+                    return
 
 
 def acquire_project_lock(
@@ -40,7 +53,7 @@ def acquire_project_lock(
     while True:
         try:
             fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except FileExistsError:
+        except (FileExistsError, PermissionError):
             if time.monotonic() >= deadline:
                 raise GatewayError(
                     ErrorCode.CONFLICT,

@@ -76,7 +76,10 @@ def mission_artifact_gaps(preset: str, mission_artifacts: list[dict[str, Any]]) 
         candidates = by_kind.get(kind, [])
         if not candidates:
             gaps.append(f"missing mission artifact of kind {kind!r}")
-        elif not any(is_approved(artifact) for artifact in candidates):
+        elif (
+            preset in {"unattended_extended", "unattended_maximal"}
+            and not any(is_approved(artifact) for artifact in candidates)
+        ):
             gaps.append(
                 f"mission artifact of kind {kind!r} exists but has not been "
                 "approved by an independent challenge"

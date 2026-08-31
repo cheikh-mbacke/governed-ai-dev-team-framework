@@ -243,6 +243,55 @@ def test_tick_starts_a_ready_work_unit(workspace: Workspace) -> None:
     assert lease_document["epoch"] == 1
 
 
+def test_tick_executes_bounded_remediation_then_returns_to_verification(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-REMEDIATE", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="remediation_required")
+    adapter = FakeAdapter([_succeeded_result(check_name="implementation")])
+
+    acquired = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-REMEDIATE", adapter=adapter, worker_id="w1"
+    )
+    assert acquired.action == "reacquired_work_unit"
+
+    remediated = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-REMEDIATE", adapter=adapter, worker_id="w1"
+    )
+    assert remediated.action == "advanced_work_unit"
+    assert remediated.details["from"] == "remediation_required"
+    assert remediated.details["to"] == "verification"
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["step"] == "remediation"
+
+
+def test_unattended_run_stops_when_adapter_cannot_isolate_workers(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-NO-ISOLATION", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    run_path = workspace.ai_team / "runs" / "RUN-NO-ISOLATION.yaml"
+    run = yaml.safe_load(run_path.read_text(encoding="utf-8"))
+    run["autonomy_preset"] = "unattended_conservative"
+    run_path.write_text(yaml.safe_dump(run), encoding="utf-8")
+
+    first = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-NO-ISOLATION", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    assert first.action == "reacquired_work_unit"
+    stopped = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-NO-ISOLATION", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    assert stopped.action == "run_stopped"
+    assert stopped.details["stop_condition"] == "worker_isolation_unguaranteed"
+
+
 def test_tick_reassigns_a_stale_lease(workspace: Workspace) -> None:
     gateway = CommandGateway(workspace)
     gateway.execute_command(_open_run("RUN-TICK-002", work_unit_ids=["WU-A"]))

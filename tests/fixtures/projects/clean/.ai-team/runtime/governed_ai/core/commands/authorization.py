@@ -53,11 +53,15 @@ SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
     ),
     "backend-developer": frozenset({"RegisterEvidence"}),
     "qa-test": frozenset({"RegisterEvidence"}),
-    # Document 6 §6.2 — the auditor is the independent reviewer of mission
-    # artifacts precisely because it is never the role that drafts them; no
-    # new "requirements-challenger" identity is needed to get that
-    # separation, since the Core checks actor role_id != authored_by_role.
+    # The auditor remains an eligible independent reviewer, but the dedicated
+    # Document 6 roles are first-class actors rather than decorative bundle
+    # entries.
     "auditor": frozenset({"RegisterFinding", "RecordMissionArtifactChallenge"}),
+    "requirements-challenger": frozenset({"RecordMissionArtifactChallenge"}),
+    "mandate-matcher": frozenset({"ResolveRunDecision"}),
+    "integration-steward": frozenset(
+        {"RecordExecutionAttempt", "RecordIntegrationMerge"}
+    ),
     "code-reviewer": frozenset({"RegisterFinding"}),
     "security-reviewer": frozenset({"RegisterFinding"}),
     "release-agent": frozenset({"RegisterReleaseCandidate"}),

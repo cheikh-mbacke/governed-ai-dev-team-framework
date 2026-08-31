@@ -9,6 +9,7 @@ side-effect-free checks; the Core is the only thing allowed to act on them.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
 # Document 6 §8 — minimum actions a grant can never authorize, regardless of
@@ -32,7 +33,20 @@ def is_revoked(grant: dict[str, Any]) -> bool:
 
 def is_expired(grant: dict[str, Any], *, now_iso: str) -> bool:
     expires_at = grant.get("expires_at")
-    return bool(expires_at) and now_iso > expires_at
+    if not expires_at:
+        return False
+    try:
+        now = datetime.fromisoformat(now_iso.replace("Z", "+00:00"))
+        expiry = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+    except ValueError:
+        # A malformed expiry must fail closed even if it predates the current
+        # schema's date-time validation.
+        return True
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=UTC)
+    if expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=UTC)
+    return now >= expiry
 
 
 def is_exhausted(grant: dict[str, Any]) -> bool:

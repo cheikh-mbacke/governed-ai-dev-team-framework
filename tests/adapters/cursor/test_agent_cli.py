@@ -18,9 +18,9 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from adapters.cursor.runtime import agent_cli
 from adapters.cursor.runtime.execute import execute_runtime
+
 from governed_ai.adapters.spi import ExecutionRequest
 
 BASE_SHA = "a" * 40
@@ -264,6 +264,18 @@ def test_unattended_shell_hook_enforces_human_allowlist() -> None:
     assert json.loads(allowed.stdout)["permission"] == "allow"
     assert denied.returncode == 2
     assert json.loads(denied.stdout)["permission"] == "deny"
+
+    malformed = subprocess.run(
+        [sys.executable, str(hook)],
+        input="{not-json",
+        text=True,
+        capture_output=True,
+        env=environment,
+        check=False,
+        timeout=10,
+    )
+    assert malformed.returncode == 2
+    assert json.loads(malformed.stdout)["permission"] == "deny"
 
 
 def test_agent_watchdog_kills_a_real_timed_out_process(tmp_path: Path) -> None:

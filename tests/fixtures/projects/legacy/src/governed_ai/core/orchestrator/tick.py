@@ -48,18 +48,21 @@ STATUS_TO_STEP = {
     "verification": "verification",
     "review": "review",
     "audit": "audit",
+    "remediation_required": "remediation",
 }
 NEXT_STATUS_ON_SUCCESS = {
     "in_progress": "verification",
     "verification": "review",
     "review": "audit",
     "audit": "human_test",
+    "remediation_required": "verification",
 }
 NEXT_STATUS_ON_EXHAUSTION = {
     "in_progress": "blocked",
     "verification": "remediation_required",
     "review": "remediation_required",
     "audit": "remediation_required",
+    "remediation_required": "blocked",
 }
 
 # The orchestrator acts as control-plane executing the pre-existing
@@ -68,6 +71,7 @@ NEXT_STATUS_ON_EXHAUSTION = {
 # describing this exact loop, not a role/procedure invented for this file.
 DISPATCH_CONTRACTS = {
     "sandbox_implementation": ("backend-developer", "implement-work-unit", ("implementation",)),
+    "remediation": ("backend-developer", "implement-work-unit", ("implementation",)),
     "verification": ("qa-test", "webapp-testing", ("tests",)),
     "review": ("code-reviewer", "webapp-testing", ("code_review",)),
     "security_review": ("security-reviewer", "security-review", ("security_review",)),
@@ -546,7 +550,11 @@ def run_scheduling_tick(
         if work_unit_id in leases_by_work_unit:
             continue
         wu_document = work_unit_documents.get(work_unit_id)
-        if wu_document is None or wu_document.get("status") not in {"ready", "in_progress"}:
+        if wu_document is None or wu_document.get("status") not in {
+            "ready",
+            "in_progress",
+            "remediation_required",
+        }:
             continue
         if not _dependencies_satisfied(wu_document, work_unit_documents):
             continue
@@ -582,6 +590,16 @@ def run_scheduling_tick(
                 )
             )
             if transition_exit != 0:
+                # Do not strand a READY Work Unit behind a lease acquired by a
+                # losing concurrent tick.  The next scheduler pass must be
+                # able to select it again.
+                _release_lease(
+                    gateway,
+                    run_id=run_id,
+                    work_unit_id=work_unit_id,
+                    lease_ref={"lease_id": new_lease_id, "epoch": 1},
+                    reason="work unit start transition failed",
+                )
                 return TickResult(
                     action="transition_failed",
                     work_unit_id=work_unit_id,
@@ -626,6 +644,9 @@ def run_scheduling_tick(
         role_id, procedure_id, required_checks = DISPATCH_CONTRACTS[step]
         execution_id = f"EXE-{uuid.uuid4().hex[:8]}"
         attempt_id = f"ATTEMPT-{work_unit_id}-{uuid.uuid4().hex[:8]}"
+        attempt_actor_role = (
+            "integration-steward" if step == "integration_review" else "control-plane"
+        )
         start_receipt, start_exit = gateway.execute_command(
             _envelope(
                 "RecordExecutionAttempt",
@@ -639,6 +660,7 @@ def run_scheduling_tick(
                     "status": "started",
                     "contract": {"role_id": role_id, "procedure_id": procedure_id},
                 },
+                actor_role_id=attempt_actor_role,
             )
         )
         if start_exit != 0:
@@ -656,6 +678,61 @@ def run_scheduling_tick(
         isolated_worktree = bool(
             descriptor and descriptor.get("capabilities", {}).get("isolated_worktree")
         )
+        if (
+            str(run_document.get("autonomy_preset", "")).startswith("unattended_")
+            and not isolated_worktree
+        ):
+            failed_receipt, failed_exit = gateway.execute_command(
+                _envelope(
+                    "RecordExecutionAttempt",
+                    target={
+                        "kind": "execution_attempt",
+                        "id": attempt_id,
+                        "expected_revision": 1,
+                    },
+                    payload={
+                        "run_id": run_id,
+                        "work_unit_id": work_unit_id,
+                        "worker_lease_id": lease_ref["lease_id"],
+                        "epoch": lease_ref["epoch"],
+                        "step": step,
+                        "status": "failed",
+                        "summary": "adapter cannot guarantee an isolated worker workspace",
+                    },
+                    actor_role_id=(
+                        "integration-steward" if step == "integration_review" else "control-plane"
+                    ),
+                )
+            )
+            if failed_exit != 0:
+                return TickResult(
+                    action="attempt_recording_failed",
+                    work_unit_id=work_unit_id,
+                    details={"errors": failed_receipt.get("errors")},
+                )
+            stop_receipt, stop_exit = gateway.execute_command(
+                _envelope(
+                    "CloseRun",
+                    target={
+                        "kind": "run",
+                        "id": run_id,
+                        "expected_revision": run_document["revision"],
+                    },
+                    payload={
+                        "status": "stopped",
+                        "reason": "adapter cannot guarantee worker isolation",
+                        "stop_condition": "worker_isolation_unguaranteed",
+                    },
+                )
+            )
+            return TickResult(
+                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+                work_unit_id=work_unit_id,
+                details={
+                    "stop_condition": "worker_isolation_unguaranteed",
+                    "errors": stop_receipt.get("errors"),
+                },
+            )
         if isolated_worktree:
             try:
                 execution_root = ensure_work_unit_worktree(
@@ -754,7 +831,7 @@ def run_scheduling_tick(
             evidence_error = _evidence_error(
                 result,
                 required_checks=required_checks,
-                require_changed_sha=step == "sandbox_implementation",
+                require_changed_sha=step in {"sandbox_implementation", "remediation"},
                 base_sha=base_sha,
             )
             if evidence_error:
@@ -764,7 +841,7 @@ def run_scheduling_tick(
         boundary_stop_condition: str | None = None
         if (
             status == "succeeded"
-            and step == "sandbox_implementation"
+            and step in {"sandbox_implementation", "remediation"}
             and isolated_worktree
         ):
             boundary_violation = _implementation_boundary_error(
@@ -785,6 +862,23 @@ def run_scheduling_tick(
 
         integration_merge: tuple[str, str] | None = None
         if status == "succeeded" and step == "integration_review":
+            # The agent may have run long enough for its lease to be replaced.
+            # Fence once more immediately before mutating the shared
+            # integration branch; a superseded worker may leave artifacts in
+            # its isolated worktree but can never merge them.
+            fence_receipt, fence_exit = gateway.execute_command(
+                _envelope(
+                    "RecordWorkerHeartbeat",
+                    target={"kind": "worker_lease", "id": lease_ref["lease_id"]},
+                    payload={"run_id": run_id, "epoch": lease_ref["epoch"]},
+                )
+            )
+            if fence_exit != 0:
+                return TickResult(
+                    action="fenced_before_integration",
+                    work_unit_id=work_unit_id,
+                    details={"errors": fence_receipt.get("errors")},
+                )
             try:
                 integration_merge = merge_and_revalidate(
                     workspace.root,
@@ -837,6 +931,7 @@ def run_scheduling_tick(
                     "requested_commands": result.get("requested_commands", []),
                     "usage": result.get("usage", {}),
                 },
+                actor_role_id=attempt_actor_role,
             )
         )
         if attempt_exit != 0:
@@ -1065,7 +1160,11 @@ def run_scheduling_tick(
                 )
         else:
             if status == "blocked":
-                blocked_status = "blocked" if current_status == "in_progress" else "remediation_required"
+                blocked_status = (
+                    "blocked"
+                    if current_status in {"in_progress", "remediation_required"}
+                    else "remediation_required"
+                )
                 transition_receipt, transition_exit = gateway.execute_command(
                     _envelope(
                         "TransitionWorkUnit",

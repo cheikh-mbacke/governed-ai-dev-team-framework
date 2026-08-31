@@ -115,7 +115,7 @@
     {
       "kind": "hook",
       "path": ".cursor/hooks/guard_shell.py",
-      "sha256": "sha256:845009174e3f47e7fc3f836baa3c7df2186c48868d8d105fec05029d168a1a3b"
+      "sha256": "sha256:1ee6499cbd8566911764ff6f95967371d63ca78f6221423c552c36bc3f0b5a01"
     },
     {
       "kind": "hook",

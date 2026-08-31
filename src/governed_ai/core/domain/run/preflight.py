@@ -18,6 +18,7 @@ def blocking_preflight_checks(preflight: dict[str, Any]) -> list[str]:
     """Return the names of preflight checks that must block an unattended Run."""
     blocking: list[str] = []
     for name, entry in preflight.items():
-        if isinstance(entry, dict) and entry.get("status") in BLOCKING_PREFLIGHT_STATUSES:
+        status = entry.get("status") if isinstance(entry, dict) else entry
+        if status in BLOCKING_PREFLIGHT_STATUSES:
             blocking.append(name)
     return sorted(blocking)
