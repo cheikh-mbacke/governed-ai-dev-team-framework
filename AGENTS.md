@@ -2,6 +2,20 @@
 
 This repository uses the Engineering Constitution under `.ai-team/constitution/`.
 
+## Framework source repository
+
+If `.ai-team/project-profile.yaml` declares `repository_kind: framework_source`,
+this repo **builds** the framework — it is **not** an installed client project.
+
+- Edit framework code under `src/`, `adapters/`, `.ai-team/constitution/`, etc.
+- Do **not** create `.ai-team/runtime/` or `.ai-team/installation-record.json` here.
+- Do **not** edit `tests/fixtures/projects/clean|legacy/` to change product behavior.
+- After changing the installable payload:
+  `python scripts/ai-team/sync_source_manifest.py` then `python scripts/ai-team/validate.py`
+- Never run `python tools/install.py --target .` on this repository.
+
+Work Units and gates here track **framework renovation**, not a post-install client cycle.
+
 Before making product changes:
 
 1. Read `.ai-team/project-profile.yaml` and `.ai-team/state/project-state.yaml`.

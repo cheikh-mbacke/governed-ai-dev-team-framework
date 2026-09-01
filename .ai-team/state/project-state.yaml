@@ -13,14 +13,16 @@ gates:
     at: '2026-08-28T17:03:15.860408+00:00'
     note: Plan d execution approuve - 31 WU, activation WU-P0-BASELINE
   G2:
-    status: not_required
+    status: passed
+    by: cheikh MBACKE
+    at: '2026-09-01T09:26:00+00:00'
+    note: "DEC-003 — framework_source, INC-0.7.0, clôture mode nuit, politique G3/G4 et doc 0.7.0"
   G3:
     status: not_required
   G4:
-    status: accepted
-    by: cheikh MBACKE
-    at: '2026-08-29T22:18:11.074665+00:00'
-    note: "Acceptation increment INC-CLEANUP — delegation autonomie equipe IA ; L0-L3 verts ; L4 Cursor reel not_run documente"
+    status: not_required
+    note: "REL-0.6.0 accepte le 2026-08-29 (INC-CLEANUP). Increment courant INC-0.7.0
+      en execution — G4 sera requis apres clôture WU-GIT-GOVERNANCE et tag v0.7.0."
 milestones:
 - id: M-P0
   title: Phase 0 — Baseline et gel comportemental
@@ -85,6 +87,12 @@ milestones:
   work_units:
   - WU-E2E-CONFORMITY
   target_version: 0.5.0
+- id: M-0.7.0
+  title: Release 0.7.0 — Gouvernance Git et cohérence dépôt source
+  work_units:
+  - WU-GIT-GOVERNANCE
+  - WU-MODE-NUIT-CONFORMITY
+  target_version: 0.7.0
 increments:
 - id: INC-ALPHA
   title: 0.5.0-alpha — Core modules et bundle
@@ -106,6 +114,10 @@ increments:
   title: 0.6.0 — Dépréciations et nettoyage
   milestones:
   - M-P6
+- id: INC-0.7.0
+  title: 0.7.0 — Gouvernance Git exécutable et séparation source/installé
+  milestones:
+  - M-0.7.0
 releases:
 - id: REL-0.6.0
   version: "0.6.0"
@@ -116,8 +128,14 @@ releases:
 work_units:
   WU-GIT-GOVERNANCE:
     status: in_progress
-    milestone: M-GIT-GOVERNANCE
+    milestone: M-0.7.0
     risk: high
+  WU-MODE-NUIT-CONFORMITY:
+    status: done
+    milestone: M-0.7.0
+    risk: medium
+    done_event: EVT-20260901-092600-dec-003-approved
+    note: "Clôturée par DEC-003 — tests core verts ; L4 réel hors scope 0.7.0"
   WU-P0-BASELINE:
     status: done
     milestone: M-P0
@@ -423,6 +441,12 @@ staffing_proposal:
       support:
       - qa-test
       - code-reviewer
+    M-0.7.0:
+      primary: backend-developer
+      support:
+      - qa-test
+      - code-reviewer
+      - release-agent
     M-CONFORMITY:
       primary: qa-test
       support:
@@ -436,15 +460,14 @@ staffing_proposal:
     maximum_code_writers: 2
     critical_wu_concurrent_max: 1
 execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique + Adaptateur
-  Cursor, suivant le plan de migration Document 13 en 7 phases et 31 Work Units.
+  Cursor, suivant le plan de migration Document 13 (Phases 0–6, 31 WU) clôturé en 0.6.0.
 
-  Chemin critique linéaire Phase 0 → 5 puis E2E ; Phase 6 (nettoyage) après conformité.
+  Increment courant INC-0.7.0 : gouvernance Git exécutable (WU-GIT-GOVERNANCE), conformité
+  mode nuit (WU-MODE-NUIT-CONFORMITY), séparation explicite dépôt source vs cible installée
+  (repository_kind framework_source, framework-version.json uniquement).
 
-  Increments : alpha (Core+bundle), beta (Gateway+Adaptateur), release 0.5.0 (Distribution+conformité),
-  cleanup 0.6.0.
-
-  Risque maximal sur Command Gateway (Phase 3) et conformité finale ; staffing renforcé
-  architect/security/auditor sur ces phases.
+  Le dépôt framework-renov n est pas une installation client : pas d installation-record.json
+  à la racine.
 
   '
-last_updated: '2026-08-31T14:09:19+00:00'
+last_updated: '2026-09-01T09:26:00+00:00'

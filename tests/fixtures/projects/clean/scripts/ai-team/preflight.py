@@ -43,6 +43,9 @@ def main() -> int:
                 continue
             print(f"{result['status'].upper():8} {name}: {result['detail']}")
     blocking = {"fail", "blocked"}
+    if args.unattended:
+        # Document 6 §9.6 — align CLI exit code with Core OpenRun refusal.
+        blocking.add("manual")
     return 1 if any(
         isinstance(result, dict) and result.get("status") in blocking
         for result in report.values()

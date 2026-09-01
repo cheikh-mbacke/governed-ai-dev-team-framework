@@ -7,9 +7,8 @@ tested: real wall-clock behavior over a real interval is exactly what
 docs/product/requirements/mode-nuit-preuve-resilience-couverture.md flags
 as needing a real run, not a unit test.
 
-`adapters/cursor/runtime/execute.py::execute_runtime()` is still a stub —
-this loop calls the real AdapterSPI contract, so nothing here needs to
-change the day that stub starts doing real work.
+`adapters/cursor/runtime/execute.py::execute_runtime()` launches the native
+Cursor agent only after explicit unattended opt-in and a passing preflight.
 
 With `--workers N > 1`, N threads tick concurrently, each under its own
 worker id. `CommandGateway.execute_command()` is safe to share across
@@ -52,6 +51,7 @@ def _worker_loop(
     interval_seconds: float,
     max_ticks: int | None,
     stop_event: threading.Event,
+    errors: list[str],
 ) -> None:
     tick_count = 0
     while not stop_event.is_set() and (max_ticks is None or tick_count < max_ticks):
@@ -64,9 +64,13 @@ def _worker_loop(
                     f"[{worker_id} tick {tick_count}] {result.action} "
                     f"work_unit={result.work_unit_id} {result.details}"
                 )
-        except FileNotFoundError as exc:
+            if result.action in {"run_completed", "run_stopped", "run_not_active"}:
+                stop_event.set()
+                return
+        except Exception as exc:  # noqa: BLE001 - a worker failure must stop the session
             with _print_lock:
                 print(f"[{worker_id} tick {tick_count}] ERROR: {exc}", file=sys.stderr)
+                errors.append(f"{worker_id}: {type(exc).__name__}: {exc}")
             stop_event.set()
             return
         tick_count += 1
@@ -121,6 +125,7 @@ def main(argv: list[str] | None = None) -> int:
     adapter = CursorAdapter(project_root=workspace.root, bundle_dir=bundle_dir)
 
     stop_event = threading.Event()
+    worker_errors: list[str] = []
     worker_ids = (
         [args.worker_id]
         if args.workers == 1
@@ -138,6 +143,7 @@ def main(argv: list[str] | None = None) -> int:
                 "interval_seconds": args.interval_seconds,
                 "max_ticks": args.max_ticks,
                 "stop_event": stop_event,
+                "errors": worker_errors,
             },
             name=worker_id,
         )
@@ -155,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
         for thread in threads:
             thread.join()
 
-    return 0
+    return 1 if worker_errors else 0
 
 
 if __name__ == "__main__":

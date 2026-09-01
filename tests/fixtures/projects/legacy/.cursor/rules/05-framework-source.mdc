@@ -1,0 +1,49 @@
+---
+description: Framework source repository layout — not an installed project target.
+alwaysApply: true
+---
+# Framework source repository
+
+This repository declares `repository_kind: framework_source` in
+`.ai-team/project-profile.yaml`. It **fabricates** the framework; it is **not**
+an installed client project.
+
+## Edit here (product / framework code)
+
+- `src/governed_ai/` — Core runtime source
+- `adapters/cursor/` — Cursor adapter source
+- `.ai-team/constitution/`, `.ai-team/contracts/`, `.ai-team/schemas/`
+- `.cursor/` — live Cursor config for framework development
+- `scripts/`, `tools/`, `distribution/`, `tests/` (framework tests)
+
+## Do not treat as product code
+
+- `tests/fixtures/projects/clean/` and `legacy/` — **witness installed projects**
+  for migration/distribution tests only. Never edit them to change framework
+  behavior; regenerate with `python tests/generate_witness_projects.py --write`.
+- Do **not** create `.ai-team/runtime/` or `.ai-team/installation-record.json`
+  at the repository root.
+
+## Manifests
+
+| File | Role on this repo |
+|---|---|
+| `.ai-team/framework-version.json` | Source manifest (paths under `src/`, `adapters/`, …) |
+| `.ai-team/installation-record.json` | **Must not exist** here (installed targets only) |
+
+After changing the installable payload, run:
+
+```bash
+python scripts/ai-team/sync_source_manifest.py
+python scripts/ai-team/validate.py
+```
+
+## Forbidden operations
+
+- `python tools/install.py --target .` on this repository (or any
+  `framework_source` target)
+- Copying runtime files into `.ai-team/runtime/` at the repo root
+- Editing witness fixtures instead of `src/` or `adapters/`
+
+Governance metadata (Work Units, gates in `project-state.yaml`) tracks
+**framework renovation**, not a post-install client lifecycle.

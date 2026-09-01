@@ -16,7 +16,7 @@ scope:
     - VERSIONING.md
     - CONTRIBUTING.md
     - CHANGELOG.md
-    - CODEOWNERS
+    - .github/CODEOWNERS
     - .mailmap
   exclude:
     - "Réécriture ou raccord artificiel des historiques Git existants"

@@ -7,6 +7,7 @@ project:
 communication:
   language: français
 autonomy:
+  preset: supervised_copilots
   level: 3
 paths:
   product_docs: docs/product

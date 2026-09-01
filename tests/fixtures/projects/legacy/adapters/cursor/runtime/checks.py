@@ -201,6 +201,31 @@ def collect_preflight_report(
                 else "set GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1 before unattended preflight"
             ),
         }
+        # Document 6 §9.6 — manual confirmation states forbid unattended start.
+        # A human may attest those Cursor-UI-only checks via env so the report
+        # can back OpenRun without inventing a Core bypass.
+        acknowledged = os.environ.get("GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT") == "1"
+        for name in ("global_allowlist", "execution_surface"):
+            entry = report.get(name)
+            if not isinstance(entry, dict) or entry.get("status") != "manual":
+                continue
+            if acknowledged:
+                report[name] = {
+                    "status": "pass",
+                    "detail": (
+                        f"{entry.get('detail')} "
+                        "(human-attested via GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1)"
+                    ),
+                }
+            else:
+                report[name] = {
+                    "status": "manual",
+                    "detail": (
+                        f"{entry.get('detail')} — set "
+                        "GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1 after confirming, "
+                        "or OpenRun will refuse this check"
+                    ),
+                }
     return report
 
 

@@ -27,6 +27,16 @@
         "level"
       ],
       "properties": {
+        "preset": {
+          "enum": [
+            "supervised_copilots",
+            "unattended_conservative",
+            "unattended_extended",
+            "unattended_maximal",
+            "custom"
+          ],
+          "description": "Named autonomy preset. Legacy level remains accepted only as compatibility input."
+        },
         "level": {
           "enum": [
             1,

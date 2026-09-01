@@ -31,7 +31,7 @@ Le `protocol_version` reste indépendant de la version du framework.
 - Étiqueter la révision 0.4.x servant de référence.
 - Exécuter la suite actuelle et conserver le résultat attendu.
 - Ajouter des fixtures représentatives pour Project Profile, Project State, Work Unit, Gate Decision, Observation, Retrospective et manifeste installé.
-- Capturer les sorties et codes de retour de `validate.py`, `record_gate.py`, `feedback.py`, `check_done.py`, `preflight.py`, `diagnose.py`, `status.py` et `tools/install.py`.
+- Capturer les sorties et codes de retour de `validate.py`, `gov.py`, `feedback.py`, `check_done.py`, `preflight.py`, `diagnose.py`, `status.py` et `tools/install.py`.
 - Inventorier chaque fichier livré avec son propriétaire réel.
 - Créer un projet témoin propre et un projet témoin contenant données runtime, fichiers obsolètes gérés et changements utilisateur.
 
@@ -111,7 +111,7 @@ Les schémas v2 ajoutent `revision`, `created_at` et `updated_at`. Migration dé
 
 ### Fenêtre de compatibilité
 
-`record_gate.py` et `feedback.py` traduisent leurs arguments en Command Envelope. Un avertissement de dépréciation va sur stderr, sans casser les scripts automatisés qui lisent stdout.
+`gov.py command` (enveloppes dont `RecordGateDecision`) et `feedback.py` traduisent leurs arguments en Command Envelope. Les wrappers legacy émettent un avertissement de dépréciation sur stderr lorsque applicable.
 
 Si cette traduction elle-même échoue (arguments legacy non convertibles en Command Envelope valide, schéma legacy incompatible avec le nouveau validateur), le wrapper DOIT s'arrêter avant tout appel au Command Gateway, retourner un code de sortie non nul et un message explicite sur stderr, et NE DOIT PAS retomber sur l'ancien comportement d'écriture directe de fichier : un wrapper qui échoue à traduire ne doit jamais silencieusement repasser en écriture non gouvernée. Ce cas est distinct d'un rejet du Command Gateway lui-même (`INVALID_SCHEMA`, etc.), qui est déjà couvert par les codes de sortie du Document 12 §11.
 
@@ -206,7 +206,7 @@ Conversion :
 |---|---|---|
 | `scripts/ai-team/common.py` | `src/governed_ai/core/...` | Extraire, conserver wrapper/import compatible. |
 | `feedback_common.py`, `feedback.py` | `src/governed_ai/feedback/...` | Extraire puis router par commandes. |
-| `record_gate.py` | handler `RecordGateDecision` | Wrapper déprécié. |
+| `gov.py command` (`RecordGateDecision`) | handler `RecordGateDecision` | Chemin actuel depuis 0.6.0. |
 | `check_done.py` | invariant/query Work Unit | Conserver wrapper. |
 | `preflight.py`, `diagnose.py`, `propose_allowlist.py` | parties Core + `adapters/cursor/runtime` | Séparer les checks génériques des checks Cursor. |
 | `.cursor/agents`, skills, rules, hooks | `adapters/cursor/templates` + sortie compilée | Shadow compile puis bascule. |

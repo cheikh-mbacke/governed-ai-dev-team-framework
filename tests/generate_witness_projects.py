@@ -28,6 +28,19 @@ FIXTURES_DIR = ROOT / "tests" / "fixtures" / "projects"
 CLEAN_DIR = FIXTURES_DIR / "clean"
 LEGACY_DIR = FIXTURES_DIR / "legacy"
 MANIFEST_PATH = FIXTURES_DIR / "witness-manifest.json"
+DO_NOT_EDIT_CONTENT = """# Witness fixture — do not edit as framework product code
+
+This directory is a **reproducible installed-project witness** for tests only.
+
+To change framework behavior, edit `src/`, `adapters/`, etc. at the repository root,
+then regenerate witnesses:
+
+```bash
+python tests/generate_witness_projects.py --write
+```
+
+See `tests/fixtures/projects/README.md`.
+"""
 
 PROJECT_OWNED_DIRS = (
     "work-units",
@@ -693,6 +706,12 @@ def copy_fixture_tree(source: Path, destination: Path) -> None:
             shutil.copy2(child, dest)
 
 
+def write_do_not_edit_marker(destination: Path) -> None:
+    (destination / "DO_NOT_EDIT_AS_PRODUCT.md").write_text(
+        DO_NOT_EDIT_CONTENT, encoding="utf-8"
+    )
+
+
 def write_manifest(clean_root: Path, legacy_root: Path) -> dict:
     manifest = {
         "framework_version": framework_version(),
@@ -762,6 +781,8 @@ def generate_trees(parent: Path) -> tuple[Path, Path]:
     apply_legacy_mutations(legacy, "witness-legacy")
     normalize_text_files(clean)
     normalize_text_files(legacy)
+    write_do_not_edit_marker(clean)
+    write_do_not_edit_marker(legacy)
     return clean, legacy
 
 

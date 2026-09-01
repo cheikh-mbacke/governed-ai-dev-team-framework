@@ -1,6 +1,6 @@
 # Checklist adoptant
 
-Checklist pour mettre en service un projet avec le framework `0.5.0`.
+Checklist pour mettre en service un projet avec le framework `0.7.0`.
 
 ## 1. Préparation du dépôt
 
@@ -16,7 +16,7 @@ Checklist pour mettre en service un projet avec le framework `0.5.0`.
   python tools/install.py --target . --project-id <id> --project-name "<nom>"
   ```
 
-- [ ] `.ai-team/installation-record.json` présent (`schema_version: 2`).
+- [ ] `.ai-team/installation-record.json` présent (`schema_version: 3`).
 - [ ] `.ai-team/project-profile.yaml` complété (identité, commandes, `active_adapter_id`).
 - [ ] `.ai-team/sources/source-registry.yaml` renseigné (sources autoritaires).
 

@@ -33,10 +33,10 @@ risk:
 required_verification:
   unit_tests: true
 context_package_ref: null
-status: verification
-revision: 2
+status: done
+revision: 3
 created_at: "2026-08-31T20:00:00+00:00"
-updated_at: "2026-08-31T20:55:19Z"
+updated_at: "2026-09-01T09:26:00+00:00"
 events:
   - type: IMPLEMENTATION
     at: "2026-08-31T20:55:19Z"
@@ -44,6 +44,9 @@ events:
       Écarts Document 6 corrigés — membership license_in, EscalateWorkUnitRisk
       WIP critique sur tout le lot, câblage tick risk_escalation, commentaire
       permissions auditor aligné.
+  - type: STATUS
+    at: "2026-09-01T09:26:00+00:00"
+    summary: "Clôturée par DEC-003 — conformité mode nuit acceptée pour 0.7.0 avec limites L4 documentées."
 evidence:
   - kind: unit_tests
     at: "2026-08-31T20:55:19Z"
@@ -53,7 +56,7 @@ evidence:
       - Preuve L4 réelle (run multi-heures / kill OS process) non acquise — voir mode-nuit-preuve-resilience-couverture.md
       - Alertes immédiates = événements BLOCKER in-repo, pas de transport email/Slack
 outcomes:
-  review_status: pending
+  review_status: approved
   audit_status: not_required
   critical_open_items: []
   defects: []

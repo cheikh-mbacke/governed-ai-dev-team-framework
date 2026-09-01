@@ -54,10 +54,11 @@ Le consentement à l’export est désormais formulé comme **exigence cible**. 
 
 ## 5. Limites
 
-- `active_adapter_id` et l’Installation Record v2 n’ont pas encore été implémentés.
+- `active_adapter_id` et l’Installation Record v3 sont implémentés depuis la Phase 5 ; le dépôt **framework source** (`repository_kind: framework_source`) n’embarque pas `installation-record.json`.
 - Aucun deuxième Adaptateur ne valide ce modèle.
 - La médiation d’Observation doit être testée avec les restrictions Cursor effectives.
 - Les besoins d’isolation du Control Plane restent ouverts.
+- La qualification mode nuit **L4** (run Cursor réel multi-heures) reste hors scope 0.7.0 (DEC-003).
 
 ## Sources
 

@@ -60,7 +60,11 @@ def map_source_relative_to_target(source_rel: str) -> str:
 def map_target_relative_to_source(target_rel: str) -> str | None:
     """Reverse map an installed target path to framework source, if relocated."""
     rel = normalize_path(target_rel)
-    for src_prefix, dest_prefix in RELOCATED_COPY_PREFIXES:
+    # Longest dest prefix first so nested relocations (e.g. adapters/cursor) win
+    # over the parent runtime/governed_ai prefix.
+    for src_prefix, dest_prefix in sorted(
+        RELOCATED_COPY_PREFIXES, key=lambda pair: len(pair[1]), reverse=True
+    ):
         if rel == dest_prefix or rel.startswith(dest_prefix + "/"):
             suffix = rel[len(dest_prefix) :].lstrip("/")
             return f"{src_prefix}/{suffix}" if suffix else src_prefix

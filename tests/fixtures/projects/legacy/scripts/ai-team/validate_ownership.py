@@ -179,7 +179,7 @@ def generate_inventory(root: Path) -> dict:
     files = iter_scope_files(root)
     return {
         "schema_version": 1,
-        "framework_version": "0.6.0",
+        "framework_version": "0.7.0",
         "description": "File ownership inventory for delivered 0.4.x scope (Document 11 §4).",
         "owners": sorted(VALID_OWNERS),
         "scope_dirs": list(SCOPE_DIRS),

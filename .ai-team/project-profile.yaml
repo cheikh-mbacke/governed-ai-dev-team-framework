@@ -1,7 +1,7 @@
 project:
   id: framework-renov
   name: Framework Renov
-  repository_kind: existing_or_greenfield_project
+  repository_kind: framework_source
   primary_language: python
   package_manager: pip
 communication:
@@ -51,7 +51,8 @@ human_authorities:
 setup_status:
   template: false
   cursor_compile_opt_in: true
-  note: 'DEC-001 tranchée — unit_test et lint définis ; tests/ créé par WU-P0-BASELINE
-    ; typecheck différé (pas de mypy en v1). WU-P4-SHADOW-COMPILE : opt-in compilateur
-    Cursor actif sur ce dépôt.'
+  note: 'Dépôt source/distribution du framework — pas une cible installée. Seul
+    framework-version.json décrit le payload ; pas d installation-record.json ici.
+    Gouvernance de refonte (WU, gates) = métadonnées projet de développement, distinctes
+    du cycle client post-install. sync_source_manifest.py regénère le manifeste source.'
 active_adapter_id: cursor

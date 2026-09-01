@@ -7,14 +7,17 @@ versions produit suivent Semantic Versioning.
 
 ### Added
 
-- Gouvernance Git exécutable : CI, contrôle des branches et commits, cohérence de version,
-  modèle de pull request et documentation opérateur.
-- Décision rétrospective documentant la rupture volontaire entre la lignée 0.4.x et le
-  nouveau `main`.
+- Décision **DEC-003** — modèle `framework_source`, increment **INC-0.7.0**, clôture mode nuit, politique G3/G4 et nettoyage doc.
+- `scripts/ai-team/sync_source_manifest.py` et validation `framework_source` dans `validate.py`.
+
+### Changed
+
+- Documentation produit alignée sur `gov.py` et Installation Record v3 (suppression des références actives à `record_gate.py`).
+- **WU-MODE-NUIT-CONFORMITY** clôturée (L4 réel documenté hors scope 0.7.0).
 
 ### Fixed
 
-- Restauration du workflow de tests sur la lignée courante.
+- Séparation explicite dépôt framework vs projet installé ; suppression du record dogfood incohérent.
 
 ## [0.7.0] - Non publiée
 
