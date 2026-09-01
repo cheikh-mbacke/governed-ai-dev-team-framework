@@ -208,6 +208,7 @@
     "adapters/cursor/templates/.cursor/skills/webapp-testing/SKILL.md",
     "requirements.txt",
     "scripts/ai-team/check_done.py",
+    "scripts/ai-team/check_git_policy.py",
     "scripts/ai-team/diagnose.py",
     "scripts/ai-team/feedback.py",
     "scripts/ai-team/gov.py",

@@ -4,8 +4,8 @@
 Usage: python scripts/ai-team/check_done.py WU-001
 This intentionally errs on the side of NOT DONE when evidence is ambiguous.
 """
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
 

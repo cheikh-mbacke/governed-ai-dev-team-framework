@@ -646,6 +646,19 @@ def iter_fixture_files(root: Path) -> list[Path]:
     return sorted(files, key=lambda p: p.relative_to(root).as_posix())
 
 
+def normalize_text_files(root: Path) -> None:
+    """Store generated UTF-8 fixtures with LF on every operating system."""
+    for path in iter_fixture_files(root):
+        raw = path.read_bytes()
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        canonical = text.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+        if canonical != raw:
+            path.write_bytes(canonical)
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     digest.update(path.read_bytes())
@@ -747,6 +760,8 @@ def generate_trees(parent: Path) -> tuple[Path, Path]:
 
     legacy = install_target(parent, "witness-legacy", "Witness Legacy")
     apply_legacy_mutations(legacy, "witness-legacy")
+    normalize_text_files(clean)
+    normalize_text_files(legacy)
     return clean, legacy
 
 
@@ -765,7 +780,9 @@ def main() -> int:
             FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
             copy_fixture_tree(clean_root, CLEAN_DIR)
             copy_fixture_tree(legacy_root, LEGACY_DIR)
-            MANIFEST_PATH.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            MANIFEST_PATH.write_bytes(
+                (json.dumps(manifest, indent=2) + "\n").encode("utf-8")
+            )
             print(f"Wrote {CLEAN_DIR}")
             print(f"Wrote {LEGACY_DIR}")
             print(f"Wrote {MANIFEST_PATH}")

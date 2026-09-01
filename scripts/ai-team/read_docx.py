@@ -14,9 +14,9 @@ for matrix/table-heavy sources (traceability matrices, decision registers).
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import re
 import sys
+from pathlib import Path
 
 from i18n import project_language, t
 

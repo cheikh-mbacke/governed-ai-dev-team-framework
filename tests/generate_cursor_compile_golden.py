@@ -48,7 +48,7 @@ def main() -> int:
         golden = build_golden_manifest(manifest)
 
     GOLDEN_PATH.parent.mkdir(parents=True, exist_ok=True)
-    GOLDEN_PATH.write_text(json.dumps(golden, indent=2) + "\n", encoding="utf-8")
+    GOLDEN_PATH.write_bytes((json.dumps(golden, indent=2) + "\n").encode("utf-8"))
     print(f"Wrote {GOLDEN_PATH} ({len(golden['artifacts'])} artefacts)")
     return 0
 

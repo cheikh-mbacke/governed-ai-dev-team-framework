@@ -1,0 +1,43 @@
+# Configuration GitHub requise
+
+Les hooks locaux ne remplacent pas les protections serveur. Un administrateur du dépôt
+doit appliquer les réglages suivants, puis joindre une capture ou un export de règles à la
+preuve de clôture de `WU-GIT-GOVERNANCE`.
+
+## Règle de branche `main`
+
+- exiger une pull request avant fusion ;
+- exiger la résolution des conversations ;
+- invalider les approbations devenues obsolètes ;
+- exiger les checks `git-policy`, `tests` et `governance-validation` ;
+- exiger que la branche soit à jour avant fusion ;
+- bloquer force-push et suppression ;
+- restreindre les pushes directs ;
+- ne permettre aucun bypass silencieux, y compris administrateur ;
+- conserver uniquement la stratégie merge commit ; désactiver squash et rebase merge.
+
+Une approbation est exigée lorsqu'un second reviewer responsable est disponible. Tant que
+le dépôt reste mono-mainteneur, le contrôle automatisé `governance-validation` est obligatoire
+et l'acceptation humaine reste enregistrée dans `.ai-team/`.
+
+## Règle de tags `v*`
+
+- bloquer mise à jour et suppression ;
+- réserver la création au parcours de release autorisé ;
+- n'accepter que des tags annotés et signés ;
+- exécuter le workflow sur le tag avant publication des artefacts.
+
+Les tags historiques `v0.4.0` et `v0.6.0` sont conservés tels quels. La nouvelle règle
+s'applique à toute création future et ne justifie pas leur déplacement.
+
+## Réglages du dépôt
+
+- branche par défaut : `main` ;
+- merge commits : activés ;
+- squash merge et rebase merge : désactivés ;
+- suppression automatique des branches après fusion : activée ;
+- GitHub Actions limité aux permissions minimales, `contents: read` par défaut.
+
+La vérification se fait avec un compte administrateur dans **Settings → Rules → Rulesets**
+et **Settings → General → Pull Requests**. Un contrôle trimestriel compare les réglages
+effectifs à ce document.

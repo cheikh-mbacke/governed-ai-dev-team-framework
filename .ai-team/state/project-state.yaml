@@ -1,6 +1,6 @@
 project_id: framework-renov
-constitution_version: 1.1.0
-phase: completed
+constitution_version: 1.2.0
+phase: execution
 gates:
   G0:
     status: passed
@@ -114,6 +114,10 @@ releases:
   gate: G4
   note: "Cloture migration Document 13 Phase 6 — deprecations et nettoyage ; acceptation G4 INC-CLEANUP"
 work_units:
+  WU-GIT-GOVERNANCE:
+    status: in_progress
+    milestone: M-GIT-GOVERNANCE
+    risk: high
   WU-P0-BASELINE:
     status: done
     milestone: M-P0
@@ -443,4 +447,4 @@ execution_plan_summary: 'Refonte du framework gouverné IA en noyau agnostique +
   architect/security/auditor sur ces phases.
 
   '
-last_updated: '2026-08-29T22:30:00+00:00'
+last_updated: '2026-08-31T14:09:19+00:00'

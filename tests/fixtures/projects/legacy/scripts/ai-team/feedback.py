@@ -18,6 +18,8 @@ except ModuleNotFoundError:
     print("Missing dependency: PyYAML and/or jsonschema. Install requirements first.", file=sys.stderr)
     raise SystemExit(1) from None
 
+from i18n import project_language, t
+
 from governed_ai.core.commands.errors import EXIT_CLI
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.commands.legacy_cli import (
@@ -34,8 +36,6 @@ from governed_ai.core.commands.legacy_cli import (
     translate_feedback_retrospective,
 )
 from governed_ai.core.workspace import Workspace
-
-from i18n import project_language, t
 
 ROOT = Workspace.discover(Path.cwd()).root
 LANG = project_language(ROOT)

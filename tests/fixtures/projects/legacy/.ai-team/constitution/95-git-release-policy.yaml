@@ -1,11 +1,19 @@
 policy: git_release_rollback
-version: "1.1.0"
+version: "1.2.0"
 git:
+  development_model: trunk_based_governed
+  canonical_branch: main
   developer_uses_isolated_working_branch_or_worktree: true
   developer_direct_protected_branch_write: false
   merge_requires_definition_of_done_and_risk_approvals: true
   shared_contract_or_structural_migration_requires_impact_analysis: true
   candidate_commit_or_artifact_must_be_stably_identified_in_evidence: true
+  branch_names:
+    work_unit: "wu/WU-<ID>-<slug>"
+    unattended_worker: "ai-run/<RUN-ID>/<WU-ID>"
+    integration: "integration/<RUN-ID>"
+    hotfix: "hotfix/WU-<ID>-<slug>"
+    maintenance: "release/<major>.<minor>"
 commit_policy:
   principle: "A commit is a recoverable technical checkpoint on an isolated Work Unit branch; merge and release remain separately governed actions."
   working_branch_autonomy:
@@ -32,6 +40,7 @@ commit_policy:
   message:
     work_unit_id_required: true
     reference_format: "type(WU-ID): concise description"
+    breaking_reference_format: "type(WU-ID)!: concise description"
     wip_reference_format: "wip(WU-ID): concise checkpoint description"
   evidence:
     developer_handoff_includes_commit_sha: true
@@ -50,7 +59,32 @@ commit_policy:
   merge:
     separate_from_commit: true
     protected_branch_requires_definition_of_done_and_applicable_approvals: true
+    strategy: merge_commit_no_ff
+    squash_merge: prohibited
+    rebase_merge: prohibited
+    merged_sha_requires_full_revalidation: true
+    delete_working_branch_after_merge: true
+  server_side_enforcement:
+    pull_request_required: true
+    required_status_checks: [git-policy, tests, governance-validation]
+    branch_must_be_up_to_date: true
+    stale_approvals_dismissed: true
+    conversations_resolved: true
+    force_push: prohibited
+    protected_branch_deletion: prohibited
+    bypass_must_be_explicit_and_recorded: true
+  history_cutover:
+    exceptional_only: true
+    requirements: [human_decision, technical_rationale, refs_before_and_after, evidence_impact, verified_backup, restoration_plan, communication]
 release:
+  versioning: semver
+  canonical_version_source: pyproject.toml
+  synchronized_version_files: [.ai-team/framework-version.json]
+  stable_tag_format: "vMAJOR.MINOR.PATCH"
+  tags_are_annotated_signed_and_immutable: true
+  release_is_built_from_tagged_commit_only: true
+  github_release_required: true
+  changelog_required: true
   release_candidate_contains: [commits, migrations, evidence, open_findings, approval_status]
   production_deployment_gate: G3
   lower_environments_may_be_automated: true
