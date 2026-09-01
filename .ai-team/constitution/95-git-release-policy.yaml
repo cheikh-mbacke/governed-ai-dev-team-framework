@@ -79,7 +79,9 @@ commit_policy:
 release:
   versioning: semver
   canonical_version_source: pyproject.toml  # adapt: package.json, VERSION, setup.cfg, etc.
-  synchronized_version_files: []  # list files that must mirror the version in canonical_version_source
+  synchronized_version_files:
+    - .ai-team/framework-version.json
+    - adapters/cursor/manifest.json
   stable_tag_format: "vMAJOR.MINOR.PATCH"
   tags_are_annotated_signed_and_immutable: true
   release_is_built_from_tagged_commit_only: true

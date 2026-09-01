@@ -63,3 +63,26 @@ def test_non_semver_product_version_is_rejected(tmp_path: Path) -> None:
     errors = POLICY.validate_versions(tmp_path)
     assert len(errors) >= 2
     assert any("not SemVer" in error for error in errors)
+
+
+def test_changelog_release_section_requires_iso_date() -> None:
+    changelog = "## [0.7.1] - 2026-09-01\n\nInitial note.\n"
+    assert POLICY.validate_changelog_release_section("0.7.1", changelog) == []
+
+
+def test_changelog_release_section_rejects_placeholder_date() -> None:
+    changelog = "## [0.7.0] - Non publiée\n\nNot ready.\n"
+    errors = POLICY.validate_changelog_release_section("0.7.0", changelog)
+    assert any("not publish-ready" in error for error in errors)
+
+
+def test_changelog_release_section_requires_header() -> None:
+    errors = POLICY.validate_changelog_release_section("0.8.0", "## [Unreleased]\n")
+    assert any("must declare" in error for error in errors)
+
+
+def test_tag_payload_declares_signature() -> None:
+    unsigned = "object abc\ntype commit\n..."
+    signed = "object abc\ntype tag\ngpgsig -----BEGIN PGP SIGNATURE-----\n"
+    assert not POLICY.tag_payload_declares_signature(unsigned)
+    assert POLICY.tag_payload_declares_signature(signed)
