@@ -22,6 +22,15 @@ except ModuleNotFoundError:
 
 from i18n import project_language, t
 
+from install_paths import bootstrap_runtime
+
+bootstrap_runtime(_ROOT)
+
+from governed_ai.core.workspace_mode import (
+    collect_framework_source_client_cycle_artifacts,
+    collect_framework_source_feedback_artifacts,
+)
+
 ROOT = _ROOT
 AI = ROOT / ".ai-team"
 LANG = project_language(ROOT)
@@ -137,6 +146,12 @@ if (AI / "project-profile.yaml").exists():
                 "framework_source repository must not contain "
                 ".ai-team/runtime/governed_ai/ (installed-target layout only)"
             )
+        source_state_path = AI / "state" / "project-state.yaml"
+        state_for_checks = load_yaml(source_state_path) if source_state_path.exists() else {}
+        errors.extend(collect_framework_source_feedback_artifacts(AI))
+        errors.extend(
+            collect_framework_source_client_cycle_artifacts(AI, state=state_for_checks)
+        )
         if isinstance(version_manifest, dict):
             for path in version_manifest.get("managed_files") or []:
                 if not isinstance(path, str):

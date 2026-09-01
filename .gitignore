@@ -1,3 +1,12 @@
+# Installed-target layout must not appear on framework_source repositories
+.ai-team/runtime/
+.ai-team/installation-record.json
+
+# Client feedback loop artifacts (belong on installed projects, not the source repo)
+.ai-team/metrics/framework-feedback-*.json
+.ai-team/observations/OBS-*.yaml
+.ai-team/retrospectives/RET-*.yaml
+
 # AI-team ephemeral/runtime scratch
 .ai-team/logs/*.jsonl
 .ai-team/tmp/

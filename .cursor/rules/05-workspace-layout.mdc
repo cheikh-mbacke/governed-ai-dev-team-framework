@@ -1,0 +1,28 @@
+---
+description: >-
+  When repository_kind is framework_source, this repo builds the framework; it
+  does not run the client governance cycle (compile-project, gates, Work Units).
+alwaysApply: true
+---
+# Framework source workspace layout
+
+Read `.ai-team/project-profile.yaml` → `project.repository_kind` first.
+
+When `repository_kind` is `framework_source`:
+
+- This repository **builds** the framework. It is **not** an installed client
+  project and must not be analyzed as one.
+- `.ai-team/state/project-state.yaml` is a **virgin template** (`phase:
+  not_compiled`, empty `work_units`). Do not treat it as an active client
+  runtime or execution plan.
+- Do **not** run `/compile-project`, gate commands, or client Work Unit cycles
+  here. Framework development on this repo does not use the installed-client
+  orchestration path.
+- Edit implementation code under `src/governed_ai/`, `adapters/`, and
+  `distribution/`. Never create `.ai-team/runtime/` or
+  `installation-record.json` here.
+- To observe installed behavior, use `tests/fixtures/projects/clean/` or
+  `python tools/install.py --target <dir>` in a separate directory.
+- Do not run `scripts/ai-team/feedback.py` record, retrospective, or export here.
+
+When `repository_kind` is not `framework_source`, ignore the rules above.

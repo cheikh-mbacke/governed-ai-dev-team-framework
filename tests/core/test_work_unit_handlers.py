@@ -16,6 +16,8 @@ from governed_ai.core.domain.work_unit.state_machine import (
 )
 from governed_ai.core.workspace import Workspace
 
+from tests.core.workspace_helpers import write_installed_client_profile
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -41,7 +43,7 @@ def wu_workspace(tmp_path: Path) -> Workspace:
     source = REPO_ROOT / ".ai-team"
     for name in ("schemas", "constitution", "contracts"):
         shutil.copytree(source / name, ai_team / name)
-    shutil.copy2(source / "project-profile.yaml", ai_team / "project-profile.yaml")
+    write_installed_client_profile(ai_team)
     shutil.copy2(source / "framework-version.json", ai_team / "framework-version.json")
     (ai_team / "work-units").mkdir(parents=True)
     (ai_team / "state").mkdir(parents=True)

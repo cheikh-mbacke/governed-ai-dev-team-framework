@@ -13,6 +13,8 @@ from governed_ai.core.commands.errors import ErrorCode
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.workspace import Workspace
 
+from tests.core.workspace_helpers import write_installed_client_profile
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -22,7 +24,7 @@ def retro_workspace(tmp_path: Path) -> Workspace:
     source = REPO_ROOT / ".ai-team"
     for name in ("schemas", "constitution", "contracts"):
         shutil.copytree(source / name, ai_team / name)
-    shutil.copy2(source / "project-profile.yaml", ai_team / "project-profile.yaml")
+    write_installed_client_profile(ai_team, project_id="retro-test")
     shutil.copy2(source / "framework-version.json", ai_team / "framework-version.json")
     for directory in (
         "observations",
