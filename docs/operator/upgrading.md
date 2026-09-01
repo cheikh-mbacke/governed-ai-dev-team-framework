@@ -101,6 +101,14 @@ L'installation fraîche utilise le même mécanisme de rollback transactionnel.
 - Les objets créés sous schémas v2/v3 (horodatages `revision`, champs gateway, hashes) **ne sont pas** automatiquement convertis vers v1.
 - Un rollback logiciel restaure les **fichiers** ; une migration inverse de données explicite est requise pour une rétrogradation déclarée sûre.
 
+### Minimums de schéma par version produit installée
+
+| Version produit | Installation record | Agrégats mutables (Work Unit, etc.) | Bundle manifest |
+|---|---|---|---|
+| `0.7.0` | `schema_version` ≥ 3 | champs v2 (`revision`, `created_at`, `updated_at`) | `schema_version` 1 |
+
+Détail et règles de bump : [versioning-policy.md](versioning-policy.md).
+
 ## Limites résiduelles
 
 - Qualification Cursor réelle : voir Document 14 niveaux L3/L4.

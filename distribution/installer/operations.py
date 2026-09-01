@@ -15,12 +15,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from distribution.installer.apply import apply_copy_entries, collect_changed_destinations
+from distribution.installer.errors import InstallationValidationError
 from distribution.installer.build_record import (
-    InstallationValidationError,
     finalize_installation_manifests,
     validate_installation_record,
-    validate_update_path,
 )
+from distribution.installer.version_policy import validate_update_path
 from distribution.installer.collisions import (
     format_collision_report,
     scan_fresh_install_collisions,

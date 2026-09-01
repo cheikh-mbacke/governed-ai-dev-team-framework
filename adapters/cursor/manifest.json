@@ -1,6 +1,6 @@
 {
   "adapter_id": "cursor",
-  "adapter_version": "0.5.0",
+  "adapter_version": "0.7.0",
   "protocol_versions": ["1.0"],
   "bundle_version_range": ">=1.0.0,<2.0.0",
   "platforms": ["windows", "linux", "macos"],

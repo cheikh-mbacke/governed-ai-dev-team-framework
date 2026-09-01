@@ -16,7 +16,7 @@ from .staging import (
 )
 
 ADAPTER_ID = "cursor"
-ADAPTER_VERSION = "0.5.0"
+ADAPTER_VERSION = "0.7.0"
 CURSOR_SUBDIR = ".cursor"
 BUNDLE_ROLE_AGENT = {
     "architect",

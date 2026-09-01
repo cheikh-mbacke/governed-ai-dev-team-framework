@@ -19,7 +19,7 @@ Recherche `rg` sur le dépôt (scripts, tests, docs, `.ai-team/`, `tools/`) avan
 
 | Élément | Remplacement | Échéance indicative |
 |---|---|---|
-| `.ai-team/framework-version.json` (v1) | `.ai-team/installation-record.json` (v2) | Migré automatiquement à la première `--update` ; fichier legacy préservé en backup |
+| `.ai-team/framework-version.json` (v1) | `.ai-team/installation-record.json` (v3) | Migré automatiquement à la première `--update` ; fichier legacy préservé en backup |
 | Écritures directes YAML d'état par scripts | Command Gateway (`gov.py`) | `0.6.0` |
 
 ## Scripts CLI

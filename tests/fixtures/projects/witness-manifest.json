@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-01T12:41:49+00:00",
+  "generated_at": "2026-09-01T13:35:35+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -33,7 +33,7 @@
     {
       "name": "clean",
       "root": "clean",
-      "file_count": 360,
+      "file_count": 362,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -85,7 +85,7 @@
         },
         {
           "path": ".ai-team/constitution/95-git-release-policy.yaml",
-          "sha256": "4876f435aef8324fddd4b61115205f398b82b6c9e906a58958fb999d2de06748"
+          "sha256": "096149f0d855c763bf0352afc06d87f7eecf0bea6c8f382af1a67d32c873a32f"
         },
         {
           "path": ".ai-team/constitution/constitution.yaml",
@@ -237,11 +237,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "004e2b69c3b368bf297dfae12b56a7877051cc840041313a72268c25cba3a3ca"
+          "sha256": "c27936338dd859be1976488055268d19f4cacf24c025ca21935704cbae9632bb"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "71d4009e2d42e0606bc80d4f9c854fbfb5ee1314f21de5e3a823c6b846e0c9e4"
+          "sha256": "745168fb2e76c298b4a2c7f22bcb2bec89142dfa687390d43021f1d1f168e108"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -273,7 +273,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compatibility.py",
-          "sha256": "12cf57660bcd9da1f54dd5cd85a28aae222048edbdc119174f393960d29e1370"
+          "sha256": "10589214eb61958080caf4fc77e988c9b3c1a9a526ddb70554840742a3e7708d"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compile.py",
@@ -293,7 +293,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/compile.py",
-          "sha256": "e33ce9de0370b8e850a7c84896d778d0ff532ba7762f260fad699a0d647d1a37"
+          "sha256": "dce8fce53a522f82e0eca5afe97a55beab5721705a7207971d18b0643332a0a4"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/install_support.py",
@@ -309,7 +309,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/manifest.json",
-          "sha256": "57a575c7c68a4e9ab856ed012584ad9b143dfa6e94f9872d5b04af9d0e115cb2"
+          "sha256": "ba6da5e4d974e5139ef57a3344ebbf81b9bb0dd89548b2df21d4f8a5bd5d8fe3"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/__init__.py",
@@ -690,6 +690,10 @@
         {
           "path": ".ai-team/runtime/governed_ai/contracts/schemas/role-definition-revision.schema.json",
           "sha256": "58ff505695956612582f617efd055f0176038202cd5fd85953b34cc6138889bf"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/contracts/semver.py",
+          "sha256": "f81ec1044aced900bd8eb9ecfd595f4a7550deb9a8c29874313567703f0a43af"
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/validate_bundle.py",
@@ -1417,7 +1421,11 @@
         },
         {
           "path": "scripts/ai-team/check_git_policy.py",
-          "sha256": "67d0ad17fc45b623f0fe2ab8ffa402e0e7d65d218a004d2e10359195fcee0851"
+          "sha256": "a4722af0bf25e0d492eadb6a84f97a5e6b523d874163bd5b12bea1a37ee86f94"
+        },
+        {
+          "path": "scripts/ai-team/check_release_matrix.py",
+          "sha256": "c1c8992d5404a061b8558db3e9b0b1f86ef5612a4c8916508f09b91e51ed5378"
         },
         {
           "path": "scripts/ai-team/diagnose.py",
@@ -1469,18 +1477,18 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "c6c558996169e6b98b5136c5e2191345099284b124f8dfc75eb87468ed2bd0f7"
+          "sha256": "1376eae24000933fd00b899c8b6f5f76b953ba2fba216c142d907ce68f3fe4a0"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "eb238053787e1cc919517ea9ee54c37d2ab2a8c4ac42142ee5ee32e5b10a86c7"
+          "sha256": "00ea767d085c323cff01f5ae5cf1c10ada690b17d1457c7aecd2439a11cbbc7c"
         }
       ]
     },
     {
       "name": "legacy",
       "root": "legacy",
-      "file_count": 376,
+      "file_count": 378,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -1532,7 +1540,7 @@
         },
         {
           "path": ".ai-team/constitution/95-git-release-policy.yaml",
-          "sha256": "4876f435aef8324fddd4b61115205f398b82b6c9e906a58958fb999d2de06748"
+          "sha256": "096149f0d855c763bf0352afc06d87f7eecf0bea6c8f382af1a67d32c873a32f"
         },
         {
           "path": ".ai-team/constitution/constitution.yaml",
@@ -1716,11 +1724,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "ef098f2e870aefa6851587e04c2e6f5683a32763c93aa00b614fb747185a4b9e"
+          "sha256": "9b8a6f9f1bb5516030d9eb8a08bf71f671f88a2b66d8cdf5d5668f74fc5a40db"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "a5322ff8c1b9a3a98e145f1202ccd3b94ed4b1f60af312f40c78b91d01abde8d"
+          "sha256": "b695286c635ff48195b429816e5e4f7e84df4a9991268d8e25f99988f1b1908a"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2124,7 +2132,7 @@
         },
         {
           "path": "adapters/cursor/compatibility.py",
-          "sha256": "12cf57660bcd9da1f54dd5cd85a28aae222048edbdc119174f393960d29e1370"
+          "sha256": "10589214eb61958080caf4fc77e988c9b3c1a9a526ddb70554840742a3e7708d"
         },
         {
           "path": "adapters/cursor/compiler-notes.yaml",
@@ -2140,7 +2148,7 @@
         },
         {
           "path": "adapters/cursor/compiler/compile.py",
-          "sha256": "e33ce9de0370b8e850a7c84896d778d0ff532ba7762f260fad699a0d647d1a37"
+          "sha256": "dce8fce53a522f82e0eca5afe97a55beab5721705a7207971d18b0643332a0a4"
         },
         {
           "path": "adapters/cursor/compiler/install_support.py",
@@ -2156,7 +2164,7 @@
         },
         {
           "path": "adapters/cursor/manifest.json",
-          "sha256": "57a575c7c68a4e9ab856ed012584ad9b143dfa6e94f9872d5b04af9d0e115cb2"
+          "sha256": "ba6da5e4d974e5139ef57a3344ebbf81b9bb0dd89548b2df21d4f8a5bd5d8fe3"
         },
         {
           "path": "adapters/cursor/runtime/__init__.py",
@@ -2384,7 +2392,11 @@
         },
         {
           "path": "scripts/ai-team/check_git_policy.py",
-          "sha256": "67d0ad17fc45b623f0fe2ab8ffa402e0e7d65d218a004d2e10359195fcee0851"
+          "sha256": "a4722af0bf25e0d492eadb6a84f97a5e6b523d874163bd5b12bea1a37ee86f94"
+        },
+        {
+          "path": "scripts/ai-team/check_release_matrix.py",
+          "sha256": "c1c8992d5404a061b8558db3e9b0b1f86ef5612a4c8916508f09b91e51ed5378"
         },
         {
           "path": "scripts/ai-team/diagnose.py",
@@ -2436,11 +2448,11 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "c6c558996169e6b98b5136c5e2191345099284b124f8dfc75eb87468ed2bd0f7"
+          "sha256": "1376eae24000933fd00b899c8b6f5f76b953ba2fba216c142d907ce68f3fe4a0"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "eb238053787e1cc919517ea9ee54c37d2ab2a8c4ac42142ee5ee32e5b10a86c7"
+          "sha256": "00ea767d085c323cff01f5ae5cf1c10ada690b17d1457c7aecd2439a11cbbc7c"
         },
         {
           "path": "src/governed_ai/__init__.py",
@@ -2625,6 +2637,10 @@
         {
           "path": "src/governed_ai/contracts/schemas/role-definition-revision.schema.json",
           "sha256": "58ff505695956612582f617efd055f0176038202cd5fd85953b34cc6138889bf"
+        },
+        {
+          "path": "src/governed_ai/contracts/semver.py",
+          "sha256": "f81ec1044aced900bd8eb9ecfd595f4a7550deb9a8c29874313567703f0a43af"
         },
         {
           "path": "src/governed_ai/contracts/validate_bundle.py",

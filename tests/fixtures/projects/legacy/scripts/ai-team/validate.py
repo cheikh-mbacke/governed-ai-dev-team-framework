@@ -150,6 +150,48 @@ if (AI / "project-profile.yaml").exists():
                     errors.append(
                         f".ai-team/framework-version.json lists missing source file: {path}"
                     )
+            product_version = version_manifest.get("version")
+            pyproject_path = ROOT / "pyproject.toml"
+            if isinstance(product_version, str) and pyproject_path.is_file():
+                import re
+
+                pyproject_text = pyproject_path.read_text(encoding="utf-8")
+                match = re.search(
+                    r'(?m)^version\s*=\s*["\']([^"\']+)["\']\s*$',
+                    pyproject_text,
+                )
+                pyproject_version = match.group(1) if match else None
+                if pyproject_version and product_version != pyproject_version:
+                    errors.append(
+                        "product version mismatch: "
+                        f"framework-version.json={product_version}, "
+                        f"pyproject.toml={pyproject_version}"
+                    )
+            adapter_manifest_path = ROOT / "adapters" / "cursor" / "manifest.json"
+            if isinstance(product_version, str) and adapter_manifest_path.is_file():
+                if str(ROOT) not in sys.path:
+                    sys.path.insert(0, str(ROOT))
+                descriptor = load_json(adapter_manifest_path)
+                if isinstance(descriptor, dict):
+                    from distribution.installer.version_policy import (
+                        validate_adapter_descriptor_alignment,
+                    )
+
+                    errors.extend(
+                        validate_adapter_descriptor_alignment(
+                            product_version,
+                            "cursor",
+                            descriptor,
+                        )
+                    )
+            if str(ROOT) not in sys.path:
+                sys.path.insert(0, str(ROOT))
+            src_root = ROOT / "src"
+            if src_root.is_dir() and str(src_root) not in sys.path:
+                sys.path.insert(0, str(src_root))
+            from distribution.installer.version_policy import validate_release_matrix
+
+            errors.extend(validate_release_matrix(ROOT))
     elif repository_kind == "existing_or_greenfield_project":
         if not (AI / "installation-record.json").is_file():
             warnings.append(

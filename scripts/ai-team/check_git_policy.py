@@ -81,6 +81,36 @@ def validate_versions(root: Path = ROOT) -> list[str]:
             "product version mismatch: "
             f"pyproject.toml={pyproject_version}, framework-version.json={framework_version}"
         )
+
+    manifest_path = root / "adapters" / "cursor" / "manifest.json"
+    if pyproject_version and manifest_path.is_file():
+        try:
+            descriptor = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            errors.append(f"cannot read adapters/cursor/manifest.json: {exc}")
+        else:
+            if isinstance(descriptor, dict):
+                if str(ROOT) not in sys.path:
+                    sys.path.insert(0, str(ROOT))
+                from distribution.installer.version_policy import (
+                    validate_adapter_descriptor_alignment,
+                )
+
+                errors.extend(
+                    validate_adapter_descriptor_alignment(
+                        pyproject_version,
+                        "cursor",
+                        descriptor,
+                    )
+                )
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    src_root = root / "src"
+    if src_root.is_dir() and str(src_root) not in sys.path:
+        sys.path.insert(0, str(src_root))
+    from distribution.installer.version_policy import validate_release_matrix
+
+    errors.extend(validate_release_matrix(root))
     return errors
 
 

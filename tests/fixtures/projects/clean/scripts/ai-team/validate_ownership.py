@@ -213,6 +213,21 @@ def main(argv: list[str] | None = None) -> int:
         args.inventory if args.inventory.is_absolute() else root / args.inventory
     )
 
+    profile_path = root / ".ai-team" / "project-profile.yaml"
+    if profile_path.is_file():
+        for line in profile_path.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("repository_kind:"):
+                kind = line.split(":", 1)[1].strip()
+                if kind != "framework_source":
+                    print(
+                        f"Error: validate_ownership.py only applies to framework_source "
+                        f"repositories (this project declares repository_kind: {kind!r}). "
+                        f"Run validate.py instead.",
+                        file=sys.stderr,
+                    )
+                    return 1
+                break
+
     if args.generate:
         payload = generate_inventory(root)
         inventory_path.parent.mkdir(parents=True, exist_ok=True)

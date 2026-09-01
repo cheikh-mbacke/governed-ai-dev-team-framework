@@ -59,9 +59,13 @@ Le framework suit Semantic Versioning sous la forme `MAJOR.MINOR.PATCH` :
 - `PATCH` : correction rétrocompatible sans nouvelle capacité contractuelle.
 
 `pyproject.toml` est la source canonique de la version produit. La valeur de
-`.ai-team/framework-version.json` doit être identique. Les versions de protocole,
-de Constitution, de bundle et d'Adaptateur ont leur propre cycle et ne sont pas
-forcément identiques à la version produit.
+`.ai-team/framework-version.json` doit être identique. Pour l’adaptateur Cursor livré,
+`adapters/cursor/manifest.json` → `adapter_version` doit aussi être identique (voir
+[`docs/operator/versioning-policy.md`](docs/operator/versioning-policy.md)).
+
+Les versions de protocole, de Constitution, de bundle et d’Adaptateur ont leur propre
+cycle documenté ; seul l’adaptateur **embarqué** suit la version produit. La matrice
+`distribution/installer/version_policy.py` fixe les combinaisons supportées à l’update.
 
 ## Releases et tags
 

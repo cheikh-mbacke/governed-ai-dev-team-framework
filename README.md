@@ -15,6 +15,7 @@ Framework de développement multi-agents gouverné par l'humain : gates, Work Un
 | Guide | Contenu |
 |---|---|
 | [Architecture](docs/operator/architecture.md) | Noyau, Adaptateur, Distribution — vue d'ensemble |
+| [Politique de versionnement](docs/operator/versioning-policy.md) | Axes de version, bumps, matrice de compatibilité |
 | [Modèle de sécurité](docs/operator/security-model.md) | Autorité, gates, capacités, frontières |
 | [Guide opérateur](docs/operator/operator-guide.md) | Install, update, validation, rollback, CLI |
 | [Upgrading](docs/operator/upgrading.md) | Migration `0.4.x` → `0.7.0` |

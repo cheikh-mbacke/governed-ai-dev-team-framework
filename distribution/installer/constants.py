@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from distribution.installer.version_policy import SUPPORTED_UPDATE_FROM
+
 # Installed-target copy map (Document 11 §4). Framework repo layout unchanged.
 COPY_ITEMS = [
     ".cursor",
@@ -52,8 +54,6 @@ FRESH_PROJECT_SEEDS = (
     ".ai-team/sources/source-registry.yaml",
 )
 
-SUPPORTED_UPDATE_FROM = {None, "0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0", "0.6.0", "0.7.0"}
-
 LEGACY_VERSION_REL = Path(".ai-team/framework-version.json")
 
 # Marker files indicating a prior framework installation (not collisions on fresh install).
@@ -65,3 +65,12 @@ FRAMEWORK_INSTALL_MARKERS = frozenset(
         ".ai-team/state/project-state.yaml",
     }
 )
+
+__all__ = [
+    "COPY_ITEMS",
+    "FRESH_PROJECT_SEEDS",
+    "FRAMEWORK_INSTALL_MARKERS",
+    "LEGACY_VERSION_REL",
+    "PROJECT_OWNED_PATTERNS",
+    "SUPPORTED_UPDATE_FROM",
+]

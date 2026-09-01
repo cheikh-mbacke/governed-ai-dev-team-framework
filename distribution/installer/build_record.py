@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from distribution.installer.constants import SUPPORTED_UPDATE_FROM
 from distribution.installer.ownership import (
     OWNER_CORE,
     OWNER_CURSOR,
@@ -165,13 +164,7 @@ def managed_files_union_from_record(record: dict[str, Any]) -> set[str]:
     return managed_files_union(record)
 
 
-class InstallationValidationError(ValueError):
-    """Pre-flight installation/update validation failure."""
-
-    def __init__(self, code: str, message: str) -> None:
-        super().__init__(message)
-        self.code = code
-
+from distribution.installer.errors import InstallationValidationError
 
 def validate_installation_record(record: dict[str, Any]) -> None:
     adapter_id = str(record.get("active_adapter_id", ""))
@@ -184,12 +177,4 @@ def validate_installation_record(record: dict[str, Any]) -> None:
         raise InstallationValidationError(
             "MISSING_ACTIVE_ADAPTER",
             f"active_adapter_id {adapter_id!r} has no installed adapter entry",
-        )
-
-
-def validate_update_path(installed_version: str | None, new_version: str) -> None:
-    if installed_version not in SUPPORTED_UPDATE_FROM:
-        raise InstallationValidationError(
-            "UNSUPPORTED_VERSION_PATH",
-            f"No safe migration path from {installed_version!r} to {new_version}",
         )

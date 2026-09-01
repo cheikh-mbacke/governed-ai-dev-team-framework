@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from governed_ai.contracts.compatibility import CompatibilityReport
+from governed_ai.contracts.semver import version_in_range
 from governed_ai.adapters.spi import (
     AdapterDescriptor,
     ProcedureRevision,
@@ -15,22 +15,6 @@ from governed_ai.adapters.spi import (
 
 UNSUPPORTED_CONTRACT = "UNSUPPORTED_CONTRACT"
 CAPABILITY_NOT_ENFORCEABLE = "CAPABILITY_NOT_ENFORCEABLE"
-
-
-def _parse_semver_range(spec: str) -> tuple[str, str | None]:
-    match = re.match(r"^>=([0-9.]+)(?:,<([0-9.]+))?$", spec.strip())
-    if not match:
-        return spec, None
-    return match.group(1), match.group(2)
-
-
-def _version_in_range(version: str, spec: str) -> bool:
-    lower, upper = _parse_semver_range(spec)
-    if version < lower:
-        return False
-    if upper is not None and version >= upper:
-        return False
-    return True
 
 
 def _normalize_platform(platform: str) -> tuple[str, bool]:
@@ -77,7 +61,7 @@ def negotiate_compatibility(
         compatible = False
 
     bundle_version = str(bundle.get("bundle_version", ""))
-    if not _version_in_range(bundle_version, str(descriptor["bundle_version_range"])):
+    if not version_in_range(bundle_version, str(descriptor["bundle_version_range"])):
         issues.append(
             {
                 "code": UNSUPPORTED_CONTRACT,
