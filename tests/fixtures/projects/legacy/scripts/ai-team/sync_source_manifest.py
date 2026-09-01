@@ -9,6 +9,22 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+
+_profile_path = ROOT / ".ai-team" / "project-profile.yaml"
+if _profile_path.is_file():
+    for _line in _profile_path.read_text(encoding="utf-8").splitlines():
+        if _line.strip().startswith("repository_kind:"):
+            _kind = _line.split(":", 1)[1].strip()
+            if _kind != "framework_source":
+                print(
+                    f"Error: sync_source_manifest.py only applies to framework_source "
+                    f"repositories (this project declares repository_kind: {_kind!r}). "
+                    f"Run validate.py instead.",
+                    file=sys.stderr,
+                )
+                raise SystemExit(1)
+            break
+
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

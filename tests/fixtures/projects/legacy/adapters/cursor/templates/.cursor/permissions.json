@@ -22,6 +22,7 @@
     "python scripts/ai-team/status.py",
     "python scripts/ai-team/diagnose.py",
     "python scripts/ai-team/preflight.py",
+    "python scripts/ai-team/check_done.py",
     "python scripts/ai-team/propose_allowlist.py",
     "python scripts/ai-team/feedback.py",
     "python scripts/ai-team/read_docx.py",
@@ -29,6 +30,7 @@
     "py -3 scripts/ai-team/status.py",
     "py -3 scripts/ai-team/diagnose.py",
     "py -3 scripts/ai-team/preflight.py",
+    "py -3 scripts/ai-team/check_done.py",
     "py -3 scripts/ai-team/propose_allowlist.py",
     "py -3 scripts/ai-team/feedback.py",
     "py -3 scripts/ai-team/read_docx.py"

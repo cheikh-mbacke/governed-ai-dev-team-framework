@@ -125,22 +125,17 @@
     {
       "kind": "hook",
       "path": ".cursor/hooks/session_init.py",
-      "sha256": "sha256:d0f61d4baf687ba2c812e3f4321e876536d6395c9800615a293a77ddac7cfe74"
+      "sha256": "sha256:b89220bb02f9d32ecc6800defa4bfb993a1053467508cf4793fa0ccea498b563"
     },
     {
       "kind": "permissions",
       "path": ".cursor/permissions.json",
-      "sha256": "sha256:7a862f4a9f04fd83fdf42bac631bbda0d99a8b1c21c18f26ea777a83dd377c9a"
+      "sha256": "sha256:b200f4cac210b300128b0aeaef79aaf9425cba70aa97a312d85fc5270c0d0234"
     },
     {
       "kind": "rule",
       "path": ".cursor/rules/00-governance.mdc",
       "sha256": "sha256:9375b94c85e7bb334bfa86f2728ccf7ef78fb0570e7572a41bf20c11d82d4766"
-    },
-    {
-      "kind": "rule",
-      "path": ".cursor/rules/05-framework-source.mdc",
-      "sha256": "sha256:fd9fedd5797157b0689de833aed7e22865088ae2421a42ecaded5ac1f9c979c8"
     },
     {
       "kind": "rule",

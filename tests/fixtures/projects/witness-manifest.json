@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-01T09:56:24+00:00",
+  "generated_at": "2026-09-01T12:41:49+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -33,7 +33,7 @@
     {
       "name": "clean",
       "root": "clean",
-      "file_count": 362,
+      "file_count": 360,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -237,11 +237,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "4f0ad0c0bdbf14b553abbab5987b3a0ffd6f05d16de3b6bdef865617cefc2b5f"
+          "sha256": "004e2b69c3b368bf297dfae12b56a7877051cc840041313a72268c25cba3a3ca"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "a0951a0355416cc6f4a6e76457a28605225d2a59cf3a2ed6e3e60af65288e4e3"
+          "sha256": "71d4009e2d42e0606bc80d4f9c854fbfb5ee1314f21de5e3a823c6b846e0c9e4"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -429,15 +429,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/permissions.json",
-          "sha256": "7f3e5778b1f994690af75032a6383678010ddec274ce7cda87000fc9eaee7e8e"
+          "sha256": "87081231841c580051b15a274643b830b328216654c0110a7349ec65f135deba"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/00-governance.mdc",
           "sha256": "f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
-        },
-        {
-          "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/05-framework-source.mdc",
-          "sha256": "93bd25fc82e63d55dd3e3c543f444b52ab925bcb3d80f15708a07f6adc059c61"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/10-work-units.mdc",
@@ -1309,15 +1305,11 @@
         },
         {
           "path": ".cursor/permissions.json",
-          "sha256": "7f3e5778b1f994690af75032a6383678010ddec274ce7cda87000fc9eaee7e8e"
+          "sha256": "87081231841c580051b15a274643b830b328216654c0110a7349ec65f135deba"
         },
         {
           "path": ".cursor/rules/00-governance.mdc",
           "sha256": "f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
-        },
-        {
-          "path": ".cursor/rules/05-framework-source.mdc",
-          "sha256": "93bd25fc82e63d55dd3e3c543f444b52ab925bcb3d80f15708a07f6adc059c61"
         },
         {
           "path": ".cursor/rules/10-work-units.mdc",
@@ -1473,7 +1465,7 @@
         },
         {
           "path": "scripts/ai-team/sync_source_manifest.py",
-          "sha256": "8fec0321c5cdd110032e43ed01924da62d378a11e0e0404578d39182db2c5817"
+          "sha256": "7820bbf8d0cf36fc6e95fdb2fd9e82392c517e0e5eb0e1ca55479f748b0869f9"
         },
         {
           "path": "scripts/ai-team/validate.py",
@@ -1488,7 +1480,7 @@
     {
       "name": "legacy",
       "root": "legacy",
-      "file_count": 378,
+      "file_count": 376,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -1724,11 +1716,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "4110201f378309ebfbe062b066f67949a5f75b67e557915a7b1a8e7ee1d7589c"
+          "sha256": "ef098f2e870aefa6851587e04c2e6f5683a32763c93aa00b614fb747185a4b9e"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "637e4eba087120ff47bf90727be2db59bf704aeb7d304d31f77ae7222b83f1fb"
+          "sha256": "a5322ff8c1b9a3a98e145f1202ccd3b94ed4b1f60af312f40c78b91d01abde8d"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2016,15 +2008,11 @@
         },
         {
           "path": ".cursor/permissions.json",
-          "sha256": "7f3e5778b1f994690af75032a6383678010ddec274ce7cda87000fc9eaee7e8e"
+          "sha256": "87081231841c580051b15a274643b830b328216654c0110a7349ec65f135deba"
         },
         {
           "path": ".cursor/rules/00-governance.mdc",
           "sha256": "f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
-        },
-        {
-          "path": ".cursor/rules/05-framework-source.mdc",
-          "sha256": "93bd25fc82e63d55dd3e3c543f444b52ab925bcb3d80f15708a07f6adc059c61"
         },
         {
           "path": ".cursor/rules/10-work-units.mdc",
@@ -2288,15 +2276,11 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/permissions.json",
-          "sha256": "7f3e5778b1f994690af75032a6383678010ddec274ce7cda87000fc9eaee7e8e"
+          "sha256": "87081231841c580051b15a274643b830b328216654c0110a7349ec65f135deba"
         },
         {
           "path": "adapters/cursor/templates/.cursor/rules/00-governance.mdc",
           "sha256": "f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
-        },
-        {
-          "path": "adapters/cursor/templates/.cursor/rules/05-framework-source.mdc",
-          "sha256": "93bd25fc82e63d55dd3e3c543f444b52ab925bcb3d80f15708a07f6adc059c61"
         },
         {
           "path": "adapters/cursor/templates/.cursor/rules/10-work-units.mdc",
@@ -2448,7 +2432,7 @@
         },
         {
           "path": "scripts/ai-team/sync_source_manifest.py",
-          "sha256": "8fec0321c5cdd110032e43ed01924da62d378a11e0e0404578d39182db2c5817"
+          "sha256": "7820bbf8d0cf36fc6e95fdb2fd9e82392c517e0e5eb0e1ca55479f748b0869f9"
         },
         {
           "path": "scripts/ai-team/validate.py",

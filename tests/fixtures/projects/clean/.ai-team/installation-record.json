@@ -75,11 +75,11 @@
       },
       {
         "path": ".ai-team/contracts/active-bundle.json",
-        "installed_sha256": "sha256:746b423a00d48daf3cca3f7a499885ce51f74901d99c48ebba2f253eaeb54547"
+        "installed_sha256": "sha256:91d3be4d247fed703483d735e870c04c2448cd19fbae52dd246408a621c2c46e"
       },
       {
         "path": ".ai-team/contracts/bundles/1.0.0/manifest.json",
-        "installed_sha256": "sha256:965031550f95d61a3046bb3c585ea56a0d86ff476a46866295d59f7dca413954"
+        "installed_sha256": "sha256:5c591b87637bdc72977842c1e420533ab550d402b5a82bac1228a39e00f28317"
       },
       {
         "path": ".ai-team/contracts/bundles/1.0.0/procedures/audit-release.json",
@@ -235,7 +235,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/manifest.json",
-        "installed_sha256": "sha256:c194f57ea5e5cc6ade0963c798589f458228e53d4a3d02f6f9dd90fded2f3b16"
+        "installed_sha256": "sha256:93e42d42fc5de35f26467ad69278e2e0b0edae0741ec72865d37a3b85879eafa"
       },
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/audit-release.json",
@@ -531,7 +531,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/commands/legacy_cli.py",
-        "installed_sha256": "sha256:3ebd9c1b1527bded8c9d66c2e9e52530025b632ea1a41600272e5047f580ce01"
+        "installed_sha256": "sha256:b1858d53021395aa6f41dbc808112b5bd0e6e49f6788046c18ffc2cbeef33f4e"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/commands/receipt.py",
@@ -955,7 +955,7 @@
       },
       {
         "path": "scripts/ai-team/sync_source_manifest.py",
-        "installed_sha256": "sha256:bce3ddefecb7dc659fa32a3c36b755423aff07d54a8f1de6e5cf50b65de653f8"
+        "installed_sha256": "sha256:7820bbf8d0cf36fc6e95fdb2fd9e82392c517e0e5eb0e1ca55479f748b0869f9"
       },
       {
         "path": "scripts/ai-team/validate.py",
@@ -963,7 +963,7 @@
       },
       {
         "path": "scripts/ai-team/validate_ownership.py",
-        "installed_sha256": "sha256:9ffceb97be3ffa3cb30dc9303c7b414c85ac3990443e1899846564597b82a49c"
+        "installed_sha256": "sha256:eb238053787e1cc919517ea9ee54c37d2ab2a8c4ac42142ee5ee32e5b10a86c7"
       }
     ]
   },
@@ -1134,19 +1134,15 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/hooks/session_init.py",
-          "installed_sha256": "sha256:d0f61d4baf687ba2c812e3f4321e876536d6395c9800615a293a77ddac7cfe74"
+          "installed_sha256": "sha256:b89220bb02f9d32ecc6800defa4bfb993a1053467508cf4793fa0ccea498b563"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/permissions.json",
-          "installed_sha256": "sha256:7a862f4a9f04fd83fdf42bac631bbda0d99a8b1c21c18f26ea777a83dd377c9a"
+          "installed_sha256": "sha256:b200f4cac210b300128b0aeaef79aaf9425cba70aa97a312d85fc5270c0d0234"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/00-governance.mdc",
           "installed_sha256": "sha256:9375b94c85e7bb334bfa86f2728ccf7ef78fb0570e7572a41bf20c11d82d4766"
-        },
-        {
-          "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/05-framework-source.mdc",
-          "installed_sha256": "sha256:fd9fedd5797157b0689de833aed7e22865088ae2421a42ecaded5ac1f9c979c8"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/10-work-units.mdc",
@@ -1330,19 +1326,15 @@
         },
         {
           "path": ".cursor/hooks/session_init.py",
-          "installed_sha256": "sha256:d0f61d4baf687ba2c812e3f4321e876536d6395c9800615a293a77ddac7cfe74"
+          "installed_sha256": "sha256:b89220bb02f9d32ecc6800defa4bfb993a1053467508cf4793fa0ccea498b563"
         },
         {
           "path": ".cursor/permissions.json",
-          "installed_sha256": "sha256:7a862f4a9f04fd83fdf42bac631bbda0d99a8b1c21c18f26ea777a83dd377c9a"
+          "installed_sha256": "sha256:b200f4cac210b300128b0aeaef79aaf9425cba70aa97a312d85fc5270c0d0234"
         },
         {
           "path": ".cursor/rules/00-governance.mdc",
           "installed_sha256": "sha256:9375b94c85e7bb334bfa86f2728ccf7ef78fb0570e7572a41bf20c11d82d4766"
-        },
-        {
-          "path": ".cursor/rules/05-framework-source.mdc",
-          "installed_sha256": "sha256:fd9fedd5797157b0689de833aed7e22865088ae2421a42ecaded5ac1f9c979c8"
         },
         {
           "path": ".cursor/rules/10-work-units.mdc",
