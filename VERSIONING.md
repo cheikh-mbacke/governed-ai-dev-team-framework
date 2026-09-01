@@ -79,6 +79,15 @@ Une release stable suit cette séquence :
 6. publier une GitHub Release et les artefacts à partir du tag, jamais d'un arbre local ;
 7. enregistrer le SHA, les digests, les preuves et le plan de rollback.
 
+Avant l'étape 5, le changelog doit contenir une entrée publiable :
+
+```text
+## [0.7.1] - 2026-09-01
+```
+
+Les placeholders (`Non publiée`, `Unreleased`, `TBD`) sont refusés par `check_git_policy.py --tag`.
+Le tag doit être annoté **et** signé (GPG ou SSH) ; un tag léger ou annoté non signé échoue la CI tag.
+
 Un tag `v*` est immuable : il n'est ni déplacé ni supprimé. Une erreur de release est
 corrigée par une nouvelle version et documentée dans le changelog.
 
@@ -91,6 +100,21 @@ Les lignes maintenues sont déclarées explicitement dans le changelog et la doc
 opérateur. Un hotfix suit les mêmes contrôles qu'une autre modification. Une procédure
 d'urgence peut réduire les délais, jamais supprimer la traçabilité, la revalidation ou
 l'autorité humaine de production.
+
+### Correctif patch (`PATCH`) sur une ligne maintenue
+
+| Situation | Branche | Base | Exemple |
+|---|---|---|---|
+| Correctif urgent depuis `main` courant | `hotfix/WU-<ID>-<slug>` | tag ou commit de la dernière release stable | `hotfix/WU-SEC-42-cve` |
+| Correctif sur ligne `0.7.x` déjà sortie | `release/0.7` | tag `v0.7.0` (ou dernier patch `v0.7.n`) | commits patch → tag `v0.7.1` |
+| Nouvelle capacité sur `main` | `wu/WU-<ID>-<slug>` | `main` | bump `MINOR`, pas de branche `release/` |
+
+Règles :
+
+- une branche `release/<major>.<minor>` porte **un minor** (`0.7`), jamais un patch complet (`0.7.0` est refusé par la politique de nommage) ;
+- le tag release patch reste `v0.7.1`, `v0.7.2`, etc. ;
+- fusion hotfix/maintenance vers la branche cible, puis tag annoté **signé** et GitHub Release ;
+- le changelog exige `## [0.7.1] - YYYY-MM-DD` (pas « Non publiée ») avant validation du tag.
 
 ## Rupture historique 0.4.x
 

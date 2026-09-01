@@ -24,8 +24,25 @@ et l'acceptation humaine reste enregistrée dans `.ai-team/`.
 
 - bloquer mise à jour et suppression ;
 - réserver la création au parcours de release autorisé ;
-- n'accepter que des tags annotés et signés ;
+- n'accepter que des tags annotés et signés (GPG ou SSH — vérifiés par `check_git_policy.py --tag`) ;
 - exécuter le workflow sur le tag avant publication des artefacts.
+
+Création locale typique :
+
+```bash
+git tag -s v0.7.1 -m "Release 0.7.1"
+python scripts/ai-team/check_git_policy.py --tag v0.7.1
+git push origin v0.7.1
+```
+
+## Correctifs patch et branches de maintenance
+
+| Objectif | Branche | Tag résultant |
+|---|---|---|
+| Hotfix urgent | `hotfix/WU-<ID>-<slug>` depuis le dernier tag stable | `vX.Y.Z` patch suivant |
+| Ligne `0.7.x` maintenue | `release/0.7` (pas `release/0.7.0`) | `v0.7.1`, `v0.7.2`, … |
+
+Voir [`VERSIONING.md`](../VERSIONING.md) pour le détail normatif.
 
 Les tags historiques `v0.4.0` et `v0.6.0` sont conservés tels quels. La nouvelle règle
 s'applique à toute création future et ne justifie pas leur déplacement.
