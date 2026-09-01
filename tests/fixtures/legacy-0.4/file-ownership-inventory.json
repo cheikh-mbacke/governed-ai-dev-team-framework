@@ -526,6 +526,7 @@
     "scripts/ai-team/orchestrate.py": "core",
     "scripts/ai-team/preflight.py": "core",
     "scripts/ai-team/propose_allowlist.py": "core",
+    "scripts/ai-team/prune_merged_branches.py": "core",
     "scripts/ai-team/read_docx.py": "core",
     "scripts/ai-team/status.py": "core",
     "scripts/ai-team/sync_source_manifest.py": "core",

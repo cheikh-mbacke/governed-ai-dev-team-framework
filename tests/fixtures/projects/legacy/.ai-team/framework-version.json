@@ -219,6 +219,7 @@
     "scripts/ai-team/orchestrate.py",
     "scripts/ai-team/preflight.py",
     "scripts/ai-team/propose_allowlist.py",
+    "scripts/ai-team/prune_merged_branches.py",
     "scripts/ai-team/read_docx.py",
     "scripts/ai-team/status.py",
     "scripts/ai-team/sync_source_manifest.py",

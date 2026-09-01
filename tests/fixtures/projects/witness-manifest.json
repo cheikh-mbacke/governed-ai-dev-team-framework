@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-01T13:35:35+00:00",
+  "generated_at": "2026-09-01T14:58:08+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -33,7 +33,7 @@
     {
       "name": "clean",
       "root": "clean",
-      "file_count": 362,
+      "file_count": 363,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -85,7 +85,7 @@
         },
         {
           "path": ".ai-team/constitution/95-git-release-policy.yaml",
-          "sha256": "096149f0d855c763bf0352afc06d87f7eecf0bea6c8f382af1a67d32c873a32f"
+          "sha256": "04d195564bb688e09bc9659bb52367014d7ceb86bb920ff328a13c3968887093"
         },
         {
           "path": ".ai-team/constitution/constitution.yaml",
@@ -105,11 +105,11 @@
         },
         {
           "path": ".ai-team/contracts/active-bundle.json",
-          "sha256": "91d3be4d247fed703483d735e870c04c2448cd19fbae52dd246408a621c2c46e"
+          "sha256": "968ae338bdf244ab5774d1fccae31b4737f60d056c2b895c73580ffc686182d3"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/manifest.json",
-          "sha256": "5c591b87637bdc72977842c1e420533ab550d402b5a82bac1228a39e00f28317"
+          "sha256": "49f8130cf7e88e824779104fc726fbccbc3fb0bf9997d8f1323cdd29d048ae3f"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/audit-release.json",
@@ -237,11 +237,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "c27936338dd859be1976488055268d19f4cacf24c025ca21935704cbae9632bb"
+          "sha256": "8448970f70ffd2afc9cc9ac8a447779552135a76ed0e2012e5182e394fbe3211"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "745168fb2e76c298b4a2c7f22bcb2bec89142dfa687390d43021f1d1f168e108"
+          "sha256": "83187c9a621f1e3f2c36da0cbb2b8576e53b7582ccb4bd7763458a0326df7634"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -541,7 +541,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/manifest.json",
-          "sha256": "93e42d42fc5de35f26467ad69278e2e0b0edae0741ec72865d37a3b85879eafa"
+          "sha256": "3b91267e1d4d3003e01979e6abd3c525ebc6448a983b12cdebdefedc747ab32e"
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/audit-release.json",
@@ -1421,7 +1421,7 @@
         },
         {
           "path": "scripts/ai-team/check_git_policy.py",
-          "sha256": "a4722af0bf25e0d492eadb6a84f97a5e6b523d874163bd5b12bea1a37ee86f94"
+          "sha256": "8b65d1946938f7b49101cfacd5b1418bd17c8daeb30dc20c71504f2076c60d9f"
         },
         {
           "path": "scripts/ai-team/check_release_matrix.py",
@@ -1464,6 +1464,10 @@
           "sha256": "151925ec3bd99cd370fecf604735fcf65d8c480e451d8bb0bf6d44c3e89f3599"
         },
         {
+          "path": "scripts/ai-team/prune_merged_branches.py",
+          "sha256": "3ed12eeab3de2fc8bbe03fd268c51f51fadd21bf70cfabb40d1d5d722d381806"
+        },
+        {
           "path": "scripts/ai-team/read_docx.py",
           "sha256": "bbf4c68cbb73fbb837f485679d8fb47f8ad3286de84018650579add2c49dc61d"
         },
@@ -1488,7 +1492,7 @@
     {
       "name": "legacy",
       "root": "legacy",
-      "file_count": 378,
+      "file_count": 379,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -1540,7 +1544,7 @@
         },
         {
           "path": ".ai-team/constitution/95-git-release-policy.yaml",
-          "sha256": "096149f0d855c763bf0352afc06d87f7eecf0bea6c8f382af1a67d32c873a32f"
+          "sha256": "04d195564bb688e09bc9659bb52367014d7ceb86bb920ff328a13c3968887093"
         },
         {
           "path": ".ai-team/constitution/constitution.yaml",
@@ -1564,11 +1568,11 @@
         },
         {
           "path": ".ai-team/contracts/active-bundle.json",
-          "sha256": "91d3be4d247fed703483d735e870c04c2448cd19fbae52dd246408a621c2c46e"
+          "sha256": "968ae338bdf244ab5774d1fccae31b4737f60d056c2b895c73580ffc686182d3"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/manifest.json",
-          "sha256": "5c591b87637bdc72977842c1e420533ab550d402b5a82bac1228a39e00f28317"
+          "sha256": "49f8130cf7e88e824779104fc726fbccbc3fb0bf9997d8f1323cdd29d048ae3f"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/audit-release.json",
@@ -1724,11 +1728,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "9b8a6f9f1bb5516030d9eb8a08bf71f671f88a2b66d8cdf5d5668f74fc5a40db"
+          "sha256": "8ff64363258db4fff8fca8fb092ff42c284801892d01bf276dca3b6481df3bd2"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "b695286c635ff48195b429816e5e4f7e84df4a9991268d8e25f99988f1b1908a"
+          "sha256": "866f6c695370486c1d50e5bd702ff9c99b9e0f053731b566a729b8f4da1202ca"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2392,7 +2396,7 @@
         },
         {
           "path": "scripts/ai-team/check_git_policy.py",
-          "sha256": "a4722af0bf25e0d492eadb6a84f97a5e6b523d874163bd5b12bea1a37ee86f94"
+          "sha256": "8b65d1946938f7b49101cfacd5b1418bd17c8daeb30dc20c71504f2076c60d9f"
         },
         {
           "path": "scripts/ai-team/check_release_matrix.py",
@@ -2433,6 +2437,10 @@
         {
           "path": "scripts/ai-team/propose_allowlist.py",
           "sha256": "151925ec3bd99cd370fecf604735fcf65d8c480e451d8bb0bf6d44c3e89f3599"
+        },
+        {
+          "path": "scripts/ai-team/prune_merged_branches.py",
+          "sha256": "3ed12eeab3de2fc8bbe03fd268c51f51fadd21bf70cfabb40d1d5d722d381806"
         },
         {
           "path": "scripts/ai-team/read_docx.py",
@@ -2488,7 +2496,7 @@
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/manifest.json",
-          "sha256": "93e42d42fc5de35f26467ad69278e2e0b0edae0741ec72865d37a3b85879eafa"
+          "sha256": "3b91267e1d4d3003e01979e6abd3c525ebc6448a983b12cdebdefedc747ab32e"
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/procedures/audit-release.json",

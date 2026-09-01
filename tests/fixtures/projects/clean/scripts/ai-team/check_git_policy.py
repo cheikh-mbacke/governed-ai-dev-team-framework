@@ -30,6 +30,15 @@ BRANCH_PATTERNS = (
     re.compile(r"^hotfix/WU-[A-Za-z0-9._-]+$"),
     re.compile(r"^release/(0|[1-9]\d*)\.(0|[1-9]\d*)$"),
 )
+CHANGELOG_PLACEHOLDER_RE = re.compile(
+    r"non\s+publi[eé]e|unreleased|tbd|à\s+d[eé]terminer|pending",
+    re.IGNORECASE,
+)
+TAG_SIGNATURE_MARKERS = (
+    "gpgsig",
+    "-----BEGIN PGP SIGNATURE-----",
+    "-----BEGIN SSH SIGNATURE-----",
+)
 
 
 def git(*args: str, root: Path = ROOT, check: bool = True) -> str:
@@ -153,6 +162,63 @@ def validate_merge_head(head: str = "HEAD", root: Path = ROOT) -> list[str]:
     return [f"protected-branch head {head!r} must be a two-parent merge commit"]
 
 
+def tag_payload_declares_signature(payload: str) -> bool:
+    """Return True when an annotated tag payload includes a signature block."""
+    return any(marker in payload for marker in TAG_SIGNATURE_MARKERS)
+
+
+def validate_changelog_release_section(tag_version: str, changelog: str) -> list[str]:
+    """Require a publish-ready Keep a Changelog header for a tagged release."""
+    errors: list[str] = []
+    header = re.search(
+        rf"(?m)^## \[{re.escape(tag_version)}\]\s*-\s*(.+)$",
+        changelog,
+    )
+    if not header:
+        errors.append(
+            f"CHANGELOG.md must declare ## [{tag_version}] - YYYY-MM-DD before tagging"
+        )
+        return errors
+
+    date_part = header.group(1).strip()
+    if CHANGELOG_PLACEHOLDER_RE.search(date_part):
+        errors.append(
+            "CHANGELOG.md release "
+            f"{tag_version} is not publish-ready (placeholder date: {date_part!r})"
+        )
+    elif not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_part):
+        errors.append(
+            "CHANGELOG.md release "
+            f"{tag_version} must use ISO date YYYY-MM-DD, got {date_part!r}"
+        )
+    return errors
+
+
+def validate_tag_signature(tag: str, root: Path = ROOT) -> list[str]:
+    """Require an annotated tag that declares a GPG or SSH signature."""
+    errors: list[str] = []
+    verify = subprocess.run(
+        ["git", "verify-tag", tag],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    if verify.returncode == 0:
+        return errors
+
+    payload = git("cat-file", "-p", f"refs/tags/{tag}", root=root, check=False)
+    if payload and tag_payload_declares_signature(payload):
+        return errors
+
+    detail = (verify.stderr or verify.stdout or "missing or unsigned tag").strip()
+    errors.append(
+        f"release tag {tag!r} must be annotated and signed (git tag -s); {detail}"
+    )
+    return errors
+
+
 def validate_release_tag(tag: str, root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     match = re.fullmatch(r"v(.+)", tag)
@@ -170,10 +236,12 @@ def validate_release_tag(tag: str, root: Path = ROOT) -> list[str]:
     object_type = git("cat-file", "-t", f"refs/tags/{tag}", root=root, check=False)
     if object_type != "tag":
         errors.append(f"release tag {tag!r} must be an annotated tag, got {object_type or 'missing'}")
+        return errors
+
+    errors.extend(validate_tag_signature(tag, root=root))
 
     changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
-    if not re.search(rf"(?m)^## \[{re.escape(tag_version)}\](?:\s|$)", changelog):
-        errors.append(f"CHANGELOG.md has no release section for {tag_version}")
+    errors.extend(validate_changelog_release_section(tag_version, changelog))
     return errors
 
 
