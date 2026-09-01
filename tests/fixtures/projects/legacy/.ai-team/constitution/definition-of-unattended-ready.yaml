@@ -3,12 +3,11 @@ version: "1.0.0"
 rule: >
   No batch of Work Units starts an unsupervised ("mode nuit") session without
   passing this readiness check, in addition to the ordinary Definition of
-  Ready. Like the ordinary Definition of Ready, this is a human-facing
-  dashboard that informs the G1 decision — Core does not mechanically block
-  OpenRun on it; the CommandGateway "unattended-readiness" query computes it
-  on demand so it can be displayed before a session starts.
+  Ready. The CommandGateway "unattended-readiness" query computes the
+  dashboard before G1 and Core mechanically refuses OpenRun while any gap
+  remains.
 dimensions:
-  risk_and_reassessment: "Every Work Unit in the batch carries an explicit risk class; reassessment happens through TightenExecutionCeiling if reality diverges mid-run."
+  risk_and_reassessment: "Every Work Unit in the batch carries an explicit risk class; escalation changes the risk class immediately and may also tighten its execution ceiling."
   closed_scope_and_ceiling: "Every Work Unit has a closed scope (explicit include/exclude) and an explicit execution_ceiling declared for this run, not a silently applied default."
   decision_menu_coverage: "The RunAuthorizationGrant's decision-menu anticipates the forks plausible for this batch, proportional to the autonomy preset requested."
   mission_artifact_challenge: "For unattended_extended and unattended_maximal, every required mission artifact (Document 6 §6.1) has survived an independent adversarial challenge (Document 6 §6.2) before backing the grant."

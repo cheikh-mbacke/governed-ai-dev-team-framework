@@ -111,6 +111,8 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_resolve_run_decision(raw)
     elif raw["type"] == "TightenExecutionCeiling":
         _validate_tighten_execution_ceiling(raw)
+    elif raw["type"] == "EscalateWorkUnitRisk":
+        _validate_escalate_work_unit_risk(raw)
     elif raw["type"] == "RecordIntegrationMerge":
         _validate_record_integration_merge(raw)
     elif raw["type"] == "RecordWorkerHeartbeat":
@@ -121,7 +123,7 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_register_mission_artifact(raw)
     elif raw["type"] == "RecordMissionArtifactChallenge":
         _validate_record_mission_artifact_challenge(raw)
-    elif raw["type"] in GATE_COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
+    if raw["type"] in GATE_COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
         raise GatewayError(
             ErrorCode.HUMAN_AUTH_REQUIRED,
             "human_authorization required",
@@ -736,6 +738,22 @@ def _validate_tighten_execution_ceiling(raw: dict[str, Any]) -> None:
                 ErrorCode.INVALID_SCHEMA,
                 f"payload.{field} is required",
                 f"/payload/{field}",
+            )
+
+
+def _validate_escalate_work_unit_risk(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "run" or "expected_revision" not in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "EscalateWorkUnitRisk requires run target and expected_revision",
+            "/target",
+        )
+    payload = raw["payload"]
+    for field in ("work_unit_id", "new_risk_class", "reason"):
+        if not payload.get(field):
+            raise GatewayError(
+                ErrorCode.INVALID_SCHEMA, f"payload.{field} is required", f"/payload/{field}"
             )
 
 

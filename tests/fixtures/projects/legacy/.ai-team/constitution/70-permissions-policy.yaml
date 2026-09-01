@@ -59,12 +59,11 @@ roles:
     allow: [read_repository, read_evidence, security_assessment, produce_findings]
     deny: [modify_evaluated_code, production_deploy]
   auditor:
-    # Document 6 §6.2: also the mandatory independent adversarial reviewer
-    # of mission artifacts before G1 — no separate "requirements-challenger"
-    # role exists; the Core mechanically enforces that the reviewer's role
-    # can never equal the artifact's authored_by_role (see can_challenge in
-    # core/domain/run/mission_artifact.py), which the auditor/product-analyst
-    # role split already guarantees.
+    # Document 6 §6.2: remains an eligible independent reviewer of mission
+    # artifacts. The dedicated requirements-challenger role is first-class
+    # (see above); the Core still mechanically rejects a challenge whose
+    # role equals the artifact's authored_by_role (can_challenge in
+    # core/domain/run/mission_artifact.py).
     allow: [read_repository, read_evidence, read_runtime_evidence, produce_audit_findings, challenge_mission_artifacts]
     deny: [remediate_during_measurement, production_deploy, challenge_self_authored_mission_artifact]
   release-agent:

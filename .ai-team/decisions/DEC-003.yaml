@@ -1,0 +1,45 @@
+id: DEC-003
+type: DECISION_REQUEST
+gate: G2
+question: "Valider le modèle framework_source, l'increment INC-0.7.0, la clôture mode nuit, la politique G3/G4 pour v0.7.0 et le nettoyage documentaire."
+why_human_authority_is_required: "Périmètre produit post-0.6.0, séparation dépôt source vs installation client, acceptation partielle mode nuit et critères de release."
+source_investigation:
+  - "Audit incohérences septembre 2026 — dogfooding récursif"
+  - ".ai-team/project-profile.yaml"
+  - ".ai-team/state/project-state.yaml"
+  - "docs/operator/architecture.md"
+  - "566 tests pytest verts après resynchronisation source"
+options:
+  - id: D1-A
+    label: "framework_source — pas d'installation-record.json sur le dépôt framework"
+  - id: D2-A
+    label: "Increment INC-0.7.0 / jalon M-0.7.0"
+  - id: D3-A
+    label: "Clore WU-MODE-NUIT-CONFORMITY (L4 réel hors scope 0.7.0)"
+  - id: D4-A
+    label: "G3/G4 stricts après WU-GIT-GOVERNANCE done et CI verte"
+  - id: D5-A
+    label: "Nettoyage doc record_gate / Installation Record v3 dans 0.7.0"
+impact_by_option:
+  D1-A: "Manifeste source via sync_source_manifest.py ; plus de record dogfood fantôme."
+  D2-A: "Traçabilité claire entre REL-0.6.0 clos et REL-0.7.0 à venir."
+  D3-A: "Débloque 0.7.0 sans qualification Cursor L4 multi-heures."
+  D4-A: "Tag v0.7.0 seulement après SHA candidat validé en CI."
+  D5-A: "Doc alignée sur gov.py et schema v3."
+recommended_option: "D1-A,D2-A,D3-A,D4-A,D5-A"
+status: decided
+decision:
+  selected_option: "D1-A,D2-A,D3-A,D4-A,D5-A"
+  scope: "Pack recommandé approuvé intégralement pour la clôture 0.7.0."
+  decided_by: cheikh MBACKE
+  decided_at: "2026-09-01T09:26:00+00:00"
+  rationale: |
+    Le dépôt framework-renov fabrique le framework ; il n'est pas une cible installée.
+    INC-0.7.0 regroupe WU-GIT-GOVERNANCE et la conformité mode nuit déjà vérifiée en tests.
+    La preuve L4 Cursor réelle et les transports d'alerte externes restent documentés comme limites.
+    Release 0.7.0 soumise à G3 après CI et clôture WU-GIT-GOVERNANCE ; G4 sur INC-0.7.0 après tag.
+  applied_changes:
+    - "repository_kind framework_source confirmé"
+    - "suppression installation-record.json dogfood"
+    - "DEC-003 + EVT + project-state + WU-MODE-NUIT-CONFORMITY done"
+    - "nettoyage docs product/operator"

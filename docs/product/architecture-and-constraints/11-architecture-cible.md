@@ -73,9 +73,8 @@ distribution/
   migrations/
   schemas/
 scripts/ai-team/
-  gov.py                 # CLI stable du Command Gateway
+  gov.py                 # CLI stable du Command Gateway (RecordGateDecision, etc.)
   validate.py            # wrapper compatible
-  record_gate.py         # wrapper déprécié puis supprimé
   feedback.py            # wrapper compatible
 tools/install.py         # wrapper Distribution
 tests/

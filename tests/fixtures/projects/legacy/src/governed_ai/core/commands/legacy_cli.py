@@ -11,7 +11,7 @@ from typing import Any
 import yaml
 
 DEPRECATION_RECORD_GATE = (
-    "DEPRECATED: scripts/ai-team/record_gate.py will be removed; "
+    "DEPRECATED: use scripts/ai-team/gov.py command with RecordGateDecision; "
     "use scripts/ai-team/gov.py command with a Command Envelope."
 )
 DEPRECATION_FEEDBACK = (

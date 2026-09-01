@@ -47,6 +47,7 @@ from distribution.installer.record import (
     managed_files_union,
     read_installation_manifest,
 )
+from distribution.installer.repository_kind import framework_source_install_error
 from distribution.installer.snapshot import create_snapshot, rollback_paths
 from distribution.installer.source_files import (
     build_copy_plan,
@@ -322,6 +323,11 @@ def _needs_layout_migration(target: Path) -> bool:
 
 
 def run_update(source_root: Path, args: Namespace, target: Path) -> int:
+    install_error = framework_source_install_error(source_root, target)
+    if install_error:
+        print(install_error)
+        return 2
+
     if not (target / ".ai-team" / "project-profile.yaml").exists():
         print(
             f"--update expects an installed project at {target}; "
@@ -597,6 +603,10 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
             "  repository_kind: framework_template",
             "  repository_kind: existing_or_greenfield_project",
         ),
+        (
+            "  repository_kind: framework_source",
+            "  repository_kind: existing_or_greenfield_project",
+        ),
         ("  template: true", "  template: false"),
         (
             '  note: "The installer rewrites project.id, project.name and template=false. '
@@ -651,6 +661,11 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
 
 
 def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
+    install_error = framework_source_install_error(source_root, target)
+    if install_error:
+        print(install_error)
+        return 2
+
     try:
         import yaml as _yaml
     except ModuleNotFoundError:

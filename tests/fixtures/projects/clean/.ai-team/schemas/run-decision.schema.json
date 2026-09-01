@@ -39,6 +39,12 @@
         "type": "string"
       }
     },
+    "decision_menu_version": {
+      "type": ["string", "null"]
+    },
+    "authorized_option_id": {
+      "type": ["string", "null"]
+    },
     "resolved": {
       "type": "boolean"
     },

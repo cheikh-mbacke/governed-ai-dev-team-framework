@@ -28,7 +28,7 @@ def test_golden_manifest_documents_line_ending_policy() -> None:
     kinds = {entry.get("kind") for entry in golden.documented_differences}
     assert "line_endings" in kinds
     assert golden.bundle_version == "1.0.0"
-    assert len(golden.artifacts) == 48
+    assert len(golden.artifacts) == 49
 
 
 def test_compile_matches_frozen_golden_manifest(tmp_path: Path) -> None:

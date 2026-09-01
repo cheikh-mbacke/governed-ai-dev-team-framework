@@ -31,7 +31,7 @@ La cible les sépare :
 
 ## 3. Gate Decision : état réel
 
-`record_gate.py` effectue trois écritures possibles : Project State, fichier Gate Decision, puis Work Unit pour G4. Le mécanisme actuel est un journal d’audit auxiliaire, non une source événementielle :
+Le handler `RecordGateDecision` (via `scripts/ai-team/gov.py command`) applique les décisions de gate dans une unité transactionnelle cible. L’ancien script `record_gate.py` a été **supprimé en 0.6.0** ; les écritures directes non transactionnelles décrites ci-dessous concernent l’audit legacy pré-Phase 3 :
 
 - Project State est écrit avant le fichier de décision ;
 - les écritures ne sont pas transactionnelles ;
@@ -70,4 +70,4 @@ Ces chemins sont des frontières de persistance observées, pas à eux seuls des
 
 ## Sources
 
-Schémas Gouvernance sous `.ai-team/schemas/`, `scripts/ai-team/record_gate.py`, `validate.py`, `.ai-team/templates/decision-request.yaml`, DDD Reference d’Eric Evans.
+Schémas Gouvernance sous `.ai-team/schemas/`, `scripts/ai-team/gov.py`, `validate.py`, `.ai-team/templates/decision-request.yaml`, DDD Reference d’Eric Evans.

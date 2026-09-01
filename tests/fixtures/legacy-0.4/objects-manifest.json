@@ -1,42 +1,42 @@
 {
-  "framework_version": "0.4.0",
+  "framework_version": "0.7.0",
   "fixture_set": "legacy-0.4/objects",
   "description": "Immutable golden object fixtures with SHA256 hashes (Document 14 section 14).",
   "objects": [
     {
       "path": "objects/project-profile.yaml",
       "object_type": "project-profile",
-      "sha256": "03d2f093067bf393b5b02e29cfd76dece932eea2d16881bdcda0a1b041d7a1fd"
+      "sha256": "ed6f8b5a91cba4e1a446a88a458c03776fcc86d10f482526a92e8a3354579fd4"
     },
     {
       "path": "objects/project-state.yaml",
       "object_type": "project-state",
-      "sha256": "a63dbcb8c6f9211022fbcb9fbb7f8aa6da4cf7f96e74dc20099672e0e2255920"
+      "sha256": "428c665b01dd93ab0989fde3dcad68b874ae9c9f9d5c076977d936c609351799"
     },
     {
       "path": "objects/work-unit.yaml",
       "object_type": "work-unit",
-      "sha256": "a5e785ecd27140935c841b7f74574b2b921feed040c0d84ba12cdb626147dea6"
+      "sha256": "ee70aadaceab5a7dbfd90fcb63699a4f2f22f15d4bec02c5a09c795f3c554cc2"
     },
     {
       "path": "objects/gate-decision.yaml",
       "object_type": "gate-decision",
-      "sha256": "d3b56e28d15728f8b07ea8bd5d92756459a8e3516d7f6327896b3e559c4c4e09"
+      "sha256": "8da968fa66a9c691969136fb5abded83ecdc9b87ae7aa0f2a05df7907dfe8248"
     },
     {
       "path": "objects/observation.yaml",
       "object_type": "observation",
-      "sha256": "0e213dbfaba9bf6cdbd8eb60104a80dd192fe7a2eb79465b3959c8c7828a2589"
+      "sha256": "0dd7403e73e75a7a3c3a2665896d4b559238280ab6af725bfc0dff44f93633fa"
     },
     {
       "path": "objects/retrospective.yaml",
       "object_type": "retrospective",
-      "sha256": "0db458a9fe41df3f4e737d7ae4c646f9c3424cff905cd6a9da0276eab4a7ec5c"
+      "sha256": "a605bfa58fcb9c07667457cc21071370a871c3df2774f53a9f71a12924c5d819"
     },
     {
       "path": "objects/installation-manifest.json",
       "object_type": "installation-manifest",
-      "sha256": "baf6a41c92f4acf95f634a0d1e5e6b5e4eaad5f4651fa91f9b6307e7d254cd38"
+      "sha256": "6befab8ad72c29217258e45d6c9875920e1a85e45f7ebcb30b6854d7827ce4ed"
     }
   ]
 }

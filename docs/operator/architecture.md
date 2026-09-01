@@ -59,3 +59,24 @@ Le runtime framework **n'est plus copié** à la racine sous `src/`, `adapters/`
 - Seul l'**Adaptateur Cursor** est livré en `0.7.0`. Aucun Adaptateur Claude Code ou Codex n'est fourni.
 - Le comportement d'un Cursor réel dépend de la version et de la plateforme ; qualification via Document 14 (niveaux L3/L4).
 - Distribution ne dépend pas du noyau à l'exécution ; le noyau ne dépend pas de Distribution.
+
+## Dépôt framework vs projet installé
+
+Le **dépôt source** (`repository_kind: framework_source`) n'est pas une cible `tools/install.py` :
+
+| | Dépôt source | Projet installé |
+|---|---|---|
+| Runtime Python | `src/governed_ai/` | `.ai-team/runtime/governed_ai/` |
+| Adaptateur Cursor | `adapters/cursor/` | sous `.ai-team/runtime/…` |
+| Manifeste de version | `.ai-team/framework-version.json` (chemins **source**) | `.ai-team/installation-record.json` v3 |
+| Doc opérateur / tests | présents | absents |
+| Gouvernance produit (WU, gates) | métadonnées de développement du framework | cycle client |
+
+Regénérer le manifeste source après modification du payload installable :
+
+```bash
+python scripts/ai-team/sync_source_manifest.py
+python scripts/ai-team/validate.py
+```
+
+Ne pas créer ni conserver `.ai-team/installation-record.json` dans le dépôt source : ce fichier décrit une **installation réelle** et utilise des chemins cible (`.ai-team/runtime/…`).

@@ -73,6 +73,7 @@ for cursor_json_name in ["hooks.json", "permissions.json"]:
         load_json(cursor_json_path)
 
 version_path = AI / "framework-version.json"
+version_manifest = None
 if version_path.exists():
     version_manifest = load_json(version_path)
     if version_manifest is not None:
@@ -123,6 +124,38 @@ if (AI / "project-profile.yaml").exists():
     for k, v in auth.items():
         if v in (None, "unspecified", ""):
             warnings.append(f"Human authority '{k}' is unspecified")
+
+    repository_kind = (profile.get("project") or {}).get("repository_kind")
+    if repository_kind == "framework_source":
+        if (AI / "installation-record.json").exists():
+            errors.append(
+                "framework_source repository must not contain "
+                ".ai-team/installation-record.json (installed targets only)"
+            )
+        if (AI / "runtime" / "governed_ai").is_dir():
+            errors.append(
+                "framework_source repository must not contain "
+                ".ai-team/runtime/governed_ai/ (installed-target layout only)"
+            )
+        if isinstance(version_manifest, dict):
+            for path in version_manifest.get("managed_files") or []:
+                if not isinstance(path, str):
+                    continue
+                if path.startswith(".ai-team/runtime/"):
+                    errors.append(
+                        ".ai-team/framework-version.json lists installed-target path "
+                        f"{path!r}; run scripts/ai-team/sync_source_manifest.py"
+                    )
+                elif not (ROOT / path).is_file():
+                    errors.append(
+                        f".ai-team/framework-version.json lists missing source file: {path}"
+                    )
+    elif repository_kind == "existing_or_greenfield_project":
+        if not (AI / "installation-record.json").is_file():
+            warnings.append(
+                "installed project profile without .ai-team/installation-record.json "
+                "(expected after tools/install.py)"
+            )
 
     protected_branch = profile.get("release", {}).get("protected_branch")
     if protected_branch and (ROOT / ".git").exists():
