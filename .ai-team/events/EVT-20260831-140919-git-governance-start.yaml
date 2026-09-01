@@ -1,0 +1,18 @@
+id: EVT-20260831-140919-git-governance-start
+type: STATUS
+work_unit: WU-GIT-GOVERNANCE
+created_at: "2026-08-31T14:09:19Z"
+created_by_role: control-plane
+summary: "Activation de la remédiation de gouvernance Git validée par l'autorité humaine."
+details:
+  decision: DEC-GIT-GOVERNANCE-20260831
+  branch: wu/WU-GIT-GOVERNANCE
+  preserved_refs:
+    - origin/release/0.4.0
+    - v0.4.0
+    - v0.6.0
+  history_rewrite_authorized: false
+affected_nodes:
+  - WU-GIT-GOVERNANCE
+requires_human: false
+status: open

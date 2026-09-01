@@ -10,11 +10,10 @@ from __future__ import annotations
 
 import argparse
 import codecs
-from dataclasses import dataclass
-from pathlib import Path
 import re
 import shutil
-
+from dataclasses import dataclass
+from pathlib import Path
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 ACCEPTANCE_MIGRATION_ID = "acceptance-status-passed"

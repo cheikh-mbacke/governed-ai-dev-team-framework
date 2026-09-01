@@ -17,9 +17,16 @@ Framework de développement multi-agents gouverné par l'humain : gates, Work Un
 | [Architecture](docs/operator/architecture.md) | Noyau, Adaptateur, Distribution — vue d'ensemble |
 | [Modèle de sécurité](docs/operator/security-model.md) | Autorité, gates, capacités, frontières |
 | [Guide opérateur](docs/operator/operator-guide.md) | Install, update, validation, rollback, CLI |
-| [Upgrading](docs/operator/upgrading.md) | Migration `0.4.x` → `0.5.0` |
+| [Upgrading](docs/operator/upgrading.md) | Migration `0.4.x` → `0.7.0` |
 | [Checklist adoptant](docs/operator/adopter-checklist.md) | Mise en service d'un projet |
 | [Dépréciations](docs/operator/deprecations.md) | Échéances et remplacements |
+| [Gouvernance GitHub](docs/operator/github-governance.md) | Protections de branches, tags et réglages de fusion |
+| [Rupture historique 0.4.x](docs/operator/history-cutover-0.4.md) | Décision et conséquences de la nouvelle lignée Git |
+
+## Contribution et versionnement
+
+Voir [`CONTRIBUTING.md`](CONTRIBUTING.md), [`VERSIONING.md`](VERSIONING.md) et
+[`CHANGELOG.md`](CHANGELOG.md).
 
 ## Documentation produit (normative)
 

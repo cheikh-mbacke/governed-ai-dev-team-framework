@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from pathlib import Path
-import sys
 import json
 import subprocess
+import sys
+from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -148,10 +148,68 @@ if (AI / "sources" / "source-registry.yaml").exists():
         warnings.append("No authoritative product sources are registered")
 
 schema_dir = AI / "schemas"
+legacy_counts = {}
+
+
+def is_legacy_instance(data, schema_name):
+    """Recognize immutable pre-revision artifacts without rewriting them.
+
+    The early 0.4/0.5 governance records predate the mutable-v2 metadata
+    (revision/created_at/updated_at) and the normalized evidence result object.
+    They remain audit evidence and are therefore validated through a bounded
+    compatibility profile instead of being migrated in place.
+    """
+    if not isinstance(data, dict):
+        return False
+    if schema_name in {"work-unit.schema.json", "decision.schema.json"}:
+        return not {"revision", "created_at", "updated_at"}.issubset(data)
+    if schema_name == "evidence.schema.json":
+        return not isinstance(data.get("result"), dict)
+    if schema_name == "event.schema.json":
+        return data.get("type") not in {
+            "STATUS",
+            "CONTEXT_REQUEST",
+            "CLARIFICATION_REQUEST",
+            "DECISION_REQUEST",
+            "BLOCKER",
+            "CONTRACT_CHANGE",
+            "REVIEW_REQUEST",
+            "DEFECT",
+            "SKILL_REQUEST",
+            "HANDOFF",
+        }
+    return False
+
+
+def validate_legacy_instance(data, instance_path, schema_name):
+    required_by_schema = {
+        "work-unit.schema.json": [
+            "id", "title", "objective", "scope", "expected_behavior",
+            "acceptance_criteria", "dependencies", "risk",
+            "required_verification", "status",
+        ],
+        "decision.schema.json": [
+            "id", "question", "why_human_authority_is_required", "options", "status",
+        ],
+        "evidence.schema.json": ["id", "type", "result"],
+        "event.schema.json": ["id", "type", "summary", "status"],
+    }
+    missing = [field for field in required_by_schema[schema_name] if field not in data]
+    if missing:
+        errors.append(
+            f"{instance_path.relative_to(ROOT)}: legacy compatibility profile is missing "
+            + ", ".join(missing)
+        )
+    if not isinstance(data.get("id"), str) or not data.get("id"):
+        errors.append(f"{instance_path.relative_to(ROOT)}: legacy id must be a non-empty string")
+    legacy_counts[schema_name] = legacy_counts.get(schema_name, 0) + 1
 
 def validate_instance(instance_path, schema_name):
     data = load_yaml(instance_path)
     if data is None:
+        return
+    if is_legacy_instance(data, schema_name):
+        validate_legacy_instance(data, instance_path, schema_name)
         return
     schema_path = schema_dir / schema_name
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -271,6 +329,12 @@ for retrospective_path in sorted((AI / "retrospectives").glob("*.yaml")):
                 f"{retrospective_path.relative_to(ROOT)} references missing observation: "
                 f"{observation_id}"
             )
+
+for schema_name, count in sorted(legacy_counts.items()):
+    warnings.append(
+        f"{count} immutable legacy artifact(s) validated with the bounded "
+        f"compatibility profile for {schema_name}"
+    )
 
 print(t(LANG, "Governed AI Team validation", "Validation Governed AI Team"))
 print("=" * 28)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
 

@@ -21,4 +21,6 @@ Before making product changes:
    QA/review, include the Work Unit ID in the message, and hand off the exact SHA.
    Never stage or commit on a protected branch, and never rewrite history after
    evidence without explicit human authorization and re-verification.
+10. Follow `VERSIONING.md` for branch names, commit messages, merge strategy,
+    version changes, tags, releases, maintenance branches, and history cutovers.
 <!-- governed-ai:end -->

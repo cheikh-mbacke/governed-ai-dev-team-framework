@@ -15,42 +15,42 @@
     {
       "kind": "adapter_file",
       "path": ".cursor/.gitattributes",
-      "sha256": "sha256:3071d140516907ef8f3f0da01296b86248e7005c99b4ba3a6e565cf4133e8dfc"
+      "sha256": "sha256:39b8621bc56c12be0e05264916679128cebee744d10a50561a7e969c1652836e"
     },
     {
       "kind": "adapter_file",
       "path": ".cursor/BUGBOT.md",
-      "sha256": "sha256:20cc8d1364ff9e47be003d3a830a518140de5fb10bf4ff381ddb138fe9281b19"
+      "sha256": "sha256:66ad7f4ebb528f7950c67558268c0e3717db180566e781ef5777853306ddec12"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/architect.md",
-      "sha256": "sha256:e2f4c6f63ae12ca7369cee92fd61d7e0ff1dc6204635aeaeb5dadd59bcc0367e"
+      "sha256": "sha256:87acdc4364222ae2e5d4e43ba3704a606a56559f821da244fe421dbcc3854b21"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/auditor.md",
-      "sha256": "sha256:c38d4162a43c2ca67b32a971f4bc1b231325055fbb7a5d1596e91e5ca7d323c4"
+      "sha256": "sha256:7895a118cc8d0673b02371d39d3e7b24eef478aae94f31030c3527b3f347b52a"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/auth-smoke.md",
-      "sha256": "sha256:2dd4e288fbf21eabd0da0c79e09e7e1ad5c7deda9a56aceb0058497ac6c9f88d"
+      "sha256": "sha256:b717c6408d0ecc70117340bb55bba1584a198fb093446b3dc1fc7540f0f953f7"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/backend-developer.md",
-      "sha256": "sha256:921c6f476865f6d00cffaa3fbc6159170f2ebc0eea085baa533829f202137448"
+      "sha256": "sha256:2be9c8975cd4d0e78aee6b1aeb18e2895fb7bcedaad787950ad19aa1e229595f"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/code-reviewer.md",
-      "sha256": "sha256:74f526548c83f66b393f48c9e4b5890a8f12697ec15de2508fed60c56499b905"
+      "sha256": "sha256:d205e01467f8a9557e6a6a1a1fa98c4e56df22fc6ff40d4547f0ab9e9bd6aeba"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/frontend-developer.md",
-      "sha256": "sha256:866152a9d2ec067b22495912a3d6d7eaa9dacb53622459cdc82087e8834647f1"
+      "sha256": "sha256:4f394cf292c711a6bae71623977d8dc11b3fdfb74a20cb4abedde35c84ca7f84"
     },
     {
       "kind": "agent",
@@ -65,17 +65,17 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/product-analyst.md",
-      "sha256": "sha256:b1579bba0161daecce55e81549cac03c5122a9eee7362a921ad71db5d038f18d"
+      "sha256": "sha256:8ce4cd6aedef69178b253931450d7be6a6305e95ee74b76dc1193f2453afc5b3"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/qa-test.md",
-      "sha256": "sha256:3a3bc159836925f7e97a913a13c65eca90a09aeaec3bc2b1923c248b1eddc446"
+      "sha256": "sha256:9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/release-agent.md",
-      "sha256": "sha256:78bc5b4a6c9d6232f74011f9d1181b29af6185e640d7069b505dd11a96514632"
+      "sha256": "sha256:e1df816fd0918e30b3f31035c354a38871f9b18fda47039275a003ef3b324434"
     },
     {
       "kind": "agent",
@@ -85,7 +85,7 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/security-reviewer.md",
-      "sha256": "sha256:7d73d682bdec60970c728887832863d18737f1db557e74e21af8119cadc675a7"
+      "sha256": "sha256:ca63a1b9e06b9a4d42d74a817cd2d6b241025ca0a96bb753132c35e9738583b5"
     },
     {
       "kind": "agent",
@@ -95,22 +95,22 @@
     {
       "kind": "cli_config",
       "path": ".cursor/cli.json",
-      "sha256": "sha256:3926a8637e90f2a0c8f604be069b6f6b3ad72a812b2b50eb2f016ddf53101e71"
+      "sha256": "sha256:bbe34c66ecb4c4c80d2433fdc16619a2f1cd58e52db4bfbbff28471bad041bd2"
     },
     {
       "kind": "hooks_config",
       "path": ".cursor/hooks.json",
-      "sha256": "sha256:6c4538009762aaf83f0fdc8b0ec1c9225082e3013c8d6ec4e8ee21a5b834f3ee"
+      "sha256": "sha256:2fa77c6fa3ceaf6e453e1b759cebee118296a5990a4e6751fec770273aeab5ee"
     },
     {
       "kind": "hook",
       "path": ".cursor/hooks/audit_event.py",
-      "sha256": "sha256:71cadd46d1d4e988529dbf9471c46c1d8408540d64019584ed1232ccdfd4a84f"
+      "sha256": "sha256:139e82b770cc5cb13e6978909e081b9e281714cc518005fd5085e15372ed86c3"
     },
     {
       "kind": "hook",
       "path": ".cursor/hooks/backup_push.py",
-      "sha256": "sha256:af9cf43132938540f1ddeeaeb0d34790cc52cd9e1ef4212dbf7a268f4da99d69"
+      "sha256": "sha256:13aa419d81a8af4b28c0576f5a5eb80ecdb0439651dff961dc2fdff1fdde1382"
     },
     {
       "kind": "hook",
@@ -125,52 +125,52 @@
     {
       "kind": "hook",
       "path": ".cursor/hooks/session_init.py",
-      "sha256": "sha256:0cbc7eda544ba45ffdac857ff1b154c597c907327e76d006abc745bcd7c8c85a"
+      "sha256": "sha256:271deb4575a04cb4c61f42d7ffab123b651e20eadff5ddaf20e04b61ae4e41d0"
     },
     {
       "kind": "permissions",
       "path": ".cursor/permissions.json",
-      "sha256": "sha256:7a862f4a9f04fd83fdf42bac631bbda0d99a8b1c21c18f26ea777a83dd377c9a"
+      "sha256": "sha256:7f3e5778b1f994690af75032a6383678010ddec274ce7cda87000fc9eaee7e8e"
     },
     {
       "kind": "rule",
       "path": ".cursor/rules/00-governance.mdc",
-      "sha256": "sha256:9375b94c85e7bb334bfa86f2728ccf7ef78fb0570e7572a41bf20c11d82d4766"
+      "sha256": "sha256:f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
     },
     {
       "kind": "rule",
       "path": ".cursor/rules/10-work-units.mdc",
-      "sha256": "sha256:8e99fbc0b3c34ac916923e0d8f129a2d96af78d55669b244a3fad07b8fa2f526"
+      "sha256": "sha256:020a6890ed6e3a55ea5874a04bed8a2591530c91183fcfbe1cf3230bbe0915e7"
     },
     {
       "kind": "rule",
       "path": ".cursor/rules/20-evidence.mdc",
-      "sha256": "sha256:4c800d91e787068e7475d1be81b76bb0c1a09ed5c3e19e17058f0fb7fb743c20"
+      "sha256": "sha256:4ba023551fd0b6c01cba992295343a9a1539d5962f365789f7db465614c0731b"
     },
     {
       "kind": "rule",
       "path": ".cursor/rules/30-permissions.mdc",
-      "sha256": "sha256:acc952ca0fc54216192d4d3960ce9f8e3ca4f788c84f1d133f421f45ad99122e"
+      "sha256": "sha256:f94ca37cdb6ea0b85b485a4a4ad6623962f79913454c22369d33ec6cd1a91d89"
     },
     {
       "kind": "rule",
       "path": ".cursor/rules/40-human-gates.mdc",
-      "sha256": "sha256:f01a967859625b6357e0e5efd4b43769ea3876c78225d18298c5b7cfc51dd1b9"
+      "sha256": "sha256:894dd8cf29dfe11c3f170184e8d9b0546915814ee6fa931f1241736bb9038c7b"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/audit-release/SKILL.md",
-      "sha256": "sha256:11ce42d3c54aba2983af9fb67847cdc663e03cc5df62af67a42cb27f8c7cf14c"
+      "sha256": "sha256:00f42f3c1b166f40618f59d9562523aea3982b61c9ea19bba7684ae6e7537e53"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/build-context/SKILL.md",
-      "sha256": "sha256:bb6b5368ff0509a26d7cdecfb0eac3e1f10bc486ddfc9f2d7a98d12c8af58328"
+      "sha256": "sha256:8422ea243a3c4a8f2a0a5fa1d80fff7a317c801d43ef870b5c04df339483305a"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/capture-feedback/SKILL.md",
-      "sha256": "sha256:80f4bcbef162b6cc4af71991bb37ce4b24c0d936e487daabb9fa76d8953bec09"
+      "sha256": "sha256:c18c5428f5af6dee8254ef7b52ed3cd06e478f21f691351c40230295c8f97080"
     },
     {
       "kind": "skill",
@@ -180,7 +180,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/compile-project/SKILL.md",
-      "sha256": "sha256:36fe39f87bc3077d01eb77f8bca001f42b2154a6a7b7330a017805e8884f4a74"
+      "sha256": "sha256:8eae4b19ba0ffc2a8e26e01004a32bddd3b3a2ce3ee0b888383fc1269592406f"
     },
     {
       "kind": "skill",
@@ -190,22 +190,22 @@
     {
       "kind": "adapter_file",
       "path": ".cursor/skills/frontend-design/LICENSE.txt",
-      "sha256": "sha256:eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549"
+      "sha256": "sha256:0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
     },
     {
       "kind": "adapter_file",
       "path": ".cursor/skills/frontend-design/NOTICE.md",
-      "sha256": "sha256:dce9a6a3913cd2be46324027e6b1b5cc36c5f3db13c65351541aeae3e0a4baa3"
+      "sha256": "sha256:6c1a77e569dff8433d7542748c896681417a1d1cac4be6fba29bd13530cf99ae"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/frontend-design/SKILL.md",
-      "sha256": "sha256:d723d9cb805dc373d3f5422c0ccc34b6ac31cce35837f009c18e6a568ebb4d4d"
+      "sha256": "sha256:464641c1450357485b50652e8f5bd783f30c585da6688677c6ad531122760bd1"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/impact-analysis/SKILL.md",
-      "sha256": "sha256:4d60cf2ffb90ff028d00a07ec70cba834e89c80363c9bc6082b7024dde1e9b78"
+      "sha256": "sha256:2c93c6f492d5a0130f2200cc3ec99105056239e4329e126a92e23bcbe9a65909"
     },
     {
       "kind": "skill",
@@ -220,37 +220,37 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/orchestrator/SKILL.md",
-      "sha256": "sha256:bbfe4715af1e2e546c62ba425c32cc81864dbca1ba0c58f9acd6016657f3b54d"
+      "sha256": "sha256:c0265b2736962a44cb9bc945293899fb27a2b5ad4c50e1f6a4f5d5d60575b39c"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/prepare-acceptance/SKILL.md",
-      "sha256": "sha256:5e8cd12fc6df405ff6e4a0378055951dc1ab4ef9ad25711a21fc4656ec4961dd"
+      "sha256": "sha256:48c06b8c1b24be04b965b943eabbd7edd7967d22c6f36abf573c012fdb83dba1"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/propose-profile/SKILL.md",
-      "sha256": "sha256:ad3dcb07307c961175a0f3d3e103282f8a6020e6fe03a4003d9d16963c85ef58"
+      "sha256": "sha256:544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/verify-work-unit/SKILL.md",
-      "sha256": "sha256:6d1c95a8e2853f4aeea023bec1d2596826b9eaa96076a7db218fd93bb2b18f45"
+      "sha256": "sha256:4af0a0c7c1b32c17016004a2b21dfd76bfc1ae6be6e14fc181c4dba699304d3c"
     },
     {
       "kind": "adapter_file",
       "path": ".cursor/skills/webapp-testing/LICENSE.txt",
-      "sha256": "sha256:eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549"
+      "sha256": "sha256:0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
     },
     {
       "kind": "adapter_file",
       "path": ".cursor/skills/webapp-testing/NOTICE.md",
-      "sha256": "sha256:0f185f659f0463a78578e55721af8735dc3b380998d59237919cbd0716fe597d"
+      "sha256": "sha256:d1c085ba3b4dbc98cd1c4dd0e4753652543fa41f07c0485d8dc9d7460b62f6b9"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/webapp-testing/SKILL.md",
-      "sha256": "sha256:9a62d2530b0cec5a0fbb057609199d54691d2bf73c41f46362cf36b17abac8e2"
+      "sha256": "sha256:4bf54100287180b020ff7351c844a0c0172ee5fe29662b3014bd63acedafeef9"
     }
   ]
 }

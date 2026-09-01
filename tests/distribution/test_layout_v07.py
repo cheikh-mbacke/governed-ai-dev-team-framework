@@ -150,7 +150,7 @@ def test_dry_run_legacy_v1_writes_nothing(tmp_path: Path) -> None:
     assert legacy.is_file()
     before = legacy.read_bytes()
 
-    proc = _run_update(target, "--dry-run")
+    proc = _run_update(target, "--dry-run", "--force-constitution-update")
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert legacy.read_bytes() == before
     assert not (target / INSTALLATION_RECORD_FILE).exists()
