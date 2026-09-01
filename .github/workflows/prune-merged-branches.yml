@@ -1,0 +1,118 @@
+name: Prune merged branches
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List branches only (true) or delete merged branches (false)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+jobs:
+  delete-merged-pr-head:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete governed PR head branch after merge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require("@actions/core");
+            const ref = context.payload.pull_request.head.ref;
+            const protectedNames = new Set(["main", "master"]);
+            const governedPrefixes = ["wu/", "ai-run/", "integration/", "hotfix/"];
+
+            if (protectedNames.has(ref) || ref.startsWith("release/")) {
+              core.info(`Skip protected or maintenance branch: ${ref}`);
+              return;
+            }
+            if (!governedPrefixes.some((prefix) => ref.startsWith(prefix))) {
+              core.info(`Skip non-governed branch pattern: ${ref}`);
+              return;
+            }
+            if (
+              context.payload.pull_request.head.repo.full_name !==
+              context.repo.full_name
+            ) {
+              core.info("Skip fork head branch");
+              return;
+            }
+
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${ref}`,
+              });
+              core.info(`Deleted merged branch ${ref}`);
+            } catch (error) {
+              if (error.status === 422) {
+                core.info(`Branch ${ref} already deleted or missing`);
+                return;
+              }
+              throw error;
+            }
+
+  prune-stale-merged:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prune remote branches already merged into main
+        uses: actions/github-script@v7
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        with:
+          script: |
+            const core = require("@actions/core");
+            const { execSync } = require("child_process");
+            const dryRun = process.env.DRY_RUN !== "false";
+            const governed = /^(wu|ai-run|integration|hotfix)\//;
+
+            execSync("git fetch origin main --prune");
+            const merged = execSync("git branch -r --merged origin/main", {
+              encoding: "utf8",
+            })
+              .split("\n")
+              .map((line) => line.trim().replace(/^origin\//, ""))
+              .filter(Boolean)
+              .filter((name) => governed.test(name))
+              .filter((name) => !name.startsWith("release/"));
+
+            if (merged.length === 0) {
+              core.info("No governed merged branches to prune.");
+              return;
+            }
+
+            for (const ref of merged) {
+              if (dryRun) {
+                core.info(`Would delete origin/${ref}`);
+                continue;
+              }
+              try {
+                await github.rest.git.deleteRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `heads/${ref}`,
+                });
+                core.info(`Deleted origin/${ref}`);
+              } catch (error) {
+                if (error.status === 422) {
+                  core.info(`Skip missing branch origin/${ref}`);
+                  continue;
+                }
+                throw error;
+              }
+            }

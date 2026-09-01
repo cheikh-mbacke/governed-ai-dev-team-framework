@@ -19,7 +19,8 @@ Les changements sont réalisés sur des branches courtes :
 | Maintenance | `release/<major>.<minor>` | tag stable concerné | Seulement si la ligne est officiellement supportée |
 
 Toute autre convention doit être approuvée et enregistrée avant utilisation.
-Les branches fusionnées sont supprimées, sauf branche de maintenance active.
+Les branches fusionnées sont supprimées automatiquement (réglage GitHub + workflow
+`prune-merged-branches.yml`), sauf branche de maintenance active `release/*`.
 
 ## Commits
 
