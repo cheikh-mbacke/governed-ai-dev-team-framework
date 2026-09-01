@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
+from governed_ai.core.domain.run.morning_report import build_morning_report
 from governed_ai.core.domain.run.state_machine import is_transition_allowed
 from governed_ai.core.domain.run.stop_conditions import GLOBAL_STOP_CONDITIONS
 from governed_ai.core.persistence.transaction import Transaction
@@ -81,6 +82,44 @@ def handle_close_run(
                 lease["release_reason"] = f"run stopped: {stop_condition}"
                 transaction.plan_yaml_write(lease_path, lease)
     transaction.plan_yaml_write(run_path, document)
+
+    # Document 6 §13 — persist the unique end-of-session report at close time.
+    work_units: dict[str, dict[str, Any] | None] = {}
+    for work_unit_id in document.get("work_unit_ids") or []:
+        wu_path = workspace_root.ai_team / "work-units" / f"{work_unit_id}.yaml"
+        work_units[work_unit_id] = (
+            yaml.safe_load(wu_path.read_text(encoding="utf-8")) if wu_path.is_file() else None
+        )
+
+    def _load_yaml_dir(relative: str) -> list[dict[str, Any]]:
+        directory = workspace_root.ai_team / relative
+        if not directory.is_dir():
+            return []
+        items: list[dict[str, Any]] = []
+        for path in sorted(directory.glob("*.yaml")):
+            item = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            if item.get("run_id") == run_id or relative == "events":
+                items.append(item)
+        return items
+
+    morning_report = build_morning_report(
+        run_document=document,
+        work_unit_documents=work_units,
+        attempts=_load_yaml_dir("runs/execution-attempts"),
+        leases=_load_yaml_dir("runs/leases"),
+        decisions=_load_yaml_dir("runs/decisions"),
+        escalations=[],
+        events=[
+            event
+            for event in _load_yaml_dir("events")
+            if (event.get("details") or {}).get("run_id") == run_id
+            or event.get("type") in {"BLOCKER", "RISK_ESCALATION"}
+        ],
+        integration_merges=_load_yaml_dir("runs/integration-merges"),
+        release_candidates=_load_yaml_dir("runs/release-candidates"),
+    )
+    report_path = workspace_root.ai_team / "runs" / "morning-reports" / f"{run_id}.json"
+    transaction.plan_json_write(report_path, morning_report)
 
     domain_events: list[str] = []
     if to_status in STOPPING_STATUSES:

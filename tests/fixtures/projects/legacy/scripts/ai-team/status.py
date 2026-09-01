@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -20,9 +20,22 @@ ROOT = _ROOT
 AI = ROOT / ".ai-team"
 LANG = project_language(ROOT)
 state = yaml.safe_load((AI / "state" / "project-state.yaml").read_text(encoding="utf-8"))
+profile = yaml.safe_load((AI / "project-profile.yaml").read_text(encoding="utf-8")) or {}
 
 print(t(LANG, "Project:", "Projet :") + f" {state.get('project_id')}")
 print(t(LANG, "Phase:  ", "Phase :  ") + f" {state.get('phase')}")
+try:
+    from install_paths import bootstrap_runtime
+
+    bootstrap_runtime(ROOT)
+    from governed_ai.core.domain.run.autonomy_policy import resolve_project_preset
+
+    preset = resolve_project_preset(profile.get("autonomy") or {})
+except Exception:
+    preset = (profile.get("autonomy") or {}).get("preset") or (profile.get("autonomy") or {}).get(
+        "level"
+    )
+print(t(LANG, "Autonomy preset:", "Preset d'autonomie :") + f" {preset}")
 print(t(LANG, "Gates:", "Gates :"))
 for k, v in (state.get("gates") or {}).items():
     print(f"  {k}: {v.get('status') if isinstance(v, dict) else v}")
@@ -44,7 +57,55 @@ else:
 print(t(LANG, "Open decisions:", "Decisions ouvertes :") + f" {len(state.get('open_decisions') or [])}")
 print(t(LANG, "Open defects:  ", "Defauts ouverts :   ") + f" {len(state.get('open_defects') or [])}")
 print(t(LANG, "Open findings: ", "Constats ouverts :  ") + f" {len(state.get('open_findings') or [])}")
-print(t(LANG, "Active workers:", "Agents actifs :     ") + f" {len(state.get('active_workers') or [])}")
+active_workers = []
+leases_dir = AI / "runs" / "leases"
+if leases_dir.is_dir():
+    for lease_path in leases_dir.glob("*.yaml"):
+        try:
+            lease = yaml.safe_load(lease_path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        if lease.get("status") == "active":
+            active_workers.append(lease)
+print(t(LANG, "Active workers:", "Agents actifs :     ") + f" {len(active_workers)}")
+for lease in sorted(active_workers, key=lambda item: str(item.get("id"))):
+    print(
+        f"  {lease.get('worker_id')} run={lease.get('run_id')} "
+        f"work_unit={lease.get('work_unit_id')} epoch={lease.get('epoch')}"
+    )
+
+runs_dir = AI / "runs"
+active_or_recent_runs = []
+if runs_dir.is_dir():
+    for run_path in sorted(runs_dir.glob("*.yaml")):
+        try:
+            run = yaml.safe_load(run_path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        if run.get("status") in {"pending", "active", "completed", "stopped", "failed"}:
+            active_or_recent_runs.append(run)
+print(t(LANG, "Runs:", "Runs :") + f" {len(active_or_recent_runs)}")
+for run in active_or_recent_runs:
+    print(
+        f"  {run.get('id')} status={run.get('status')} "
+        f"preset={run.get('autonomy_preset')} stop={run.get('stop_condition')}"
+    )
+    report_path = AI / "runs" / "morning-reports" / f"{run.get('id')}.json"
+    if report_path.is_file():
+        try:
+            import json
+
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            print(
+                t(LANG, "    morning report:", "    rapport matinal :")
+                + (
+                    f" completed={len(report.get('completed_work_units') or [])}"
+                    f" paused={len(report.get('paused_work_units') or [])}"
+                    f" cancelled={len(report.get('cancelled_work_units') or [])}"
+                )
+            )
+        except (OSError, json.JSONDecodeError):
+            pass
 
 observations = []
 for p in (AI / "observations").glob("*.yaml"):

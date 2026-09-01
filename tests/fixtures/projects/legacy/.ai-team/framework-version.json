@@ -279,6 +279,7 @@
     "src/governed_ai/core/commands/handlers/close_run.py",
     "src/governed_ai/core/commands/handlers/create_decision_request.py",
     "src/governed_ai/core/commands/handlers/create_work_unit.py",
+    "src/governed_ai/core/commands/handlers/escalate_work_unit_risk.py",
     "src/governed_ai/core/commands/handlers/export_feedback.py",
     "src/governed_ai/core/commands/handlers/generate_retrospective.py",
     "src/governed_ai/core/commands/handlers/issue_run_authorization_grant.py",

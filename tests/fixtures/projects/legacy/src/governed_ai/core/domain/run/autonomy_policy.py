@@ -13,14 +13,35 @@ from governed_ai.core.domain.run.execution_ceiling import (
 )
 
 UNATTENDED_PRESETS = frozenset(
-    {"unattended_conservative", "unattended_extended", "unattended_maximal"}
+    {"unattended_conservative", "unattended_extended", "unattended_maximal", "custom"}
 )
+
+NAMED_AUTONOMY_PRESETS = frozenset({"supervised_copilots", *UNATTENDED_PRESETS})
+LEGACY_LEVEL_PRESET = {
+    1: "supervised_copilots",
+    2: "supervised_copilots",
+    3: "unattended_conservative",
+}
 
 _WINDOWS = {
     "unattended_conservative": 8,
     "unattended_extended": 10,
     "unattended_maximal": 12,
+    "custom": 12,
 }
+
+
+def resolve_project_preset(autonomy: dict[str, Any]) -> str:
+    """Resolve the named preset once; legacy ``level`` is compatibility input only."""
+    preset = autonomy.get("preset")
+    if preset is not None:
+        if preset not in NAMED_AUTONOMY_PRESETS:
+            raise ValueError(f"unsupported autonomy preset: {preset}")
+        return str(preset)
+    level = autonomy.get("level")
+    if level not in LEGACY_LEVEL_PRESET:
+        raise ValueError("autonomy.preset or a legacy autonomy.level in 1..3 is required")
+    return LEGACY_LEVEL_PRESET[int(level)]
 
 
 def resolve_effective_policy(
@@ -33,6 +54,8 @@ def resolve_effective_policy(
 ) -> dict[str, Any]:
     if preset not in UNATTENDED_PRESETS:
         raise ValueError(f"unsupported unattended preset: {preset}")
+    if preset == "custom" and not overrides:
+        raise ValueError("custom unattended preset requires explicit policy overrides")
     policy: dict[str, Any] = {
         "autonomy": {
             "preset": preset,
@@ -49,7 +72,7 @@ def resolve_effective_policy(
             "ref": "decision-menu.yaml",
             "coverage_required": (
                 "exhaustive_for_anticipated_forks"
-                if preset == "unattended_maximal"
+                if preset in {"unattended_maximal", "custom"}
                 else "substantial_for_anticipated_forks"
                 if preset == "unattended_extended"
                 else "bounded_for_anticipated_forks"
@@ -76,7 +99,7 @@ def resolve_effective_policy(
                 ],
                 "force_pre_g1": (
                     ["requirements-challenger"]
-                    if preset in {"unattended_extended", "unattended_maximal"}
+                    if preset in {"unattended_extended", "unattended_maximal", "custom"}
                     else []
                 ),
             },
@@ -119,7 +142,7 @@ def resolve_effective_policy(
         "completion": {
             "target": (
                 "verified_release_candidate"
-                if preset == "unattended_maximal"
+                if preset in {"unattended_maximal", "custom"}
                 else "verified_integration_branch"
                 if preset == "unattended_extended"
                 else "verified_work_unit_branch"

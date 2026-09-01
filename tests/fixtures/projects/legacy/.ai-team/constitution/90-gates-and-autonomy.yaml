@@ -22,6 +22,22 @@ gates:
     trigger: increment_or_release_verified_and_audited_as_required
     human_decision: [accept, partially_accept, reject, request_remediation]
 autonomy_profiles:
+  supervised_copilots:
+    supervision: continuous
+    delivery_ceiling: according_to_human_gates
+  unattended_conservative:
+    supervision: absent_bounded_window
+    delivery_ceiling: verified_work_unit_branch
+  unattended_extended:
+    supervision: absent_extended_window
+    delivery_ceiling: verified_integration_branch
+  unattended_maximal:
+    supervision: absent_up_to_12_hours
+    delivery_ceiling: verified_release_candidate
+  custom:
+    supervision: explicitly_configured
+    delivery_ceiling: bounded_by_constitution
+  legacy_levels_deprecated: true
   level_1:
     name: coordinated_copilots
     behavior: "Agents execute limited work; human validates important intermediate steps."

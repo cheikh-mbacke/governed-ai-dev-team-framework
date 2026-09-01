@@ -39,6 +39,7 @@ SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
             # Document 6 §7.3 — escalation only; the Core enforces the
             # one-way ratchet, not the actor requesting it.
             "TightenExecutionCeiling",
+            "EscalateWorkUnitRisk",
             # Document 6 §9.8 — integration-steward supervises the merge
             # queue; the Core enforces the bounded conflict-resolution limit
             # and the mandatory revalidation, not the actor recording it.

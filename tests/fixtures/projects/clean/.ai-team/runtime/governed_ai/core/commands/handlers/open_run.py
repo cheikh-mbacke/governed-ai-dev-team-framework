@@ -8,7 +8,10 @@ from typing import Any
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
-from governed_ai.core.domain.run.autonomy_policy import UNATTENDED_PRESETS
+from governed_ai.core.domain.run.autonomy_policy import (
+    UNATTENDED_PRESETS,
+    resolve_project_preset,
+)
 from governed_ai.core.domain.run.convergence import (
     DEFAULT_MAXIMUM_ATTEMPTS_PER_STEP,
     DEFAULT_MAXIMUM_REMEDIATION_CYCLES,
@@ -102,6 +105,20 @@ def handle_open_run(
     grant_document = json.loads(grant_path.read_text(encoding="utf-8"))
 
     autonomy_preset = payload.get("autonomy_preset") or grant_document.get("autonomy_preset")
+    if autonomy_preset is None:
+        profile_path = workspace_root.ai_team / "project-profile.yaml"
+        if profile_path.is_file():
+            import yaml
+
+            profile = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
+            try:
+                autonomy_preset = resolve_project_preset(profile.get("autonomy") or {})
+            except ValueError as exc:
+                raise GatewayError(
+                    ErrorCode.INVARIANT_VIOLATION,
+                    str(exc),
+                    "/payload/autonomy_preset",
+                ) from exc
     if autonomy_preset in UNATTENDED_PRESETS:
         if autonomy_preset != grant_document.get("autonomy_preset"):
             raise GatewayError(

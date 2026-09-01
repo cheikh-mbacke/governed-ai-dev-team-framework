@@ -55,12 +55,12 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/integration-steward.md",
-      "sha256": "sha256:db81685c95a7710f71a19f3b14f9574176996e0143226d5f93a92d0c871acaac"
+      "sha256": "sha256:de43d68f2e4a5018723a92faf4fab360d1a9b274fc31024f978ab095cf2bbe43"
     },
     {
       "kind": "agent",
       "path": ".cursor/agents/mandate-matcher.md",
-      "sha256": "sha256:fe3c364b1df849cb00087f799c3a6ce4cd8c936b498b5614178c524bd103a4f3"
+      "sha256": "sha256:053d7048eaaf1b5efd368f59a9670d771630002b43f6ecaea776763a792544df"
     },
     {
       "kind": "agent",
@@ -80,7 +80,7 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/requirements-challenger.md",
-      "sha256": "sha256:6dd2e61b8c19348037dd69ece5535a5a4bb2b32d2785f33d6e212a3824d77a38"
+      "sha256": "sha256:75bf8af208560fb25c9aca428fa9204ca871e42f18fd8e4ac479a66c30fe6519"
     },
     {
       "kind": "agent",
@@ -90,7 +90,7 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/test-strategist.md",
-      "sha256": "sha256:41f426842b3736019acf74f7c3836dfa818c4233d4c2ad34d3a4cb1e07118d6a"
+      "sha256": "sha256:78d1e641fee3062afcb240cd5ca52761bfe0f331b301b940baba22dc76561eb2"
     },
     {
       "kind": "cli_config",
@@ -115,7 +115,7 @@
     {
       "kind": "hook",
       "path": ".cursor/hooks/guard_shell.py",
-      "sha256": "sha256:1ee6499cbd8566911764ff6f95967371d63ca78f6221423c552c36bc3f0b5a01"
+      "sha256": "sha256:5ed4a5b2165860af598d130576205a62ba9959ae5988d15f0b384225bf6a4c44"
     },
     {
       "kind": "hook",
@@ -175,7 +175,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/challenge-requirements/SKILL.md",
-      "sha256": "sha256:7f325924852b8a01a8c078a1a86be622f5b8744ecddb7ba6633005ebd2670a21"
+      "sha256": "sha256:7107e7f0f179741ff7d41c85d54b489d95f553121d732fca630dbe71820dfa12"
     },
     {
       "kind": "skill",
@@ -185,7 +185,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/design-verification/SKILL.md",
-      "sha256": "sha256:e266ae2f06892ee125c4ae0792353bb02b72f1ae2c753180689334e8a68e9e00"
+      "sha256": "sha256:420e1cdc0a1d7041f6313c905429c27434f492ec207857a04ce468a98421f24b"
     },
     {
       "kind": "adapter_file",
@@ -210,12 +210,12 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/integrate-work-units/SKILL.md",
-      "sha256": "sha256:90ff23de9841b62047eef57de18bcfdb7e72c58aee344bc9ee2e99a8edda68dd"
+      "sha256": "sha256:309d0b1808f4fa6ad7c119ff070e5f061b7dad2c66b74ec7f69a396f2370360e"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/match-mandate/SKILL.md",
-      "sha256": "sha256:30413cf243ceef95fac8baaed101fc53e951282845c6a01b4853282c45401a9d"
+      "sha256": "sha256:f67c662bdd3bccdef544d03d32c07e18a499c3ba95bf155363d0c59776dd9cca"
     },
     {
       "kind": "skill",

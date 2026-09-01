@@ -64,6 +64,7 @@ def build_morning_report(
                     "trigger": d.get("trigger"),
                     "proposed_entry_id": d.get("proposed_entry_id"),
                     "rejection_reason": d.get("rejection_reason"),
+                    "evidence": d.get("evidence") or [],
                 }
                 for d in decisions
                 if d.get("work_unit_id") == work_unit_id and not d.get("resolved")
@@ -85,6 +86,9 @@ def build_morning_report(
             "decision_id": d["id"],
             "work_unit_id": d.get("work_unit_id"),
             "proposed_entry_id": d.get("proposed_entry_id"),
+            "authorized_option_id": d.get("authorized_option_id"),
+            "decision_menu_version": d.get("decision_menu_version"),
+            "evidence": d.get("evidence") or [],
             "resolved_at": d.get("resolved_at"),
         }
         for d in decisions
@@ -102,6 +106,17 @@ def build_morning_report(
         }
         for e in escalations
     ]
+    risk_escalations.extend(
+        {
+            "work_unit_id": event.get("work_unit"),
+            "previous_risk_class": (event.get("details") or {}).get("previous_risk_class"),
+            "new_risk_class": (event.get("details") or {}).get("new_risk_class"),
+            "reason": (event.get("details") or {}).get("reason"),
+            "escalated_at": event.get("created_at"),
+        }
+        for event in events
+        if event.get("type") == "RISK_ESCALATION"
+    )
 
     fencing_reassignments = [
         {

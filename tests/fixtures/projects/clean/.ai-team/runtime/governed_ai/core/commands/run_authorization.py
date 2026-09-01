@@ -21,6 +21,22 @@ from governed_ai.core.domain.run.authorization_grant import unusable_reason
 
 PROTECTED_ENVIRONMENTS = frozenset({"staging", "production"})
 
+REQUIRED_UNATTENDED_COMMANDS = frozenset(
+    {
+        "OpenRun",
+        "AcquireWorkerLease",
+        "RecordExecutionAttempt",
+        "WriteCheckpoint",
+        "CloseRun",
+        "ResolveRunDecision",
+        "TightenExecutionCeiling",
+        "EscalateWorkUnitRisk",
+        "RecordWorkerHeartbeat",
+        "ReleaseWorkerLease",
+        "TransitionWorkUnit",
+    }
+)
+
 RUN_SCOPED_COMMANDS = frozenset(
     {
         "OpenRun",
@@ -30,14 +46,19 @@ RUN_SCOPED_COMMANDS = frozenset(
         "CloseRun",
         "ResolveRunDecision",
         "TightenExecutionCeiling",
+        "EscalateWorkUnitRisk",
         "RecordIntegrationMerge",
         "RecordWorkerHeartbeat",
         "ReleaseWorkerLease",
+        "TransitionWorkUnit",
+        "RegisterReleaseCandidate",
     }
 )
 
 # Commands whose envelope carries the run id on `target.id` rather than `payload.run_id`.
-TARGET_IS_RUN_ID_COMMANDS = frozenset({"CloseRun", "TightenExecutionCeiling"})
+TARGET_IS_RUN_ID_COMMANDS = frozenset(
+    {"CloseRun", "TightenExecutionCeiling", "EscalateWorkUnitRisk"}
+)
 
 
 def _grant_path(workspace_ai_team: Path, grant_id: str) -> Path:

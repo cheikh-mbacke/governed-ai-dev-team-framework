@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import UTC, datetime
 from typing import Any
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
+from governed_ai.contracts.bundle_hash import canonical_json_bytes
 from governed_ai.core.commands.human_authorization import consume_human_authorization
+from governed_ai.core.commands.run_authorization import REQUIRED_UNATTENDED_COMMANDS
 from governed_ai.core.commands.validation import validate_against_schema
 from governed_ai.core.domain.run.authorization_grant import MINIMUM_EXCLUDED_ACTIONS
 from governed_ai.core.domain.run.autonomy_policy import (
@@ -60,6 +63,14 @@ def handle_issue_run_authorization_grant(
     payload = envelope["payload"]
     autonomy_preset = payload.get("autonomy_preset")
 
+    human_authority = str((envelope.get("human_authorization") or {}).get("granted_by") or "")
+    if human_authority and human_authority != str(payload.get("issuing_authority")):
+        raise GatewayError(
+            ErrorCode.UNAUTHORIZED,
+            "issuing_authority must match human_authorization.granted_by",
+            "/payload/issuing_authority",
+        )
+
     grant_path = workspace_root.ai_team / "run-authorization-grants" / f"{grant_id}.json"
     if grant_path.is_file():
         raise GatewayError(
@@ -93,12 +104,11 @@ def handle_issue_run_authorization_grant(
                 "/payload/mission_artifact_ids",
             )
         artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+        # Document 6 §6.2 starts the independent challenger at extended+.
+        # Conservative may attach pending artifacts (human auth on this command
+        # is enough). Any other preset — and grants without a preset that still
+        # bind mission artifacts — must only consume independently approved ones.
         challenge_required = autonomy_preset != "unattended_conservative"
-        # Document 6 §6.2 starts the independent challenger requirement at
-        # extended, not conservative.  Conservative artifacts still receive
-        # explicit human approval through the authorization consumed by this
-        # very command; they are simply not forced through the extra agent
-        # challenge stage.
         if challenge_required and not is_approved(artifact):
             raise GatewayError(
                 ErrorCode.INVARIANT_VIOLATION,
@@ -132,16 +142,22 @@ def handle_issue_run_authorization_grant(
         None,
     )
     if execution_artifact is not None:
-        artifact_ceilings = (
-            (execution_artifact.get("content") or {}).get("execution_ceilings_by_work_unit")
-            or {}
-        )
+        execution_content = execution_artifact.get("content") or {}
+        artifact_ceilings = execution_content.get("execution_ceilings_by_work_unit") or {}
         missing_ceilings = sorted(set(payload["work_unit_ids"]) - set(artifact_ceilings))
         if missing_ceilings:
             raise GatewayError(
                 ErrorCode.INVARIANT_VIOLATION,
                 f"execution envelope has no ceiling for work units: {missing_ceilings}",
                 "/payload/mission_artifact_ids",
+            )
+        artifact_environments = set(execution_content.get("environments") or [])
+        supplied_environments = set(payload.get("allowed_environments") or [])
+        if autonomy_preset is not None and supplied_environments != artifact_environments:
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                "grant allowed_environments must exactly match the execution-envelope artifact",
+                "/payload/allowed_environments",
             )
 
     effective_policy = None
@@ -178,6 +194,18 @@ def handle_issue_run_authorization_grant(
                 "unattended grants require an explicit non-empty command allowlist",
                 "/payload/allowed_commands",
             )
+        required_commands = set(REQUIRED_UNATTENDED_COMMANDS)
+        if autonomy_preset in {"unattended_extended", "unattended_maximal", "custom"}:
+            required_commands.add("RecordIntegrationMerge")
+        if autonomy_preset in {"unattended_maximal", "custom"}:
+            required_commands.add("RegisterReleaseCandidate")
+        missing_commands = sorted(required_commands - set(payload["allowed_commands"]))
+        if missing_commands:
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                f"unattended grant is missing required Core commands: {missing_commands}",
+                "/payload/allowed_commands",
+            )
         maximum_duration = payload.get("maximum_duration_hours")
         if maximum_duration is None or maximum_duration <= 0:
             raise GatewayError(
@@ -201,6 +229,21 @@ def handle_issue_run_authorization_grant(
         "work_unit_ids": payload["work_unit_ids"],
         "allowed_commands": payload.get("allowed_commands", []),
         "allowed_environments": payload.get("allowed_environments", []),
+        "allowed_shell_commands": (
+            list((execution_artifact.get("content") or {}).get("allowed_commands") or [])
+            if execution_artifact is not None
+            else []
+        ),
+        "allowed_paths": (
+            list((execution_artifact.get("content") or {}).get("allowed_paths") or [])
+            if execution_artifact is not None
+            else []
+        ),
+        "accessible_secrets": (
+            list((execution_artifact.get("content") or {}).get("accessible_secrets") or [])
+            if execution_artifact is not None
+            else []
+        ),
         "maximum_spend": payload.get("maximum_spend"),
         "maximum_duration_hours": payload.get("maximum_duration_hours"),
         "maximum_tokens": payload.get("maximum_tokens"),
@@ -213,6 +256,9 @@ def handle_issue_run_authorization_grant(
         "revoked_at": None,
         "revoked_reason": None,
         "decision_menu": decision_menu,
+        "decision_menu_version": (
+            "sha256:" + hashlib.sha256(canonical_json_bytes(decision_menu)).hexdigest()
+        ),
         "mission_artifact_ids": mission_artifact_ids,
         "mission_contract_hash": (
             compute_mission_contract_hash(mission_artifacts) if mission_artifacts else None

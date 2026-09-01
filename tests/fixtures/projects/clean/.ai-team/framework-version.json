@@ -176,6 +176,7 @@
     ".ai-team/runtime/governed_ai/core/commands/handlers/close_run.py",
     ".ai-team/runtime/governed_ai/core/commands/handlers/create_decision_request.py",
     ".ai-team/runtime/governed_ai/core/commands/handlers/create_work_unit.py",
+    ".ai-team/runtime/governed_ai/core/commands/handlers/escalate_work_unit_risk.py",
     ".ai-team/runtime/governed_ai/core/commands/handlers/export_feedback.py",
     ".ai-team/runtime/governed_ai/core/commands/handlers/generate_retrospective.py",
     ".ai-team/runtime/governed_ai/core/commands/handlers/issue_run_authorization_grant.py",
