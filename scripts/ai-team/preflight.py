@@ -19,6 +19,10 @@ _checks = import_adapters_cursor("runtime.checks")
 collect_preflight_report = _checks.collect_preflight_report
 from i18n import project_language, t
 
+from governed_ai.core.commands.errors import GatewayError, exit_code_for
+from governed_ai.core.workspace import Workspace
+from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+
 LANG = project_language(ROOT)
 
 
@@ -31,6 +35,11 @@ def main() -> int:
         help="include checks required specifically for unattended execution",
     )
     args = parser.parse_args()
+    try:
+        ensure_client_cycle_allowed(Workspace.from_root(ROOT))
+    except GatewayError as exc:
+        print(exc.message)
+        return exit_code_for(exc.code)
     report = collect_preflight_report(ROOT, unattended=args.unattended)
     if args.json:
         print(json.dumps(report, indent=2))

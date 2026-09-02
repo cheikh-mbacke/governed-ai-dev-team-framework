@@ -7,9 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
 import yaml
-
 from distribution.installer.repository_kind import (
     framework_source_install_error,
     read_repository_kind,
@@ -44,6 +42,7 @@ def test_framework_version_uses_source_layout_only() -> None:
     assert any(path.startswith("src/governed_ai/") for path in managed)
     assert any(path.startswith("adapters/cursor/") for path in managed)
     assert any(path.startswith("distribution/payload/.ai-team/") for path in managed)
+    assert not any(path.startswith(".cursor/") for path in managed)
     for path in managed:
         assert (REPO_ROOT / path).is_file(), f"missing managed source file: {path}"
 

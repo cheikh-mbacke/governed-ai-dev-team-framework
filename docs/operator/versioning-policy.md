@@ -6,12 +6,12 @@ Guide opérateur complémentaire à [`VERSIONING.md`](../../VERSIONING.md) et au
 
 | Axe | Fichier / emplacement | Cycle | Rôle |
 |---|---|---|---|
-| **Version produit** | `pyproject.toml` (canonique), `.ai-team/framework-version.json` (source), `installation-record.json` → `core.version` (installé) | SemVer `MAJOR.MINOR.PATCH` | Release globale du framework |
+| **Version produit** | `pyproject.toml` (canonique), `.fabric/framework-version.json` (source), `.ai-team/installation-record.json` → `core.version` (installé) | SemVer `MAJOR.MINOR.PATCH` | Release globale du framework |
 | **Adaptateur livré** | `adapters/cursor/manifest.json` → `adapter_version` | **Identique à la version produit** pour l’adaptateur Cursor livré avec le framework | Capacités et plages supportées |
 | **Protocole noyau↔adaptateur** | `manifest.json` → `protocol_versions` | Indépendant ; bump **majeur** si champ supprimé/renommé ou sémantique changée | Compatibilité SPI |
-| **Bundle de contrats** | `.ai-team/contracts/bundles/<version>/manifest.json` → `bundle_version` | SemVer ; répertoire **immuable** une fois publié | Snapshot rôles + procédures |
+| **Bundle de contrats** | `distribution/payload/.ai-team/contracts/bundles/<version>/manifest.json` (source), `.ai-team/contracts/bundles/<version>/manifest.json` (installé) → `bundle_version` | SemVer ; répertoire **immuable** une fois publié | Snapshot rôles + procédures |
 | **Révision rôle / procédure** | `roles/*.json`, `procedures/*.json` → `revision` | SemVer par artefact | Changement local au mandate ou aux steps |
-| **Constitution** | `.ai-team/constitution/constitution.yaml` → `version` | SemVer ; gelée en mid-cycle | Politiques d’ingénierie |
+| **Constitution** | `distribution/payload/.ai-team/constitution/constitution.yaml` (source), `.ai-team/constitution/constitution.yaml` (installé) → `version` | SemVer ; gelée en mid-cycle | Politiques d’ingénierie |
 | **Schémas persistés** | `revision` (agrégats mutables v2), `schema_version` (installation record, manifestes) | Entier ou migration nommée | Évolution des formats de données |
 
 Avant `1.0.0`, une rupture de compatibilité produit peut porter sur `MINOR` (voir `VERSIONING.md`).
@@ -90,9 +90,11 @@ Une rétrogradation de **fichiers** (rollback installateur) ne convertit pas aut
 
 ## Fichiers synchronisés avec la version produit
 
-Listés dans `.ai-team/constitution/95-git-release-policy.yaml` → `release.synchronized_version_files` :
+La politique livrée est définie dans
+`distribution/payload/.ai-team/constitution/95-git-release-policy.yaml`. Pour le
+dépôt source, les fichiers synchronisés sont :
 
-- `.ai-team/framework-version.json`
+- `.fabric/framework-version.json`
 - `adapters/cursor/manifest.json` (`adapter_version`)
 
 ## Vérifications automatiques

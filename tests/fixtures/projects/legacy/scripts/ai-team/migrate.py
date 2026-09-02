@@ -24,6 +24,20 @@ STATUS_RE = re.compile(
 )
 
 
+def _repository_kind(root: Path) -> str | None:
+    for profile in (
+        root / ".fabric" / "project-profile.yaml",
+        root / ".ai-team" / "project-profile.yaml",
+    ):
+        if not profile.is_file():
+            continue
+        for line in profile.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("repository_kind:"):
+                return stripped.split(":", 1)[1].strip()
+    return None
+
+
 @dataclass(frozen=True)
 class MigrationChange:
     path: Path
@@ -166,6 +180,12 @@ def main() -> int:
     )
     args = parser.parse_args()
     target = Path(args.target).expanduser().resolve()
+    if _repository_kind(target) == "framework_source":
+        print(
+            "Client governance commands are not available on a framework_source "
+            "repository. Use --target with a separate installed client project."
+        )
+        return 2
     acceptance_changes = plan_acceptance_status(target)
     mutable_plan = None
     mutable_error = None

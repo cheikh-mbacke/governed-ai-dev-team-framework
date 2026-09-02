@@ -10,15 +10,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
-from distribution.installer.fabrication_layout import (  # noqa: E402
-    is_framework_source_repo,
-    source_version_file,
-)
+def _is_framework_source_repo(root: Path) -> bool:
+    profile = root / ".fabric" / "project-profile.yaml"
+    if not profile.is_file():
+        return False
+    return any(
+        line.strip() == "repository_kind: framework_source"
+        for line in profile.read_text(encoding="utf-8").splitlines()
+    )
 
-if not is_framework_source_repo(ROOT):
+
+if not _is_framework_source_repo(ROOT):
     print(
         "Error: sync_source_manifest.py only applies to framework_source "
         "repositories. Run validate.py instead.",

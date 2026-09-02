@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Append Cursor hook events to .ai-team/logs/cursor-events.jsonl.
+"""Append Cursor hook events to the active fabrication or client log directory.
 
 The hook is deliberately fail-open for logging failures: governance logging should
 not unexpectedly break development. Hazardous command blocking lives in guard_shell.py.

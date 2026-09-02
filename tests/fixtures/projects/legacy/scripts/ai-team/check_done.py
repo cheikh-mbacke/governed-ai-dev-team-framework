@@ -24,12 +24,21 @@ from install_paths import bootstrap_runtime
 
 bootstrap_runtime(_ROOT)
 
+from governed_ai.core.commands.errors import GatewayError, exit_code_for
 from governed_ai.core.domain.work_unit.done import missing_done_prerequisites
 from governed_ai.core.domain.work_unit.paths import find_work_unit_path
+from governed_ai.core.workspace import Workspace
+from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
 
 ROOT = _ROOT
-AI = ROOT / ".ai-team"
 LANG = project_language(ROOT)
+WORKSPACE = Workspace.from_root(ROOT)
+try:
+    ensure_client_cycle_allowed(WORKSPACE)
+except GatewayError as exc:
+    print(exc.message, file=sys.stderr)
+    raise SystemExit(exit_code_for(exc.code)) from None
+AI = WORKSPACE.ai_team
 
 if len(sys.argv) != 2:
     print(t(LANG, "Usage: check_done.py WU-ID", "Usage : check_done.py WU-ID"))

@@ -31,7 +31,10 @@ _checks = import_adapters_cursor("runtime.checks")
 build_allowlist_proposals = _checks.build_allowlist_proposals
 load_cursor_json = _checks.load_cursor_json
 
+from governed_ai.core.commands.errors import GatewayError, exit_code_for
 from governed_ai.core.diagnostics import declared_profile_commands
+from governed_ai.core.workspace import Workspace
+from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
 
 
 def main() -> int:
@@ -40,6 +43,12 @@ def main() -> int:
     )
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     args = parser.parse_args()
+
+    try:
+        ensure_client_cycle_allowed(Workspace.from_root(ROOT))
+    except GatewayError as exc:
+        print(exc.message)
+        return exit_code_for(exc.code)
 
     profile_path = ROOT / ".ai-team" / "project-profile.yaml"
     if not profile_path.is_file():

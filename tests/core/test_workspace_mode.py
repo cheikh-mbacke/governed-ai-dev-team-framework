@@ -2,20 +2,22 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
-import json
 from pathlib import Path
 
+import pytest
+
+from governed_ai.core.fabrication_overlay import (
+    collect_framework_source_fabrication_overlay_violations,
+)
 from governed_ai.core.workspace import Workspace
 from governed_ai.core.workspace_mode import (
     collect_framework_source_client_cycle_artifacts,
     collect_framework_source_root_layout_violations,
     is_framework_source,
     read_repository_kind,
-)
-from governed_ai.core.fabrication_overlay import (
-    collect_framework_source_fabrication_overlay_violations,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -125,6 +127,30 @@ def test_orchestrate_blocked_on_framework_source() -> None:
     )
     assert result.returncode != 0
     assert "framework_source" in (result.stderr + result.stdout).lower()
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        ["scripts/ai-team/status.py"],
+        ["scripts/ai-team/check_done.py", "WU-NOPE"],
+        ["scripts/ai-team/preflight.py", "--json"],
+        ["scripts/ai-team/propose_allowlist.py", "--json"],
+        ["scripts/ai-team/migrate.py"],
+    ],
+)
+def test_other_client_cli_blocked_cleanly_on_framework_source(command: list[str]) -> None:
+    result = subprocess.run(
+        [sys.executable, *command],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        timeout=30,
+    )
+    output = result.stderr + result.stdout
+    assert result.returncode != 0
+    assert "framework_source" in output.lower()
+    assert "traceback" not in output.lower()
 
 
 def test_diagnose_fabrication_mode() -> None:

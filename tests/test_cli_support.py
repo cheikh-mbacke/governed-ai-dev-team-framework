@@ -1,13 +1,12 @@
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 CURSOR = ROOT / ".cursor"
@@ -47,7 +46,7 @@ class CursorCliConfigurationTests(unittest.TestCase):
                 any(entry.startswith(f"Shell({write_cmdlet}") for entry in allow),
                 f"{write_cmdlet} must stay behind approval, not be broadly allowed",
             )
-        self.assertIn("Write(.ai-team/constitution/**)", deny)
+        self.assertIn("Write(distribution/payload/.ai-team/constitution/**)", deny)
         self.assertIn("Write(.cursor/cli.json)", deny)
         self.assertIn("Write(.cursor/permissions.json)", deny)
         self.assertIn("Shell(git:reset*--hard*)", deny)
@@ -163,24 +162,43 @@ class PortableHookRunnerTests(unittest.TestCase):
 
 class PreflightTests(unittest.TestCase):
     def test_preflight_reports_machine_readable_capabilities(self):
-        result = subprocess.run(
-            [sys.executable, "scripts/ai-team/preflight.py", "--json"],
-            text=True,
-            capture_output=True,
-            cwd=ROOT,
-            timeout=15,
-        )
-        self.assertIn(result.returncode, {0, 1}, result.stderr)
-        report = json.loads(result.stdout)
-        self.assertEqual(report["hooks_config"]["status"], "pass")
-        self.assertEqual(report["guard_hook"]["status"], "pass")
-        self.assertEqual(report["project_cli"]["status"], "pass")
-        self.assertEqual(report["global_allowlist"]["status"], "manual")
-        self.assertEqual(report["execution_surface"]["status"], "manual")
-        if report["platform"] == "windows-native":
-            self.assertEqual(report["readonly_sandbox"]["status"], "skip")
-        else:
-            self.assertEqual(report["readonly_sandbox"]["status"], "expected")
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir) / "preflight-client"
+            install = subprocess.run(
+                [
+                    sys.executable,
+                    "tools/install.py",
+                    "--target",
+                    str(target),
+                    "--project-id",
+                    "preflight-client",
+                    "--project-name",
+                    "Preflight Client",
+                ],
+                text=True,
+                capture_output=True,
+                cwd=ROOT,
+                timeout=120,
+            )
+            self.assertEqual(install.returncode, 0, install.stderr + install.stdout)
+            result = subprocess.run(
+                [sys.executable, "scripts/ai-team/preflight.py", "--json"],
+                text=True,
+                capture_output=True,
+                cwd=target,
+                timeout=15,
+            )
+            self.assertIn(result.returncode, {0, 1}, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["hooks_config"]["status"], "pass")
+            self.assertEqual(report["guard_hook"]["status"], "pass")
+            self.assertEqual(report["project_cli"]["status"], "pass")
+            self.assertEqual(report["global_allowlist"]["status"], "manual")
+            self.assertEqual(report["execution_surface"]["status"], "manual")
+            if report["platform"] == "windows-native":
+                self.assertEqual(report["readonly_sandbox"]["status"], "skip")
+            else:
+                self.assertEqual(report["readonly_sandbox"]["status"], "expected")
 
 
 class AuditEventTests(unittest.TestCase):
@@ -324,8 +342,8 @@ class GuardShellTests(unittest.TestCase):
     def test_framework_source_allows_conventional_commits(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
             target = Path(temp_dir)
-            (target / ".ai-team").mkdir(parents=True)
-            (target / ".ai-team" / "project-profile.yaml").write_text(
+            (target / ".fabric").mkdir(parents=True)
+            (target / ".fabric" / "project-profile.yaml").write_text(
                 "project:\n  repository_kind: framework_source\n"
                 "release:\n  protected_branch: main\n",
                 encoding="utf-8",
