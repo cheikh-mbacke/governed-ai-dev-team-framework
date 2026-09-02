@@ -20,7 +20,7 @@ import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from governed_ai.compat.datetime import UTC, datetime, timedelta
 from typing import Any
 
 import yaml

@@ -77,12 +77,14 @@ def run_cli(args: list[str], cwd: Path | None = None) -> dict[str, object]:
 
 
 def load_golden(scenario: str) -> dict:
+    import unittest
+
     path = FIXTURES_DIR / f"{scenario}.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("platform") and payload["platform"] != sys.platform:
-        raise RuntimeError(
-            f"Golden fixture {scenario} was captured on {payload['platform']}, "
-            f"current platform is {sys.platform}"
+        raise unittest.SkipTest(
+            f"Golden fixture {scenario} was captured on {payload['platform']}; "
+            f"regenerate with tests/generate_golden_fixtures.py on {sys.platform}"
         )
     return payload
 

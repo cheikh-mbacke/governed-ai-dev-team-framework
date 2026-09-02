@@ -10,7 +10,7 @@ loop (§9.3); a merge without a passed revalidation is never recorded.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
 import yaml

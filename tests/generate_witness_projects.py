@@ -783,6 +783,8 @@ def generate_trees(parent: Path) -> tuple[Path, Path]:
     normalize_text_files(legacy)
     write_do_not_edit_marker(clean)
     write_do_not_edit_marker(legacy)
+    normalize_text_files(clean)
+    normalize_text_files(legacy)
     return clean, legacy
 
 

@@ -266,6 +266,8 @@
     "src/governed_ai/adapters/cursor/adapter.py": "core",
     "src/governed_ai/adapters/cursor/compile.py": "core",
     "src/governed_ai/adapters/spi.py": "core",
+    "src/governed_ai/compat/__init__.py": "core",
+    "src/governed_ai/compat/datetime.py": "core",
     "src/governed_ai/contracts/__init__.py": "core",
     "src/governed_ai/contracts/bundle_hash.py": "core",
     "src/governed_ai/contracts/bundles/v1/manifest.json": "core",

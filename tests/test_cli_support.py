@@ -115,11 +115,10 @@ class CursorCliConfigurationTests(unittest.TestCase):
 
 class PortableHookRunnerTests(unittest.TestCase):
     def run_guard(self, command):
-        runner_command = (
-            r".cursor\hooks\run_hook.cmd .cursor\hooks\guard_shell.py"
-            if os.name == "nt"
-            else ".cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py"
-        )
+        if os.name == "nt":
+            runner_command = r".cursor\hooks\run_hook.cmd .cursor\hooks\guard_shell.py"
+        else:
+            runner_command = "sh .cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py"
         return subprocess.run(
             runner_command,
             input=json.dumps({"command": command}),
@@ -148,7 +147,7 @@ class PortableHookRunnerTests(unittest.TestCase):
             env = os.environ.copy()
             env["PATH"] = temp_dir
             result = subprocess.run(
-                ".cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py",
+                "sh .cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py",
                 input=json.dumps({"command": "whoami"}),
                 text=True,
                 capture_output=True,
@@ -376,7 +375,12 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             installed_runner = target / ".cursor" / "hooks" / "run_hook.cmd"
             self.assertTrue(installed_runner.is_file())
             if os.name != "nt":
-                self.assertTrue(os.access(installed_runner, os.X_OK))
+                from adapters.cursor.runtime.checks import probe_hook
+
+                guard_ok, guard_detail = probe_hook(
+                    target, "guard_shell.py", {"command": "whoami"}
+                )
+                self.assertTrue(guard_ok, guard_detail)
             self.assertTrue((target / "scripts" / "ai-team" / "preflight.py").is_file())
 
             validate = self.run_command(

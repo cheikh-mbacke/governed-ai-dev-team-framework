@@ -9,7 +9,7 @@ resolution. No natural-language interpretation is involved anywhere here.
 from __future__ import annotations
 
 import fnmatch
-from datetime import UTC, datetime
+from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
 REASON_TRIGGER_MISMATCH = "trigger_mismatch"

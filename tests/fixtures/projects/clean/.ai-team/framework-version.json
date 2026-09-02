@@ -125,6 +125,8 @@
     ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/webapp-testing/NOTICE.md",
     ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/webapp-testing/SKILL.md",
     ".ai-team/runtime/governed_ai/adapters/spi.py",
+    ".ai-team/runtime/governed_ai/compat/__init__.py",
+    ".ai-team/runtime/governed_ai/compat/datetime.py",
     ".ai-team/runtime/governed_ai/contracts/__init__.py",
     ".ai-team/runtime/governed_ai/contracts/bundle_hash.py",
     ".ai-team/runtime/governed_ai/contracts/bundles/v1/manifest.json",

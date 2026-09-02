@@ -9,7 +9,7 @@ side-effect-free checks; the Core is the only thing allowed to act on them.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
 # Document 6 §8 — minimum actions a grant can never authorize, regardless of

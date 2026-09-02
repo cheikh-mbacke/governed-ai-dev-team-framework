@@ -10,7 +10,7 @@ payload.
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError

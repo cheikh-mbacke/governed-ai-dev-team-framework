@@ -62,6 +62,32 @@ def _yaml_module():
     return yaml
 
 
+def _load_profile_yaml(target: Path, *, validator: Path | None = None) -> dict:
+    profile_path = target / ".ai-team" / "project-profile.yaml"
+    text = profile_path.read_text(encoding="utf-8")
+    try:
+        return _yaml_module().safe_load(text) or {}
+    except ModuleNotFoundError:
+        candidate = validator or validation_python(target)
+        if candidate is None:
+            raise
+        result = subprocess.run(
+            [
+                str(candidate),
+                "-c",
+                "import sys, yaml, json; json.dump(yaml.safe_load(sys.stdin.read()) or {}, sys.stdout)",
+            ],
+            input=text,
+            text=True,
+            capture_output=True,
+            timeout=15,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise ModuleNotFoundError("yaml") from None
+        return json.loads(result.stdout)
+
+
 @dataclass
 class UpdatePlan:
     git_state: str
@@ -299,16 +325,13 @@ def build_update_plan(source_root: Path, target: Path, *, compile_cursor: bool |
     )
 
 
-def _project_id_from_target(target: Path) -> str:
-    profile_path = target / ".ai-team" / "project-profile.yaml"
-    profile = _yaml_module().safe_load(profile_path.read_text(encoding="utf-8"))
+def _project_id_from_target(target: Path, *, validator: Path | None = None) -> str:
+    profile = _load_profile_yaml(target, validator=validator)
     return str(profile.get("project", {}).get("id", ""))
 
 
-def _active_adapter_id(target: Path) -> str:
-    profile = _yaml_module().safe_load(
-        (target / ".ai-team" / "project-profile.yaml").read_text(encoding="utf-8")
-    )
+def _active_adapter_id(target: Path, *, validator: Path | None = None) -> str:
+    profile = _load_profile_yaml(target, validator=validator)
     return str(profile.get("active_adapter_id", "cursor"))
 
 
@@ -466,8 +489,8 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
         # migration call itself raises before returning a result.
         pending_layout_moves = plan_layout_migration(target).moved
 
-    project_id = _project_id_from_target(target)
-    active_adapter = _active_adapter_id(target)
+    project_id = _project_id_from_target(target, validator=validator)
+    active_adapter = _active_adapter_id(target, validator=validator)
 
     layout_result = None
     with tempfile.TemporaryDirectory(prefix="governed-ai-update-") as temp_dir:

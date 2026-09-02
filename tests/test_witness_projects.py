@@ -127,6 +127,11 @@ class WitnessProjectsTests(unittest.TestCase):
                 )
 
     def test_regeneration_script_verify_mode(self):
+        if self.manifest.get("platform") and self.manifest["platform"] != sys.platform:
+            self.skipTest(
+                f"Witness manifest generated on {self.manifest['platform']}; "
+                f"run --verify on {self.manifest['platform']} or regenerate with --write"
+            )
         result = subprocess.run(
             [sys.executable, str(GENERATOR), "--verify"],
             cwd=ROOT,

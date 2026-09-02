@@ -59,7 +59,9 @@ def hook_command(project_root: Path, script: Path) -> str:
         return subprocess.list2cmdline([str(runner), str(script)])
     import shlex
 
-    return f"{shlex.quote(str(runner))} {shlex.quote(str(script))}"
+    runner_rel = runner.relative_to(project_root).as_posix()
+    script_rel = script.relative_to(project_root).as_posix()
+    return f"sh {shlex.quote(runner_rel)} {shlex.quote(script_rel)}"
 
 
 def probe_hook(project_root: Path, script_name: str, payload: dict[str, Any]) -> tuple[bool, str]:
