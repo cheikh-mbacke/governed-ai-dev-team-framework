@@ -118,7 +118,7 @@ class PortableHookRunnerTests(unittest.TestCase):
         if os.name == "nt":
             runner_command = r".cursor\hooks\run_hook.cmd .cursor\hooks\guard_shell.py"
         else:
-            runner_command = "sh .cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py"
+            runner_command = "/bin/sh .cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py"
         return subprocess.run(
             runner_command,
             input=json.dumps({"command": command}),
@@ -147,7 +147,7 @@ class PortableHookRunnerTests(unittest.TestCase):
             env = os.environ.copy()
             env["PATH"] = temp_dir
             result = subprocess.run(
-                "sh .cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py",
+                "/bin/sh .cursor/hooks/run_hook.cmd .cursor/hooks/guard_shell.py",
                 input=json.dumps({"command": "whoami"}),
                 text=True,
                 capture_output=True,
