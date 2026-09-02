@@ -9,6 +9,7 @@
 
 # AI-team ephemeral/runtime scratch
 .ai-team/logs/*.jsonl
+.ai-team/locks/
 .ai-team/tmp/
 .ai-team/cache/
 .ai-team/.transactions/

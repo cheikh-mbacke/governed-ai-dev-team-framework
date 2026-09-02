@@ -70,7 +70,7 @@ Le **dépôt source** (`repository_kind: framework_source`) n'est pas une cible 
 | Adaptateur Cursor | `adapters/cursor/` | sous `.ai-team/runtime/…` |
 | Manifeste de version | `.ai-team/framework-version.json` (chemins **source**) | `.ai-team/installation-record.json` v3 |
 | Doc opérateur / tests | présents | absents |
-| Gouvernance produit (WU, gates) | métadonnées de développement du framework | cycle client |
+| Gouvernance produit (WU, gates) | absent — `project-state.yaml` vierge (`not_compiled`) | cycle client actif |
 
 Regénérer le manifeste source après modification du payload installable :
 

@@ -4,7 +4,19 @@ Framework de développement multi-agents gouverné par l'humain : gates, Work Un
 
 **Version cible de cette refonte :** `0.7.0` (noyau agnostique + Adaptateur Cursor + Installation Record v3).
 
-## Démarrage rapide
+> **Ce dépôt est le dépôt source du framework** (`repository_kind: framework_source`).
+> Il sert à développer et distribuer le framework — ce n'est **pas** un projet où le
+> framework a été installé sur lui-même. Voir [`AGENTS.md`](AGENTS.md) avant toute
+> contribution. Pour **adopter** le framework sur un autre projet, suivre la section
+> « Adopter le framework » ci-dessous.
+
+## Contribuer au framework (ce dépôt)
+
+1. Lire [`AGENTS.md`](AGENTS.md) et [`CONTRIBUTING.md`](CONTRIBUTING.md).
+2. Modifier `src/`, `adapters/`, le payload `.ai-team/` et les templates Cursor.
+3. Valider avec `pytest` et `python scripts/ai-team/validate.py`.
+
+## Adopter le framework (autre projet)
 
 1. Lire [docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md).
 2. Installer ou mettre à jour avec [docs/operator/operator-guide.md](docs/operator/operator-guide.md).
