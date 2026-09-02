@@ -114,6 +114,8 @@ def should_skip(path: Path, root: Path | None = None) -> bool:
             return True
         if rel.startswith("src/governed_ai_dev_team_framework.egg-info/"):
             return True
+        if rel.startswith(".ai-team/logs/") and rel.endswith(".jsonl"):
+            return True
     return False
 
 

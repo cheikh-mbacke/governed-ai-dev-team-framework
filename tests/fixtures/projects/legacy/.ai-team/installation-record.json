@@ -975,11 +975,11 @@
       },
       {
         "path": "scripts/ai-team/validate.py",
-        "installed_sha256": "sha256:738ef2a03220f6bc047663b754226cb2623ecb49dffe4dd10ee982a9504b1425"
+        "installed_sha256": "sha256:19d198a0f23447e960676f56e6243e13d31700d7bc74ef8b9ef61ae2292cb53a"
       },
       {
         "path": "scripts/ai-team/validate_ownership.py",
-        "installed_sha256": "sha256:6f22377e47b4e53c67b1452392a9b0dce78f0cd7f4becd3bd8f45cf7b9d6fc9e"
+        "installed_sha256": "sha256:915db3aab9f8c5edddf9d56990a12c4ad7e8ed715317dc0ad706468bd422e108"
       }
     ]
   },
