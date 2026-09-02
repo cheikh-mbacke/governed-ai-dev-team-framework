@@ -40,6 +40,8 @@ def classify_owner(path: str) -> str:
         return "adapter:cursor"
     if p == "tools/install.py":
         return "distribution"
+    if p.startswith("tools/"):
+        return "core"
     if p == ".ai-team/framework-version.json":
         return "distribution"
     if p == ".ai-team/installation-record.json":

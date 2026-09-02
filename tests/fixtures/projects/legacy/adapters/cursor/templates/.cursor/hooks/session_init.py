@@ -5,7 +5,6 @@ from pathlib import Path
 
 root = Path(os.environ.get("CURSOR_PROJECT_DIR", ".")).resolve()
 profile = root / ".ai-team" / "project-profile.yaml"
-state = root / ".ai-team" / "state" / "project-state.yaml"
 
 
 def _repository_kind(profile_path: Path) -> str | None:
@@ -19,15 +18,20 @@ def _repository_kind(profile_path: Path) -> str | None:
 
 
 message = (
-    "Governed AI Team framework detected. Before product changes, read "
-    f"{profile.relative_to(root) if profile.exists() else '.ai-team/project-profile.yaml'} and "
-    f"{state.relative_to(root) if state.exists() else '.ai-team/state/project-state.yaml'}. "
-    "Use /compile-project before runtime activation when no approved execution plan exists."
+    "Governed AI Team framework detected. Read .ai-team/project-profile.yaml before "
+    "inferring how this repository is organized."
 )
 if _repository_kind(profile) == "framework_source":
     message += (
-        " This is a framework_source repository: edit src/ and adapters/, not "
-        "tests/fixtures/projects/; do not create .ai-team/runtime/ or "
-        "installation-record.json here; run sync_source_manifest.py after payload changes."
+        " Workspace mode: framework_source (fabrication). This repo builds the framework;"
+        " it is not an installed client project and does not run compile-project or"
+        " client Work Unit cycles here. project-state.yaml is a virgin template only."
+        " Edit src/ and adapters/. Installed-layout reference:"
+        " tests/fixtures/projects/clean/. Never run tools/install.py --target . here."
+    )
+else:
+    message += (
+        " Read .ai-team/state/project-state.yaml before runtime activation when no"
+        " approved execution plan exists. Use /compile-project when required."
     )
 print(json.dumps({"additional_context": message}))

@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-01T14:58:08+00:00",
+  "generated_at": "2026-09-02T09:01:04+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -33,7 +33,7 @@
     {
       "name": "clean",
       "root": "clean",
-      "file_count": 363,
+      "file_count": 366,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -237,11 +237,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "8448970f70ffd2afc9cc9ac8a447779552135a76ed0e2012e5182e394fbe3211"
+          "sha256": "96b6609cede47e1bb2cf5f5b2850913bc0d42d8e1970ffd94d133c4a36267d36"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "83187c9a621f1e3f2c36da0cbb2b8576e53b7582ccb4bd7763458a0326df7634"
+          "sha256": "4527da736ecdee13c194babf02b242ddbaab0cae77e6513f47c8314b53faec01"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -425,7 +425,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/hooks/session_init.py",
-          "sha256": "b89220bb02f9d32ecc6800defa4bfb993a1053467508cf4793fa0ccea498b563"
+          "sha256": "be7494bba98788b8342a8d536b4243a0ce0af8bf5bde78fb8051b36c6ce3ce1b"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/permissions.json",
@@ -434,6 +434,10 @@
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/00-governance.mdc",
           "sha256": "f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/05-workspace-layout.mdc",
+          "sha256": "3b294b176071e2d37b052f9356d2747b75cc542f97d2dfa0a3c066be6a0947b4"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/10-work-units.mdc",
@@ -749,11 +753,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/export_feedback.py",
-          "sha256": "0a5c05cbfb3d20f276da4a328ac8d2c2a4f1a8b14cd7212004f18689860295fe"
+          "sha256": "6b9bb4ba0148cea0aef16e5b79596b096490d37b3f816676cb384049efd2c138"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/generate_retrospective.py",
-          "sha256": "a5a27ed7c4005d0f5c7d586ff9aaa22b4afc7e095fae5e5e3f3b64d750160693"
+          "sha256": "019442061ed7f00c2a6bf2d4578f562145ce5e3735367726e5cc5d86c43fd616"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/issue_run_authorization_grant.py",
@@ -785,7 +789,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/record_observation.py",
-          "sha256": "c84485b4602926e19e88ee0f8d5931db2d42d7046327dac893d00bf9bd1a1e85"
+          "sha256": "d8095ce6d7b8a81b8feb03e66971b3675a3fc1f75923c0c22dccb142ce285ed9"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/record_worker_heartbeat.py",
@@ -1034,6 +1038,10 @@
         {
           "path": ".ai-team/runtime/governed_ai/core/workspace.py",
           "sha256": "43a145462c9f442e149cf3d76ad3936c765d85bf51142a090da475e6d606c105"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/core/workspace_mode.py",
+          "sha256": "245c0d276adf2194e506d18e44ed393050fbe1ea11c6ccb37b928d686582d4e1"
         },
         {
           "path": ".ai-team/runtime/governed_ai/feedback/__init__.py",
@@ -1305,7 +1313,7 @@
         },
         {
           "path": ".cursor/hooks/session_init.py",
-          "sha256": "b89220bb02f9d32ecc6800defa4bfb993a1053467508cf4793fa0ccea498b563"
+          "sha256": "be7494bba98788b8342a8d536b4243a0ce0af8bf5bde78fb8051b36c6ce3ce1b"
         },
         {
           "path": ".cursor/permissions.json",
@@ -1314,6 +1322,10 @@
         {
           "path": ".cursor/rules/00-governance.mdc",
           "sha256": "f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
+        },
+        {
+          "path": ".cursor/rules/05-workspace-layout.mdc",
+          "sha256": "3b294b176071e2d37b052f9356d2747b75cc542f97d2dfa0a3c066be6a0947b4"
         },
         {
           "path": ".cursor/rules/10-work-units.mdc",
@@ -1409,7 +1421,7 @@
         },
         {
           "path": "AGENTS.md",
-          "sha256": "7682f9b7dfb6fd233f2784fc9252fc6079fd1050a5329d6ec3f963b608c9b9f0"
+          "sha256": "4b00a019e3a19c46def4884e8f250c61cb61ea2ca64aebbcf43393fad38a3ccc"
         },
         {
           "path": "DO_NOT_EDIT_AS_PRODUCT.md",
@@ -1481,18 +1493,18 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "1376eae24000933fd00b899c8b6f5f76b953ba2fba216c142d907ce68f3fe4a0"
+          "sha256": "738ef2a03220f6bc047663b754226cb2623ecb49dffe4dd10ee982a9504b1425"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "00ea767d085c323cff01f5ae5cf1c10ada690b17d1457c7aecd2439a11cbbc7c"
+          "sha256": "6f22377e47b4e53c67b1452392a9b0dce78f0cd7f4becd3bd8f45cf7b9d6fc9e"
         }
       ]
     },
     {
       "name": "legacy",
       "root": "legacy",
-      "file_count": 379,
+      "file_count": 382,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -1728,11 +1740,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "8ff64363258db4fff8fca8fb092ff42c284801892d01bf276dca3b6481df3bd2"
+          "sha256": "6f24e7b250ca02870d49729feff9b3070116db2f4caee1beb69bf51af839e80f"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "866f6c695370486c1d50e5bd702ff9c99b9e0f053731b566a729b8f4da1202ca"
+          "sha256": "e773e3b4d5ac58a548054591b125f016f0ab8c9b5a993951721741cb2ec7c754"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2016,7 +2028,7 @@
         },
         {
           "path": ".cursor/hooks/session_init.py",
-          "sha256": "b89220bb02f9d32ecc6800defa4bfb993a1053467508cf4793fa0ccea498b563"
+          "sha256": "be7494bba98788b8342a8d536b4243a0ce0af8bf5bde78fb8051b36c6ce3ce1b"
         },
         {
           "path": ".cursor/permissions.json",
@@ -2025,6 +2037,10 @@
         {
           "path": ".cursor/rules/00-governance.mdc",
           "sha256": "f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
+        },
+        {
+          "path": ".cursor/rules/05-workspace-layout.mdc",
+          "sha256": "3b294b176071e2d37b052f9356d2747b75cc542f97d2dfa0a3c066be6a0947b4"
         },
         {
           "path": ".cursor/rules/10-work-units.mdc",
@@ -2124,7 +2140,7 @@
         },
         {
           "path": "AGENTS.md",
-          "sha256": "7682f9b7dfb6fd233f2784fc9252fc6079fd1050a5329d6ec3f963b608c9b9f0"
+          "sha256": "4b00a019e3a19c46def4884e8f250c61cb61ea2ca64aebbcf43393fad38a3ccc"
         },
         {
           "path": "DO_NOT_EDIT_AS_PRODUCT.md",
@@ -2284,7 +2300,7 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/hooks/session_init.py",
-          "sha256": "b89220bb02f9d32ecc6800defa4bfb993a1053467508cf4793fa0ccea498b563"
+          "sha256": "be7494bba98788b8342a8d536b4243a0ce0af8bf5bde78fb8051b36c6ce3ce1b"
         },
         {
           "path": "adapters/cursor/templates/.cursor/permissions.json",
@@ -2293,6 +2309,10 @@
         {
           "path": "adapters/cursor/templates/.cursor/rules/00-governance.mdc",
           "sha256": "f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
+        },
+        {
+          "path": "adapters/cursor/templates/.cursor/rules/05-workspace-layout.mdc",
+          "sha256": "3b294b176071e2d37b052f9356d2747b75cc542f97d2dfa0a3c066be6a0947b4"
         },
         {
           "path": "adapters/cursor/templates/.cursor/rules/10-work-units.mdc",
@@ -2456,11 +2476,11 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "1376eae24000933fd00b899c8b6f5f76b953ba2fba216c142d907ce68f3fe4a0"
+          "sha256": "738ef2a03220f6bc047663b754226cb2623ecb49dffe4dd10ee982a9504b1425"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "00ea767d085c323cff01f5ae5cf1c10ada690b17d1457c7aecd2439a11cbbc7c"
+          "sha256": "6f22377e47b4e53c67b1452392a9b0dce78f0cd7f4becd3bd8f45cf7b9d6fc9e"
         },
         {
           "path": "src/governed_ai/__init__.py",
@@ -2704,11 +2724,11 @@
         },
         {
           "path": "src/governed_ai/core/commands/handlers/export_feedback.py",
-          "sha256": "0a5c05cbfb3d20f276da4a328ac8d2c2a4f1a8b14cd7212004f18689860295fe"
+          "sha256": "6b9bb4ba0148cea0aef16e5b79596b096490d37b3f816676cb384049efd2c138"
         },
         {
           "path": "src/governed_ai/core/commands/handlers/generate_retrospective.py",
-          "sha256": "a5a27ed7c4005d0f5c7d586ff9aaa22b4afc7e095fae5e5e3f3b64d750160693"
+          "sha256": "019442061ed7f00c2a6bf2d4578f562145ce5e3735367726e5cc5d86c43fd616"
         },
         {
           "path": "src/governed_ai/core/commands/handlers/issue_run_authorization_grant.py",
@@ -2740,7 +2760,7 @@
         },
         {
           "path": "src/governed_ai/core/commands/handlers/record_observation.py",
-          "sha256": "c84485b4602926e19e88ee0f8d5931db2d42d7046327dac893d00bf9bd1a1e85"
+          "sha256": "d8095ce6d7b8a81b8feb03e66971b3675a3fc1f75923c0c22dccb142ce285ed9"
         },
         {
           "path": "src/governed_ai/core/commands/handlers/record_worker_heartbeat.py",
@@ -2989,6 +3009,10 @@
         {
           "path": "src/governed_ai/core/workspace.py",
           "sha256": "43a145462c9f442e149cf3d76ad3936c765d85bf51142a090da475e6d606c105"
+        },
+        {
+          "path": "src/governed_ai/core/workspace_mode.py",
+          "sha256": "245c0d276adf2194e506d18e44ed393050fbe1ea11c6ccb37b928d686582d4e1"
         },
         {
           "path": "src/governed_ai/feedback/__init__.py",
