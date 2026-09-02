@@ -31,7 +31,10 @@ def _read_payload():
 payload = _read_payload()
 
 root = Path(os.environ.get("CURSOR_PROJECT_DIR", ".")).resolve()
-log_dir = root / ".ai-team" / "logs"
+if (root / ".fabric" / "project-profile.yaml").is_file():
+    log_dir = root / ".fabric" / "logs"
+else:
+    log_dir = root / ".ai-team" / "logs"
 log_dir.mkdir(parents=True, exist_ok=True)
 record = {
     "timestamp": datetime.now(timezone.utc).isoformat(),

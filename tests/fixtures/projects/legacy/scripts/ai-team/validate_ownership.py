@@ -10,7 +10,16 @@ from pathlib import Path
 
 VALID_OWNERS = frozenset({"core", "adapter:cursor", "distribution", "project"})
 
-SCOPE_DIRS = ("tests/fixtures", ".ai-team", ".cursor", "scripts", "tools", "adapters/cursor", "src")
+SCOPE_DIRS = (
+    "tests/fixtures",
+    ".fabric",
+    "distribution/payload",
+    ".cursor",
+    "scripts",
+    "tools",
+    "adapters/cursor",
+    "src",
+)
 SCOPE_FILES = ("AGENTS.md",)
 EXCLUDE_DIR_NAMES = frozenset(
     {".git", "__pycache__", ".ruff_cache", ".pytest_cache", "node_modules"}
@@ -62,6 +71,24 @@ def classify_owner(path: str) -> str:
         return "core"
     if p.startswith("tests/fixtures/"):
         return "core"
+    if p == ".fabric/framework-version.json":
+        return "distribution"
+    if p == ".fabric/project-profile.yaml":
+        return "distribution"
+    if p.startswith(".fabric/logs/"):
+        return "core"
+    if p.startswith("distribution/payload/.ai-team/constitution/"):
+        return "core"
+    if p.startswith("distribution/payload/.ai-team/contracts/"):
+        return "core"
+    if p.startswith("distribution/payload/.ai-team/schemas/"):
+        return "core"
+    if p.startswith("distribution/payload/.ai-team/templates/"):
+        return "core"
+    if p == "distribution/payload/.ai-team/migration-backups/.gitignore":
+        return "core"
+    if p.startswith("distribution/payload/seeds/"):
+        return "distribution"
     if p.startswith(".ai-team/constitution/"):
         return "core"
     if p.startswith(".ai-team/contracts/"):
@@ -115,6 +142,8 @@ def should_skip(path: Path, root: Path | None = None) -> bool:
         if rel.startswith("src/governed_ai_dev_team_framework.egg-info/"):
             return True
         if rel.startswith(".ai-team/logs/") and rel.endswith(".jsonl"):
+            return True
+        if rel.startswith(".fabric/logs/") and rel.endswith(".jsonl"):
             return True
     return False
 
@@ -217,7 +246,9 @@ def main(argv: list[str] | None = None) -> int:
         args.inventory if args.inventory.is_absolute() else root / args.inventory
     )
 
-    profile_path = root / ".ai-team" / "project-profile.yaml"
+    profile_path = root / ".fabric" / "project-profile.yaml"
+    if not profile_path.is_file():
+        profile_path = root / ".ai-team" / "project-profile.yaml"
     if profile_path.is_file():
         for line in profile_path.read_text(encoding="utf-8").splitlines():
             if line.strip().startswith("repository_kind:"):

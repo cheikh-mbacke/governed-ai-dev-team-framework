@@ -21,6 +21,11 @@ from governed_ai.core.commands.errors import (
 )
 from governed_ai.core.commands.gateway import CommandGateway, load_envelope_from_json
 from governed_ai.core.workspace import Workspace
+from governed_ai.core.workspace_mode import ensure_client_cycle_allowed, is_framework_source
+
+
+def _reject_client_cycle_on_fabrication(workspace: Workspace) -> None:
+    ensure_client_cycle_allowed(workspace)
 
 
 def _emit_json(payload: dict, *, file=sys.stdout) -> None:
@@ -34,11 +39,16 @@ def _emit_error(message: str) -> None:
 
 
 def _cmd_command(args: argparse.Namespace) -> int:
+    workspace = Workspace.discover(Path.cwd())
+    try:
+        _reject_client_cycle_on_fabrication(workspace)
+    except GatewayError as exc:
+        _emit_error(exc.message)
+        return exit_code_for(exc.code)
     if args.input:
         text = Path(args.input).read_text(encoding="utf-8")
     else:
         text = sys.stdin.read()
-    workspace = Workspace.discover(Path.cwd())
     gateway = CommandGateway(workspace)
     try:
         envelope = load_envelope_from_json(text)
@@ -61,6 +71,17 @@ def _cmd_command(args: argparse.Namespace) -> int:
 
 def _cmd_query(args: argparse.Namespace) -> int:
     workspace = Workspace.discover(Path.cwd())
+    try:
+        _reject_client_cycle_on_fabrication(workspace)
+    except GatewayError as exc:
+        _emit_error(exc.message)
+        _emit_json(
+            {
+                "status": "rejected",
+                "errors": [exc.as_dict()],
+            }
+        )
+        return exit_code_for(exc.code)
     gateway = CommandGateway(workspace)
     try:
         result = gateway.query(args.name)
@@ -81,6 +102,16 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     workspace = Workspace.discover(Path.cwd())
     gateway = CommandGateway(workspace)
     result = gateway.validate_gateway()
+    if is_framework_source(workspace):
+        result = {
+            **result,
+            "workspace_mode": "framework_source",
+            "note": (
+                "Fabrication workspace — the client Command Gateway cycle is not "
+                "active here. Use AGENTS.md (git/PR/tests). To exercise installed "
+                "behavior: tests/fixtures/projects/clean/ or tools/install.py --target."
+            ),
+        }
     if args.all:
         from governed_ai.contracts.compatibility import resolve_active_bundle_dir
         from governed_ai.contracts.validate_bundle import validate_bundle
@@ -100,6 +131,12 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
 def _cmd_recover(args: argparse.Namespace) -> int:
     workspace = Workspace.discover(Path.cwd())
+    try:
+        _reject_client_cycle_on_fabrication(workspace)
+    except GatewayError as exc:
+        _emit_error(exc.message)
+        _emit_json({"status": "rejected", "errors": [exc.as_dict()]})
+        return exit_code_for(exc.code)
     gateway = CommandGateway(workspace)
     result = gateway.recover()
     _emit_json(result)

@@ -34,9 +34,14 @@ from install_paths import bootstrap_runtime
 
 bootstrap_runtime(_REPO_ROOT)
 
+from governed_ai.core.commands.errors import (
+    GatewayError,
+    exit_code_for,
+)
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.orchestrator.tick import run_scheduling_tick
 from governed_ai.core.workspace import Workspace
+from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
 
 _print_lock = threading.Lock()
 
@@ -97,12 +102,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    workspace = Workspace.discover(Path.cwd())
+    try:
+        ensure_client_cycle_allowed(workspace)
+    except GatewayError as exc:
+        print(exc.message, file=sys.stderr)
+        return exit_code_for(exc.code)
+
     from adapters.cursor.runtime.agent_cli import is_real_agent_launch_enabled
 
     from governed_ai.adapters.cursor.adapter import CursorAdapter
     from governed_ai.contracts.compatibility import resolve_active_bundle_dir
 
-    workspace = Workspace.discover(Path.cwd())
     gateway = CommandGateway(workspace)
     run_path = workspace.ai_team / "runs" / f"{args.run_id}.yaml"
     if not run_path.is_file():

@@ -23,7 +23,7 @@ from governed_ai.core.orchestrator.git_workspace import head_sha
 from governed_ai.core.orchestrator.tick import run_scheduling_tick
 from governed_ai.core.workspace import Workspace
 
-from tests.core.workspace_helpers import write_installed_client_profile
+from tests.core.workspace_helpers import FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_GRANT_ID = "GRANT-DEFAULT"
@@ -73,11 +73,11 @@ def _seed_grant(workspace: Workspace, grant_id: str, *, work_unit_ids: list[str]
 @pytest.fixture()
 def workspace(tmp_path: Path) -> Workspace:
     ai_team = tmp_path / ".ai-team"
-    source = REPO_ROOT / ".ai-team"
+    source = PAYLOAD_AI_TEAM
     for name in ("schemas", "constitution", "contracts"):
         shutil.copytree(source / name, ai_team / name)
     write_installed_client_profile(ai_team)
-    shutil.copy2(source / "framework-version.json", ai_team / "framework-version.json")
+    shutil.copy2(FABRIC_ROOT / "framework-version.json", ai_team / "framework-version.json")
     (ai_team / "state").mkdir(parents=True)
     (ai_team / "state" / "project-state.yaml").write_text("phase: execution\n", encoding="utf-8")
     (ai_team / "work-units").mkdir(parents=True)

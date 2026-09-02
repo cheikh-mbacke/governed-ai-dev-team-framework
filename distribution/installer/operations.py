@@ -26,7 +26,12 @@ from distribution.installer.collisions import (
     scan_fresh_install_collisions,
     scan_local_drift_collisions,
 )
-from distribution.installer.constants import FRESH_PROJECT_SEEDS, PROJECT_OWNED_PATTERNS
+from distribution.installer.constants import PROJECT_OWNED_PATTERNS
+from distribution.installer.fabrication_layout import (
+    FRESH_PROJECT_SEED_SOURCES,
+    source_constitution_path,
+    source_version_file,
+)
 from distribution.installer.migrate_layout import (
     apply_layout_migration,
     iter_legacy_migration_destination_files,
@@ -102,14 +107,12 @@ class UpdatePlan:
 
 
 def current_version(source_root: Path) -> str:
-    payload = json.loads((source_root / LEGACY_VERSION_FILE).read_text(encoding="utf-8"))
+    payload = json.loads(source_version_file(source_root).read_text(encoding="utf-8"))
     return payload["version"]
 
 
 def source_constitution_version(source_root: Path) -> str:
-    text = (source_root / ".ai-team" / "constitution" / "constitution.yaml").read_text(
-        encoding="utf-8"
-    )
+    text = source_constitution_path(source_root).read_text(encoding="utf-8")
     match = re.search(r'(?m)^\s{2}version:\s*["\']?([^"\'\s]+)', text)
     if not match:
         raise ValueError("Source Constitution version is missing or malformed")
@@ -603,11 +606,11 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
 
 
 def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> None:
-    for rel in FRESH_PROJECT_SEEDS:
-        src = source_root / rel
+    for src_rel, dest_rel in FRESH_PROJECT_SEED_SOURCES:
+        src = source_root / src_rel
         if not src.is_file():
             continue
-        dest = target / rel
+        dest = target / dest_rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dest)
 
@@ -700,7 +703,7 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
     target.mkdir(parents=True, exist_ok=True)
 
     entries, managed_files = build_copy_plan(source_root, target, project_id=args.project_id)
-    seed_destinations = [target / rel for rel in FRESH_PROJECT_SEEDS]
+    seed_destinations = [target / dest_rel for _src_rel, dest_rel in FRESH_PROJECT_SEED_SOURCES]
     copy_destinations = collect_changed_destinations(entries)
     collision_destinations = seed_destinations + copy_destinations
 

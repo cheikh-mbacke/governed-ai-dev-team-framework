@@ -4,18 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-FRAMEWORK_SOURCE_KIND = "framework_source"
-
-
-def read_repository_kind(root: Path) -> str | None:
-    profile = root / ".ai-team" / "project-profile.yaml"
-    if not profile.is_file():
-        return None
-    for line in profile.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("repository_kind:"):
-            return stripped.split(":", 1)[1].strip()
-    return None
+from distribution.installer.fabrication_layout import (
+    FRAMEWORK_SOURCE_KIND,
+    read_repository_kind,
+)
 
 
 def framework_source_install_error(source_root: Path, target: Path) -> str | None:
@@ -34,3 +26,6 @@ def framework_source_install_error(source_root: Path, target: Path) -> str | Non
             "The framework source repository is not an install target."
         )
     return None
+
+
+__all__ = ["FRAMEWORK_SOURCE_KIND", "framework_source_install_error", "read_repository_kind"]

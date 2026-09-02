@@ -170,7 +170,7 @@ def test_golden_v1_subset_classifies_and_builds_record(tmp_path: Path) -> None:
     target = tmp_path / "golden"
     (target / ".ai-team").mkdir(parents=True)
     shutil.copy(
-        REPO_ROOT / ".ai-team" / "project-profile.yaml",
+        REPO_ROOT / ".fabric" / "project-profile.yaml",
         target / ".ai-team" / "project-profile.yaml",
     )
     golden = json.loads(GOLDEN_V1.read_text(encoding="utf-8"))

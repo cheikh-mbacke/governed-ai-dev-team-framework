@@ -15,7 +15,22 @@ POLICY = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(POLICY)
 
 
-def test_governed_branch_names() -> None:
+def _write_client_profile(root: Path) -> None:
+    (root / ".ai-team").mkdir(parents=True, exist_ok=True)
+    (root / ".ai-team" / "project-profile.yaml").write_text(
+        "project:\n  repository_kind: existing_or_greenfield_project\n",
+        encoding="utf-8",
+    )
+
+
+def test_fabrication_branch_names_on_source_repo() -> None:
+    valid = ["main", "renov/framework-source-mode", "fix/ci", "feat/api", "docs/readme"]
+    invalid = ["wu/WU-GIT-GOVERNANCE", "random-branch", "mode-nuit"]
+    assert all(POLICY.branch_is_valid(branch, ROOT) for branch in valid)
+    assert not any(POLICY.branch_is_valid(branch, ROOT) for branch in invalid)
+
+
+def test_client_branch_names() -> None:
     valid = [
         "main",
         "wu/WU-GIT-GOVERNANCE",
@@ -25,16 +40,40 @@ def test_governed_branch_names() -> None:
         "release/0.7",
     ]
     invalid = ["master", "feat/free-form", "mode-nuit", "release/0.7.0", "wu/no-id"]
-    assert all(POLICY.branch_is_valid(branch) for branch in valid)
-    assert not any(POLICY.branch_is_valid(branch) for branch in invalid)
+    client_root = ROOT / "tests" / "_git_policy_client_fixture"
+    # Use an isolated path under tests/ only if needed; tmp_path is cleaner.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        client_root = Path(temp_dir)
+        _write_client_profile(client_root)
+        assert all(POLICY.branch_is_valid(branch, client_root) for branch in valid)
+        assert not any(POLICY.branch_is_valid(branch, client_root) for branch in invalid)
 
 
-def test_governed_commit_subjects() -> None:
-    assert POLICY.commit_subject_is_valid("feat(WU-API-42): ajouter le contrat")
-    assert POLICY.commit_subject_is_valid("fix(WU-API-42)!: retirer le format historique")
-    assert POLICY.commit_subject_is_valid("wip(WU-API-42): conserver le point de reprise")
-    assert not POLICY.commit_subject_is_valid("feat(api): ajouter le contrat")
-    assert not POLICY.commit_subject_is_valid("chore: changement sans Work Unit")
+def test_fabrication_commit_subjects_on_source_repo() -> None:
+    assert POLICY.commit_subject_is_valid("feat: ajouter la garde fabrication", ROOT)
+    assert POLICY.commit_subject_is_valid("fix!: rupture de compatibilite", ROOT)
+    assert not POLICY.commit_subject_is_valid("feat(WU-API-42): ajouter le contrat", ROOT)
+
+
+def test_client_commit_subjects() -> None:
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        client_root = Path(temp_dir)
+        _write_client_profile(client_root)
+        assert POLICY.commit_subject_is_valid(
+            "feat(WU-API-42): ajouter le contrat", client_root
+        )
+        assert POLICY.commit_subject_is_valid(
+            "fix(WU-API-42)!: retirer le format historique", client_root
+        )
+        assert POLICY.commit_subject_is_valid(
+            "wip(WU-API-42): conserver le point de reprise", client_root
+        )
+        assert not POLICY.commit_subject_is_valid("feat(api): ajouter le contrat", client_root)
+        assert not POLICY.commit_subject_is_valid("chore: changement sans Work Unit", client_root)
 
 
 def _write_version_sources(root: Path, pyproject: str, framework: str) -> None:

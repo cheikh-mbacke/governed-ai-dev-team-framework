@@ -1,14 +1,19 @@
 # Governed AI Dev Team Framework
 
-Framework de développement multi-agents gouverné par l'humain : gates, Work Units, preuves, revue et audit indépendants.
+**Dépôt source du framework** — fabrication, tests et distribution du produit.
 
-**Version cible de cette refonte :** `0.7.0` (noyau agnostique + Adaptateur Cursor + Installation Record v3).
+Ce dépôt **n'a pas** de répertoire `.ai-team/` à la racine. L'identité fabrication
+vit sous [`.fabric/`](.fabric/project-profile.yaml) ; le payload installable sous
+[`distribution/payload/`](distribution/payload/). Voir [`AGENTS.md`](AGENTS.md).
 
-## Démarrage rapide
+Framework multi-agents gouverné par l'humain, livré aux **projets cibles après
+installation** — voir [docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md).
 
-1. Lire [docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md).
-2. Installer ou mettre à jour avec [docs/operator/operator-guide.md](docs/operator/operator-guide.md).
-3. Migrer depuis `0.4.x` avec [docs/operator/upgrading.md](docs/operator/upgrading.md) si applicable.
+**Version cible :** `0.7.0`
+
+## Contribuer
+
+[`AGENTS.md`](AGENTS.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`VERSIONING.md`](VERSIONING.md)
 
 ## Documentation opérateur
 
@@ -24,21 +29,12 @@ Framework de développement multi-agents gouverné par l'humain : gates, Work Un
 | [Gouvernance GitHub](docs/operator/github-governance.md) | Protections de branches, tags et réglages de fusion |
 | [Rupture historique 0.4.x](docs/operator/history-cutover-0.4.md) | Décision et conséquences de la nouvelle lignée Git |
 
-## Contribution et versionnement
-
-Voir [`CONTRIBUTING.md`](CONTRIBUTING.md), [`VERSIONING.md`](VERSIONING.md) et
-[`CHANGELOG.md`](CHANGELOG.md).
-
 ## Documentation produit (normative)
 
-Spécifications détaillées sous [`docs/product/`](docs/product/) — vision, architecture cible, tests de conformité (Document 14), etc.
+[`docs/product/`](docs/product/) — spécifications du framework livré aux projets installés.
 
 ## Prérequis
 
 - Python **≥ 3.10**
 - `PyYAML`, `jsonschema` (`requirements.txt`)
 - Git recommandé pour les mises à jour transactionnelles
-
-## Instructions agents
-
-Voir [`AGENTS.md`](AGENTS.md) pour les règles de travail dans ce dépôt.

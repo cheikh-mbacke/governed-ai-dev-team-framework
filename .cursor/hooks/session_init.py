@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 root = Path(os.environ.get("CURSOR_PROJECT_DIR", ".")).resolve()
-profile = root / ".ai-team" / "project-profile.yaml"
 
 
 def _repository_kind(profile_path: Path) -> str | None:
@@ -18,20 +17,18 @@ def _repository_kind(profile_path: Path) -> str | None:
 
 
 message = (
-    "Governed AI Team framework detected. Read .ai-team/project-profile.yaml before "
-    "inferring how this repository is organized."
+    "Governed AI Team framework detected. Read .fabric/project-profile.yaml (fabrication) "
+    "or .ai-team/project-profile.yaml (installed client) before inferring how this "
+    "repository is organized."
 )
-if _repository_kind(profile) == "framework_source":
+fabric_profile = root / ".fabric" / "project-profile.yaml"
+if _repository_kind(fabric_profile) == "framework_source":
     message += (
-        " Workspace mode: framework_source (fabrication). This repo builds the framework;"
-        " it is not an installed client project and does not run compile-project or"
-        " client Work Unit cycles here. project-state.yaml is a virgin template only."
-        " Edit src/ and adapters/. Installed-layout reference:"
-        " tests/fixtures/projects/clean/. Never run tools/install.py --target . here."
+        " Workspace mode: framework_source (fabrication). See AGENTS.md."
+        " Installed-client reference: tests/fixtures/projects/clean/."
     )
 else:
     message += (
-        " Read .ai-team/state/project-state.yaml before runtime activation when no"
-        " approved execution plan exists. Use /compile-project when required."
+        " Read .ai-team/state/project-state.yaml before runtime activation."
     )
 print(json.dumps({"additional_context": message}))

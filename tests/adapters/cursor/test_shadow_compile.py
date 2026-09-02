@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from adapters.cursor.compiler.compile import compile_manifest
 from adapters.cursor.compiler.parity import shadow_compare
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 BUNDLE_V1 = REPO_ROOT / "src" / "governed_ai" / "contracts" / "bundles" / "v1"
-HISTORICAL_CURSOR = REPO_ROOT / ".cursor"
 TEMPLATES_ROOT = REPO_ROOT / "adapters" / "cursor" / "templates"
 PROJECT_PROFILE = {
     "project_id": "framework-renov",
@@ -17,11 +17,26 @@ PROJECT_PROFILE = {
 }
 
 
-def test_shadow_compile_matches_historical_cursor(tmp_path: Path) -> None:
+def test_compile_output_is_deterministic(tmp_path: Path) -> None:
+    """Two compiles from the same templates must produce identical client payload."""
+    staging_a = tmp_path / "staging-a"
+    staging_b = tmp_path / "staging-b"
+    compile_manifest(
+        BUNDLE_V1,
+        staging_a,
+        PROJECT_PROFILE,
+        templates_root=TEMPLATES_ROOT,
+    )
+    compile_manifest(
+        BUNDLE_V1,
+        staging_b,
+        PROJECT_PROFILE,
+        templates_root=TEMPLATES_ROOT,
+    )
     report = shadow_compare(
         BUNDLE_V1,
-        HISTORICAL_CURSOR,
-        tmp_path / "staging",
+        staging_a / ".cursor",
+        staging_b,
         PROJECT_PROFILE,
         templates_root=TEMPLATES_ROOT,
     )

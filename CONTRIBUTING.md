@@ -1,38 +1,36 @@
 # Contribuer
 
-Toute contribution doit respecter `VERSIONING.md`, `AGENTS.md` et la Constitution sous
-`.ai-team/constitution/`.
+Respecter `VERSIONING.md`, `AGENTS.md` et, pour le payload livré, la Constitution
+sous `distribution/payload/.ai-team/constitution/`.
 
-## Parcours minimal
+## Dépôt source (`repository_kind: framework_source`)
 
-1. Partir d'un `main` à jour et propre.
-2. Utiliser une Work Unit approuvée, puis créer `wu/WU-<ID>-<slug>`.
-3. Limiter le diff au périmètre de la Work Unit.
-4. Ajouter ou adapter les tests et la documentation.
-5. Exécuter :
+Workflow complet : [`AGENTS.md`](AGENTS.md).
 
-   ```text
-   python scripts/ai-team/check_git_policy.py
-   python -m ruff check scripts/
-   python -m pytest tests/ -q
-   python scripts/ai-team/validate.py
-   ```
+Layout fabrication : `.fabric/` (identité) + `distribution/payload/` (livré à
+l'install). **Pas de `.ai-team/` à la racine.**
 
-6. Commiter avec `type(WU-ID): description concise`.
-7. Ouvrir une pull request en complétant le modèle fourni.
-8. Corriger par de nouveaux commits ; ne pas réécrire un SHA déjà évalué.
+Parcours minimal :
 
-Une pull request ne doit pas être fusionnée tant qu'un contrôle requis échoue ou qu'un
-défaut critique, un finding bloquant ou une décision humaine reste ouvert.
+1. Partir d'un `main` à jour ; branche `renov/<slug>` ou `fix/<slug>`.
+2. Limiter le diff ; ajouter ou adapter tests et documentation.
+3. Exécuter les vérifications listées dans `AGENTS.md`.
+4. Ouvrir une pull request (modèle GitHub).
+
+## Projets installés
+
+Après `tools/install.py` sur un projet cible : voir
+[docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md) et
+[docs/operator/client-git-policy.md](docs/operator/client-git-policy.md).
 
 ## Changement de version
 
-Une modification de version met à jour simultanément `pyproject.toml`,
-`.ai-team/framework-version.json`, `CHANGELOG.md` et le candidat de release. Le tag est
-créé seulement après validation du commit de merge sur `main`.
+Mettre à jour `pyproject.toml`, `.fabric/framework-version.json`, `CHANGELOG.md`
+et le candidat de release. Tag après validation du merge sur `main` — voir
+`VERSIONING.md`.
 
 ## Signalement de sécurité
 
-Ne publiez pas de secret ni de vulnérabilité exploitable dans une issue publique. Utilisez
-le canal privé du mainteneur ou la fonctionnalité GitHub de signalement privé lorsqu'elle
-est activée.
+Ne publiez pas de secret ni de vulnérabilité exploitable dans une issue publique.
+Utilisez le canal privé du mainteneur ou le signalement privé GitHub lorsqu'il est
+activé.

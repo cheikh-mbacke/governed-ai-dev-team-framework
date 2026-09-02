@@ -1,5 +1,8 @@
 # Matériel produit humain
 
+> **Périmètre :** spécifications normatives pour les **projets clients installés**.
+> Pour fabriquer le framework sur ce dépôt, voir [`../../AGENTS.md`](../../AGENTS.md).
+
 Placez vos documents produit qui font autorité dans les sous-dossiers
 ci-dessous, ou enregistrez les fichiers là où ils vivent réellement dans
 `.ai-team/sources/source-registry.yaml` — rien n'est obligé de vivre ici

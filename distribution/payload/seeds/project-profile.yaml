@@ -1,0 +1,51 @@
+project:
+  id: framework-template
+  name: Governed AI Development Team Framework
+  repository_kind: framework_template
+  primary_language: python
+  package_manager: pip
+communication:
+  language: français
+autonomy:
+  preset: supervised_copilots
+  level: 3
+paths:
+  product_docs: docs/product
+  source_roots:
+  - src
+  test_roots:
+  - tests
+  config_roots:
+  - .ai-team
+  - .cursor
+commands:
+  setup: python -m pip install -r requirements.txt
+  build: null
+  lint: null
+  typecheck: null
+  unit_test: null
+  integration_test: null
+  e2e_test: null
+runtime_environments:
+  development:
+    protected: false
+  test:
+    protected: false
+  staging:
+    protected: true
+  production:
+    protected: true
+release:
+  protected_branch: main
+  production_requires_g3: true
+  auto_push_working_branches: false
+human_authorities:
+  product: unspecified
+  engineering_constitution: unspecified
+  production_release: unspecified
+  final_acceptance: unspecified
+setup_status:
+  template: true
+  cursor_compile_opt_in: false
+  note: "The installer rewrites project.id, project.name and template=false. Fill repository-specific commands, paths and human authorities before production use."
+active_adapter_id: cursor

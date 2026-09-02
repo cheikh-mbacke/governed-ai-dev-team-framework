@@ -22,12 +22,25 @@ COMMIT_RE = re.compile(
     r"^(feat|fix|docs|refactor|perf|test|build|ci|chore|revert|style|wip)"
     r"\(WU-[A-Za-z0-9._-]+\)!?:\s+\S.+$"
 )
+FABRICATION_COMMIT_RE = re.compile(
+    r"^(feat|fix|docs|refactor|perf|test|build|ci|chore|revert|style|wip)"
+    r"(!?)?:\s+\S.+$"
+)
 BRANCH_PATTERNS = (
     re.compile(r"^main$"),
     re.compile(r"^wu/WU-[A-Za-z0-9._-]+$"),
     re.compile(r"^ai-run/[A-Za-z0-9._-]+/WU-[A-Za-z0-9._-]+$"),
     re.compile(r"^integration/[A-Za-z0-9._-]+$"),
     re.compile(r"^hotfix/WU-[A-Za-z0-9._-]+$"),
+    re.compile(r"^release/(0|[1-9]\d*)\.(0|[1-9]\d*)$"),
+)
+FABRICATION_BRANCH_PATTERNS = (
+    re.compile(r"^main$"),
+    re.compile(r"^renov/.+$"),
+    re.compile(r"^fix/.+$"),
+    re.compile(r"^feat/.+$"),
+    re.compile(r"^docs/.+$"),
+    re.compile(r"^chore/.+$"),
     re.compile(r"^release/(0|[1-9]\d*)\.(0|[1-9]\d*)$"),
 )
 CHANGELOG_PLACEHOLDER_RE = re.compile(
@@ -61,9 +74,9 @@ def read_product_versions(root: Path = ROOT) -> tuple[str | None, str | None]:
     match = re.search(r'(?m)^version\s*=\s*["\']([^"\']+)["\']\s*$', pyproject)
     pyproject_version = match.group(1) if match else None
 
-    framework = json.loads(
-        (root / ".ai-team" / "framework-version.json").read_text(encoding="utf-8")
-    )
+    from distribution.installer.fabrication_layout import source_version_file
+
+    framework = json.loads(source_version_file(root).read_text(encoding="utf-8"))
     framework_version = framework.get("version")
     return pyproject_version, framework_version
 
@@ -81,7 +94,7 @@ def validate_versions(root: Path = ROOT) -> list[str]:
         errors.append(f"pyproject.toml version is not SemVer: {pyproject_version!r}")
 
     if not isinstance(framework_version, str):
-        errors.append(".ai-team/framework-version.json does not declare a string version")
+        errors.append(".fabric/framework-version.json does not declare a string version")
     elif not SEMVER_RE.fullmatch(framework_version):
         errors.append(f"framework version is not SemVer: {framework_version!r}")
 
@@ -123,17 +136,36 @@ def validate_versions(root: Path = ROOT) -> list[str]:
     return errors
 
 
-def branch_is_valid(branch: str) -> bool:
-    return any(pattern.fullmatch(branch) for pattern in BRANCH_PATTERNS)
+def read_repository_kind(root: Path = ROOT) -> str | None:
+    from distribution.installer.fabrication_layout import read_repository_kind as _read_kind
+
+    return _read_kind(root)
 
 
-def commit_subject_is_valid(subject: str) -> bool:
+def is_framework_source_repo(root: Path = ROOT) -> bool:
+    return read_repository_kind(root) == "framework_source"
+
+
+def branch_is_valid(branch: str, root: Path = ROOT) -> bool:
+    patterns = FABRICATION_BRANCH_PATTERNS if is_framework_source_repo(root) else BRANCH_PATTERNS
+    return any(pattern.fullmatch(branch) for pattern in patterns)
+
+
+def commit_subject_is_valid(subject: str, root: Path = ROOT) -> bool:
+    if is_framework_source_repo(root):
+        return bool(FABRICATION_COMMIT_RE.fullmatch(subject))
     return bool(COMMIT_RE.fullmatch(subject))
 
 
-def validate_branch(branch: str) -> list[str]:
-    if branch_is_valid(branch):
+def validate_branch(branch: str, root: Path = ROOT) -> list[str]:
+    if branch_is_valid(branch, root):
         return []
+    if is_framework_source_repo(root):
+        return [
+            f"branch name {branch!r} is not allowed on framework_source; use "
+            "renov/<slug>, fix/<slug>, feat/<slug>, docs/<slug>, chore/<slug>, "
+            "or release/<major>.<minor>"
+        ]
     return [
         f"branch name {branch!r} is not governed; use wu/WU-<ID>-<slug>, "
         "ai-run/<RUN-ID>/<WU-ID>, integration/<RUN-ID>, hotfix/WU-<ID>-<slug>, "
@@ -145,12 +177,16 @@ def validate_commit_range(base: str, head: str = "HEAD", root: Path = ROOT) -> l
     merge_base = git("merge-base", base, head, root=root)
     commits = git("rev-list", "--reverse", "--no-merges", f"{merge_base}..{head}", root=root)
     errors: list[str] = []
+    expected = (
+        "expected type: description (Conventional Commits)"
+        if is_framework_source_repo(root)
+        else "expected type(WU-ID): description"
+    )
     for sha in commits.splitlines():
         subject = git("show", "-s", "--format=%s", sha, root=root)
-        if not commit_subject_is_valid(subject):
+        if not commit_subject_is_valid(subject, root):
             errors.append(
-                f"commit {sha[:12]} has invalid subject {subject!r}; "
-                "expected type(WU-ID): description"
+                f"commit {sha[:12]} has invalid subject {subject!r}; {expected}"
             )
     return errors
 
@@ -268,7 +304,7 @@ def validate_ci_environment(root: Path = ROOT) -> list[str]:
 
     branch = os.environ.get("GITHUB_HEAD_REF") or ref_name
     if branch:
-        errors.extend(validate_branch(branch))
+        errors.extend(validate_branch(branch, root))
 
     if event_name == "pull_request":
         base_branch = os.environ.get("GITHUB_BASE_REF")
@@ -313,7 +349,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             errors = validate_versions(ROOT)
             branch = git("rev-parse", "--abbrev-ref", "HEAD")
-            errors.extend(validate_branch(branch))
+            errors.extend(validate_branch(branch, ROOT))
             if args.base_ref:
                 errors.extend(validate_commit_range(args.base_ref, args.head_ref, ROOT))
             if args.tag:

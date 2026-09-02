@@ -25,34 +25,68 @@ from install_paths import bootstrap_runtime
 
 bootstrap_runtime(_ROOT)
 
+from governed_ai.core.fabrication_overlay import (
+    collect_framework_source_fabrication_overlay_violations,
+)
+from governed_ai.core.workspace import Workspace
 from governed_ai.core.workspace_mode import (
     collect_framework_source_client_cycle_artifacts,
     collect_framework_source_feedback_artifacts,
+    collect_framework_source_root_layout_violations,
 )
 
 ROOT = _ROOT
-AI = ROOT / ".ai-team"
+WORKSPACE = Workspace.from_root(ROOT)
+FABRIC = ROOT / ".fabric"
+AI = WORKSPACE.ai_team
+PROFILE_PATH = WORKSPACE.profile_path
+IS_FABRICATION = (FABRIC / "project-profile.yaml").is_file()
+VERSION_PATH = (
+    FABRIC / "framework-version.json"
+    if IS_FABRICATION
+    else AI / "framework-version.json"
+)
+SEEDS = ROOT / "distribution" / "payload" / "seeds"
 LANG = project_language(ROOT)
 
 errors = []
 warnings = []
 
-required = [
-    AI / "project-profile.yaml",
-    AI / "constitution" / "constitution.yaml",
-    AI / "sources" / "source-registry.yaml",
-    AI / "state" / "project-state.yaml",
-    AI / "framework-version.json",
-    ROOT / ".cursor" / "hooks.json",
-    ROOT / ".cursor" / "hooks" / "run_hook.cmd",
-    ROOT / ".cursor" / "permissions.json",
-    ROOT / ".cursor" / "cli.json",
-    ROOT / "scripts" / "ai-team" / "migrate.py",
-    ROOT / "scripts" / "ai-team" / "feedback.py",
-    AI / "schemas" / "observation.schema.json",
-    AI / "schemas" / "retrospective.schema.json",
-    AI / "schemas" / "feedback-export.schema.json",
-]
+if IS_FABRICATION:
+    required = [
+        FABRIC / "project-profile.yaml",
+        FABRIC / "framework-version.json",
+        AI / "constitution" / "constitution.yaml",
+        SEEDS / "source-registry.yaml",
+        SEEDS / "project-state.yaml",
+        SEEDS / "project-profile.yaml",
+        ROOT / ".cursor" / "hooks.json",
+        ROOT / ".cursor" / "hooks" / "run_hook.cmd",
+        ROOT / ".cursor" / "permissions.json",
+        ROOT / ".cursor" / "cli.json",
+        ROOT / "scripts" / "ai-team" / "migrate.py",
+        ROOT / "scripts" / "ai-team" / "feedback.py",
+        AI / "schemas" / "observation.schema.json",
+        AI / "schemas" / "retrospective.schema.json",
+        AI / "schemas" / "feedback-export.schema.json",
+    ]
+else:
+    required = [
+        AI / "project-profile.yaml",
+        AI / "constitution" / "constitution.yaml",
+        AI / "sources" / "source-registry.yaml",
+        AI / "state" / "project-state.yaml",
+        AI / "framework-version.json",
+        ROOT / ".cursor" / "hooks.json",
+        ROOT / ".cursor" / "hooks" / "run_hook.cmd",
+        ROOT / ".cursor" / "permissions.json",
+        ROOT / ".cursor" / "cli.json",
+        ROOT / "scripts" / "ai-team" / "migrate.py",
+        ROOT / "scripts" / "ai-team" / "feedback.py",
+        AI / "schemas" / "observation.schema.json",
+        AI / "schemas" / "retrospective.schema.json",
+        AI / "schemas" / "feedback-export.schema.json",
+    ]
 for p in required:
     if not p.exists():
         errors.append(f"Missing required file: {p.relative_to(ROOT)}")
@@ -80,21 +114,20 @@ for cursor_json_name in ["hooks.json", "permissions.json"]:
     if cursor_json_path.exists():
         load_json(cursor_json_path)
 
-version_path = AI / "framework-version.json"
+version_path = VERSION_PATH
 version_manifest = None
 if version_path.exists():
     version_manifest = load_json(version_path)
     if version_manifest is not None:
+        version_label = version_path.relative_to(ROOT).as_posix()
         if not isinstance(version_manifest.get("version"), str):
-            errors.append(".ai-team/framework-version.json: version must be a string")
+            errors.append(f"{version_label}: version must be a string")
         managed_files = version_manifest.get("managed_files")
         if managed_files is not None and (
             not isinstance(managed_files, list)
             or not all(isinstance(path, str) for path in managed_files)
         ):
-            errors.append(
-                ".ai-team/framework-version.json: managed_files must be a list of strings"
-            )
+            errors.append(f"{version_label}: managed_files must be a list of strings")
 
 cli_config_path = cursor_dir / "cli.json"
 if cli_config_path.exists():
@@ -121,8 +154,8 @@ if cli_config_path.exists():
                         "of strings"
                     )
 
-if (AI / "project-profile.yaml").exists():
-    profile = load_yaml(AI / "project-profile.yaml") or {}
+if PROFILE_PATH.is_file():
+    profile = load_yaml(PROFILE_PATH) or {}
     if profile.get("setup_status", {}).get("template"):
         warnings.append("project-profile.yaml is still marked as template=true")
     for field in ["build", "lint", "unit_test"]:
@@ -135,35 +168,36 @@ if (AI / "project-profile.yaml").exists():
 
     repository_kind = (profile.get("project") or {}).get("repository_kind")
     if repository_kind == "framework_source":
-        if (AI / "installation-record.json").exists():
+        errors.extend(collect_framework_source_root_layout_violations(ROOT))
+        if (ROOT / ".ai-team" / "installation-record.json").exists():
             errors.append(
                 "framework_source repository must not contain "
                 ".ai-team/installation-record.json (installed targets only)"
             )
-        if (AI / "runtime" / "governed_ai").is_dir():
+        if (ROOT / ".ai-team" / "runtime" / "governed_ai").is_dir():
             errors.append(
                 "framework_source repository must not contain "
                 ".ai-team/runtime/governed_ai/ (installed-target layout only)"
             )
-        source_state_path = AI / "state" / "project-state.yaml"
-        state_for_checks = load_yaml(source_state_path) if source_state_path.exists() else {}
+        seed_state_path = SEEDS / "project-state.yaml"
+        state_for_checks = load_yaml(seed_state_path) if seed_state_path.exists() else {}
         errors.extend(collect_framework_source_feedback_artifacts(AI))
         errors.extend(
             collect_framework_source_client_cycle_artifacts(AI, state=state_for_checks)
         )
+        errors.extend(collect_framework_source_fabrication_overlay_violations(ROOT))
         if isinstance(version_manifest, dict):
+            version_label = version_path.relative_to(ROOT).as_posix()
             for path in version_manifest.get("managed_files") or []:
                 if not isinstance(path, str):
                     continue
                 if path.startswith(".ai-team/runtime/"):
                     errors.append(
-                        ".ai-team/framework-version.json lists installed-target path "
+                        f"{version_label} lists installed-target path "
                         f"{path!r}; run scripts/ai-team/sync_source_manifest.py"
                     )
                 elif not (ROOT / path).is_file():
-                    errors.append(
-                        f".ai-team/framework-version.json lists missing source file: {path}"
-                    )
+                    errors.append(f"{version_label} lists missing source file: {path}")
             product_version = version_manifest.get("version")
             pyproject_path = ROOT / "pyproject.toml"
             if isinstance(product_version, str) and pyproject_path.is_file():
@@ -231,8 +265,13 @@ if (AI / "project-profile.yaml").exists():
         except Exception:
             pass  # Best-effort check; never fail validate.py over git introspection.
 
-if (AI / "sources" / "source-registry.yaml").exists():
-    reg = load_yaml(AI / "sources" / "source-registry.yaml") or {}
+source_registry_path = (
+    SEEDS / "source-registry.yaml"
+    if IS_FABRICATION
+    else AI / "sources" / "source-registry.yaml"
+)
+if source_registry_path.exists():
+    reg = load_yaml(source_registry_path) or {}
     if not reg.get("sources"):
         warnings.append("No authoritative product sources are registered")
 

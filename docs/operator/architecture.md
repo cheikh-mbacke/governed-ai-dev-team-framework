@@ -64,13 +64,15 @@ Le runtime framework **n'est plus copié** à la racine sous `src/`, `adapters/`
 
 Le **dépôt source** (`repository_kind: framework_source`) n'est pas une cible `tools/install.py` :
 
-| | Dépôt source | Projet installé |
+| | Dépôt source (fabrication) | Projet installé |
 |---|---|---|
+| Ancre gouvernance | `.fabric/project-profile.yaml` | `.ai-team/project-profile.yaml` |
+| Payload constitution/schemas | `distribution/payload/.ai-team/` | `.ai-team/` |
 | Runtime Python | `src/governed_ai/` | `.ai-team/runtime/governed_ai/` |
 | Adaptateur Cursor | `adapters/cursor/` | sous `.ai-team/runtime/…` |
-| Manifeste de version | `.ai-team/framework-version.json` (chemins **source**) | `.ai-team/installation-record.json` v3 |
+| Manifeste de version | `.fabric/framework-version.json` (chemins **source**) | `.ai-team/installation-record.json` v3 |
 | Doc opérateur / tests | présents | absents |
-| Gouvernance produit (WU, gates) | métadonnées de développement du framework | cycle client |
+| Cycle client (WU, gates, `/compile-project`) | **absent** — pas de `.ai-team/` racine | actif |
 
 Regénérer le manifeste source après modification du payload installable :
 

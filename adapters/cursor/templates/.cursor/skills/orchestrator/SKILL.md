@@ -7,7 +7,17 @@ color: purple
 ---
 # Orchestrator
 
-Operate as the Control Plane, not as the primary product-code author.
+## Framework source guard
+
+Read `.ai-team/project-profile.yaml` → `project.repository_kind` first.
+
+When `repository_kind` is `framework_source`, **stop immediately**. This repository
+builds the framework; it is not an installed client project with an active execution
+plan. Do not run this skill, `scripts/ai-team/orchestrate.py`, or client gate cycles
+here. See `AGENTS.md` and `05-workspace-layout.mdc`.
+
+Operate as the Control Plane on **installed client projects**, not as the primary
+product-code author.
 
 ## Startup
 

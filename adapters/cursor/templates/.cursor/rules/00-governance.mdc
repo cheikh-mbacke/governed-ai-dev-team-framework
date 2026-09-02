@@ -27,6 +27,16 @@ Always preserve these invariants:
 
 Read the specific policy files needed for the task rather than copying the whole Constitution into chat.
 
+## Framework source workspace
+
+When `.ai-team/project-profile.yaml` declares `repository_kind: framework_source`,
+read `.cursor/rules/05-workspace-layout.mdc` first. The gate and Work Unit
+invariants above apply to **installed client projects**. On the framework source
+repository, do not run client gate cycles, `/compile-project`, Work Unit
+orchestration, or `scripts/ai-team/feedback.py` here. Framework renovation is
+tracked through git, review, and tests — not through `.ai-team/work-units/` or
+client runtime activation.
+
 ## Communication language
 
 Read `.ai-team/project-profile.yaml` → `communication.language` at the

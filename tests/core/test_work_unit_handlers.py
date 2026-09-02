@@ -16,7 +16,7 @@ from governed_ai.core.domain.work_unit.state_machine import (
 )
 from governed_ai.core.workspace import Workspace
 
-from tests.core.workspace_helpers import write_installed_client_profile
+from tests.core.workspace_helpers import FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -40,11 +40,11 @@ def _minimal_work_unit_payload(work_unit_id: str, **overrides) -> dict:
 @pytest.fixture()
 def wu_workspace(tmp_path: Path) -> Workspace:
     ai_team = tmp_path / ".ai-team"
-    source = REPO_ROOT / ".ai-team"
+    source = PAYLOAD_AI_TEAM
     for name in ("schemas", "constitution", "contracts"):
         shutil.copytree(source / name, ai_team / name)
     write_installed_client_profile(ai_team)
-    shutil.copy2(source / "framework-version.json", ai_team / "framework-version.json")
+    shutil.copy2(FABRIC_ROOT / "framework-version.json", ai_team / "framework-version.json")
     (ai_team / "work-units").mkdir(parents=True)
     (ai_team / "state").mkdir(parents=True)
     (ai_team / "state" / "project-state.yaml").write_text("phase: execution\n", encoding="utf-8")

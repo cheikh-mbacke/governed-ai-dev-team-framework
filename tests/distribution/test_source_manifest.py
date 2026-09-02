@@ -20,8 +20,8 @@ from distribution.installer.source_manifest import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FRAMEWORK_VERSION = REPO_ROOT / ".ai-team" / "framework-version.json"
-PROJECT_PROFILE = REPO_ROOT / ".ai-team" / "project-profile.yaml"
+FRAMEWORK_VERSION = REPO_ROOT / ".fabric" / "framework-version.json"
+PROJECT_PROFILE = REPO_ROOT / ".fabric" / "project-profile.yaml"
 INSTALL = REPO_ROOT / "tools" / "install.py"
 SYNC_MANIFEST = REPO_ROOT / "scripts" / "ai-team" / "sync_source_manifest.py"
 
@@ -33,6 +33,7 @@ def test_project_profile_declares_framework_source() -> None:
 
 def test_source_repo_has_no_installation_record() -> None:
     assert not (REPO_ROOT / ".ai-team" / "installation-record.json").exists()
+    assert not (REPO_ROOT / ".ai-team").exists()
 
 
 def test_framework_version_uses_source_layout_only() -> None:
@@ -42,6 +43,7 @@ def test_framework_version_uses_source_layout_only() -> None:
     assert not any(path.startswith(".ai-team/runtime/") for path in managed)
     assert any(path.startswith("src/governed_ai/") for path in managed)
     assert any(path.startswith("adapters/cursor/") for path in managed)
+    assert any(path.startswith("distribution/payload/.ai-team/") for path in managed)
     for path in managed:
         assert (REPO_ROOT / path).is_file(), f"missing managed source file: {path}"
 

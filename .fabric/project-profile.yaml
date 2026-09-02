@@ -1,0 +1,63 @@
+project:
+  id: framework-renov
+  name: Framework Renov
+  repository_kind: framework_source
+  primary_language: python
+  package_manager: pip
+communication:
+  language: français
+# autonomy, release, human_authorities below are schema-compatible placeholders on
+# this fabrication repo — they apply to installed client projects after install,
+# not to framework renovation workflow (git/PR/tests per AGENTS.md).
+autonomy:
+  # Named preset is authoritative (Document 6 §4). Legacy level is kept only
+  # for schema compatibility; resolve_project_preset never lets new code read
+  # level directly when preset is present.
+  preset: supervised_copilots
+  level: 3
+paths:
+  product_docs: docs/product
+  source_roots:
+  - scripts
+  - src
+  - .cursor/hooks
+  test_roots:
+  - tests
+  config_roots:
+  - .fabric
+  - distribution/payload
+  - .cursor
+commands:
+  setup: python -m pip install -r requirements.txt
+  build: null
+  lint: python -m ruff check scripts/
+  typecheck: null
+  unit_test: python -m pytest tests/ -q
+  integration_test: null
+  e2e_test: null
+runtime_environments:
+  development:
+    protected: false
+  test:
+    protected: false
+  staging:
+    protected: true
+  production:
+    protected: true
+release:
+  protected_branch: main
+  production_requires_g3: true
+  auto_push_working_branches: false
+human_authorities:
+  product: cheikh MBACKE
+  engineering_constitution: cheikh MBACKE
+  production_release: cheikh MBACKE
+  final_acceptance: cheikh MBACKE
+setup_status:
+  template: false
+  cursor_compile_opt_in: false
+  fabrication_workflow: classical
+  note: 'Dépôt source du framework (fabrication). Workflow git/PR/tests — voir AGENTS.md.
+    Payload installable sous distribution/payload/. Payload client Cursor sous
+    adapters/cursor/templates/.cursor/.'
+active_adapter_id: cursor

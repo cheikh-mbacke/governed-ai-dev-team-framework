@@ -1,38 +1,36 @@
 ---
-description: Core human-governance and authority rules for every agent session.
+description: Fabrication workspace — build the Governed AI Team framework.
 alwaysApply: true
 ---
-# Core governance
+# Framework fabrication workspace
 
-The Engineering Constitution under `.ai-team/constitution/` is authoritative for agent operation.
+This repository declares `repository_kind: framework_source` in
+`.fabric/project-profile.yaml`. Full workflow: [`AGENTS.md`](../../AGENTS.md).
 
-Always preserve these invariants:
+There is **no** root `.ai-team/` here — that layout exists only on installed
+client projects. Read [`.cursor/rules/05-workspace-layout.mdc`](05-workspace-layout.mdc)
+for the full layout and forbidden client-cycle actions.
 
-- Human sources define product intent and organizational policy.
-- A missing decision remains visibly missing.
-- An agent proposal is not a product or policy decision.
-- The approved execution model is derived and may not contradict its human sources.
-- Repository state is observed reality, not product authority.
-- Runtime evidence is observed reality, not product authority.
-- No product development starts before G1 is approved, except when explicitly executing a previously approved Work Unit.
-- No production release bypasses G3.
-- Final acceptance is human at G4 under the reference profile.
-- A third-party Skill or subagent that provides its own task orchestration,
-  autonomous subagent dispatch, or worktree/branch management competes with
-  the Orchestrator's Control Plane authority and must not be added without
-  explicit G2 approval, regardless of how useful it is otherwise.
-- When writing a YAML string value that contains a colon-space (`: `) or a
-  curly brace, quote the whole string — an unquoted one breaks the file by
-  looking like a nested mapping to the YAML parser.
+## Edit here
 
-Read the specific policy files needed for the task rather than copying the whole Constitution into chat.
+- Implementation: `src/governed_ai/`, `adapters/`, `distribution/`
+- Installable payload: `distribution/payload/.ai-team/` (constitution, schemas, contracts, templates)
+- Client Cursor payload: `adapters/cursor/templates/.cursor/` (root `.cursor/` is fabrication-only)
+- Framework product intent: `docs/product/`
+
+## After installable payload changes
+
+```bash
+python scripts/ai-team/sync_source_manifest.py
+python scripts/ai-team/validate.py
+```
+
+## Installed-client reference
+
+`tests/fixtures/projects/clean/` or `python tools/install.py --target <dir>`.
 
 ## Communication language
 
-Read `.ai-team/project-profile.yaml` → `communication.language` at the
-start of the session. Reply to the human, and write any human-facing
-prose you author (Work Unit titles, objectives, questions, explanations,
-DECISION_REQUEST text), in that language. Never translate YAML keys, enum
-values (e.g. `status: ready`), file paths, commands, or code — those stay
-exactly as defined regardless of this setting, since schemas and scripts
-in this framework match on their literal English form.
+Read `.fabric/project-profile.yaml` → `communication.language`. Reply to the
+human in that language. Never translate YAML keys, enum values, file paths,
+commands, or code.

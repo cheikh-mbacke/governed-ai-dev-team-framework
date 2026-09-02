@@ -1,5 +1,8 @@
 # Human product material
 
+> **Scope:** normative specifications for **installed client projects**. To build
+> the framework itself, see [`../AGENTS.md`](../AGENTS.md).
+
 Put your authoritative product documents under the subfolders below, or
 register files from wherever they actually live in
 `.ai-team/sources/source-registry.yaml` — nothing has to physically live

@@ -20,13 +20,15 @@ from governed_ai.core.persistence.migrations.mutable_v2 import (
     plan_mutable_v2,
 )
 
+from tests.core.workspace_helpers import PAYLOAD_AI_TEAM
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MIGRATED_AT = "2026-08-29T19:00:00+00:00"
 
 
 def _seed_ai_team(tmp_path: Path) -> Path:
     ai_team = tmp_path / ".ai-team"
-    source = REPO_ROOT / ".ai-team"
+    source = PAYLOAD_AI_TEAM
     shutil.copytree(source / "schemas", ai_team / "schemas")
     for directory in (
         "work-units",

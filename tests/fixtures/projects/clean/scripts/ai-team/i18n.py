@@ -33,7 +33,9 @@ def project_language(root: Path) -> str:
     """
     if yaml is None:
         return "english"
-    profile_path = root / ".ai-team" / "project-profile.yaml"
+    profile_path = root / ".fabric" / "project-profile.yaml"
+    if not profile_path.is_file():
+        profile_path = root / ".ai-team" / "project-profile.yaml"
     if not profile_path.exists():
         return "english"
     try:
