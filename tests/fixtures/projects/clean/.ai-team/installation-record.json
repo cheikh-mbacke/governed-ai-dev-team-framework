@@ -927,7 +927,7 @@
       },
       {
         "path": "scripts/ai-team/check_git_policy.py",
-        "installed_sha256": "sha256:0240849793965b4d6e9a2b0efa1dfc4e771110b18ee1f62ddd3e751de574684e"
+        "installed_sha256": "sha256:cdc1723f29d2f5a19640f60658899389eb85798810c8c8b610c361ad33251df2"
       },
       {
         "path": "scripts/ai-team/check_release_matrix.py",

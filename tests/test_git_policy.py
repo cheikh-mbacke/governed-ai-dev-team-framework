@@ -104,6 +104,15 @@ def test_non_semver_product_version_is_rejected(tmp_path: Path) -> None:
     assert any("not SemVer" in error for error in errors)
 
 
+def test_client_repo_without_pyproject_toml_is_not_a_version_error(tmp_path: Path) -> None:
+    # canonical_version_source: pyproject.toml is the framework's own convention
+    # (see distribution/payload/.ai-team/constitution/95-git-release-policy.yaml,
+    # which itself notes "adapt: package.json, VERSION, setup.cfg, etc."). An
+    # installed client project must not be forced to have a pyproject.toml.
+    _write_client_profile(tmp_path)
+    assert POLICY.validate_versions(tmp_path) == []
+
+
 def test_changelog_release_section_requires_iso_date() -> None:
     changelog = "## [0.7.1] - 2026-09-01\n\nInitial note.\n"
     assert POLICY.validate_changelog_release_section("0.7.1", changelog) == []
