@@ -233,6 +233,8 @@
     "src/governed_ai/adapters/cursor/adapter.py",
     "src/governed_ai/adapters/cursor/compile.py",
     "src/governed_ai/adapters/spi.py",
+    "src/governed_ai/compat/__init__.py",
+    "src/governed_ai/compat/datetime.py",
     "src/governed_ai/contracts/__init__.py",
     "src/governed_ai/contracts/bundle_hash.py",
     "src/governed_ai/contracts/bundles/v1/manifest.json",

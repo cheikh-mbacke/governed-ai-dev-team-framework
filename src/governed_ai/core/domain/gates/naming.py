@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from governed_ai.compat.datetime import UTC, datetime
 
 
 def generate_gate_decision_id(gate: str) -> str:

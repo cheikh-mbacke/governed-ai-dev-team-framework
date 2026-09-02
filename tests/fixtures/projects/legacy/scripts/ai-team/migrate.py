@@ -135,6 +135,9 @@ def _load_mutable_v2_module():
     import sys
 
     module_path = _mutable_v2_module_path(DEFAULT_ROOT)
+    src_root = str(DEFAULT_ROOT / "src")
+    if src_root not in sys.path:
+        sys.path.insert(0, src_root)
     module_name = "governed_ai_mutable_v2_migration"
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:

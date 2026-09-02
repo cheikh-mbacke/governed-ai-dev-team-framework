@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from governed_ai.compat.datetime import UTC, datetime, timedelta
 from typing import Any
 
 import yaml

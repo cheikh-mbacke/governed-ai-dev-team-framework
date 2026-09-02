@@ -7,7 +7,7 @@ import os
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from governed_ai.compat.datetime import UTC, datetime
 from pathlib import Path
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError

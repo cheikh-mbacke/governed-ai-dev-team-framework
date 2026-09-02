@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from datetime import UTC, datetime, timedelta
+from governed_ai.compat.datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
