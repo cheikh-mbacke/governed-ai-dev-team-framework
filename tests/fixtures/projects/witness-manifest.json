@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-02T09:01:04+00:00",
+  "generated_at": "2026-09-02T09:23:07+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -241,7 +241,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "4527da736ecdee13c194babf02b242ddbaab0cae77e6513f47c8314b53faec01"
+          "sha256": "d5252da590b8bfa4171652c6ddf04bbf533289c6dc506fabdc8a4735ee898662"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1493,11 +1493,11 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "738ef2a03220f6bc047663b754226cb2623ecb49dffe4dd10ee982a9504b1425"
+          "sha256": "19d198a0f23447e960676f56e6243e13d31700d7bc74ef8b9ef61ae2292cb53a"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "6f22377e47b4e53c67b1452392a9b0dce78f0cd7f4becd3bd8f45cf7b9d6fc9e"
+          "sha256": "915db3aab9f8c5edddf9d56990a12c4ad7e8ed715317dc0ad706468bd422e108"
         }
       ]
     },
@@ -1744,7 +1744,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "e773e3b4d5ac58a548054591b125f016f0ab8c9b5a993951721741cb2ec7c754"
+          "sha256": "04780cb53b649847b20ee730de3dab972369981189c9fdca793a198ea8684f2c"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2476,11 +2476,11 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "738ef2a03220f6bc047663b754226cb2623ecb49dffe4dd10ee982a9504b1425"
+          "sha256": "19d198a0f23447e960676f56e6243e13d31700d7bc74ef8b9ef61ae2292cb53a"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "6f22377e47b4e53c67b1452392a9b0dce78f0cd7f4becd3bd8f45cf7b9d6fc9e"
+          "sha256": "915db3aab9f8c5edddf9d56990a12c4ad7e8ed715317dc0ad706468bd422e108"
         },
         {
           "path": "src/governed_ai/__init__.py",

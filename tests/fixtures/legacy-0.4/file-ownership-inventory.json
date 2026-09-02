@@ -80,7 +80,6 @@
     ".ai-team/findings/.gitkeep": "project",
     ".ai-team/framework-version.json": "distribution",
     ".ai-team/logs/.gitkeep": "project",
-    ".ai-team/logs/cursor-events.jsonl": "project",
     ".ai-team/metrics/.gitkeep": "project",
     ".ai-team/migration-backups/.gitignore": "core",
     ".ai-team/observations/.gitkeep": "project",

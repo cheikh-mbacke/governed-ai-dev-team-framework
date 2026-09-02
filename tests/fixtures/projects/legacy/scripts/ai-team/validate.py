@@ -21,7 +21,6 @@ except ModuleNotFoundError:
     raise SystemExit(1)
 
 from i18n import project_language, t
-
 from install_paths import bootstrap_runtime
 
 bootstrap_runtime(_ROOT)
