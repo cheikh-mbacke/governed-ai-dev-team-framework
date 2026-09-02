@@ -99,9 +99,19 @@ def current_branch(project_root):
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def profile_path(project_root):
+    fabric = project_root / ".fabric" / "project-profile.yaml"
+    if fabric.is_file():
+        return fabric
+    client = project_root / ".ai-team" / "project-profile.yaml"
+    if client.is_file():
+        return client
+    return None
+
+
 def read_repository_kind(project_root):
-    profile = project_root / ".ai-team" / "project-profile.yaml"
-    if not profile.is_file():
+    profile = profile_path(project_root)
+    if profile is None:
         return None
     try:
         text = profile.read_text(encoding="utf-8")
@@ -116,7 +126,9 @@ def read_repository_kind(project_root):
 
 def protected_branches(project_root):
     branches = {"main", "master", "trunk"}
-    profile = project_root / ".ai-team" / "project-profile.yaml"
+    profile = profile_path(project_root)
+    if profile is None:
+        return branches
     try:
         text = profile.read_text(encoding="utf-8")
     except OSError:

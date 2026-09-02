@@ -739,11 +739,11 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/workspace.py",
-        "installed_sha256": "sha256:43a145462c9f442e149cf3d76ad3936c765d85bf51142a090da475e6d606c105"
+        "installed_sha256": "sha256:7f5999b5c927f15d408f220061c78960e837acfec2fcc9e0952b124fd07defa7"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/workspace_mode.py",
-        "installed_sha256": "sha256:245c0d276adf2194e506d18e44ed393050fbe1ea11c6ccb37b928d686582d4e1"
+        "installed_sha256": "sha256:65e5325cbeabf9a7d15d7d5d2413f8f7465d6c6472ce3d683ab338c0d5283087"
       },
       {
         "path": ".ai-team/runtime/governed_ai/feedback/__init__.py",
@@ -927,7 +927,7 @@
       },
       {
         "path": "scripts/ai-team/check_git_policy.py",
-        "installed_sha256": "sha256:5c641b6e271ff02a81aa5253818859d012f627b735ec6a06d3fff2e0edcfbd4b"
+        "installed_sha256": "sha256:d6fa2fb1c2fc2a0275bdbf21f17c0759232c81ea05bc407a3270b040164f00fd"
       },
       {
         "path": "scripts/ai-team/check_release_matrix.py",
@@ -935,7 +935,7 @@
       },
       {
         "path": "scripts/ai-team/diagnose.py",
-        "installed_sha256": "sha256:3934ea6ba86394df35a8f227134ca92d4b286e695244968eabaa1b4764718da0"
+        "installed_sha256": "sha256:0a30566982754495b9812092da14ec989ecaf009e0f22474f5fade8497440a84"
       },
       {
         "path": "scripts/ai-team/feedback.py",
@@ -943,11 +943,11 @@
       },
       {
         "path": "scripts/ai-team/gov.py",
-        "installed_sha256": "sha256:02717dbb49336db61a6d5f3e7cf2edb664fb5d6fed06dbd4f897e5422b048a57"
+        "installed_sha256": "sha256:62ab8bf843eceb176ef5aed7efb5c13de22011784a0730eba799c03a6c66d387"
       },
       {
         "path": "scripts/ai-team/i18n.py",
-        "installed_sha256": "sha256:44df865c7097b5c4f404baaa6279d457b412e866bc00c7cb7ec5c464762899ab"
+        "installed_sha256": "sha256:e73c1fdde4a34ea855c27638ba26416c8205692cd31edfc00847eb9147eaed9a"
       },
       {
         "path": "scripts/ai-team/install_paths.py",
@@ -959,7 +959,7 @@
       },
       {
         "path": "scripts/ai-team/orchestrate.py",
-        "installed_sha256": "sha256:ac9bf36d3eb2ce73390b808b17f2b062b20200ca809f0d424b8d9dd7e9a15059"
+        "installed_sha256": "sha256:10f628843651b9715423cd4e781df476b457a5dd52425a701e6a381bbbcdf92d"
       },
       {
         "path": "scripts/ai-team/preflight.py",
@@ -983,15 +983,15 @@
       },
       {
         "path": "scripts/ai-team/sync_source_manifest.py",
-        "installed_sha256": "sha256:7820bbf8d0cf36fc6e95fdb2fd9e82392c517e0e5eb0e1ca55479f748b0869f9"
+        "installed_sha256": "sha256:b14723d44d4bb8aa689a1aa991f0686539f03f44d04219eeb8cc1c8954c5f925"
       },
       {
         "path": "scripts/ai-team/validate.py",
-        "installed_sha256": "sha256:5c548819d6e5c53cbe2573a26dd37caa8a9ff3115585a5db323f079da8d3f975"
+        "installed_sha256": "sha256:a675227cfb1436a772d3aa106db0b7a4b6e8c1ed8f4a18e51f84bd1b6c500cc5"
       },
       {
         "path": "scripts/ai-team/validate_ownership.py",
-        "installed_sha256": "sha256:915db3aab9f8c5edddf9d56990a12c4ad7e8ed715317dc0ad706468bd422e108"
+        "installed_sha256": "sha256:3fa57977130e8d5b4fc313f277752ae69ac7c996376f16a47f7812cb38571626"
       }
     ]
   },
@@ -1058,7 +1058,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/checks.py",
-          "installed_sha256": "sha256:14e9c16e205e912314e7f0684a1148b7b14e2fea280295d81b968a4099343685"
+          "installed_sha256": "sha256:3dab006a5bcd75ad7ea78f6b3a40d2405a0ceff351cc7ff485f976f62122e6cc"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/execute.py",

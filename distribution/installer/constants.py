@@ -55,6 +55,7 @@ FRESH_PROJECT_SEEDS = (
 )
 
 LEGACY_VERSION_REL = Path(".ai-team/framework-version.json")
+FABRIC_SOURCE_VERSION_REL = Path(".fabric/framework-version.json")
 
 # Marker files indicating a prior framework installation (not collisions on fresh install).
 FRAMEWORK_INSTALL_MARKERS = frozenset(

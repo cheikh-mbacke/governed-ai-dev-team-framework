@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+      - "renov/**"
+      - "fix/**"
+      - "feat/**"
+      - "docs/**"
+      - "chore/**"
       - "wu/**"
       - "ai-run/**"
       - "integration/**"

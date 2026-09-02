@@ -74,9 +74,9 @@ def read_product_versions(root: Path = ROOT) -> tuple[str | None, str | None]:
     match = re.search(r'(?m)^version\s*=\s*["\']([^"\']+)["\']\s*$', pyproject)
     pyproject_version = match.group(1) if match else None
 
-    framework = json.loads(
-        (root / ".ai-team" / "framework-version.json").read_text(encoding="utf-8")
-    )
+    from distribution.installer.fabrication_layout import source_version_file
+
+    framework = json.loads(source_version_file(root).read_text(encoding="utf-8"))
     framework_version = framework.get("version")
     return pyproject_version, framework_version
 
@@ -94,7 +94,7 @@ def validate_versions(root: Path = ROOT) -> list[str]:
         errors.append(f"pyproject.toml version is not SemVer: {pyproject_version!r}")
 
     if not isinstance(framework_version, str):
-        errors.append(".ai-team/framework-version.json does not declare a string version")
+        errors.append(".fabric/framework-version.json does not declare a string version")
     elif not SEMVER_RE.fullmatch(framework_version):
         errors.append(f"framework version is not SemVer: {framework_version!r}")
 
@@ -137,14 +137,9 @@ def validate_versions(root: Path = ROOT) -> list[str]:
 
 
 def read_repository_kind(root: Path = ROOT) -> str | None:
-    profile = root / ".ai-team" / "project-profile.yaml"
-    if not profile.is_file():
-        return None
-    for line in profile.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("repository_kind:"):
-            return stripped.split(":", 1)[1].strip()
-    return None
+    from distribution.installer.fabrication_layout import read_repository_kind as _read_kind
+
+    return _read_kind(root)
 
 
 def is_framework_source_repo(root: Path = ROOT) -> bool:

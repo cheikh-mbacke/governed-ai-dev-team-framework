@@ -1,28 +1,19 @@
 # Governed AI Dev Team Framework
 
-**Ce dépôt fabrique le framework** (`repository_kind: framework_source`). Il sert à
-développer et distribuer le produit — ce n'est **pas** un projet où le framework
-s'utilise sur lui-même (pas de Work Units, gates ni `/compile-project` ici).
+**Dépôt source du framework** — fabrication, tests et distribution du produit.
 
-Framework multi-agents gouverné par l'humain : gates, Work Units, preuves, revue et
-audit indépendants — **pour les projets cibles une fois le framework installé**.
+Ce dépôt **n'a pas** de répertoire `.ai-team/` à la racine. L'identité fabrication
+vit sous [`.fabric/`](.fabric/project-profile.yaml) ; le payload installable sous
+[`distribution/payload/`](distribution/payload/). Voir [`AGENTS.md`](AGENTS.md).
 
-**Version cible de cette refonte :** `0.7.0` (noyau agnostique + Adaptateur Cursor + Installation Record v3).
+Framework multi-agents gouverné par l'humain, livré aux **projets cibles après
+installation** — voir [docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md).
 
-Voir [`AGENTS.md`](AGENTS.md) avant toute contribution. Pour **adopter** le framework
-sur un autre projet, suivre la section « Adopter le framework » ci-dessous.
+**Version cible :** `0.7.0`
 
-## Contribuer au framework (ce dépôt)
+## Contribuer
 
-1. Lire [`AGENTS.md`](AGENTS.md) et [`CONTRIBUTING.md`](CONTRIBUTING.md).
-2. Modifier `src/`, `adapters/`, le payload `.ai-team/` et les templates Cursor.
-3. Valider avec `pytest` et `python scripts/ai-team/validate.py`.
-
-## Adopter le framework (autre projet)
-
-1. Lire [docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md).
-2. Installer ou mettre à jour avec [docs/operator/operator-guide.md](docs/operator/operator-guide.md).
-3. Migrer depuis `0.4.x` avec [docs/operator/upgrading.md](docs/operator/upgrading.md) si applicable.
+[`AGENTS.md`](AGENTS.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`VERSIONING.md`](VERSIONING.md)
 
 ## Documentation opérateur
 
@@ -38,21 +29,12 @@ sur un autre projet, suivre la section « Adopter le framework » ci-dessous.
 | [Gouvernance GitHub](docs/operator/github-governance.md) | Protections de branches, tags et réglages de fusion |
 | [Rupture historique 0.4.x](docs/operator/history-cutover-0.4.md) | Décision et conséquences de la nouvelle lignée Git |
 
-## Contribution et versionnement
-
-Voir [`CONTRIBUTING.md`](CONTRIBUTING.md), [`VERSIONING.md`](VERSIONING.md) et
-[`CHANGELOG.md`](CHANGELOG.md).
-
 ## Documentation produit (normative)
 
-Spécifications détaillées sous [`docs/product/`](docs/product/) — vision, architecture cible, tests de conformité (Document 14), etc.
+[`docs/product/`](docs/product/) — spécifications du framework livré aux projets installés.
 
 ## Prérequis
 
 - Python **≥ 3.10**
 - `PyYAML`, `jsonschema` (`requirements.txt`)
 - Git recommandé pour les mises à jour transactionnelles
-
-## Instructions agents
-
-Voir [`AGENTS.md`](AGENTS.md) pour les règles de travail dans ce dépôt.

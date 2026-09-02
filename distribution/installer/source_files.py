@@ -16,18 +16,15 @@ from distribution.installer.paths import (
     compile_source_root,
     map_source_relative_to_target,
 )
+from distribution.installer.fabrication_layout import (
+    read_repository_kind,
+    source_ai_team_dir,
+)
 from distribution.installer.record import INSTALLATION_RECORD_FILE, LEGACY_VERSION_FILE
 
 
 def _read_repository_kind(source_root: Path) -> str | None:
-    profile = source_root / ".ai-team" / "project-profile.yaml"
-    if not profile.is_file():
-        return None
-    for line in profile.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("repository_kind:"):
-            return stripped.split(":", 1)[1].strip()
-    return None
+    return read_repository_kind(source_root)
 
 
 def _resolve_agents_md_source(source_root: Path) -> Path:
@@ -74,7 +71,10 @@ def _should_skip_source_file(relative: Path, *, skip_install_record: bool = True
 
 
 def _iter_direct_copy_files(source_root: Path, item: str):
-    src = source_root / item
+    if item == ".ai-team":
+        src = source_ai_team_dir(source_root)
+    else:
+        src = source_root / item
     if not src.exists():
         return
     if item == ".ai-team":
@@ -95,7 +95,10 @@ def _iter_direct_copy_files(source_root: Path, item: str):
     for path in paths:
         if path.is_dir():
             continue
-        relative = path.relative_to(source_root)
+        if item == ".ai-team":
+            relative = Path(".ai-team") / path.relative_to(src)
+        else:
+            relative = path.relative_to(source_root)
         if _should_skip_source_file(relative):
             continue
         dest_rel = map_source_relative_to_target(relative.as_posix())

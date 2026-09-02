@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-FRAMEWORK_VERSION = REPO_ROOT / ".ai-team" / "framework-version.json"
+FRAMEWORK_VERSION = REPO_ROOT / ".fabric" / "framework-version.json"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 README = REPO_ROOT / "README.md"
 ADAPTER_MANIFEST = REPO_ROOT / "adapters" / "cursor" / "manifest.json"

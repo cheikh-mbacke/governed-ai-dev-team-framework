@@ -6,6 +6,9 @@ project:
   package_manager: pip
 communication:
   language: français
+# autonomy, release, human_authorities below are schema-compatible placeholders on
+# this fabrication repo — they apply to installed client projects after install,
+# not to framework renovation workflow (git/PR/tests per AGENTS.md).
 autonomy:
   # Named preset is authoritative (Document 6 §4). Legacy level is kept only
   # for schema compatibility; resolve_project_preset never lets new code read
@@ -16,11 +19,13 @@ paths:
   product_docs: docs/product
   source_roots:
   - scripts
+  - src
   - .cursor/hooks
   test_roots:
   - tests
   config_roots:
-  - .ai-team
+  - .fabric
+  - distribution/payload
   - .cursor
 commands:
   setup: python -m pip install -r requirements.txt
@@ -52,11 +57,7 @@ setup_status:
   template: false
   cursor_compile_opt_in: false
   fabrication_workflow: classical
-  note: 'Dépôt source du framework — pas une cible installée ni un client en
-    exécution. project-state.yaml reste vierge (not_compiled). Pas de cycle
-    compile-project / Work Units / feedback ici. Workflow fabrication = git/PR/tests
-    classique. Payload client Cursor sous adapters/cursor/templates/.cursor/.
-    cursor_compile_opt_in=false rappelle que /compile-project est réservé aux
-    projets installés. framework-version.json décrit le payload ; pas d
-    installation-record.json. sync_source_manifest.py regénère le manifeste source.'
+  note: 'Dépôt source du framework (fabrication). Workflow git/PR/tests — voir AGENTS.md.
+    Payload installable sous distribution/payload/. Payload client Cursor sous
+    adapters/cursor/templates/.cursor/.'
 active_adapter_id: cursor

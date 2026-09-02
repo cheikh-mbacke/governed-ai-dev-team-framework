@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Optionally back up the current working branch to "origin" after a subagent stops.
 
-Off by default (.ai-team/project-profile.yaml -> release.auto_push_working_branches).
+Off by default (.fabric/ or .ai-team/ project-profile.yaml ->
+release.auto_push_working_branches).
 Even when enabled, this refuses to push the protected branch, and never fails the
 triggering action if the push itself fails or no remote is configured - a backup
 push is a convenience, not a gate. It never merges, force-pushes, or touches any
@@ -22,7 +23,12 @@ except ModuleNotFoundError:
     raise SystemExit(0)
 
 root = Path(os.environ.get("CURSOR_PROJECT_DIR", ".")).resolve()
-profile_path = root / ".ai-team" / "project-profile.yaml"
+fabric_profile = root / ".fabric" / "project-profile.yaml"
+profile_path = (
+    fabric_profile
+    if fabric_profile.is_file()
+    else root / ".ai-team" / "project-profile.yaml"
+)
 
 
 def allow():

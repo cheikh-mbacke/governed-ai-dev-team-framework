@@ -7,7 +7,7 @@
 .ai-team/observations/OBS-*.yaml
 .ai-team/retrospectives/RET-*.yaml
 
-# AI-team ephemeral/runtime scratch
+# AI-team ephemeral/runtime scratch (installed clients)
 .ai-team/logs/*.jsonl
 .ai-team/locks/
 .ai-team/tmp/
@@ -16,6 +16,13 @@
 .ai-team/worktrees/
 .ai-team/migration-backups/*
 !.ai-team/migration-backups/.gitignore
+
+# Fabrication telemetry (framework_source)
+.fabric/logs/*.jsonl
+.fabric/locks/
+.fabric/tmp/
+.fabric/cache/
+.fabric/.transactions/
 
 # Python
 __pycache__/

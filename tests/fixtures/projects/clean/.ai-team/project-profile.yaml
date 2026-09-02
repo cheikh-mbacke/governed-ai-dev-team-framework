@@ -12,8 +12,7 @@ autonomy:
 paths:
   product_docs: docs/product
   source_roots:
-  - scripts
-  - .cursor/hooks
+  - src
   test_roots:
   - tests
   config_roots:
@@ -22,9 +21,9 @@ paths:
 commands:
   setup: python -m pip install -r requirements.txt
   build: null
-  lint: python -m ruff check scripts/
+  lint: null
   typecheck: null
-  unit_test: python -m pytest tests/ -q
+  unit_test: null
   integration_test: null
   e2e_test: null
 runtime_environments:
@@ -41,13 +40,12 @@ release:
   production_requires_g3: true
   auto_push_working_branches: false
 human_authorities:
-  product: cheikh MBACKE
-  engineering_constitution: cheikh MBACKE
-  production_release: cheikh MBACKE
-  final_acceptance: cheikh MBACKE
+  product: unspecified
+  engineering_constitution: unspecified
+  production_release: unspecified
+  final_acceptance: unspecified
 setup_status:
   template: false
   cursor_compile_opt_in: true
-  fabrication_workflow: classical
   note: Witness clean fixture — minimal post-install project data.
 active_adapter_id: cursor

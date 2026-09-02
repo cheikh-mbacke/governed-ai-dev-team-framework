@@ -62,7 +62,7 @@ class InstallCompilerTests(unittest.TestCase):
                 )
 
     def test_framework_profile_declares_fabrication_mode(self) -> None:
-        profile = (ROOT / ".ai-team" / "project-profile.yaml").read_text(encoding="utf-8")
+        profile = (ROOT / ".fabric" / "project-profile.yaml").read_text(encoding="utf-8")
         self.assertIn("repository_kind: framework_source", profile)
         self.assertIn("fabrication_workflow: classical", profile)
         self.assertIn("cursor_compile_opt_in: false", profile)

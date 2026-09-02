@@ -63,13 +63,16 @@ TEMPLATE_CURSOR_ROOT = Path("adapters") / "cursor" / "templates" / ".cursor"
 
 
 def _read_repository_kind(repo_root: Path) -> str | None:
-    profile = repo_root / ".ai-team" / "project-profile.yaml"
-    if not profile.is_file():
-        return None
-    for line in profile.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("repository_kind:"):
-            return stripped.split(":", 1)[1].strip()
+    for profile in (
+        repo_root / ".fabric" / "project-profile.yaml",
+        repo_root / ".ai-team" / "project-profile.yaml",
+    ):
+        if not profile.is_file():
+            continue
+        for line in profile.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("repository_kind:"):
+                return stripped.split(":", 1)[1].strip()
     return None
 
 

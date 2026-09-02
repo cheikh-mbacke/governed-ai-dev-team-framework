@@ -14,7 +14,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from distribution.installer.record import LEGACY_VERSION_FILE
+from distribution.installer.fabrication_layout import profile_path, source_version_file
 from distribution.installer.source_files import build_copy_plan
 
 
@@ -33,9 +33,9 @@ def build_source_managed_files(
 ) -> list[str]:
     """Return sorted source-relative paths that constitute the install payload."""
     source_root = source_root.resolve()
-    profile_src = source_root / ".ai-team" / "project-profile.yaml"
-    if not profile_src.is_file():
-        raise FileNotFoundError(f"Missing {profile_src.relative_to(source_root)}")
+    profile_src = profile_path(source_root)
+    if profile_src is None or not profile_src.is_file():
+        raise FileNotFoundError("Missing fabrication or client project-profile.yaml")
 
     with tempfile.TemporaryDirectory(prefix="source-manifest-") as tmp:
         target = Path(tmp) / "manifest-target"
@@ -88,7 +88,7 @@ def write_source_manifest(
 ) -> Path:
     source_root = source_root.resolve()
     payload = build_source_manifest(source_root, version=version)
-    path = source_root / LEGACY_VERSION_FILE
+    path = source_version_file(source_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return path

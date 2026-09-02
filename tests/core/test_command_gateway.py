@@ -17,6 +17,8 @@ from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.persistence.lock import force_release_stale_lock
 from governed_ai.core.workspace import Workspace
 
+from tests.conftest import PAYLOAD_AI_TEAM
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GOV_PY = REPO_ROOT / "scripts" / "ai-team" / "gov.py"
 
@@ -25,7 +27,7 @@ GOV_PY = REPO_ROOT / "scripts" / "ai-team" / "gov.py"
 def gateway_workspace(tmp_path: Path) -> Workspace:
     ai_team = tmp_path / ".ai-team"
     contracts = ai_team / "contracts"
-    source_contracts = REPO_ROOT / ".ai-team" / "contracts"
+    source_contracts = PAYLOAD_AI_TEAM / "contracts"
     if source_contracts.is_dir():
         shutil.copytree(source_contracts, contracts)
     else:

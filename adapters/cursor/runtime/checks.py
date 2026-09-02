@@ -263,7 +263,10 @@ def collect_preflight_report(
 
 
 def last_hook_activity(project_root: Path) -> dict[str, Any] | None:
-    log_path = project_root / ".ai-team" / "logs" / "cursor-events.jsonl"
+    if (project_root / ".fabric" / "project-profile.yaml").is_file():
+        log_path = project_root / ".fabric" / "logs" / "cursor-events.jsonl"
+    else:
+        log_path = project_root / ".ai-team" / "logs" / "cursor-events.jsonl"
     if not log_path.is_file():
         return None
     last_line = None

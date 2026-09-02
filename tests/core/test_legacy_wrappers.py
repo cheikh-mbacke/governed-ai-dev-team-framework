@@ -25,7 +25,7 @@ from governed_ai.core.commands.legacy_cli import (
 )
 from governed_ai.core.workspace import Workspace
 
-from tests.core.workspace_helpers import write_installed_client_profile
+from tests.core.workspace_helpers import FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -33,11 +33,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 @pytest.fixture()
 def wrapper_workspace(tmp_path: Path) -> Workspace:
     ai_team = tmp_path / ".ai-team"
-    source = REPO_ROOT / ".ai-team"
+    source = PAYLOAD_AI_TEAM
     for name in ("schemas", "constitution", "contracts"):
         shutil.copytree(source / name, ai_team / name)
     write_installed_client_profile(ai_team, project_id="wrapper-test")
-    shutil.copy2(source / "framework-version.json", ai_team / "framework-version.json")
+    shutil.copy2(FABRIC_ROOT / "framework-version.json", ai_team / "framework-version.json")
     for directory in (
         "observations",
         "retrospectives",

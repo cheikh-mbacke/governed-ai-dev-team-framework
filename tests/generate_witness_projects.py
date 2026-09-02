@@ -99,7 +99,9 @@ def parse_args() -> argparse.Namespace:
 
 
 def constitution_version() -> str:
-    text = (ROOT / ".ai-team" / "constitution" / "constitution.yaml").read_text(
+    text = (
+        ROOT / "distribution" / "payload" / ".ai-team" / "constitution" / "constitution.yaml"
+    ).read_text(
         encoding="utf-8"
     )
     match = re.search(r'(?m)^\s{2}version:\s*["\']?([^"\'\s]+)', text)
@@ -109,7 +111,7 @@ def constitution_version() -> str:
 
 
 def framework_version() -> str:
-    payload = json.loads((ROOT / ".ai-team" / "framework-version.json").read_text(encoding="utf-8"))
+    payload = json.loads((ROOT / ".fabric" / "framework-version.json").read_text(encoding="utf-8"))
     return payload["version"]
 
 

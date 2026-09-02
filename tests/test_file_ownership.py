@@ -16,7 +16,7 @@ FIXTURES_ROOT = ROOT / "tests" / "fixtures" / "legacy-0.4"
 OBJECTS_DIR = FIXTURES_ROOT / "objects"
 INVENTORY_PATH = FIXTURES_ROOT / "file-ownership-inventory.json"
 OBJECTS_MANIFEST_PATH = FIXTURES_ROOT / "objects-manifest.json"
-SCHEMAS_DIR = ROOT / ".ai-team" / "schemas"
+SCHEMAS_DIR = ROOT / "distribution" / "payload" / ".ai-team" / "schemas"
 
 sys.path.insert(0, str(ROOT / "scripts" / "ai-team"))
 from validate_ownership import (  # noqa: E402
@@ -74,23 +74,23 @@ class FileOwnershipInventoryTests(unittest.TestCase):
         self.assertTrue(INVENTORY_PATH.is_file())
 
     def test_migration_backups_gitignore_is_core(self):
-        path = ".ai-team/migration-backups/.gitignore"
+        path = "distribution/payload/.ai-team/migration-backups/.gitignore"
         self.assertEqual(classify_owner(path), "core")
         inventory = load_json(INVENTORY_PATH)
         self.assertEqual(inventory["files"][path], "core")
 
     def test_managed_files_classify_as_non_project(self):
-        framework_version = load_json(ROOT / ".ai-team" / "framework-version.json")
+        framework_version = load_json(ROOT / ".fabric" / "framework-version.json")
         for path in framework_version["managed_files"]:
-            if not path.startswith(".ai-team/") and not path.startswith("scripts/"):
+            if not path.startswith("distribution/payload/.ai-team/") and not path.startswith("scripts/"):
                 continue
             if not any(
                 path.startswith(prefix)
                 for prefix in (
-                    ".ai-team/constitution/",
-                    ".ai-team/schemas/",
-                    ".ai-team/templates/",
-                    ".ai-team/migration-backups/",
+                    "distribution/payload/.ai-team/constitution/",
+                    "distribution/payload/.ai-team/schemas/",
+                    "distribution/payload/.ai-team/templates/",
+                    "distribution/payload/.ai-team/migration-backups/",
                     "scripts/ai-team/",
                 )
             ):

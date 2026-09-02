@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate .ai-team/framework-version.json for the framework source repository."""
+"""Regenerate .fabric/framework-version.json for the framework source repository."""
 
 from __future__ import annotations
 
@@ -10,25 +10,26 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-_profile_path = ROOT / ".ai-team" / "project-profile.yaml"
-if _profile_path.is_file():
-    for _line in _profile_path.read_text(encoding="utf-8").splitlines():
-        if _line.strip().startswith("repository_kind:"):
-            _kind = _line.split(":", 1)[1].strip()
-            if _kind != "framework_source":
-                print(
-                    f"Error: sync_source_manifest.py only applies to framework_source "
-                    f"repositories (this project declares repository_kind: {_kind!r}). "
-                    f"Run validate.py instead.",
-                    file=sys.stderr,
-                )
-                raise SystemExit(1)
-            break
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from distribution.installer.fabrication_layout import (  # noqa: E402
+    is_framework_source_repo,
+    source_version_file,
+)
+
+if not is_framework_source_repo(ROOT):
+    print(
+        "Error: sync_source_manifest.py only applies to framework_source "
+        "repositories. Run validate.py instead.",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from distribution.installer.record import LEGACY_VERSION_FILE  # noqa: E402
+from distribution.installer.fabrication_layout import source_version_file  # noqa: E402
 from distribution.installer.source_manifest import (  # noqa: E402
     build_source_manifest,
     write_source_manifest,
@@ -50,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     root = args.root.resolve()
-    manifest_path = root / LEGACY_VERSION_FILE
+    manifest_path = source_version_file(root)
 
     if args.check:
         if not manifest_path.is_file():

@@ -1,30 +1,44 @@
 ---
 description: >-
-  When repository_kind is framework_source, this repo builds the framework; it
-  does not run the client governance cycle (compile-project, gates, Work Units).
+  Fabrication workspace layout — no root .ai-team/, no client governance cycle.
 alwaysApply: true
 ---
-# Framework source workspace layout
+# Framework fabrication workspace layout
 
-Read `.ai-team/project-profile.yaml` → `project.repository_kind` first.
+Read `.fabric/project-profile.yaml` → `project.repository_kind` first.
 
-When `repository_kind` is `framework_source`:
+This repository **builds** the framework. It is **not** an installed client
+project.
 
-- This repository **builds** the framework. It is **not** an installed client
-  project and must not be analyzed as one.
-- `.ai-team/state/project-state.yaml` is a **virgin template** (`phase:
-  not_compiled`, empty `work_units`). Do not treat it as an active client
-  runtime or execution plan.
-- Do **not** run `/compile-project`, gate commands, or client Work Unit cycles
-  here. Framework development on this repo does not use the installed-client
-  orchestration path.
-- Edit implementation code under `src/governed_ai/`, `adapters/`, and
-  `distribution/`. Client Cursor payload lives under
-  `adapters/cursor/templates/.cursor/` — not as a full client overlay at
-  the repository root. Never create `.ai-team/runtime/` or
-  `installation-record.json` here.
-- To observe installed behavior, use `tests/fixtures/projects/clean/` or
-  `python tools/install.py --target <dir>` in a separate directory.
-- Do not run `scripts/ai-team/feedback.py` record, retrospective, or export here.
+## What exists at the repository root
 
-When `repository_kind` is not `framework_source`, ignore the rules above.
+| Path | Role |
+|------|------|
+| `.fabric/` | Fabrication identity (`project-profile.yaml`, source manifest, logs) |
+| `distribution/payload/.ai-team/` | Installable payload (constitution, schemas, contracts, templates) |
+| `distribution/payload/seeds/` | Fresh-install seeds copied to client `.ai-team/` |
+| `src/`, `adapters/`, `scripts/` | Implementation and CLI |
+| `.cursor/` | Minimal fabrication overlay only (not client skills/agents) |
+| `adapters/cursor/templates/.cursor/` | Client Cursor payload (installed target) |
+
+There is **no** root `.ai-team/` directory. If you see one, it was created by
+mistake — remove it and run `python scripts/ai-team/validate.py`.
+
+## Do not run the client cycle here
+
+- Do **not** run `/compile-project`, gate commands, Work Unit orchestration, or
+  `scripts/ai-team/feedback.py` record / retrospective / export.
+- Do **not** create `.ai-team/runtime/` or `installation-record.json` at the repo
+  root.
+- Framework work uses git branches (`renov/*`, `fix/*`, …), review, and tests —
+  see [`AGENTS.md`](../../AGENTS.md).
+
+## Observe installed-client behavior
+
+- Reference fixture: `tests/fixtures/projects/clean/`
+- Or: `python tools/install.py --target <separate-directory>`
+
+## Wrong files to follow
+
+- `adapters/cursor/templates/AGENTS.md` describes **installed clients**, not this
+  repo. Use root [`AGENTS.md`](../../AGENTS.md) here.
