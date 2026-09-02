@@ -1,4 +1,3 @@
-<!-- governed-ai:start -->
 # Governed AI Team Instructions
 
 This repository uses the Engineering Constitution under `.ai-team/constitution/`.
@@ -20,4 +19,3 @@ before runtime activation.
 Do not invent missing product or policy decisions. Treat repository state and
 runtime evidence as observed reality, not as permission to contradict human
 authoritative sources under `docs/product/` and `.ai-team/sources/`.
-<!-- governed-ai:end -->

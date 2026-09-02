@@ -11,6 +11,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 CURSOR = ROOT / ".cursor"
+CLIENT_CURSOR = ROOT / "adapters" / "cursor" / "templates" / ".cursor"
 
 
 class CursorCliConfigurationTests(unittest.TestCase):
@@ -27,11 +28,11 @@ class CursorCliConfigurationTests(unittest.TestCase):
         self.assertIn("Shell(git:add*)", allow)
         self.assertIn("Shell(git:commit*)", allow)
         self.assertIn("Shell(python:scripts/ai-team/diagnose.py*)", allow)
-        self.assertIn("Shell(py:-3 scripts/ai-team/preflight.py*)", allow)
-        self.assertIn("Shell(python:scripts/ai-team/propose_allowlist.py*)", allow)
-        self.assertIn("Shell(py:-3 scripts/ai-team/propose_allowlist.py*)", allow)
-        self.assertIn("Shell(python:scripts/ai-team/read_docx.py*)", allow)
-        self.assertIn("Shell(py:-3 scripts/ai-team/read_docx.py*)", allow)
+        self.assertIn("Shell(python:scripts/ai-team/sync_source_manifest.py*)", allow)
+        self.assertIn("Shell(python:scripts/ai-team/check_git_policy.py*)", allow)
+        self.assertIn("Shell(py:-3 scripts/ai-team/validate.py*)", allow)
+        self.assertIn("Shell(py:-3 scripts/ai-team/sync_source_manifest.py*)", allow)
+        self.assertIn("Shell(py:-3 scripts/ai-team/check_git_policy.py*)", allow)
         # Themed read-only additions: git reconnaissance verbs beyond the
         # original status/diff/log/show, and read-only PowerShell cmdlets
         # (never a write cmdlet like Remove-Item/Set-Content).
@@ -63,8 +64,8 @@ class CursorCliConfigurationTests(unittest.TestCase):
         self.assertIn("git rev-parse", terminal_allowlist)
         self.assertIn("git merge-base", terminal_allowlist)
         self.assertIn("Get-ChildItem", terminal_allowlist)
-        self.assertIn("python scripts/ai-team/propose_allowlist.py", terminal_allowlist)
-        self.assertIn("py -3 scripts/ai-team/propose_allowlist.py", terminal_allowlist)
+        self.assertIn("python scripts/ai-team/sync_source_manifest.py", terminal_allowlist)
+        self.assertIn("python scripts/ai-team/check_git_policy.py", terminal_allowlist)
 
     def test_subagents_are_foreground_by_default_and_readonly_roles_stay_readonly(self):
         readonly_roles = {
@@ -75,14 +76,14 @@ class CursorCliConfigurationTests(unittest.TestCase):
             "release-agent.md",
             "security-reviewer.md",
         }
-        for agent_path in sorted((CURSOR / "agents").glob("*.md")):
+        for agent_path in sorted((CLIENT_CURSOR / "agents").glob("*.md")):
             text = agent_path.read_text(encoding="utf-8")
             self.assertNotIn("is_background: true", text, agent_path.name)
             if agent_path.name in readonly_roles:
                 self.assertIn("readonly: true", text, agent_path.name)
 
     def test_auth_smoke_agent_is_non_readonly_for_cross_platform_allowlist_smoke(self):
-        text = (CURSOR / "agents" / "auth-smoke.md").read_text(encoding="utf-8")
+        text = (CLIENT_CURSOR / "agents" / "auth-smoke.md").read_text(encoding="utf-8")
         self.assertIn("name: auth-smoke", text)
         self.assertIn("readonly: false", text)
         self.assertNotIn("readonly: true", text)
@@ -319,6 +320,34 @@ class GuardShellTests(unittest.TestCase):
             )
             self.assertEqual(missing_work_unit.returncode, 2, missing_work_unit.stderr)
             self.assertIn("type(WU-ID)", json.loads(missing_work_unit.stdout)["message"])
+
+    def test_framework_source_allows_conventional_commits(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+            target = Path(temp_dir)
+            (target / ".ai-team").mkdir(parents=True)
+            (target / ".ai-team" / "project-profile.yaml").write_text(
+                "project:\n  repository_kind: framework_source\n"
+                "release:\n  protected_branch: main\n",
+                encoding="utf-8",
+            )
+            (target / "tracked.txt").write_text("initial\n", encoding="utf-8")
+            commands = [
+                ["git", "init", "-q"],
+                ["git", "config", "user.name", "Guard Test"],
+                ["git", "config", "user.email", "guard@example.invalid"],
+                ["git", "add", "."],
+                ["git", "commit", "-qm", "initial"],
+                ["git", "branch", "-M", "main"],
+                ["git", "switch", "-c", "renov/test"],
+            ]
+            for command in commands:
+                result = subprocess.run(
+                    command, cwd=target, text=True, capture_output=True, timeout=10
+                )
+                self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+
+            working = self.run_guard('git commit -m "feat: fabrication change"', target)
+            self.assertEqual(working.returncode, 0, working.stderr)
 
     def test_history_rewrite_is_not_an_autonomous_path(self):
         for command in ["git commit --amend --no-edit", "git rebase main"]:

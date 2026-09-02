@@ -7,7 +7,17 @@ color: blue
 ---
 # Capture framework feedback
 
-Use this Skill when the human asks for a retrospective, when a Work Unit reaches
+## Framework source guard
+
+Read `.ai-team/project-profile.yaml` → `project.repository_kind` first.
+
+When `repository_kind` is `framework_source`, **stop immediately**. This repository
+builds the framework; feedback commands are for **installed target projects** only.
+Do not run `scripts/ai-team/feedback.py` here. See `AGENTS.md` and
+`05-workspace-layout.mdc`.
+
+Use this Skill on an installed client project when the human asks for a retrospective,
+when a Work Unit reaches
 a terminal state, or when execution exposes unexpected rework, delay, manual
 intervention, or a limitation in governance, context, staffing, permissions,
 tooling, verification, or the environment.

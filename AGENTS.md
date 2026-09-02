@@ -1,37 +1,54 @@
-# Governed AI Team Instructions
+# Governed AI Team — dépôt source du framework
 
-This repository uses the Engineering Constitution under `.ai-team/constitution/`.
+Ce dépôt **fabrique** le framework Governed AI Team. Ce n'est **pas** un projet
+client où le framework a été installé et activé.
 
-## Framework source repository
+## Votre workflow ici (fabrication)
 
-If `.ai-team/project-profile.yaml` declares `repository_kind: framework_source`,
-this repo **builds** the framework — it is **not** an installed client project.
+Développement logiciel classique :
 
-- Edit framework code under `src/`, `adapters/`, `distribution/`, and the
-  installable payload under `.ai-team/constitution/`, `.ai-team/schemas/`,
-  `.ai-team/contracts/`, `.ai-team/templates/`.
-- `.ai-team/state/project-state.yaml` is a **virgin template** (`phase:
-  not_compiled`, empty `work_units`). It is not an active client runtime.
-- Do **not** run `/compile-project`, client gate cycles, or Work Unit orchestration
-  on this repository.
-- Do **not** create `.ai-team/runtime/` or `.ai-team/installation-record.json` here.
-- Do **not** run `scripts/ai-team/feedback.py` record, retrospective, or export here.
-- Do **not** edit `tests/fixtures/projects/clean|legacy/` to change product behavior.
-- To test installed behavior, use `tests/fixtures/projects/clean/` or
-  `python tools/install.py --target <separate-dir>` — never `--target .` on this repo.
-- After changing the installable payload:
-  `python scripts/ai-team/sync_source_manifest.py` then `python scripts/ai-team/validate.py`
+1. Branche courte depuis `main` (`renov/<slug>`, `fix/<slug>`, etc.).
+2. Modifier le code et les tests.
+3. Valider : `python -m pytest tests/ -q`, `python scripts/ai-team/validate.py`.
+4. Commit Conventional Commits (`feat: …`, `fix: …`, `docs: …`).
+5. Pull request vers `main`.
 
-Before making framework code changes:
+**Ne pas utiliser sur ce dépôt :**
 
-1. Read `.ai-team/project-profile.yaml` to confirm `repository_kind:
-   framework_source`.
-2. Do not invent missing product or policy decisions; update human product sources
-   under `docs/product/` when intent changes.
-3. Treat repository/runtime observations as evidence, not as permission to
-   contradict human authoritative sources.
-4. When execution exposes reusable friction on an **installed target project**,
-   record it there with `python scripts/ai-team/feedback.py record` — not in this
-   source repository.
-5. Follow `VERSIONING.md` for branch names, commit messages, merge strategy,
-   version changes, tags, releases, maintenance branches, and history cutovers.
+- `/compile-project`, orchestrateur client, gates G0–G4 client ;
+- `.ai-team/work-units/`, cycle de preuves client, `feedback.py` ;
+- `tools/install.py --target .` (jamais sur ce repo).
+
+## Où éditer quoi
+
+| Zone | Contenu |
+|------|---------|
+| `src/governed_ai/` | Noyau Python |
+| `adapters/` | Adaptateur Cursor et compilateur |
+| `distribution/` | Installateur et politique de version |
+| `.ai-team/constitution/`, `schemas/`, `contracts/`, `templates/` | Payload installable |
+| `adapters/cursor/templates/.cursor/` | **Payload client Cursor** (agents, skills, règles WU/gates) |
+| `.cursor/` (racine) | Overlay **fabrication** uniquement — minimal, pas de cycle client |
+
+Pour tester le comportement **installé**, utiliser `tests/fixtures/projects/clean/`
+ou `python tools/install.py --target <répertoire-séparé>`.
+
+## Après modification du payload installable
+
+```bash
+python scripts/ai-team/sync_source_manifest.py
+python scripts/ai-team/validate.py
+```
+
+## Règles générales
+
+1. Confirmer `repository_kind: framework_source` dans `.ai-team/project-profile.yaml`.
+2. Ne pas inventer d'intention produit ; mettre à jour `docs/product/` si besoin.
+3. Ne pas modifier `tests/fixtures/projects/clean|legacy/` pour changer le comportement produit.
+4. Suivre `VERSIONING.md` pour branches, versions, tags et releases.
+
+## Projets cibles (après installation)
+
+Sur un projet **installé** (`existing_or_greenfield_project`), le cycle gouverné
+client s'applique : Work Units, gates, orchestrateur, preuves. Voir
+`docs/operator/adopter-checklist.md` et le `AGENTS.md` généré à l'installation.

@@ -19,6 +19,24 @@ from distribution.installer.paths import (
 from distribution.installer.record import INSTALLATION_RECORD_FILE, LEGACY_VERSION_FILE
 
 
+def _read_repository_kind(source_root: Path) -> str | None:
+    profile = source_root / ".ai-team" / "project-profile.yaml"
+    if not profile.is_file():
+        return None
+    for line in profile.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("repository_kind:"):
+            return stripped.split(":", 1)[1].strip()
+    return None
+
+
+def _resolve_agents_md_source(source_root: Path) -> Path:
+    template = source_root / "adapters" / "cursor" / "templates" / "AGENTS.md"
+    if _read_repository_kind(source_root) == "framework_source" and template.is_file():
+        return template
+    return source_root / "AGENTS.md"
+
+
 def bootstrap_adapter_imports(source_root: Path, target: Path | None = None) -> None:
     from distribution.installer.paths import is_installed_runtime_layout
 
@@ -67,8 +85,9 @@ def _iter_direct_copy_files(source_root: Path, item: str):
             return
         paths = ai_team.rglob("*")
     elif item == "AGENTS.md":
-        if src.is_file():
-            yield Path("AGENTS.md"), src
+        agents_src = _resolve_agents_md_source(source_root)
+        if agents_src.is_file():
+            yield Path("AGENTS.md"), agents_src
         return
     else:
         paths = src.rglob("*") if src.is_dir() else [src]

@@ -99,6 +99,21 @@ def current_branch(project_root):
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def read_repository_kind(project_root):
+    profile = project_root / ".ai-team" / "project-profile.yaml"
+    if not profile.is_file():
+        return None
+    try:
+        text = profile.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("repository_kind:"):
+            return stripped.split(":", 1)[1].strip()
+    return None
+
+
 def protected_branches(project_root):
     branches = {"main", "master", "trunk"}
     profile = project_root / ".ai-team" / "project-profile.yaml"
@@ -126,6 +141,7 @@ for pattern in history_rewrite_patterns:
         )
 
 project_root = Path(os.environ.get("CURSOR_PROJECT_DIR", ".")).resolve()
+fabrication_mode = read_repository_kind(project_root) == "framework_source"
 branch = current_branch(project_root)
 protected_mutation = re.search(
     r"\bgit(?:\s+-C\s+(?:\"[^\"]+\"|'[^']+'|\S+))?\s+"
@@ -134,15 +150,27 @@ protected_mutation = re.search(
     flags=re.IGNORECASE,
 )
 if protected_mutation and branch in {None, "HEAD"}:
-    deny(
-        "Git mutation requires a named isolated Work Unit branch; detached or "
-        "unresolved HEAD is not an autonomous commit path."
-    )
+    if fabrication_mode:
+        deny(
+            "Git mutation requires a named branch; detached or unresolved HEAD "
+            "is not allowed."
+        )
+    else:
+        deny(
+            "Git mutation requires a named isolated Work Unit branch; detached or "
+            "unresolved HEAD is not an autonomous commit path."
+        )
 if branch in protected_branches(project_root) and protected_mutation:
-    deny(
-        f"Git mutation '{protected_mutation.group(1)}' is blocked on protected "
-        f"branch '{branch}'. Use an isolated Work Unit branch or worktree."
-    )
+    if fabrication_mode:
+        deny(
+            f"Git mutation '{protected_mutation.group(1)}' is blocked on protected "
+            f"branch '{branch}'. Use a short-lived feature branch."
+        )
+    else:
+        deny(
+            f"Git mutation '{protected_mutation.group(1)}' is blocked on protected "
+            f"branch '{branch}'. Use an isolated Work Unit branch or worktree."
+        )
 
 commit_command = re.search(
     r"\bgit(?:\s+-C\s+(?:\"[^\"]+\"|'[^']+'|\S+))?\s+commit\b",
@@ -154,7 +182,7 @@ work_unit_message = re.search(
     command,
     flags=re.IGNORECASE,
 )
-if commit_command and not work_unit_message:
+if commit_command and not work_unit_message and not fabrication_mode:
     deny(
         "Autonomous commit messages must use 'type(WU-ID): concise description'. "
         "Use a human-controlled path for commits outside an approved Work Unit."

@@ -1,14 +1,16 @@
 # Governed AI Dev Team Framework
 
-Framework de développement multi-agents gouverné par l'humain : gates, Work Units, preuves, revue et audit indépendants.
+**Ce dépôt fabrique le framework** (`repository_kind: framework_source`). Il sert à
+développer et distribuer le produit — ce n'est **pas** un projet où le framework
+s'utilise sur lui-même (pas de Work Units, gates ni `/compile-project` ici).
+
+Framework multi-agents gouverné par l'humain : gates, Work Units, preuves, revue et
+audit indépendants — **pour les projets cibles une fois le framework installé**.
 
 **Version cible de cette refonte :** `0.7.0` (noyau agnostique + Adaptateur Cursor + Installation Record v3).
 
-> **Ce dépôt est le dépôt source du framework** (`repository_kind: framework_source`).
-> Il sert à développer et distribuer le framework — ce n'est **pas** un projet où le
-> framework a été installé sur lui-même. Voir [`AGENTS.md`](AGENTS.md) avant toute
-> contribution. Pour **adopter** le framework sur un autre projet, suivre la section
-> « Adopter le framework » ci-dessous.
+Voir [`AGENTS.md`](AGENTS.md) avant toute contribution. Pour **adopter** le framework
+sur un autre projet, suivre la section « Adopter le framework » ci-dessous.
 
 ## Contribuer au framework (ce dépôt)
 

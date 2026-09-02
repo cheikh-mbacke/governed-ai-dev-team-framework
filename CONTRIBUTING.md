@@ -9,7 +9,9 @@ Ce dépôt **fabrique** le framework. Ce n'est **pas** un projet client où le f
 a été installé et activé.
 
 - Éditer le code sous `src/`, `adapters/`, `distribution/` et le payload installable
-  (`.ai-team/constitution/`, schémas, contrats, templates, `.cursor/` à la racine).
+  (`.ai-team/constitution/`, schémas, contrats, templates).
+- Éditer le payload client Cursor sous `adapters/cursor/templates/.cursor/` —
+  **pas** à la racine `.cursor/` (overlay fabrication minimal uniquement).
 - Ne pas lancer `/compile-project`, l'orchestrateur client, les gates G0–G4 client, ni
   `scripts/ai-team/feedback.py` **sur ce dépôt**.
 - Ne pas remplir `.ai-team/work-units/`, `events/`, `evidence/`, etc. — l'historique de

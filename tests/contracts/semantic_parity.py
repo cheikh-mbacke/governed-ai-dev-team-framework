@@ -58,6 +58,27 @@ ROLE_AGENT_ALIASES: dict[str, str] = {}
 CONTROL_PLANE_ROLE_ID = "control-plane"
 IMPLEMENT_WORK_UNIT_PROCEDURE = "implement-work-unit"
 SECURITY_REVIEW_PROCEDURE = "security-review"
+FRAMEWORK_SOURCE_KIND = "framework_source"
+TEMPLATE_CURSOR_ROOT = Path("adapters") / "cursor" / "templates" / ".cursor"
+
+
+def _read_repository_kind(repo_root: Path) -> str | None:
+    profile = repo_root / ".ai-team" / "project-profile.yaml"
+    if not profile.is_file():
+        return None
+    for line in profile.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("repository_kind:"):
+            return stripped.split(":", 1)[1].strip()
+    return None
+
+
+def _cursor_tree_root(repo_root: Path) -> Path:
+    if _read_repository_kind(repo_root) == FRAMEWORK_SOURCE_KIND:
+        template_root = repo_root / TEMPLATE_CURSOR_ROOT
+        if template_root.is_dir():
+            return template_root
+    return repo_root / ".cursor"
 
 
 @dataclass(frozen=True)
@@ -171,10 +192,11 @@ def _default_procedure_sources(procedure_id: str) -> list[str]:
 
 
 def _resolve_role_cursor_paths(role_id: str, repo_root: Path) -> list[Path]:
+    cursor_root = _cursor_tree_root(repo_root)
     if role_id == CONTROL_PLANE_ROLE_ID:
-        return [repo_root / ".cursor" / "skills" / "orchestrator" / "SKILL.md"]
+        return [cursor_root / "skills" / "orchestrator" / "SKILL.md"]
     agent_name = ROLE_AGENT_ALIASES.get(role_id, role_id)
-    return [repo_root / ".cursor" / "agents" / f"{agent_name}.md"]
+    return [cursor_root / "agents" / f"{agent_name}.md"]
 
 
 def _resolve_procedure_cursor_paths(
@@ -183,7 +205,8 @@ def _resolve_procedure_cursor_paths(
     compiler_notes: dict[str, list[str]],
 ) -> list[Path]:
     rel_paths = compiler_notes.get(procedure_id) or _default_procedure_sources(procedure_id)
-    return [repo_root / ".cursor" / rel_path for rel_path in rel_paths]
+    cursor_root = _cursor_tree_root(repo_root)
+    return [cursor_root / Path(rel_path) for rel_path in rel_paths]
 
 
 def _check_role_parity(
@@ -375,8 +398,9 @@ def _check_extra_cursor_artefacts(
     divergences: list[ParityDivergence] = []
     expected_agents = {rid for rid in roles if rid != CONTROL_PLANE_ROLE_ID}
     expected_agents |= {SECURITY_REVIEW_PROCEDURE.replace("-review", "-reviewer")}
+    cursor_root = _cursor_tree_root(repo_root)
 
-    for agent_path in sorted((repo_root / ".cursor" / "agents").glob("*.md")):
+    for agent_path in sorted((cursor_root / "agents").glob("*.md")):
         agent_id = agent_path.stem
         if agent_id in ADAPTER_ONLY_AGENTS:
             continue
@@ -397,7 +421,7 @@ def _check_extra_cursor_artefacts(
             continue
         mapped_skills.add(PROCEDURE_SKILL_ALIASES.get(procedure_id, procedure_id))
 
-    for skill_dir in sorted((repo_root / ".cursor" / "skills").iterdir()):
+    for skill_dir in sorted((cursor_root / "skills").iterdir()):
         if not skill_dir.is_dir():
             continue
         if skill_dir.name not in mapped_skills:

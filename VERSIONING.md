@@ -3,12 +3,26 @@
 Ce document est normatif pour ce dépôt. Il complète la Constitution d'ingénierie,
 notamment `.ai-team/constitution/95-git-release-policy.yaml`.
 
-## Modèle de développement
+## Dépôt source du framework (`repository_kind: framework_source`)
+
+Ce dépôt **fabrique** le framework. Le cycle Work Unit / gates client **ne
+s'applique pas** au développement ici — seulement sur les projets installés.
+
+| Élément | Convention sur ce dépôt |
+|---|---|
+| Branches | `renov/<slug>`, `fix/<slug>`, `feat/<slug>`, `docs/<slug>`, `chore/<slug>`, `release/<major>.<minor>` |
+| Commits | Conventional Commits : `feat: …`, `fix: …`, `docs: …` (sans `WU-ID`) |
+| PR | Vers `main`, tests et `validate.py` verts |
+| Vocabulaire client | Réservé au payload (`adapters/cursor/templates/`) et aux projets installés |
+
+Voir aussi [`CONTRIBUTING.md`](CONTRIBUTING.md) et [`AGENTS.md`](AGENTS.md).
+
+## Modèle de développement (projets installés et politique produit)
 
 Le dépôt suit un modèle trunk-based gouverné. `main` est la seule branche de
 référence publiable et doit rester dans un état vérifié.
 
-Les changements sont réalisés sur des branches courtes :
+Les changements sur un **projet client installé** sont réalisés sur des branches courtes :
 
 | Usage | Format | Base | Durée de vie |
 |---|---|---|---|
@@ -22,9 +36,9 @@ Toute autre convention doit être approuvée et enregistrée avant utilisation.
 Les branches fusionnées sont supprimées automatiquement (réglage GitHub + workflow
 `prune-merged-branches.yml`), sauf branche de maintenance active `release/*`.
 
-## Commits
+## Commits (projets installés)
 
-Les commits non générés utilisent :
+Les commits non générés sur un **projet client installé** utilisent :
 
 ```text
 type(WU-ID): description concise

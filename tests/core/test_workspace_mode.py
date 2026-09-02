@@ -12,6 +12,9 @@ from governed_ai.core.workspace_mode import (
     is_framework_source,
     read_repository_kind,
 )
+from governed_ai.core.fabrication_overlay import (
+    collect_framework_source_fabrication_overlay_violations,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -41,6 +44,10 @@ def test_no_client_cycle_artifacts_on_source_repo() -> None:
         (REPO_ROOT / ".ai-team" / "state" / "project-state.yaml").read_text(encoding="utf-8")
     )
     assert collect_framework_source_client_cycle_artifacts(REPO_ROOT / ".ai-team", state=state) == []
+
+
+def test_fabrication_cursor_overlay_is_minimal() -> None:
+    assert collect_framework_source_fabrication_overlay_violations(REPO_ROOT) == []
 
 
 def test_feedback_record_blocked_on_framework_source() -> None:

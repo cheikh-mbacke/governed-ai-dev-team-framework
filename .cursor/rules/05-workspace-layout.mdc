@@ -19,7 +19,9 @@ When `repository_kind` is `framework_source`:
   here. Framework development on this repo does not use the installed-client
   orchestration path.
 - Edit implementation code under `src/governed_ai/`, `adapters/`, and
-  `distribution/`. Never create `.ai-team/runtime/` or
+  `distribution/`. Client Cursor payload lives under
+  `adapters/cursor/templates/.cursor/` — not as a full client overlay at
+  the repository root. Never create `.ai-team/runtime/` or
   `installation-record.json` here.
 - To observe installed behavior, use `tests/fixtures/projects/clean/` or
   `python tools/install.py --target <dir>` in a separate directory.

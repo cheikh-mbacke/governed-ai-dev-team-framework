@@ -674,6 +674,10 @@
         "installed_sha256": "sha256:732ab27a569fa667c35ece46fe89dd067e3206122fe5111028a303896856f314"
       },
       {
+        "path": ".ai-team/runtime/governed_ai/core/fabrication_overlay.py",
+        "installed_sha256": "sha256:d81d4dc074c5a20fe14868b8aa0c22a506bb3a194c10c3413b32c3ad4e90accc"
+      },
+      {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/__init__.py",
         "installed_sha256": "sha256:82b1a0464968b5993bfb494952997393787ab8dd6c5de16ad80ec52f9eda83bc"
       },
@@ -915,7 +919,7 @@
       },
       {
         "path": "AGENTS.md",
-        "installed_sha256": "sha256:70addcaeb197bdbddda80a625e5fe54a85614d45d0f785e4f64f46ea9dfda973"
+        "installed_sha256": "sha256:fc280f693062aee71c2784a86df02e314432adae5338c920bf253cf8185e339b"
       },
       {
         "path": "scripts/ai-team/check_done.py",
@@ -923,7 +927,7 @@
       },
       {
         "path": "scripts/ai-team/check_git_policy.py",
-        "installed_sha256": "sha256:8b65d1946938f7b49101cfacd5b1418bd17c8daeb30dc20c71504f2076c60d9f"
+        "installed_sha256": "sha256:5c641b6e271ff02a81aa5253818859d012f627b735ec6a06d3fff2e0edcfbd4b"
       },
       {
         "path": "scripts/ai-team/check_release_matrix.py",
@@ -983,7 +987,7 @@
       },
       {
         "path": "scripts/ai-team/validate.py",
-        "installed_sha256": "sha256:19d198a0f23447e960676f56e6243e13d31700d7bc74ef8b9ef61ae2292cb53a"
+        "installed_sha256": "sha256:5c548819d6e5c53cbe2573a26dd37caa8a9ff3115585a5db323f079da8d3f975"
       },
       {
         "path": "scripts/ai-team/validate_ownership.py",
@@ -1166,7 +1170,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/00-governance.mdc",
-          "installed_sha256": "sha256:f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
+          "installed_sha256": "sha256:ab1c87fe1a32be4c5e4025f37cc3ad5a434635d18fb6a475dd9b01b2f42b3948"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/05-workspace-layout.mdc",
@@ -1174,7 +1178,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/10-work-units.mdc",
-          "installed_sha256": "sha256:020a6890ed6e3a55ea5874a04bed8a2591530c91183fcfbe1cf3230bbe0915e7"
+          "installed_sha256": "sha256:d84cdae4dfc213256629de48852c8c5e741d083bd26f4537a54388afc98baed0"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/20-evidence.mdc",
@@ -1198,7 +1202,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/capture-feedback/SKILL.md",
-          "installed_sha256": "sha256:c18c5428f5af6dee8254ef7b52ed3cd06e478f21f691351c40230295c8f97080"
+          "installed_sha256": "sha256:cf0188821db34de32d836cccbb9ee423b24c6b8522c722fed7abd81eab04ccb3"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/challenge-requirements/SKILL.md",
@@ -1206,7 +1210,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/compile-project/SKILL.md",
-          "installed_sha256": "sha256:8eae4b19ba0ffc2a8e26e01004a32bddd3b3a2ce3ee0b888383fc1269592406f"
+          "installed_sha256": "sha256:3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/design-verification/SKILL.md",
@@ -1238,7 +1242,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/orchestrator/SKILL.md",
-          "installed_sha256": "sha256:c0265b2736962a44cb9bc945293899fb27a2b5ad4c50e1f6a4f5d5d60575b39c"
+          "installed_sha256": "sha256:244431af182de433244a2b8608415f2b48759713d66a15fcd8f1828db1174666"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/prepare-acceptance/SKILL.md",
@@ -1263,6 +1267,10 @@
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/webapp-testing/SKILL.md",
           "installed_sha256": "sha256:4bf54100287180b020ff7351c844a0c0172ee5fe29662b3014bd63acedafeef9"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/AGENTS.md",
+          "installed_sha256": "sha256:646342e6a2bf654166f2e2e748ecb525825bd7e824d4e3e5a84cabf7bdaa324c"
         },
         {
           "path": ".cursor/.gitattributes",
@@ -1362,7 +1370,7 @@
         },
         {
           "path": ".cursor/rules/00-governance.mdc",
-          "installed_sha256": "sha256:f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
+          "installed_sha256": "sha256:ab1c87fe1a32be4c5e4025f37cc3ad5a434635d18fb6a475dd9b01b2f42b3948"
         },
         {
           "path": ".cursor/rules/05-workspace-layout.mdc",
@@ -1370,7 +1378,7 @@
         },
         {
           "path": ".cursor/rules/10-work-units.mdc",
-          "installed_sha256": "sha256:020a6890ed6e3a55ea5874a04bed8a2591530c91183fcfbe1cf3230bbe0915e7"
+          "installed_sha256": "sha256:d84cdae4dfc213256629de48852c8c5e741d083bd26f4537a54388afc98baed0"
         },
         {
           "path": ".cursor/rules/20-evidence.mdc",
@@ -1394,7 +1402,7 @@
         },
         {
           "path": ".cursor/skills/capture-feedback/SKILL.md",
-          "installed_sha256": "sha256:c18c5428f5af6dee8254ef7b52ed3cd06e478f21f691351c40230295c8f97080"
+          "installed_sha256": "sha256:cf0188821db34de32d836cccbb9ee423b24c6b8522c722fed7abd81eab04ccb3"
         },
         {
           "path": ".cursor/skills/challenge-requirements/SKILL.md",
@@ -1402,7 +1410,7 @@
         },
         {
           "path": ".cursor/skills/compile-project/SKILL.md",
-          "installed_sha256": "sha256:8eae4b19ba0ffc2a8e26e01004a32bddd3b3a2ce3ee0b888383fc1269592406f"
+          "installed_sha256": "sha256:3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
         },
         {
           "path": ".cursor/skills/design-verification/SKILL.md",
@@ -1434,7 +1442,7 @@
         },
         {
           "path": ".cursor/skills/orchestrator/SKILL.md",
-          "installed_sha256": "sha256:c0265b2736962a44cb9bc945293899fb27a2b5ad4c50e1f6a4f5d5d60575b39c"
+          "installed_sha256": "sha256:244431af182de433244a2b8608415f2b48759713d66a15fcd8f1828db1174666"
         },
         {
           "path": ".cursor/skills/prepare-acceptance/SKILL.md",

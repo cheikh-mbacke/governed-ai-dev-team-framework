@@ -25,6 +25,9 @@ from install_paths import bootstrap_runtime
 
 bootstrap_runtime(_ROOT)
 
+from governed_ai.core.fabrication_overlay import (
+    collect_framework_source_fabrication_overlay_violations,
+)
 from governed_ai.core.workspace_mode import (
     collect_framework_source_client_cycle_artifacts,
     collect_framework_source_feedback_artifacts,
@@ -151,6 +154,7 @@ if (AI / "project-profile.yaml").exists():
         errors.extend(
             collect_framework_source_client_cycle_artifacts(AI, state=state_for_checks)
         )
+        errors.extend(collect_framework_source_fabrication_overlay_violations(ROOT))
         if isinstance(version_manifest, dict):
             for path in version_manifest.get("managed_files") or []:
                 if not isinstance(path, str):

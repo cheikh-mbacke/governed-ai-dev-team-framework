@@ -7,7 +7,18 @@ color: blue
 ---
 # Compile Project
 
-This is a **planning-only** operation. Do not implement product code.
+## Framework source guard
+
+Read `.ai-team/project-profile.yaml` → `project.repository_kind` first.
+
+When `repository_kind` is `framework_source`, **stop immediately**. This repository
+builds the framework; it is not an installed client project. Do not run this skill
+here, do not update `.ai-team/state/project-state.yaml` for a client cycle, and do
+not create Work Units under `.ai-team/work-units/`. Framework work uses git branches,
+review, and tests — see `AGENTS.md` and `05-workspace-layout.mdc`.
+
+This is a **planning-only** operation on installed client projects. Do not implement
+product code.
 
 ## Required inputs
 

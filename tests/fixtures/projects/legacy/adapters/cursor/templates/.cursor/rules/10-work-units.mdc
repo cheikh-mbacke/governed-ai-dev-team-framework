@@ -4,7 +4,12 @@ alwaysApply: true
 ---
 # Work Unit discipline
 
-Product changes must be attributable to a Work Unit in `.ai-team/work-units/`.
+When `.ai-team/project-profile.yaml` declares `repository_kind: framework_source`,
+this rule does **not** apply. The source repository builds the framework; it does
+not run the installed-client Work Unit cycle. See `05-workspace-layout.mdc`.
+
+Product changes on an **installed client project** must be attributable to a Work
+Unit in `.ai-team/work-units/`.
 
 A Work Unit must have:
 - stable ID and title;

@@ -135,7 +135,7 @@
     {
       "kind": "rule",
       "path": ".cursor/rules/00-governance.mdc",
-      "sha256": "sha256:f2577eb150fad7832fcc13e0eafce92daddb02f06cfceda85bf889835598c50f"
+      "sha256": "sha256:ab1c87fe1a32be4c5e4025f37cc3ad5a434635d18fb6a475dd9b01b2f42b3948"
     },
     {
       "kind": "rule",
@@ -145,7 +145,7 @@
     {
       "kind": "rule",
       "path": ".cursor/rules/10-work-units.mdc",
-      "sha256": "sha256:020a6890ed6e3a55ea5874a04bed8a2591530c91183fcfbe1cf3230bbe0915e7"
+      "sha256": "sha256:d84cdae4dfc213256629de48852c8c5e741d083bd26f4537a54388afc98baed0"
     },
     {
       "kind": "rule",
@@ -175,7 +175,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/capture-feedback/SKILL.md",
-      "sha256": "sha256:c18c5428f5af6dee8254ef7b52ed3cd06e478f21f691351c40230295c8f97080"
+      "sha256": "sha256:cf0188821db34de32d836cccbb9ee423b24c6b8522c722fed7abd81eab04ccb3"
     },
     {
       "kind": "skill",
@@ -185,7 +185,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/compile-project/SKILL.md",
-      "sha256": "sha256:8eae4b19ba0ffc2a8e26e01004a32bddd3b3a2ce3ee0b888383fc1269592406f"
+      "sha256": "sha256:3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
     },
     {
       "kind": "skill",
@@ -225,7 +225,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/orchestrator/SKILL.md",
-      "sha256": "sha256:c0265b2736962a44cb9bc945293899fb27a2b5ad4c50e1f6a4f5d5d60575b39c"
+      "sha256": "sha256:244431af182de433244a2b8608415f2b48759713d66a15fcd8f1828db1174666"
     },
     {
       "kind": "skill",

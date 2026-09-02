@@ -51,10 +51,12 @@ human_authorities:
 setup_status:
   template: false
   cursor_compile_opt_in: false
+  fabrication_workflow: classical
   note: 'Dépôt source du framework — pas une cible installée ni un client en
     exécution. project-state.yaml reste vierge (not_compiled). Pas de cycle
-    compile-project / Work Units / feedback ici. cursor_compile_opt_in=false
-    rappelle que /compile-project est réservé aux projets installés.
-    framework-version.json décrit le payload ; pas d installation-record.json.
-    sync_source_manifest.py regénère le manifeste source.'
+    compile-project / Work Units / feedback ici. Workflow fabrication = git/PR/tests
+    classique. Payload client Cursor sous adapters/cursor/templates/.cursor/.
+    cursor_compile_opt_in=false rappelle que /compile-project est réservé aux
+    projets installés. framework-version.json décrit le payload ; pas d
+    installation-record.json. sync_source_manifest.py regénère le manifeste source.'
 active_adapter_id: cursor

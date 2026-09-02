@@ -1,48 +1,38 @@
 ---
-description: Core human-governance and authority rules for every agent session.
+description: Fabrication workspace rules for the framework source repository.
 alwaysApply: true
 ---
-# Core governance
+# Framework fabrication workspace
 
-The Engineering Constitution under `.ai-team/constitution/` is authoritative for agent operation.
+This repository declares `repository_kind: framework_source` in
+`.ai-team/project-profile.yaml`. It **builds** the Governed AI Team
+framework; it is **not** an installed client project.
 
-Always preserve these invariants:
+## Your workflow here
 
-- Human sources define product intent and organizational policy.
-- A missing decision remains visibly missing.
-- An agent proposal is not a product or policy decision.
-- The approved execution model is derived and may not contradict its human sources.
-- Repository state is observed reality, not product authority.
-- Runtime evidence is observed reality, not product authority.
-- No product development starts before G1 is approved, except when explicitly executing a previously approved Work Unit.
-- No production release bypasses G3.
-- Final acceptance is human at G4 under the reference profile.
-- A third-party Skill or subagent that provides its own task orchestration,
-  autonomous subagent dispatch, or worktree/branch management competes with
-  the Orchestrator's Control Plane authority and must not be added without
-  explicit G2 approval, regardless of how useful it is otherwise.
-- When writing a YAML string value that contains a colon-space (`: `) or a
-  curly brace, quote the whole string — an unquoted one breaks the file by
-  looking like a nested mapping to the YAML parser.
+- Normal software development: branch, code, tests, pull request.
+- Do **not** run `/compile-project`, client gate cycles (G0–G4), Work Unit
+  orchestration, or `scripts/ai-team/feedback.py` on this repository.
+- Do **not** create `.ai-team/work-units/`, client `events/`, `evidence/`,
+  or activate `.ai-team/runtime/`.
+- Edit framework code under `src/`, `adapters/`, `distribution/`, and the
+  installable payload (constitution, schemas, templates under
+  `adapters/cursor/templates/.cursor/`).
+- After changing installable payload:
+  `python scripts/ai-team/sync_source_manifest.py` then
+  `python scripts/ai-team/validate.py`.
 
-Read the specific policy files needed for the task rather than copying the whole Constitution into chat.
+Read `.cursor/rules/05-workspace-layout.mdc` for the full boundary list.
 
-## Framework source workspace
+## Product sources
 
-When `.ai-team/project-profile.yaml` declares `repository_kind: framework_source`,
-read `.cursor/rules/05-workspace-layout.mdc` first. The gate and Work Unit
-invariants above apply to **installed client projects**. On the framework source
-repository, do not run client gate cycles, `/compile-project`, Work Unit
-orchestration, or `scripts/ai-team/feedback.py` here. Framework renovation is
-tracked through git, review, and tests — not through `.ai-team/work-units/` or
-client runtime activation.
+Human product intent lives under `docs/product/`. The Engineering
+Constitution under `.ai-team/constitution/` is the **product** delivered to
+installed projects — do not treat it as a runtime activation mandate on
+this repository.
 
 ## Communication language
 
-Read `.ai-team/project-profile.yaml` → `communication.language` at the
-start of the session. Reply to the human, and write any human-facing
-prose you author (Work Unit titles, objectives, questions, explanations,
-DECISION_REQUEST text), in that language. Never translate YAML keys, enum
-values (e.g. `status: ready`), file paths, commands, or code — those stay
-exactly as defined regardless of this setting, since schemas and scripts
-in this framework match on their literal English form.
+Read `.ai-team/project-profile.yaml` → `communication.language`. Reply to
+the human in that language. Never translate YAML keys, enum values, file
+paths, commands, or code.
