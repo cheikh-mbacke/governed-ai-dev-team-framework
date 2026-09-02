@@ -53,6 +53,18 @@ def _hook_runner(project_root: Path) -> Path:
     return _cursor_root(project_root) / "hooks" / "run_hook.cmd"
 
 
+def _is_ci_host() -> bool:
+    return os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
+def _posix_shell() -> str:
+    return "/bin/sh" if Path("/bin/sh").is_file() else "sh"
+
+
 def hook_command(project_root: Path, script: Path) -> str:
     runner = _hook_runner(project_root)
     if os.name == "nt":
@@ -61,7 +73,7 @@ def hook_command(project_root: Path, script: Path) -> str:
 
     runner_rel = runner.relative_to(project_root).as_posix()
     script_rel = script.relative_to(project_root).as_posix()
-    return f"sh {shlex.quote(runner_rel)} {shlex.quote(script_rel)}"
+    return f"{_posix_shell()} {shlex.quote(runner_rel)} {shlex.quote(script_rel)}"
 
 
 def probe_hook(project_root: Path, script_name: str, payload: dict[str, Any]) -> tuple[bool, str]:
@@ -146,6 +158,32 @@ def collect_preflight_report(
     cli_ok, cli_detail = check_project_cli(project_root)
     guard_ok, guard_detail = probe_hook(project_root, "guard_shell.py", {"command": "whoami"})
     agent_path = shutil.which("agent")
+    ci_host = _is_ci_host()
+    if agent_path:
+        cursor_agent = {"status": "pass", "detail": agent_path}
+    elif ci_host:
+        cursor_agent = {
+            "status": "skip",
+            "detail": "agent not found on PATH (expected in CI; run preflight on a developer host)",
+        }
+    else:
+        cursor_agent = {"status": "fail", "detail": "agent not found on PATH"}
+    infra_ready = hook_config_ok and cli_ok and guard_ok
+    if infra_ready and agent_path:
+        allowlist_status = "ready"
+        allowlist_detail = (
+            "use auth-smoke; this does not replace the architect readonly integration smoke"
+        )
+    elif infra_ready and ci_host:
+        allowlist_status = "manual"
+        allowlist_detail = (
+            "agent CLI unavailable in CI; run auth-smoke on a developer host with Cursor agent"
+        )
+    else:
+        allowlist_status = "blocked"
+        allowlist_detail = (
+            "use auth-smoke; this does not replace the architect readonly integration smoke"
+        )
     readonly = (
         {
             "status": "skip",
@@ -162,10 +200,7 @@ def collect_preflight_report(
     report: dict[str, Any] = {
         "platform": profile,
         "python": {"status": "pass", "detail": sys.executable},
-        "cursor_agent": {
-            "status": "pass" if agent_path else "fail",
-            "detail": agent_path or "agent not found on PATH",
-        },
+        "cursor_agent": cursor_agent,
         "hooks_config": {
             "status": "pass" if hook_config_ok else "fail",
             "detail": hook_config_detail,
@@ -185,12 +220,8 @@ def collect_preflight_report(
         },
         "readonly_sandbox": readonly,
         "allowlist_smoke": {
-            "status": (
-                "ready" if hook_config_ok and cli_ok and guard_ok and agent_path else "blocked"
-            ),
-            "detail": (
-                "use auth-smoke; this does not replace the architect readonly integration smoke"
-            ),
+            "status": allowlist_status,
+            "detail": allowlist_detail,
         },
     }
     if unattended:

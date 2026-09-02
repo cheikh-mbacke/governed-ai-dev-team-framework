@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-02T09:50:20+00:00",
+  "generated_at": "2026-09-02T10:20:48+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -241,7 +241,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "050994cc19e2efa90c8eda342183eedddbe18483663c816621780d25e444c298"
+          "sha256": "09821a3f69777d70eee7d6e3cb13755855d505d3ee01cc22e5cee28110050d03"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -321,7 +321,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/checks.py",
-          "sha256": "7deb6e9518f9d3ada86cd675a9240eac6049d69d5e2570b5401b71b8cecb6b0a"
+          "sha256": "14e9c16e205e912314e7f0684a1148b7b14e2fea280295d81b968a4099343685"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/execute.py",
@@ -1752,7 +1752,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "97f98612798a77549fc7808aeb57d8a61d86d040d908b66fed59545ac9139af7"
+          "sha256": "ae9692e171f02c33009182ec88aa1de992c8922a845998ecce723a1bfae7e46c"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2204,7 +2204,7 @@
         },
         {
           "path": "adapters/cursor/runtime/checks.py",
-          "sha256": "7deb6e9518f9d3ada86cd675a9240eac6049d69d5e2570b5401b71b8cecb6b0a"
+          "sha256": "14e9c16e205e912314e7f0684a1148b7b14e2fea280295d81b968a4099343685"
         },
         {
           "path": "adapters/cursor/runtime/execute.py",

@@ -53,6 +53,16 @@ def normalize_preflight_json(stdout: str) -> str:
         detail = payload.get(section, {}).get("detail")
         if isinstance(detail, str):
             payload[section]["detail"] = normalize_cli_output(detail).strip()
+    agent = payload.get("cursor_agent")
+    if isinstance(agent, dict) and agent.get("status") == "skip":
+        agent["status"] = "pass"
+        agent["detail"] = "<PATH>"
+    allowlist = payload.get("allowlist_smoke")
+    if isinstance(allowlist, dict) and allowlist.get("status") == "manual":
+        allowlist["status"] = "ready"
+        allowlist["detail"] = (
+            "use auth-smoke; this does not replace the architect readonly integration smoke"
+        )
     return json.dumps(payload, indent=2, sort_keys=False) + "\n"
 
 
