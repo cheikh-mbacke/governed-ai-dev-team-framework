@@ -6,6 +6,7 @@ from typing import Any
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.persistence.transaction import Transaction
+from governed_ai.core.workspace_mode import ensure_feedback_allowed
 from governed_ai.feedback.commands.handlers import (
     RecordObservationParams,
     build_observation_document,
@@ -21,6 +22,8 @@ def handle_record_observation(
     payload = envelope["payload"]
     if not isinstance(payload, dict):
         raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
+
+    ensure_feedback_allowed(workspace_root)
 
     actor = envelope["actor"]
     params = RecordObservationParams(

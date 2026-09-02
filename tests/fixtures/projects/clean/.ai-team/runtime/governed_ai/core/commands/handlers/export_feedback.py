@@ -8,6 +8,7 @@ from typing import Any
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.human_authorization import consume_human_authorization
 from governed_ai.core.persistence.transaction import Transaction
+from governed_ai.core.workspace_mode import ensure_feedback_allowed
 from governed_ai.feedback.commands.handlers import ExportParams, build_export_document
 
 SENSITIVE_DETAIL_LEVELS = frozenset({"full"})
@@ -37,6 +38,8 @@ def handle_export_feedback(
     payload = envelope["payload"]
     if not isinstance(payload, dict):
         raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
+
+    ensure_feedback_allowed(workspace_root)
 
     detail_level = payload.get("detail_level", "structured")
     if detail_level not in {"aggregate", "structured", "full"}:
