@@ -1,5 +1,9 @@
 # Configuration GitHub requise
 
+Réglages du dépôt **source** du framework (fabrication) lui-même — pas un guide à
+livrer aux projets clients. Pour la politique Git normative des projets où le
+framework a été installé, voir [`client-git-policy.md`](client-git-policy.md).
+
 Les hooks locaux ne remplacent pas les protections serveur. Un administrateur du dépôt
 doit appliquer les réglages suivants, puis joindre une capture ou un export de règles à la
 preuve de clôture de `WU-GIT-GOVERNANCE`.

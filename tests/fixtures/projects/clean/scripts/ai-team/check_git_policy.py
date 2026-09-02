@@ -114,6 +114,13 @@ def read_product_versions(root: Path = ROOT) -> tuple[str | None, str | None]:
 
 def validate_versions(root: Path = ROOT) -> list[str]:
     errors: list[str] = []
+    if read_repository_kind(root) == "existing_or_greenfield_project":
+        # pyproject.toml is the framework's own canonical_version_source; an
+        # installed client project may use any stack (see the "adapt: ..."
+        # note on distribution/payload/.ai-team/constitution/95-git-release-
+        # policy.yaml canonical_version_source) and has no reason to declare
+        # one, let alone keep it equal to the framework's own version.
+        return errors
     try:
         pyproject_version, framework_version = read_product_versions(root)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
