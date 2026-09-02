@@ -21,7 +21,7 @@ from governed_ai.core.commands.errors import (
 )
 from governed_ai.core.commands.gateway import CommandGateway, load_envelope_from_json
 from governed_ai.core.workspace import Workspace
-from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+from governed_ai.core.workspace_mode import ensure_client_cycle_allowed, is_framework_source
 
 
 def _reject_client_cycle_on_fabrication(workspace: Workspace) -> None:
@@ -102,6 +102,16 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     workspace = Workspace.discover(Path.cwd())
     gateway = CommandGateway(workspace)
     result = gateway.validate_gateway()
+    if is_framework_source(workspace):
+        result = {
+            **result,
+            "workspace_mode": "framework_source",
+            "note": (
+                "Fabrication workspace — the client Command Gateway cycle is not "
+                "active here. Use AGENTS.md (git/PR/tests). To exercise installed "
+                "behavior: tests/fixtures/projects/clean/ or tools/install.py --target."
+            ),
+        }
     if args.all:
         from governed_ai.contracts.compatibility import resolve_active_bundle_dir
         from governed_ai.contracts.validate_bundle import validate_bundle

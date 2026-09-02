@@ -62,9 +62,12 @@ def build_source_managed_files(
             try:
                 source_rel = entry.source.relative_to(source_root).as_posix()
             except ValueError:
-                # Cursor compiler staging lives outside the repo; the editable
-                # source tree keeps the same relative path (e.g. .cursor/…).
-                source_rel = entry.relative.as_posix()
+                # Compiled Cursor artifacts live in temporary staging. Their
+                # editable provenance is already covered by the compiler,
+                # bundle, and adapters/cursor/templates sources enumerated by
+                # the copy plan. Never reinterpret a compiled destination as a
+                # root source path: root .cursor/ is fabrication-only.
+                continue
             if (source_root / source_rel).is_file():
                 source_paths.add(source_rel)
 

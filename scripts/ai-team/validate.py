@@ -265,12 +265,8 @@ if PROFILE_PATH.is_file():
         except Exception:
             pass  # Best-effort check; never fail validate.py over git introspection.
 
-source_registry_path = (
-    SEEDS / "source-registry.yaml"
-    if IS_FABRICATION
-    else AI / "sources" / "source-registry.yaml"
-)
-if source_registry_path.exists():
+source_registry_path = None if IS_FABRICATION else AI / "sources" / "source-registry.yaml"
+if source_registry_path is not None and source_registry_path.exists():
     reg = load_yaml(source_registry_path) or {}
     if not reg.get("sources"):
         warnings.append("No authoritative product sources are registered")
@@ -357,6 +353,8 @@ if (AI / "sources" / "source-registry.yaml").exists():
             sp = ROOT / src["path"]
             if not sp.exists():
                 warnings.append(f"Registered source path does not exist: {src['path']}")
+if IS_FABRICATION and (SEEDS / "source-registry.yaml").exists():
+    validate_instance(SEEDS / "source-registry.yaml", "source-registry.schema.json")
 
 state_path = AI / "state" / "project-state.yaml"
 if state_path.exists():

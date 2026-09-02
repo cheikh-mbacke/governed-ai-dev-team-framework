@@ -13,6 +13,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 SEMVER_RE = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
     r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
@@ -69,14 +72,42 @@ def git(*args: str, root: Path = ROOT, check: bool = True) -> str:
     return completed.stdout.strip()
 
 
+def _profile_path(root: Path) -> Path | None:
+    for path in (
+        root / ".fabric" / "project-profile.yaml",
+        root / ".ai-team" / "project-profile.yaml",
+    ):
+        if path.is_file():
+            return path
+    return None
+
+
+def _framework_version_path(root: Path) -> Path:
+    fabric = root / ".fabric" / "framework-version.json"
+    return fabric if fabric.is_file() else root / ".ai-team" / "framework-version.json"
+
+
+def read_repository_kind(root: Path = ROOT) -> str | None:
+    profile = _profile_path(root)
+    if profile is None:
+        return None
+    for line in profile.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("repository_kind:"):
+            return stripped.split(":", 1)[1].strip()
+    return None
+
+
+def is_framework_source_repo(root: Path = ROOT) -> bool:
+    return read_repository_kind(root) == "framework_source"
+
+
 def read_product_versions(root: Path = ROOT) -> tuple[str | None, str | None]:
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     match = re.search(r'(?m)^version\s*=\s*["\']([^"\']+)["\']\s*$', pyproject)
     pyproject_version = match.group(1) if match else None
 
-    from distribution.installer.fabrication_layout import source_version_file
-
-    framework = json.loads(source_version_file(root).read_text(encoding="utf-8"))
+    framework = json.loads(_framework_version_path(root).read_text(encoding="utf-8"))
     framework_version = framework.get("version")
     return pyproject_version, framework_version
 
@@ -94,7 +125,8 @@ def validate_versions(root: Path = ROOT) -> list[str]:
         errors.append(f"pyproject.toml version is not SemVer: {pyproject_version!r}")
 
     if not isinstance(framework_version, str):
-        errors.append(".fabric/framework-version.json does not declare a string version")
+        version_label = _framework_version_path(root).relative_to(root).as_posix()
+        errors.append(f"{version_label} does not declare a string version")
     elif not SEMVER_RE.fullmatch(framework_version):
         errors.append(f"framework version is not SemVer: {framework_version!r}")
 
@@ -125,25 +157,16 @@ def validate_versions(root: Path = ROOT) -> list[str]:
                         descriptor,
                     )
                 )
-    if str(ROOT) not in sys.path:
-        sys.path.insert(0, str(ROOT))
-    src_root = root / "src"
-    if src_root.is_dir() and str(src_root) not in sys.path:
-        sys.path.insert(0, str(src_root))
-    from distribution.installer.version_policy import validate_release_matrix
+    if is_framework_source_repo(root):
+        if str(root) not in sys.path:
+            sys.path.insert(0, str(root))
+        src_root = root / "src"
+        if src_root.is_dir() and str(src_root) not in sys.path:
+            sys.path.insert(0, str(src_root))
+        from distribution.installer.version_policy import validate_release_matrix
 
-    errors.extend(validate_release_matrix(root))
+        errors.extend(validate_release_matrix(root))
     return errors
-
-
-def read_repository_kind(root: Path = ROOT) -> str | None:
-    from distribution.installer.fabrication_layout import read_repository_kind as _read_kind
-
-    return _read_kind(root)
-
-
-def is_framework_source_repo(root: Path = ROOT) -> bool:
-    return read_repository_kind(root) == "framework_source"
 
 
 def branch_is_valid(branch: str, root: Path = ROOT) -> bool:

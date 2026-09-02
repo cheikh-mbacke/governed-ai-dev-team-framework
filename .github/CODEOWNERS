@@ -1,7 +1,7 @@
 * @cheikh-mbacke
 
 /.github/ @cheikh-mbacke
-/.ai-team/constitution/ @cheikh-mbacke
+/distribution/payload/.ai-team/constitution/ @cheikh-mbacke
 /VERSIONING.md @cheikh-mbacke
 /CHANGELOG.md @cheikh-mbacke
 /scripts/ai-team/check_git_policy.py @cheikh-mbacke

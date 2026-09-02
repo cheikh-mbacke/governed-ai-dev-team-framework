@@ -45,7 +45,7 @@
       "Read(**/.env*)",
       "Read(**/*.key)",
       "Read(**/*.pem)",
-      "Write(.ai-team/constitution/**)",
+      "Write(distribution/payload/.ai-team/constitution/**)",
       "Write(.cursor/cli.json)",
       "Write(.cursor/hooks.json)",
       "Write(.cursor/permissions.json)",

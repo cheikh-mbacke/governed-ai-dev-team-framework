@@ -5,11 +5,9 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import yaml
-
 from distribution.installer.record import INSTALLATION_RECORD_FILE, is_installation_record
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -66,6 +64,23 @@ def test_di001_fresh_install_writes_v2_record_last(tmp_path: Path) -> None:
     profile = yaml.safe_load((target / ".ai-team/project-profile.yaml").read_text(encoding="utf-8"))
     assert profile.get("active_adapter_id") == "cursor"
     assert profile["project"]["id"] == "di001-test"
+    source_registry = yaml.safe_load(
+        (target / ".ai-team/sources/source-registry.yaml").read_text(encoding="utf-8")
+    )
+    assert source_registry == {"registry_version": "1.0", "sources": []}
+
+    source_only_sync = subprocess.run(
+        [sys.executable, "scripts/ai-team/sync_source_manifest.py", "--check"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    sync_output = source_only_sync.stderr + source_only_sync.stdout
+    assert source_only_sync.returncode != 0
+    assert "only applies to framework_source" in sync_output
+    assert "Traceback" not in sync_output
 
     mtime_record = record_path.stat().st_mtime
     legacy = target / ".ai-team/framework-version.json"

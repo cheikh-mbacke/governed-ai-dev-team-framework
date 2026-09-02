@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -15,19 +16,29 @@ except ModuleNotFoundError:
     raise SystemExit(1)
 
 from i18n import project_language, t
+from install_paths import bootstrap_runtime
 
 ROOT = _ROOT
-AI = ROOT / ".ai-team"
 LANG = project_language(ROOT)
+bootstrap_runtime(ROOT)
+
+from governed_ai.core.commands.errors import GatewayError, exit_code_for
+from governed_ai.core.workspace import Workspace
+from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+
+WORKSPACE = Workspace.from_root(ROOT)
+try:
+    ensure_client_cycle_allowed(WORKSPACE)
+except GatewayError as exc:
+    print(exc.message, file=sys.stderr)
+    raise SystemExit(exit_code_for(exc.code)) from None
+AI = WORKSPACE.ai_team
 state = yaml.safe_load((AI / "state" / "project-state.yaml").read_text(encoding="utf-8"))
 profile = yaml.safe_load((AI / "project-profile.yaml").read_text(encoding="utf-8")) or {}
 
 print(t(LANG, "Project:", "Projet :") + f" {state.get('project_id')}")
 print(t(LANG, "Phase:  ", "Phase :  ") + f" {state.get('phase')}")
 try:
-    from install_paths import bootstrap_runtime
-
-    bootstrap_runtime(ROOT)
     from governed_ai.core.domain.run.autonomy_policy import resolve_project_preset
 
     preset = resolve_project_preset(profile.get("autonomy") or {})
