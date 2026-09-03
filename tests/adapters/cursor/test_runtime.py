@@ -119,6 +119,15 @@ def test_collect_reads_persisted_runtime_result(tmp_path: Path) -> None:
     collected = collect_runtime_result(tmp_path, "EXE-COLLECT-001")
     assert collected["execution_id"] == "EXE-COLLECT-001"
     assert collected["contract"]["role_id"] == "backend-developer"
+    runtime_artifact = next(
+        item for item in collected["artifacts"] if item["kind"] == "runtime_result"
+    )
+    stored_path = tmp_path / runtime_artifact["path"]
+    import hashlib
+
+    assert runtime_artifact["sha256"] == "sha256:" + hashlib.sha256(
+        stored_path.read_bytes()
+    ).hexdigest()
 
 
 def test_cursor_adapter_spi_execute_and_collect(tmp_path: Path) -> None:

@@ -4,6 +4,7 @@
   "type": "object",
   "required": [
     "format_version",
+    "export_id",
     "generated_at",
     "detail_level",
     "project_ref",
@@ -11,10 +12,12 @@
     "constitution_version",
     "summary",
     "observations",
-    "retrospectives"
+    "retrospectives",
+    "executions"
   ],
   "properties": {
-    "format_version": {"const": "1.0"},
+    "format_version": {"const": "1.1"},
+    "export_id": {"type": "string", "pattern": "^EXP-[A-Za-z0-9._-]+$"},
     "generated_at": {"type": "string", "format": "date-time"},
     "detail_level": {"enum": ["aggregate", "structured", "full"]},
     "project_ref": {"type": "string", "minLength": 1},
@@ -23,7 +26,8 @@
     "constitution_version": {"type": "string", "minLength": 1},
     "summary": {"type": "object"},
     "observations": {"type": "array", "items": {"type": "object"}},
-    "retrospectives": {"type": "array", "items": {"type": "object"}}
+    "retrospectives": {"type": "array", "items": {"type": "object"}},
+    "executions": {"type": "array", "items": {"type": "object"}}
   },
   "additionalProperties": false
 }

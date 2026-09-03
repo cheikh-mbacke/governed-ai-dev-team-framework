@@ -9,24 +9,24 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import uuid
 from argparse import Namespace
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from distribution.installer.apply import apply_copy_entries, collect_changed_destinations
-from distribution.installer.errors import InstallationValidationError
 from distribution.installer.build_record import (
     finalize_installation_manifests,
     validate_installation_record,
 )
-from distribution.installer.version_policy import validate_update_path
 from distribution.installer.collisions import (
     format_collision_report,
     scan_fresh_install_collisions,
     scan_local_drift_collisions,
 )
 from distribution.installer.constants import PROJECT_OWNED_PATTERNS
+from distribution.installer.errors import InstallationValidationError
 from distribution.installer.fabrication_layout import (
     FRESH_PROJECT_SEED_SOURCES,
     source_constitution_path,
@@ -41,6 +41,8 @@ from distribution.installer.migrate_layout import (
 from distribution.installer.migrate_v1_v2 import MigrationError, ensure_installation_record_v2
 from distribution.installer.migrate_v2_v3 import (
     MigrationError as MigrationErrorV2V3,
+)
+from distribution.installer.migrate_v2_v3 import (
     ensure_installation_record_v3,
 )
 from distribution.installer.record import (
@@ -55,10 +57,11 @@ from distribution.installer.record import (
 from distribution.installer.repository_kind import framework_source_install_error
 from distribution.installer.snapshot import create_snapshot, rollback_paths
 from distribution.installer.source_files import (
-    build_copy_plan,
     bootstrap_adapter_imports,
+    build_copy_plan,
     detect_obsolete_managed,
 )
+from distribution.installer.version_policy import validate_update_path
 
 
 def _yaml_module():
@@ -661,9 +664,20 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
 
     profile = _yaml_module().safe_load(profile_path.read_text(encoding="utf-8"))
     profile["active_adapter_id"] = "cursor"
+    profile["telemetry"] = {
+        "project_ref": f"PRJ-{uuid.uuid4().hex}",
+        "collection": "local_only",
+        "raw_log_retention_days": 30,
+    }
     profile_path.write_text(
         _yaml_module().safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
+
+    # Raw tool traces remain local and must not depend on the host project's
+    # root .gitignore configuration.
+    logs_ignore = target / ".ai-team" / "logs" / ".gitignore"
+    logs_ignore.parent.mkdir(parents=True, exist_ok=True)
+    logs_ignore.write_text("*\n!.gitignore\n", encoding="utf-8")
 
     state_path = target / ".ai-team" / "state" / "project-state.yaml"
     constitution_version = source_constitution_version(source_root)

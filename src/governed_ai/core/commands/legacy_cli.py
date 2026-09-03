@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from governed_ai.compat.datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from governed_ai.compat.datetime import UTC, datetime
 
 DEPRECATION_RECORD_GATE = (
     "DEPRECATED: use scripts/ai-team/gov.py command with RecordGateDecision; "
@@ -311,15 +312,22 @@ def translate_feedback_export(args: FeedbackExportArgs) -> dict[str, Any]:
         payload["output"] = args.output
     envelope["payload"] = payload
 
-    if args.detail_level == "full":
+    if args.detail_level == "full" or args.include_project_id:
         if not args.authorization_id.strip():
             raise TranslationError(
-                "--authorization-id is required for full export via the Command Gateway"
+                "--authorization-id is required for full or identified export via the Command Gateway"
             )
+        expected_scope = (
+            "export:full+identified"
+            if args.detail_level == "full" and args.include_project_id
+            else "export:full"
+            if args.detail_level == "full"
+            else "export:identified"
+        )
         envelope["human_authorization"] = _human_authorization(
             authorization_id=args.authorization_id.strip(),
             granted_by=(args.authorization_granted_by or "human-operator").strip(),
-            scope=(args.authorization_scope or "export:full").strip(),
+            scope=expected_scope,
         )
     return envelope
 

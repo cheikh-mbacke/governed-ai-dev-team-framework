@@ -112,7 +112,14 @@ def test_invoke_agent_cli_parses_successful_json(
     assert outcome.status == "succeeded"
     assert outcome.summary == "OK"
     assert outcome.checks[0]["name"] == "tests"
+    assert outcome.usage["input_tokens"] == 1
+    assert outcome.usage["output_tokens"] == 1
     assert outcome.usage["total_tokens"] == 2
+    assert outcome.duration_ms == 5203
+    assert outcome.provider_session_id == "s1"
+    assert outcome.provider_request_id == "r1"
+    assert outcome.started_at
+    assert outcome.finished_at
 
 
 def test_invoke_agent_cli_parses_error_json(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

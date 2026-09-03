@@ -49,7 +49,22 @@ def handle_export_feedback(
             "/payload/detail_level",
         )
 
-    if detail_level in SENSITIVE_DETAIL_LEVELS:
+    identified = bool(payload.get("include_project_id"))
+    if detail_level in SENSITIVE_DETAIL_LEVELS or identified:
+        expected_scope = (
+            "export:full+identified"
+            if detail_level == "full" and identified
+            else "export:full"
+            if detail_level == "full"
+            else "export:identified"
+        )
+        authorization = envelope.get("human_authorization") or {}
+        if authorization.get("scope") != expected_scope:
+            raise GatewayError(
+                ErrorCode.UNAUTHORIZED,
+                f"human_authorization.scope must be {expected_scope!r}",
+                "/human_authorization/scope",
+            )
         consume_human_authorization(
             envelope,
             workspace_ai_team=workspace_root.ai_team,
@@ -58,7 +73,7 @@ def handle_export_feedback(
 
     params = ExportParams(
         detail_level=detail_level,
-        include_project_id=bool(payload.get("include_project_id")),
+        include_project_id=identified,
         output=_resolve_output_path(workspace_root, payload.get("output")),
     )
     try:

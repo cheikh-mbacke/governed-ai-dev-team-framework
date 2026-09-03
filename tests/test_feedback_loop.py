@@ -1,12 +1,11 @@
 import json
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -141,8 +140,11 @@ class FeedbackLoopIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(export.returncode, 0, export.stderr + export.stdout)
             structured = json.loads(structured_path.read_text(encoding="utf-8"))
+            self.assertEqual(structured["format_version"], "1.1")
+            self.assertTrue(structured["export_id"].startswith("EXP-"))
             self.assertNotIn("project_id", structured)
             self.assertNotIn("symptom", structured["observations"][0])
+            self.assertNotIn("affected_work_units", structured["observations"][0]["impact"])
             self.assertNotEqual(
                 structured["observations"][0]["recurrence_ref"],
                 "missing-shared-contract-context",

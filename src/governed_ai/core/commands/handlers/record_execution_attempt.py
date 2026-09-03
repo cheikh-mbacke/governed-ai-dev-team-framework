@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import json
-from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
 import yaml
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
 from governed_ai.core.domain.run import fencing
@@ -103,7 +103,14 @@ def handle_record_execution_attempt(
                 f"execution attempt {attempt_id!r} revision conflict",
                 "/target/expected_revision",
             )
-        for field in ("run_id", "work_unit_id", "worker_lease_id", "epoch", "step"):
+        for field in (
+            "run_id",
+            "execution_id",
+            "work_unit_id",
+            "worker_lease_id",
+            "epoch",
+            "step",
+        ):
             if existing_document.get(field) != payload.get(field):
                 raise GatewayError(
                     ErrorCode.CONFLICT,
@@ -164,17 +171,36 @@ def handle_record_execution_attempt(
         )
 
     now = datetime.now(UTC).isoformat()
+    ended_at = payload.get("ended_at", None if payload["status"] == "started" else now)
+    started_at = payload.get("started_at", (existing_document or {}).get("started_at", now))
+    duration_ms = payload.get("duration_ms")
+    if duration_ms is None and ended_at is not None:
+        try:
+            duration_ms = max(
+                0,
+                int(
+                    (
+                        datetime.fromisoformat(str(ended_at).replace("Z", "+00:00"))
+                        - datetime.fromisoformat(str(started_at).replace("Z", "+00:00"))
+                    ).total_seconds()
+                    * 1000
+                ),
+            )
+        except ValueError:
+            duration_ms = None
     document = {
         "id": attempt_id,
         "revision": (existing_document or {}).get("revision", 0) + 1,
         "run_id": run_id,
+        "execution_id": payload.get("execution_id"),
         "work_unit_id": work_unit_id,
         "worker_lease_id": payload["worker_lease_id"],
         "epoch": epoch,
         "step": step,
         "status": payload["status"],
-        "started_at": payload.get("started_at", (existing_document or {}).get("started_at", now)),
-        "ended_at": payload.get("ended_at", None if payload["status"] == "started" else now),
+        "started_at": started_at,
+        "ended_at": ended_at,
+        "duration_ms": duration_ms,
         "summary": payload.get("summary"),
         "checks": payload.get("checks", []),
         "artifacts": payload.get("artifacts", []),
@@ -182,6 +208,7 @@ def handle_record_execution_attempt(
         "contract": payload.get("contract", {}),
         "requested_commands": payload.get("requested_commands", []),
         "usage": payload.get("usage", {}),
+        "provider": payload.get("provider", {}),
     }
     validate_against_schema(
         workspace_root.ai_team,

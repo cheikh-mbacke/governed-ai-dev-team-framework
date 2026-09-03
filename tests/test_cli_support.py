@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -217,13 +218,16 @@ class AuditEventTests(unittest.TestCase):
             timeout=10,
         )
 
-    def test_valid_json_payload_is_logged_intact(self):
+    def test_valid_json_payload_is_minimized_before_logging(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             result = self.run_audit(
                 json.dumps(
                     {
                         "hook_event_name": "beforeShellExecution",
-                        "command": "whoami",
+                        "command": "whoami --secret token-value",
+                        "output": "sensitive command output",
+                        "user_email": "operator@example.test",
+                        "transcript_path": "/private/transcript.json",
                     }
                 ),
                 env={"CURSOR_PROJECT_DIR": temp_dir},
@@ -232,8 +236,14 @@ class AuditEventTests(unittest.TestCase):
             self.assertEqual(json.loads(result.stdout.decode("utf-8"))["permission"], "allow")
             log_path = Path(temp_dir) / ".ai-team" / "logs" / "cursor-events.jsonl"
             record = json.loads(log_path.read_text(encoding="utf-8").strip())
+            self.assertEqual(record["schema_version"], "1.0")
+            self.assertTrue(record["event_id"].startswith("CURSOR-"))
             self.assertEqual(record["event"]["hook_event_name"], "beforeShellExecution")
-            self.assertEqual(record["event"]["command"], "whoami")
+            self.assertEqual(record["event"]["command"]["executable"], "whoami")
+            self.assertNotIn("token-value", json.dumps(record))
+            self.assertNotIn("sensitive command output", json.dumps(record))
+            self.assertNotIn("operator@example.test", json.dumps(record))
+            self.assertNotIn("transcript.json", json.dumps(record))
 
     def test_bom_prefixed_json_is_parsed(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -246,7 +256,7 @@ class AuditEventTests(unittest.TestCase):
             record = json.loads(log_path.read_text(encoding="utf-8").strip())
             self.assertEqual(record["event"]["hook_event_name"], "subagentStart")
 
-    def test_invalid_json_preserves_raw_instead_of_empty_string(self):
+    def test_invalid_json_preserves_only_size_and_digest(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             result = self.run_audit(
                 "not-json-but-should-be-kept",
@@ -255,7 +265,73 @@ class AuditEventTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             log_path = Path(temp_dir) / ".ai-team" / "logs" / "cursor-events.jsonl"
             record = json.loads(log_path.read_text(encoding="utf-8").strip())
-            self.assertEqual(record["event"]["raw"], "not-json-but-should-be-kept")
+            self.assertEqual(record["parse_error"]["reason"], "invalid_json")
+            self.assertEqual(record["parse_error"]["byte_count"], 27)
+            self.assertNotIn("not-json-but-should-be-kept", json.dumps(record))
+
+    def test_governed_execution_context_is_attached(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = self.run_audit(
+                json.dumps({"hook_event_name": "afterShellExecution", "command": "pytest"}),
+                env={
+                    "CURSOR_PROJECT_DIR": temp_dir,
+                    "GOVERNED_AI_EXECUTION_ID": "EXE-1",
+                    "GOVERNED_AI_RUN_ID": "RUN-1",
+                    "GOVERNED_AI_WORK_UNIT_ID": "WU-1",
+                    "GOVERNED_AI_ROLE_ID": "qa-test",
+                },
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            log_path = Path(temp_dir) / ".ai-team" / "logs" / "cursor-events.jsonl"
+            record = json.loads(log_path.read_text(encoding="utf-8").strip())
+            self.assertEqual(
+                record["context"],
+                {
+                    "execution_id": "EXE-1",
+                    "run_id": "RUN-1",
+                    "work_unit_id": "WU-1",
+                    "role_id": "qa-test",
+                },
+            )
+
+    def test_collection_can_be_disabled_in_project_profile(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / ".ai-team").mkdir()
+            (root / ".ai-team" / "project-profile.yaml").write_text(
+                "project:\n  id: private\ntelemetry:\n  collection: disabled\n",
+                encoding="utf-8",
+            )
+            result = self.run_audit(
+                json.dumps({"hook_event_name": "afterShellExecution", "command": "pytest"}),
+                env={"CURSOR_PROJECT_DIR": temp_dir},
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse((root / ".ai-team" / "logs" / "cursor-events.jsonl").exists())
+
+    def test_retention_applies_to_the_active_log_too(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            logs = root / ".ai-team" / "logs"
+            logs.mkdir(parents=True)
+            (root / ".ai-team" / "project-profile.yaml").write_text(
+                "project:\n  id: retention\ntelemetry:\n  collection: local_only\n"
+                "  raw_log_retention_days: 1\n",
+                encoding="utf-8",
+            )
+            active = logs / "cursor-events.jsonl"
+            active.write_text('{"old":"sensitive"}\n', encoding="utf-8")
+            old = time.time() - 2 * 86400
+            os.utime(active, (old, old))
+
+            result = self.run_audit(
+                json.dumps({"hook_event_name": "afterShellExecution", "command": "pytest"}),
+                env={"CURSOR_PROJECT_DIR": temp_dir},
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("sensitive", active.read_text(encoding="utf-8"))
+            self.assertFalse((logs / "cursor-events.jsonl.1").exists())
 
 
 class GuardShellTests(unittest.TestCase):

@@ -102,10 +102,14 @@ def build_runtime_result(
     result_sha: str | None = None,
     artifacts: list[dict[str, Any]] | None = None,
     usage: dict[str, Any] | None = None,
+    started_at: str | None = None,
+    finished_at: str | None = None,
+    duration_ms: int | None = None,
+    provider: dict[str, Any] | None = None,
 ) -> RuntimeResult:
     contract = request["contract"]
-    started = utc_now_iso()
-    finished = utc_now_iso()
+    started = started_at or utc_now_iso()
+    finished = finished_at or utc_now_iso()
     workspace = {
         "base_sha": request.get("base_sha", ""),
         "result_sha": result_sha or request.get("base_sha", ""),
@@ -122,6 +126,7 @@ def build_runtime_result(
         status=status,  # type: ignore[typeddict-item]
         started_at=started,
         finished_at=finished,
+        duration_ms=max(0, int(duration_ms or 0)),
         adapter={"id": ADAPTER_ID, "version": ADAPTER_VERSION},
         contract={
             "bundle_version": str(contract["bundle_version"]),
@@ -137,24 +142,21 @@ def build_runtime_result(
         limitations=limitations or [],
         requested_commands=requested_commands or [],
         usage=usage or {},
+        provider={key: value for key, value in (provider or {}).items() if value is not None},
     )
 
 
 def persist_runtime_result(project_root: Path, result: RuntimeResult) -> Path:
     project_root = project_root.resolve()
     payload = dict(result)
+    # A file cannot truthfully contain its own final digest.  Runtime-result
+    # artifact metadata is therefore materialized by ``load_runtime_result``
+    # after hashing the persisted bytes, rather than embedded in those bytes.
+    payload["artifacts"] = [
+        item for item in payload.get("artifacts", []) if item.get("kind") != "runtime_result"
+    ]
     path = result_path(project_root, str(result["execution_id"]))
     path.parent.mkdir(parents=True, exist_ok=True)
-    body = (json.dumps(payload, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
-    path.write_bytes(body)
-    digest = sha256_bytes(body)
-    payload["artifacts"] = list(payload.get("artifacts") or []) + [
-        {
-            "kind": "runtime_result",
-            "path": path.relative_to(project_root).as_posix(),
-            "sha256": digest,
-        }
-    ]
     body = (json.dumps(payload, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
     path.write_bytes(body)
     errors = validate_runtime_result(payload)
@@ -167,10 +169,18 @@ def load_runtime_result(project_root: Path, execution_id: str) -> RuntimeResult:
     path = result_path(project_root, execution_id)
     if not path.is_file():
         raise FileNotFoundError(f"runtime result missing: {path}")
-    data = json.loads(path.read_text(encoding="utf-8"))
+    body = path.read_bytes()
+    data = json.loads(body.decode("utf-8"))
     if not isinstance(data, dict):
         raise TypeError("runtime result root must be an object")
     errors = validate_runtime_result(data)
     if errors:
         raise ValueError("; ".join(errors))
+    data["artifacts"] = list(data.get("artifacts") or []) + [
+        {
+            "kind": "runtime_result",
+            "path": path.relative_to(project_root.resolve()).as_posix(),
+            "sha256": sha256_bytes(body),
+        }
+    ]
     return RuntimeResult(**data)  # type: ignore[misc]

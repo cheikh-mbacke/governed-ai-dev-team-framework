@@ -50,6 +50,7 @@ def metadata(workspace: Workspace) -> dict:
     state = load_yaml(ai / "state" / "project-state.yaml")
     framework = load_json(ai / "framework-version.json")
     constitution = load_yaml(ai / "constitution" / "constitution.yaml")
+    telemetry = profile.get("telemetry") or {}
     return {
         "project_id": profile.get("project", {}).get("id") or state.get("project_id"),
         "framework_version": framework.get("version"),
@@ -58,6 +59,7 @@ def metadata(workspace: Workspace) -> dict:
             or constitution.get("constitution", {}).get("version")
         ),
         "phase": state.get("phase"),
+        "telemetry_project_ref": telemetry.get("project_ref"),
     }
 
 
