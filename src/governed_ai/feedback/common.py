@@ -15,6 +15,10 @@ from jsonschema import Draft202012Validator, FormatChecker
 from governed_ai.core.persistence.io import load_json
 from governed_ai.core.persistence.io import load_yaml as _load_yaml
 from governed_ai.core.workspace import Workspace
+from governed_ai.feedback.domain.observation import (
+    UNRESOLVED_STATUSES,
+    occurrence_count_of,
+)
 
 
 def now_utc() -> datetime:
@@ -139,10 +143,10 @@ def relates_to_work_unit(payload: dict, work_unit_id: str | None) -> bool:
 
 
 def observation_summary(observations: list[dict]) -> tuple[dict, dict]:
-    unresolved = {"open", "acknowledged", "candidate_change"}
     summary = {
         "total": len(observations),
-        "open": sum(item.get("status") in unresolved for item in observations),
+        "open": sum(item.get("status") in UNRESOLVED_STATUSES for item in observations),
+        "occurrences": sum(occurrence_count_of(item) for item in observations),
         "by_category": dict(sorted(Counter(item.get("category") for item in observations).items())),
         "by_origin": dict(
             sorted(

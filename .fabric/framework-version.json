@@ -260,6 +260,7 @@
     "src/governed_ai/core/commands/handlers/revoke_run_authorization_grant.py",
     "src/governed_ai/core/commands/handlers/submit_feedback.py",
     "src/governed_ai/core/commands/handlers/tighten_execution_ceiling.py",
+    "src/governed_ai/core/commands/handlers/transition_observation.py",
     "src/governed_ai/core/commands/handlers/transition_work_unit.py",
     "src/governed_ai/core/commands/handlers/write_checkpoint.py",
     "src/governed_ai/core/commands/human_authorization.py",
@@ -319,6 +320,7 @@
     "src/governed_ai/feedback/commands/handlers.py",
     "src/governed_ai/feedback/common.py",
     "src/governed_ai/feedback/domain/__init__.py",
+    "src/governed_ai/feedback/domain/observation.py",
     "src/governed_ai/feedback/submit.py"
   ]
 }

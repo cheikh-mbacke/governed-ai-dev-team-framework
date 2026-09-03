@@ -130,6 +130,16 @@ class FeedbackSubmitArgs:
     output: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class FeedbackTransitionArgs:
+    observation_id: str
+    to_status: str
+    expected_revision: int
+    resolution: str | None = None
+    origin: str | None = None
+    confidence: str | None = None
+
+
 def _now_iso() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
@@ -352,6 +362,42 @@ def translate_feedback_submit(args: FeedbackSubmitArgs) -> dict[str, Any]:
     return envelope
 
 
+def translate_feedback_transition(args: FeedbackTransitionArgs) -> dict[str, Any]:
+    if args.to_status not in FEEDBACK_STATUSES:
+        raise TranslationError(f"unsupported status {args.to_status!r}")
+    if args.expected_revision < 1:
+        raise TranslationError("expected-revision must be >= 1")
+    if (args.origin is None) ^ (args.confidence is None):
+        raise TranslationError("provide both --origin and --confidence, or neither")
+    if args.origin is not None and args.origin not in FEEDBACK_ORIGINS:
+        raise TranslationError(f"unsupported origin {args.origin!r}")
+    if args.confidence is not None and args.confidence not in FEEDBACK_CONFIDENCES:
+        raise TranslationError(f"unsupported confidence {args.confidence!r}")
+    if args.to_status in {"resolved", "rejected"} and not (args.resolution or "").strip():
+        raise TranslationError("--resolution is required for resolved/rejected")
+
+    envelope = _base_envelope(
+        command_type="TransitionObservation",
+        prefix="legacy-feedback-transition",
+        actor_role="control-plane",
+    )
+    envelope["target"] = {
+        "kind": "observation",
+        "id": args.observation_id,
+        "expected_revision": args.expected_revision,
+    }
+    payload: dict[str, Any] = {"to_status": args.to_status}
+    if args.resolution is not None:
+        payload["resolution"] = args.resolution
+    if args.origin is not None and args.confidence is not None:
+        payload["classification"] = {
+            "origin": args.origin,
+            "confidence": args.confidence,
+        }
+    envelope["payload"] = payload
+    return envelope
+
+
 def format_record_gate_stdout(receipt: dict[str, Any], *, by: str) -> list[str]:
     lines: list[str] = []
     gate = None
@@ -389,16 +435,51 @@ def format_record_gate_stdout(receipt: dict[str, Any], *, by: str) -> list[str]:
 
 def format_feedback_record_stdout(receipt: dict[str, Any], *, lang: str) -> str:
     observation_id = None
+    coalesced = False
+    occurrence_count = 1
     for item in receipt.get("affected") or []:
         if item.get("kind") == "observation":
             observation_id = item.get("id")
+            coalesced = bool(item.get("coalesced"))
+            occurrence_count = int(item.get("occurrence_count") or 1)
             break
     if not observation_id:
         raise TranslationError("gateway receipt missing observation id")
     rel_path = Path(".ai-team") / "observations" / f"{observation_id}.yaml"
+    if coalesced:
+        if _is_french(lang):
+            return (
+                f"Mis a jour {observation_id} (occurrences={occurrence_count}) : {rel_path}\n"
+            )
+        return f"Updated {observation_id} (occurrences={occurrence_count}): {rel_path}\n"
     if _is_french(lang):
         return f"Enregistre {observation_id} : {rel_path}\n"
     return f"Recorded {observation_id}: {rel_path}\n"
+
+
+def format_feedback_transition_stdout(receipt: dict[str, Any], *, lang: str) -> str:
+    observation_id = None
+    status = None
+    from_status = None
+    revision = None
+    for item in receipt.get("affected") or []:
+        if item.get("kind") == "observation":
+            observation_id = item.get("id")
+            status = item.get("status")
+            from_status = item.get("from_status")
+            revision = item.get("revision")
+            break
+    if not observation_id or not status:
+        raise TranslationError("gateway receipt missing observation transition")
+    if _is_french(lang):
+        return (
+            f"Transition {observation_id} : {from_status} -> {status} "
+            f"(revision={revision})\n"
+        )
+    return (
+        f"Transitioned {observation_id}: {from_status} -> {status} "
+        f"(revision={revision})\n"
+    )
 
 
 def format_feedback_retrospective_stdout(receipt: dict[str, Any], *, lang: str) -> str:

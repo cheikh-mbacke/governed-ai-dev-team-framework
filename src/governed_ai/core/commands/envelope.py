@@ -75,6 +75,8 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_transition_work_unit(raw)
     elif raw["type"] == "RecordObservation":
         _validate_record_observation(raw)
+    elif raw["type"] == "TransitionObservation":
+        _validate_transition_observation(raw)
     elif raw["type"] == "RegisterEvidence":
         _validate_register_evidence(raw)
     elif raw["type"] == "CreateDecisionRequest":
@@ -200,6 +202,29 @@ def _validate_record_observation(raw: dict[str, Any]) -> None:
             ErrorCode.INVALID_SCHEMA,
             "payload.symptom is required",
             "/payload/symptom",
+        )
+
+
+def _validate_transition_observation(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "observation":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "TransitionObservation target.kind must be observation",
+            "/target/kind",
+        )
+    if "expected_revision" not in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision is required",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("to_status"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.to_status is required",
+            "/payload/to_status",
         )
 
 

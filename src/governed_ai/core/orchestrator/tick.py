@@ -156,6 +156,42 @@ def _envelope(
     }
 
 
+def _best_effort_submit_feedback(gateway: CommandGateway) -> dict[str, Any]:
+    """ADR-009 remount after Run terminal close — never blocks scheduling."""
+    submit_receipt, submit_exit = gateway.execute_command(
+        _envelope(
+            "SubmitFeedback",
+            target={"kind": "feedback_export", "id": "new"},
+            payload={},
+        )
+    )
+    if submit_exit == 0:
+        affected = (submit_receipt.get("affected") or [{}])[0]
+        return {
+            "feedback_submit": {
+                "path": affected.get("path"),
+                "transmission_status": affected.get("transmission_status"),
+            }
+        }
+    return {"feedback_submit_errors": submit_receipt.get("errors")}
+
+
+def _terminal_run_result(
+    gateway: CommandGateway,
+    *,
+    close_exit: int,
+    action_ok: str,
+    action_fail: str,
+    work_unit_id: str | None,
+    details: dict[str, Any],
+) -> TickResult:
+    merged = dict(details)
+    if close_exit == 0:
+        merged.update(_best_effort_submit_feedback(gateway))
+        return TickResult(action=action_ok, work_unit_id=work_unit_id, details=merged)
+    return TickResult(action=action_fail, work_unit_id=work_unit_id, details=merged)
+
+
 def _read_yaml(path) -> dict[str, Any] | None:
     if not path.is_file():
         return None
@@ -535,8 +571,11 @@ def run_scheduling_tick(
                 },
             )
         )
-        return TickResult(
-            action="run_stopped" if exit_code == 0 else "run_stop_failed",
+        return _terminal_run_result(
+            gateway,
+            close_exit=exit_code,
+            action_ok="run_stopped",
+            action_fail="run_stop_failed",
             work_unit_id=None,
             details={"stop_condition": stop_condition, "errors": receipt.get("errors")},
         )
@@ -773,8 +812,11 @@ def run_scheduling_tick(
                     },
                 )
             )
-            return TickResult(
-                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
                 work_unit_id=work_unit_id,
                 details={
                     "stop_condition": "worker_isolation_unguaranteed",
@@ -828,8 +870,11 @@ def run_scheduling_tick(
                         },
                     )
                 )
-                return TickResult(
-                    action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+                return _terminal_run_result(
+                    gateway,
+                    close_exit=stop_exit,
+                    action_ok="run_stopped",
+                    action_fail="run_stop_failed",
                     work_unit_id=work_unit_id,
                     details={
                         "stop_condition": "worker_isolation_unguaranteed",
@@ -1005,8 +1050,11 @@ def run_scheduling_tick(
                         },
                     )
                 )
-                return TickResult(
-                    action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+                return _terminal_run_result(
+                    gateway,
+                    close_exit=stop_exit,
+                    action_ok="run_stopped",
+                    action_fail="run_stop_failed",
                     work_unit_id=work_unit_id,
                     details={
                         "stop_condition": stop_condition,
@@ -1077,8 +1125,11 @@ def run_scheduling_tick(
                     },
                 )
             )
-            return TickResult(
-                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
                 work_unit_id=work_unit_id,
                 details={
                     "stop_condition": boundary_stop_condition,
@@ -1132,8 +1183,11 @@ def run_scheduling_tick(
                     },
                 )
             )
-            return TickResult(
-                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
                 work_unit_id=work_unit_id,
                 details={"stop_condition": stop_condition, "errors": stop_receipt.get("errors")},
             )
@@ -1154,8 +1208,11 @@ def run_scheduling_tick(
                     },
                 )
             )
-            return TickResult(
-                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
                 work_unit_id=work_unit_id,
                 details={"stop_condition": systemic_stop, "errors": stop_receipt.get("errors")},
             )
@@ -1561,23 +1618,7 @@ def run_scheduling_tick(
                 else {"retrospective_errors": retrospective_receipt.get("errors")}
             )
             # ADR-009: consented projects remount full feedback without extra gates.
-            submit_receipt, submit_exit = gateway.execute_command(
-                _envelope(
-                    "SubmitFeedback",
-                    target={"kind": "feedback_export", "id": "new"},
-                    payload={},
-                )
-            )
-            if submit_exit == 0:
-                retrospective_details["feedback_submit"] = {
-                    "path": submit_receipt["affected"][0].get("path"),
-                    "transmission_status": submit_receipt["affected"][0].get(
-                        "transmission_status"
-                    ),
-                }
-            else:
-                # Best-effort: never block Run completion on learning remount.
-                retrospective_details["feedback_submit_errors"] = submit_receipt.get("errors")
+            retrospective_details.update(_best_effort_submit_feedback(gateway))
         return TickResult(
             action="run_completed" if close_exit == 0 else "run_completion_failed",
             work_unit_id=None,

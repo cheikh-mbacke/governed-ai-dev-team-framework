@@ -176,9 +176,102 @@ def test_export_is_full_without_human_authorization(retro_workspace: Workspace) 
     assert document["format_version"] == "1.2"
     assert document["detail_level"] == "full"
     assert document["project_id"] == "retro-test"
+    assert document["summary"]["occurrences"] == 1
     assert document["observations"][0]["symptom"] == "Test friction"
     assert document["executions"][0]["duration_ms"] == 2000
     assert document["executions"][0]["usage"]["total_tokens"] == 15
+
+
+def test_structured_export_with_disabled_collection_validates(
+    retro_workspace: Workspace,
+) -> None:
+    profile_path = retro_workspace.ai_team / "project-profile.yaml"
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile["telemetry"]["collection"] = "disabled"
+    profile_path.write_text(yaml.safe_dump(profile, sort_keys=False), encoding="utf-8")
+
+    gateway = CommandGateway(retro_workspace)
+    receipt, exit_code = gateway.execute_command(
+        {
+            "protocol_version": "1.0",
+            "command_id": "CMD-export-structured",
+            "idempotency_key": "idem-export-structured",
+            "correlation_id": "COR-export-structured",
+            "type": "ExportFeedback",
+            "issued_at": "2026-08-29T18:06:00Z",
+            "actor": _control_plane_actor(),
+            "target": {"kind": "feedback_export", "id": "new"},
+            "payload": {"detail_level": "structured"},
+        }
+    )
+    assert exit_code == 0, receipt
+    export_path = retro_workspace.root / receipt["affected"][0]["path"]
+    document = json.loads(export_path.read_text(encoding="utf-8"))
+    assert document["detail_level"] == "structured"
+    assert "project_id" not in document
+    assert document["observations"][0]["occurrence_count"] == 1
+    assert "observation_ref" in document["observations"][0]
+    assert "symptom" not in document["observations"][0]
+
+
+def test_export_schema_rejects_full_observation_without_category(
+    retro_workspace: Workspace,
+) -> None:
+    from governed_ai.feedback import common
+
+    document = {
+        "format_version": "1.2",
+        "export_id": "EXP-SCHEMA-BAD",
+        "generated_at": "2026-08-29T18:06:00+00:00",
+        "detail_level": "full",
+        "project_ref": "PRJ-" + ("a" * 32),
+        "framework_version": "0.7.0",
+        "constitution_version": "1.1.0",
+        "summary": {
+            "total": 1,
+            "open": 1,
+            "occurrences": 1,
+            "by_category": {"tooling": 1},
+            "by_origin": {"framework": 1},
+            "by_severity": {"low": 1},
+            "signals": {
+                "blocked_minutes": 0,
+                "rework_observations": 0,
+                "human_interventions": 0,
+            },
+            "retrospectives": 0,
+            "executions": {
+                "total": 0,
+                "terminal": 0,
+                "by_status": {},
+                "by_step": {},
+                "duration_ms": 0,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cost": 0,
+            },
+        },
+        "observations": [
+            {
+                "id": "OBS-BAD",
+                "recorded_at": "2026-08-29T18:00:00+00:00",
+                "severity": "low",
+                "symptom": "missing category",
+                "classification": {"origin": "unknown", "confidence": "low"},
+                "impact": {
+                    "blocked_minutes": 0,
+                    "rework_required": False,
+                    "human_intervention": False,
+                },
+                "status": "open",
+            }
+        ],
+        "retrospectives": [],
+        "executions": [],
+    }
+    with pytest.raises(ValueError, match="category"):
+        common.validate_payload(retro_workspace, document, "feedback-export.schema.json")
 
 
 def test_receipt_excludes_full_export_body(retro_workspace: Workspace) -> None:
@@ -223,3 +316,108 @@ def test_submit_feedback_writes_local_outbox_without_url(retro_workspace: Worksp
     assert document["detail_level"] == "full"
     assert document["project_id"] == "retro-test"
     assert document["transmission"]["status"] == "local_outbox"
+
+
+def test_submit_feedback_failed_transmission_lands_in_outbox(
+    retro_workspace: Workspace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    profile_path = retro_workspace.ai_team / "project-profile.yaml"
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile["telemetry"]["submit_url"] = "https://feedback.example.invalid/ingest"
+    profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
+
+    def _boom(*_args, **_kwargs):
+        raise OSError("simulated network failure")
+
+    monkeypatch.setattr(
+        "governed_ai.feedback.submit.urllib.request.urlopen",
+        _boom,
+    )
+
+    gateway = CommandGateway(retro_workspace)
+    receipt, exit_code = gateway.execute_command(
+        {
+            "protocol_version": "1.0",
+            "command_id": "CMD-submit-fail-001",
+            "idempotency_key": "idem-submit-fail-001",
+            "correlation_id": "COR-submit-fail-001",
+            "type": "SubmitFeedback",
+            "issued_at": "2026-08-29T18:06:00Z",
+            "actor": _control_plane_actor(),
+            "target": {"kind": "feedback_export", "id": "new"},
+            "payload": {},
+        }
+    )
+    assert exit_code == 0, receipt
+    assert receipt["affected"][0]["transmission_status"] == "failed"
+    export_path = retro_workspace.root / receipt["affected"][0]["path"]
+    assert "outbox" in export_path.as_posix()
+    document = json.loads(export_path.read_text(encoding="utf-8"))
+    assert document["transmission"]["status"] == "failed"
+    assert "simulated network failure" in (document["transmission"]["error"] or "")
+
+
+def test_flush_outbox_retries_failed_export(
+    retro_workspace: Workspace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from governed_ai.feedback.submit import flush_outbox
+
+    outbox = retro_workspace.ai_team / "metrics" / "outbox"
+    outbox.mkdir(parents=True)
+    export_id = "EXP-FLUSH-001"
+    document = {
+        "format_version": "1.2",
+        "export_id": export_id,
+        "generated_at": "2026-08-29T18:06:00+00:00",
+        "detail_level": "full",
+        "project_ref": "PRJ-" + ("a" * 32),
+        "project_id": "retro-test",
+        "framework_version": "0.5.0",
+        "constitution_version": "1.1.0",
+        "summary": {
+            "total": 0,
+            "open": 0,
+            "by_category": {},
+            "by_origin": {},
+            "by_severity": {},
+        },
+        "observations": [],
+        "retrospectives": [],
+        "executions": [],
+        "transmission": {
+            "status": "failed",
+            "submitted_at": "2026-08-29T18:06:00+00:00",
+            "destination": "https://feedback.example.invalid/ingest",
+            "ack_id": None,
+            "error": "previous failure",
+        },
+    }
+    path = outbox / f"{export_id}.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    profile_path = retro_workspace.ai_team / "project-profile.yaml"
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile["telemetry"]["submit_url"] = "https://feedback.example.test/ingest"
+    profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
+
+    class _Response:
+        def read(self) -> bytes:
+            return b'{"ack_id":"ACK-FLUSH-1"}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return False
+
+    monkeypatch.setattr(
+        "governed_ai.feedback.submit.urllib.request.urlopen",
+        lambda *_args, **_kwargs: _Response(),
+    )
+
+    results = flush_outbox(retro_workspace)
+    assert len(results) == 1
+    assert results[0].status == "transmitted"
+    updated = json.loads(path.read_text(encoding="utf-8"))
+    assert updated["transmission"]["status"] == "transmitted"
+    assert updated["transmission"]["ack_id"] == "ACK-FLUSH-1"

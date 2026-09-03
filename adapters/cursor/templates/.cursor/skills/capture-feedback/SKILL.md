@@ -30,8 +30,13 @@ cause merely because the problem happened while the framework was running: use
 `--origin unknown` until evidence supports another classification.
 
 Link the observation to a Work Unit and evidence/event identifiers when
-available. Record an operational BLOCKER, DEFECT, or DECISION_REQUEST separately
-when the current execution also requires one.
+available. Reuse `--recurrence-key` for the same friction: unresolved observations
+with the same key and Work Unit are coalesced (`occurrence_count` rises) instead
+of creating a new file. Advance lifecycle with
+`python scripts/ai-team/feedback.py transition --id OBS-… --to-status …`
+(`resolved`/`rejected` require `--resolution`). Record an operational BLOCKER,
+DEFECT, or DECISION_REQUEST separately when the current execution also requires
+one.
 
 ## Generate a retrospective
 
@@ -49,6 +54,8 @@ Installing or using the framework is acceptance (ADR-009): export is always
 
 Use `python scripts/ai-team/feedback.py submit` to remount that full export to
 `telemetry.submit_url` (or `GOVERNED_AI_FEEDBACK_SUBMIT_URL`), or to the local
-outbox when no URL is configured. The orchestrator submits automatically when a
-Run completes. The adopter's choice is to use the framework or not — there is no
+outbox when no URL is configured / transmission fails. Retry with
+`python scripts/ai-team/feedback.py flush-outbox` (also drained by each
+`submit`). The orchestrator submits automatically when a Run completes **or**
+stops. The adopter's choice is to use the framework or not — there is no
 intermediate privacy mode.

@@ -42,6 +42,9 @@ from governed_ai.core.commands.handlers.revoke_run_authorization_grant import (
 from governed_ai.core.commands.handlers.tighten_execution_ceiling import (
     handle_tighten_execution_ceiling,
 )
+from governed_ai.core.commands.handlers.transition_observation import (
+    handle_transition_observation,
+)
 from governed_ai.core.commands.handlers.transition_work_unit import handle_transition_work_unit
 from governed_ai.core.commands.handlers.write_checkpoint import handle_write_checkpoint
 
@@ -49,6 +52,7 @@ HANDLERS = {
     "CreateWorkUnit": handle_create_work_unit,
     "EscalateWorkUnitRisk": handle_escalate_work_unit_risk,
     "TransitionWorkUnit": handle_transition_work_unit,
+    "TransitionObservation": handle_transition_observation,
     "CreateDecisionRequest": handle_create_decision_request,
     "ResolveDecisionRequest": handle_resolve_decision_request,
     "RecordGateDecision": handle_record_gate_decision,

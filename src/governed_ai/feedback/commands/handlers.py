@@ -11,6 +11,13 @@ from pathlib import Path
 
 from governed_ai.core.workspace import Workspace
 from governed_ai.feedback import common
+from governed_ai.feedback.domain.observation import (
+    UNRESOLVED_STATUSES,
+    apply_coalesce,
+    find_coalesce_candidate,
+    normalize_recurrence_key,
+    occurrence_count_of,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +48,15 @@ class RecordObservationResult:
     observation_id: str
     path: Path
     display_path: Path
+    coalesced: bool = False
+    occurrence_count: int = 1
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedObservation:
+    document: dict
+    path: Path
+    coalesced: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,14 +92,57 @@ class ExportResult:
 def record_observation(
     workspace: Workspace, params: RecordObservationParams
 ) -> RecordObservationResult:
-    payload = build_observation_document(workspace, params)
-    path = workspace.ai_team / "observations" / f"{payload['id']}.yaml"
-    common.atomic_write_yaml(path, payload)
+    prepared = prepare_observation_write(workspace, params)
+    if not prepared.coalesced and prepared.path.is_file():
+        raise ValueError(f"observation {prepared.document['id']!r} already exists")
+    common.atomic_write_yaml(prepared.path, prepared.document)
     return RecordObservationResult(
-        observation_id=payload["id"],
-        path=path,
-        display_path=path.relative_to(workspace.root),
+        observation_id=prepared.document["id"],
+        path=prepared.path,
+        display_path=prepared.path.relative_to(workspace.root),
+        coalesced=prepared.coalesced,
+        occurrence_count=occurrence_count_of(prepared.document),
     )
+
+
+def prepare_observation_write(
+    workspace: Workspace, params: RecordObservationParams
+) -> PreparedObservation:
+    """Create a new Observation or fold it into an unresolved recurrence."""
+    if params.blocked_minutes < 0:
+        raise ValueError("--blocked-minutes cannot be negative")
+    if params.work_unit and common.find_work_unit(workspace, params.work_unit) is None:
+        raise ValueError(f"Work Unit not found: {params.work_unit}")
+    for work_unit in params.affected_work_unit:
+        if common.find_work_unit(workspace, work_unit) is None:
+            raise ValueError(f"Affected Work Unit not found: {work_unit}")
+
+    key = normalize_recurrence_key(params.recurrence_key)
+    if key:
+        loaded = common.load_yaml_directory(workspace.ai_team / "observations")
+        candidate = find_coalesce_candidate(
+            loaded, recurrence_key=key, work_unit=params.work_unit
+        )
+        if candidate is not None:
+            path, existing = candidate
+            document = apply_coalesce(
+                existing,
+                now=common.now_iso(),
+                blocked_minutes=params.blocked_minutes,
+                rework_required=params.rework_required,
+                human_intervention=params.human_intervention,
+                affected_work_units=params.affected_work_unit,
+                evidence_refs=params.evidence_ref,
+                severity=params.severity,
+                workaround=params.workaround,
+                candidate_improvement=params.candidate_improvement,
+            )
+            common.validate_payload(workspace, document, "observation.schema.json")
+            return PreparedObservation(document=document, path=path, coalesced=True)
+
+    document = build_observation_document(workspace, params)
+    path = workspace.ai_team / "observations" / f"{document['id']}.yaml"
+    return PreparedObservation(document=document, path=path, coalesced=False)
 
 
 def build_observation_document(
@@ -99,9 +158,10 @@ def build_observation_document(
 
     meta = common.metadata(workspace)
     observation_id = params.observation_id or common.generated_id("OBS")
+    recorded_at = common.now_iso()
     payload = {
         "id": observation_id,
-        "recorded_at": common.now_iso(),
+        "recorded_at": recorded_at,
         "recorded_by": params.recorded_by,
         "project_id": meta["project_id"],
         "framework_version": meta["framework_version"],
@@ -125,6 +185,9 @@ def build_observation_document(
         "workaround": params.workaround,
         "candidate_improvement": params.candidate_improvement,
         "recurrence_key": params.recurrence_key,
+        "occurrence_count": 1,
+        "last_recorded_at": recorded_at,
+        "revision": 1,
         "status": params.status,
         "resolution": params.resolution,
     }
@@ -174,7 +237,6 @@ def build_retrospective_document(
         sorted(Counter(item.get("status", "unknown") for item in work_units).items())
     )
     signals["executions"] = _execution_summary(attempts)
-    unresolved = {"open", "acknowledged", "candidate_change"}
 
     retrospective_id = common.generated_id("RET")
     payload = {
@@ -196,7 +258,7 @@ def build_retrospective_document(
         "signals": signals,
         "observation_refs": [item["id"] for item in observations],
         "unresolved_observation_refs": [
-            item["id"] for item in observations if item.get("status") in unresolved
+            item["id"] for item in observations if item.get("status") in UNRESOLVED_STATUSES
         ],
         "notes": params.notes,
         "status": "generated",
@@ -248,6 +310,7 @@ def _structured_observation(item: dict, *, project_ref: str) -> dict:
         "recurrence_ref": (
             _hash_ref(recurrence, namespace=project_ref) if recurrence else None
         ),
+        "occurrence_count": occurrence_count_of(item),
         "status": item.get("status"),
     }
 

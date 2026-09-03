@@ -295,6 +295,11 @@ def test_unattended_run_stops_when_adapter_cannot_isolate_workers(
     )
     assert stopped.action == "run_stopped"
     assert stopped.details["stop_condition"] == "worker_isolation_unguaranteed"
+    assert "feedback_submit" in stopped.details
+    assert stopped.details["feedback_submit"]["transmission_status"] == "local_outbox"
+    submit_path = workspace.root / stopped.details["feedback_submit"]["path"]
+    assert submit_path.is_file()
+    assert "outbox" in submit_path.as_posix()
 
 
 def test_tick_reassigns_a_stale_lease(workspace: Workspace) -> None:
@@ -889,6 +894,53 @@ def test_failed_execution_attempt_auto_records_observation(workspace: Workspace)
     assert observation["work_unit"] == "WU-A"
     assert observation["classification"]["origin"] == "unknown"
     assert observation["recorded_by"] == "orchestrator:auto"
+    assert observation["occurrence_count"] == 1
+    assert observation["recurrence_key"] == "auto:sandbox_implementation:failed"
+
+
+def test_repeated_failed_attempts_coalesce_auto_observation(workspace: Workspace) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-AUTO-COAL", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-AUTO-COAL"},
+            payload={
+                "id": "LEASE-AUTO-COAL",
+                "run_id": "RUN-AUTO-COAL",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="auto-coal-lease",
+        )
+    )
+
+    first = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-AUTO-COAL",
+        adapter=FakeAdapter([{"status": "failed", "summary": "boom-1"}]),
+        worker_id="w1",
+    )
+    assert first.action == "recorded_attempt"
+
+    second = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-AUTO-COAL",
+        adapter=FakeAdapter([{"status": "failed", "summary": "boom-2"}]),
+        worker_id="w1",
+    )
+    assert second.action == "recorded_attempt"
+
+    observations = list((workspace.ai_team / "observations").glob("*.yaml"))
+    assert len(observations) == 1
+    observation = yaml.safe_load(observations[0].read_text(encoding="utf-8"))
+    assert observation["occurrence_count"] == 2
+    assert observation["symptom"] == "boom-1"
+    assert observation["recurrence_key"] == "auto:sandbox_implementation:failed"
+    assert len(observation["evidence_refs"]) == 4
 
 
 def test_flaky_failure_can_recover_on_bounded_retry(workspace: Workspace) -> None:

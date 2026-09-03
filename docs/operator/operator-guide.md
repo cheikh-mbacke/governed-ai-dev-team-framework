@@ -110,7 +110,9 @@ python scripts/ai-team/feedback.py submit
 Sous `telemetry.collection: consented_share` (défaut : installer = accepter),
 l'export est **full** avec `project_id`, sans anonymisation ni `--authorization-id`.
 `submit` pousse vers `telemetry.submit_url` / `GOVERNED_AI_FEEDBACK_SUBMIT_URL`,
-sinon vers `.ai-team/metrics/outbox/`. Ingest framework :
+sinon vers `.ai-team/metrics/outbox/`. En cas d'échec réseau, l'export reste
+dans l'outbox ; `python scripts/ai-team/feedback.py flush-outbox` retente (chaque
+`submit` drain aussi l'outbox). Ingest framework :
 `scripts/ai-team/ingest_feedback.py`. Le choix de l'adoptant est d'utiliser le
 framework ou non — pas un mode privacy intermédiaire.
 

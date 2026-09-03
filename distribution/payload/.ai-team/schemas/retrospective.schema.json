@@ -48,6 +48,7 @@
       "properties": {
         "total": {"type": "integer", "minimum": 0},
         "open": {"type": "integer", "minimum": 0},
+        "occurrences": {"type": "integer", "minimum": 0},
         "by_category": {"type": "object", "additionalProperties": {"type": "integer"}},
         "by_origin": {"type": "object", "additionalProperties": {"type": "integer"}},
         "by_severity": {"type": "object", "additionalProperties": {"type": "integer"}}

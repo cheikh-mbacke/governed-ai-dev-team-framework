@@ -28,16 +28,20 @@ from governed_ai.core.commands.legacy_cli import (
     FeedbackRecordArgs,
     FeedbackRetrospectiveArgs,
     FeedbackSubmitArgs,
+    FeedbackTransitionArgs,
     TranslationError,
     format_feedback_export_stdout,
     format_feedback_record_stdout,
     format_feedback_retrospective_stdout,
+    format_feedback_transition_stdout,
     translate_feedback_export,
     translate_feedback_record,
     translate_feedback_retrospective,
     translate_feedback_submit,
+    translate_feedback_transition,
 )
 from governed_ai.core.workspace import Workspace
+from governed_ai.feedback.domain.observation import revision_of
 
 ROOT = Workspace.discover(Path.cwd()).root
 LANG = project_language(ROOT)
@@ -69,6 +73,7 @@ ORIGINS = [
     "unknown",
 ]
 CONFIDENCES = ["low", "probable", "high", "confirmed"]
+STATUSES = ["open", "acknowledged", "candidate_change", "resolved", "rejected"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -96,10 +101,28 @@ def build_parser() -> argparse.ArgumentParser:
     record.add_argument("--recurrence-key")
     record.add_argument(
         "--status",
-        choices=["open", "acknowledged", "candidate_change", "resolved", "rejected"],
+        choices=STATUSES,
         default="open",
     )
     record.add_argument("--resolution")
+
+    transition = subparsers.add_parser(
+        "transition", help="apply a permitted Observation status transition"
+    )
+    transition.add_argument("--id", required=True, dest="observation_id")
+    transition.add_argument(
+        "--to-status",
+        required=True,
+        choices=["acknowledged", "candidate_change", "resolved", "rejected"],
+    )
+    transition.add_argument("--resolution")
+    transition.add_argument("--origin", choices=ORIGINS)
+    transition.add_argument("--confidence", choices=CONFIDENCES)
+    transition.add_argument(
+        "--expected-revision",
+        type=int,
+        help="optimistic concurrency token (defaults to the on-disk revision)",
+    )
 
     retrospective = subparsers.add_parser(
         "retrospective", help="generate a deterministic Work Unit or project snapshot"
@@ -129,6 +152,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="submit full consented feedback to the framework learning ingest (ADR-009)",
     )
     submit.add_argument("--output")
+
+    subparsers.add_parser(
+        "flush-outbox",
+        help="retry transmission of pending/failed Feedback Exports in the local outbox",
+    )
     return parser
 
 
@@ -251,6 +279,86 @@ def submit_feedback(args: argparse.Namespace) -> int:
     return 0
 
 
+def flush_feedback_outbox(_args: argparse.Namespace) -> int:
+    from governed_ai.core.commands.errors import GatewayError
+    from governed_ai.core.workspace_mode import ensure_feedback_allowed
+    from governed_ai.feedback.submit import flush_outbox
+
+    try:
+        ensure_feedback_allowed(WORKSPACE)
+    except GatewayError as exc:
+        print(t(LANG, f"GATEWAY ERROR: {exc}", f"ERREUR GATEWAY : {exc}"), file=sys.stderr)
+        return EXIT_CLI
+
+    results = flush_outbox(WORKSPACE)
+    if not results:
+        print(
+            t(
+                LANG,
+                "OUTBOX: nothing to flush",
+                "OUTBOX : rien a transmettre",
+            )
+        )
+        return 0
+    for item in results:
+        relative = item.path
+        try:
+            relative = item.path.relative_to(WORKSPACE.root)
+        except ValueError:
+            pass
+        suffix = f" error={item.error}" if item.error else ""
+        print(f"OUTBOX {item.export_id} status={item.status} path={relative.as_posix()}{suffix}")
+    failed = sum(1 for item in results if item.status == "failed")
+    return 1 if failed else 0
+
+
+def transition_observation(args: argparse.Namespace) -> int:
+    print(DEPRECATION_FEEDBACK, file=sys.stderr)
+    path = WORKSPACE.ai_team / "observations" / f"{args.observation_id}.yaml"
+    if not path.is_file():
+        print(
+            t(
+                LANG,
+                f"Observation not found: {args.observation_id}",
+                f"Observation introuvable : {args.observation_id}",
+            ),
+            file=sys.stderr,
+        )
+        return EXIT_CLI
+    document = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        print(
+            t(LANG, "Invalid observation document", "Document Observation invalide"),
+            file=sys.stderr,
+        )
+        return EXIT_CLI
+    expected = (
+        args.expected_revision
+        if args.expected_revision is not None
+        else revision_of(document)
+    )
+    try:
+        envelope = translate_feedback_transition(
+            FeedbackTransitionArgs(
+                observation_id=args.observation_id,
+                to_status=args.to_status,
+                expected_revision=expected,
+                resolution=args.resolution,
+                origin=args.origin,
+                confidence=args.confidence,
+            )
+        )
+    except TranslationError as exc:
+        print(t(LANG, f"WRAPPER TRANSLATION ERROR: {exc}", f"ERREUR TRADUCTION WRAPPER : {exc}"), file=sys.stderr)
+        return EXIT_CLI
+
+    receipt, exit_code = _execute(envelope)
+    if exit_code != 0:
+        _handle_gateway_failure(receipt, exit_code)
+    print(format_feedback_transition_stdout(receipt, lang=LANG), end="")
+    return 0
+
+
 def main() -> int:
     args = build_parser().parse_args()
     if args.command == "record":
@@ -259,6 +367,10 @@ def main() -> int:
         return generate_retrospective(args)
     if args.command == "submit":
         return submit_feedback(args)
+    if args.command == "flush-outbox":
+        return flush_feedback_outbox(args)
+    if args.command == "transition":
+        return transition_observation(args)
     return export_feedback(args)
 
 
