@@ -9,6 +9,7 @@ from governed_ai.core.commands.handlers.create_work_unit import handle_create_wo
 from governed_ai.core.commands.handlers.escalate_work_unit_risk import handle_escalate_work_unit_risk
 from governed_ai.core.commands.handlers.export_feedback import handle_export_feedback
 from governed_ai.core.commands.handlers.generate_retrospective import handle_generate_retrospective
+from governed_ai.core.commands.handlers.review_retrospective import handle_review_retrospective
 from governed_ai.core.commands.handlers.submit_feedback import handle_submit_feedback
 from governed_ai.core.commands.handlers.issue_run_authorization_grant import (
     handle_issue_run_authorization_grant,
@@ -59,6 +60,7 @@ HANDLERS = {
     "RecordAcceptance": handle_record_acceptance,
     "RegisterReleaseCandidate": handle_register_release_candidate,
     "GenerateRetrospective": handle_generate_retrospective,
+    "ReviewRetrospective": handle_review_retrospective,
     "ExportFeedback": handle_export_feedback,
     "SubmitFeedback": handle_submit_feedback,
     "RegisterFinding": handle_register_finding,

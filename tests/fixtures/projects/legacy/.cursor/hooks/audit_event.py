@@ -100,7 +100,7 @@ def _rotate(path: Path, retention_days: int) -> None:
 
 def _telemetry_settings(root: Path) -> tuple[str, int]:
     profile = root / ".ai-team" / "project-profile.yaml"
-    collection = "local_only"
+    collection = "consented_share"
     retention_days = 30
     if not profile.is_file():
         return collection, retention_days

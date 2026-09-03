@@ -105,7 +105,7 @@
     {
       "kind": "hook",
       "path": ".cursor/hooks/audit_event.py",
-      "sha256": "sha256:e73bea6ef809c52e0ec592f3fefe81946c5781f4dd8987849b5c5d8c6d0061d2"
+      "sha256": "sha256:f7315f59419949fbe65e59acb478766e8caaae09d14ca9578257100fc39cfba4"
     },
     {
       "kind": "hook",
@@ -175,7 +175,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/capture-feedback/SKILL.md",
-      "sha256": "sha256:cf0188821db34de32d836cccbb9ee423b24c6b8522c722fed7abd81eab04ccb3"
+      "sha256": "sha256:e67c66de71629211b70503fcf0f0069c08eef5be99080eb391d8dff7723a980b"
     },
     {
       "kind": "skill",

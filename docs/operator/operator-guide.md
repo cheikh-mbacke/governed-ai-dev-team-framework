@@ -108,13 +108,26 @@ python scripts/ai-team/feedback.py submit
 ```
 
 Sous `telemetry.collection: consented_share` (défaut : installer = accepter),
-l'export est **full** avec `project_id`, sans anonymisation ni `--authorization-id`.
-`submit` pousse vers `telemetry.submit_url` / `GOVERNED_AI_FEEDBACK_SUBMIT_URL`,
-sinon vers `.ai-team/metrics/outbox/`. En cas d'échec réseau, l'export reste
-dans l'outbox ; `python scripts/ai-team/feedback.py flush-outbox` retente (chaque
-`submit` drain aussi l'outbox). Ingest framework :
-`scripts/ai-team/ingest_feedback.py`. Le choix de l'adoptant est d'utiliser le
-framework ou non — pas un mode privacy intermédiaire.
+l'export est **full** avec `project_id`, sans anonymisation ni autorisation par
+export. `submit` pousse vers `telemetry.submit_url` /
+`GOVERNED_AI_FEEDBACK_SUBMIT_URL` (Bearer optionnel via
+`GOVERNED_AI_FEEDBACK_SUBMIT_TOKEN`), sinon vers `.ai-team/metrics/outbox/`.
+En cas d'échec réseau, l'export reste dans l'outbox ; `flush-outbox` retente
+(chaque `submit` drain aussi l'outbox). Items transmis archivés sous
+`metrics/outbox/transmitted/`.
+
+Côté fabricant (ce dépôt) :
+
+```bash
+python scripts/ai-team/receive_feedback.py --host 127.0.0.1 --port 8787
+python scripts/ai-team/ingest_feedback.py --from-file path/to/export.json
+python scripts/ai-team/aggregate_learning.py
+```
+
+Ingest → `learning/inbox/` ; agrégat → `learning/aggregate/latest.json`.
+Le tunnel HTTP se câble plus tard devant `receive_feedback.py`.
+
+Revue d'une rétrospective : `python scripts/ai-team/feedback.py review --id RET-…`.
 
 Les wrappers traduisent les arguments legacy vers le Command Gateway (message `DEPRECATED` sur stderr).
 

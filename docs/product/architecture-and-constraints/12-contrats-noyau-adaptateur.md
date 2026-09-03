@@ -215,7 +215,7 @@ Valeurs de `status` : `succeeded`, `failed`, `blocked`, `cancelled`, `timed_out`
 
 ### 7.1 `human_authorization` (ajouté après audit indépendant)
 
-Toute commande exigeant une autorisation humaine (gates G0-G4, `RecordAcceptance`, `ExportFeedback` avec confidentialité `full`, ou toute commande listée « Autorisation humaine » au §8) porte un champ supplémentaire `human_authorization` dans l'enveloppe :
+Toute commande exigeant une autorisation humaine (gates G0-G4, `RecordAcceptance`, ou toute commande listée « Autorisation humaine » au §8 — **pas** `ExportFeedback` / `SubmitFeedback` sous ADR-009) porte un champ supplémentaire `human_authorization` dans l'enveloppe :
 
 ```json
 {
@@ -252,8 +252,9 @@ Invariants :
 | `RecordObservation` | Tout Rôle authentifié par son exécution | Crée un signal non autoritaire. |
 | `TransitionObservation` | Control Plane ou autorité de feedback | Applique une transition permise. |
 | `GenerateRetrospective` | Control Plane | Crée un snapshot Work Unit/projet. |
-| `ReviewRetrospective` | Humain/autorité définie | Crée la revue ou change le seul statut selon l’option retenue. |
-| `ExportFeedback` | Autorisation humaine spécifique | Exporte avec niveau de confidentialité et destination validés. |
+| `ReviewRetrospective` | Control Plane | Passe le statut `generated` → `reviewed` sans muter le contenu (hors `notes` / métadonnées de revue). |
+| `ExportFeedback` | Control Plane | Exporte localement ; sous `consented_share`, force `full` + `project_id` (ADR-009). |
+| `SubmitFeedback` | Control Plane | Remonte l’export full vers `telemetry.submit_url` / outbox (ADR-009 ; pas de `human_authorization` par export). |
 
 La liste exacte des transitions de Work Unit reste celle du schéma/politique v2 et est testée comme une machine à états fermée.
 

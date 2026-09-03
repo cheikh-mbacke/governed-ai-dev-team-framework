@@ -27,21 +27,25 @@ from governed_ai.core.commands.legacy_cli import (
     FeedbackExportArgs,
     FeedbackRecordArgs,
     FeedbackRetrospectiveArgs,
+    FeedbackReviewArgs,
     FeedbackSubmitArgs,
     FeedbackTransitionArgs,
     TranslationError,
     format_feedback_export_stdout,
     format_feedback_record_stdout,
     format_feedback_retrospective_stdout,
+    format_feedback_review_stdout,
     format_feedback_transition_stdout,
     translate_feedback_export,
     translate_feedback_record,
     translate_feedback_retrospective,
+    translate_feedback_review,
     translate_feedback_submit,
     translate_feedback_transition,
 )
 from governed_ai.core.workspace import Workspace
 from governed_ai.feedback.domain.observation import revision_of
+from governed_ai.feedback.domain.retrospective import revision_of as retrospective_revision_of
 
 ROOT = Workspace.discover(Path.cwd()).root
 LANG = project_language(ROOT)
@@ -133,19 +137,34 @@ def build_parser() -> argparse.ArgumentParser:
     retrospective.add_argument("--notes")
     retrospective.add_argument("--output")
 
+    review = subparsers.add_parser(
+        "review",
+        help="mark a generated retrospective as reviewed (status-only)",
+    )
+    review.add_argument("--id", required=True, dest="retrospective_id")
+    review.add_argument("--reviewed-by")
+    review.add_argument("--notes")
+    review.add_argument(
+        "--expected-revision",
+        type=int,
+        help="optimistic concurrency token (defaults to the on-disk revision)",
+    )
+
     export = subparsers.add_parser(
-        "export", help="export feedback for cross-project analysis"
+        "export",
+        help=(
+            "export feedback for cross-project analysis "
+            "(under consented_share, forced to full + project_id)"
+        ),
     )
     export.add_argument(
         "--detail-level",
         choices=["aggregate", "structured", "full"],
-        default="structured",
+        default="full",
+        help="ignored under consented_share (always full); used only when collection=disabled",
     )
     export.add_argument("--include-project-id", action="store_true")
     export.add_argument("--output")
-    export.add_argument("--authorization-id", default="")
-    export.add_argument("--authorization-granted-by", default="")
-    export.add_argument("--authorization-scope", default="export:full")
 
     submit = subparsers.add_parser(
         "submit",
@@ -230,6 +249,51 @@ def generate_retrospective(args: argparse.Namespace) -> int:
     return 0
 
 
+def review_retrospective(args: argparse.Namespace) -> int:
+    print(DEPRECATION_FEEDBACK, file=sys.stderr)
+    path = WORKSPACE.ai_team / "retrospectives" / f"{args.retrospective_id}.yaml"
+    if not path.is_file():
+        print(
+            t(
+                LANG,
+                f"Retrospective not found: {args.retrospective_id}",
+                f"Retrospective introuvable : {args.retrospective_id}",
+            ),
+            file=sys.stderr,
+        )
+        return EXIT_CLI
+    document = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        print(
+            t(LANG, "Invalid retrospective document", "Document Retrospective invalide"),
+            file=sys.stderr,
+        )
+        return EXIT_CLI
+    expected = (
+        args.expected_revision
+        if args.expected_revision is not None
+        else retrospective_revision_of(document)
+    )
+    try:
+        envelope = translate_feedback_review(
+            FeedbackReviewArgs(
+                retrospective_id=args.retrospective_id,
+                expected_revision=expected,
+                reviewed_by=args.reviewed_by,
+                notes=args.notes,
+            )
+        )
+    except TranslationError as exc:
+        print(t(LANG, f"WRAPPER TRANSLATION ERROR: {exc}", f"ERREUR TRADUCTION WRAPPER : {exc}"), file=sys.stderr)
+        return EXIT_CLI
+
+    receipt, exit_code = _execute(envelope)
+    if exit_code != 0:
+        _handle_gateway_failure(receipt, exit_code)
+    print(format_feedback_review_stdout(receipt, lang=LANG), end="")
+    return 0
+
+
 def export_feedback(args: argparse.Namespace) -> int:
     print(DEPRECATION_FEEDBACK, file=sys.stderr)
     try:
@@ -238,9 +302,6 @@ def export_feedback(args: argparse.Namespace) -> int:
                 detail_level=args.detail_level,
                 include_project_id=args.include_project_id,
                 output=args.output,
-                authorization_id=args.authorization_id,
-                authorization_granted_by=args.authorization_granted_by,
-                authorization_scope=args.authorization_scope,
             )
         )
     except TranslationError as exc:
@@ -365,6 +426,8 @@ def main() -> int:
         return record_observation(args)
     if args.command == "retrospective":
         return generate_retrospective(args)
+    if args.command == "review":
+        return review_retrospective(args)
     if args.command == "submit":
         return submit_feedback(args)
     if args.command == "flush-outbox":

@@ -86,7 +86,10 @@
     "observation_refs": {"type": "array", "items": {"type": "string"}},
     "unresolved_observation_refs": {"type": "array", "items": {"type": "string"}},
     "notes": {"type": ["string", "null"]},
-    "status": {"enum": ["generated", "reviewed"]}
+    "status": {"enum": ["generated", "reviewed"]},
+    "revision": {"type": "integer", "minimum": 1},
+    "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
+    "reviewed_by": {"type": ["string", "null"]}
   },
   "additionalProperties": false
 }

@@ -152,6 +152,58 @@ def test_generate_retrospective_via_gateway(retro_workspace: Workspace) -> None:
     assert "OBS-RETRO-001" in document["observation_refs"]
     assert document["signals"]["executions"]["total"] == 1
     assert document["signals"]["executions"]["total_tokens"] == 15
+    assert document["status"] == "generated"
+    assert document["revision"] == 1
+
+
+def test_review_retrospective_via_gateway(retro_workspace: Workspace) -> None:
+    gateway = CommandGateway(retro_workspace)
+    receipt, exit_code = gateway.execute_command(
+        {
+            "protocol_version": "1.0",
+            "command_id": "CMD-retro-gen-review",
+            "idempotency_key": "idem-retro-gen-review",
+            "correlation_id": "COR-retro-gen-review",
+            "type": "GenerateRetrospective",
+            "issued_at": "2026-08-29T18:05:00Z",
+            "actor": _control_plane_actor(),
+            "target": {"kind": "retrospective", "id": "new"},
+            "payload": {"scope": "work_unit", "work_unit_id": "WU-RETRO-TEST"},
+        }
+    )
+    assert exit_code == 0, receipt
+    retro_id = receipt["affected"][0]["id"]
+
+    review_receipt, review_exit = gateway.execute_command(
+        {
+            "protocol_version": "1.0",
+            "command_id": "CMD-retro-review",
+            "idempotency_key": "idem-retro-review",
+            "correlation_id": "COR-retro-review",
+            "type": "ReviewRetrospective",
+            "issued_at": "2026-08-29T18:06:00Z",
+            "actor": _control_plane_actor(),
+            "target": {
+                "kind": "retrospective",
+                "id": retro_id,
+                "expected_revision": 1,
+            },
+            "payload": {"reviewed_by": "alice", "notes": "looks good"},
+        }
+    )
+    assert review_exit == 0, review_receipt
+    assert review_receipt["affected"][0]["status"] == "reviewed"
+    assert review_receipt["affected"][0]["revision"] == 2
+    document = yaml.safe_load(
+        (retro_workspace.ai_team / "retrospectives" / f"{retro_id}.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert document["status"] == "reviewed"
+    assert document["revision"] == 2
+    assert document["reviewed_by"] == "alice"
+    assert document["notes"] == "looks good"
+    assert document["observation_refs"] == ["OBS-RETRO-001"]
 
 
 def test_export_is_full_without_human_authorization(retro_workspace: Workspace) -> None:
@@ -329,6 +381,7 @@ def test_submit_feedback_failed_transmission_lands_in_outbox(
     def _boom(*_args, **_kwargs):
         raise OSError("simulated network failure")
 
+    monkeypatch.setenv("GOVERNED_AI_FEEDBACK_SUBMIT_ATTEMPTS", "1")
     monkeypatch.setattr(
         "governed_ai.feedback.submit.urllib.request.urlopen",
         _boom,
@@ -418,6 +471,9 @@ def test_flush_outbox_retries_failed_export(
     results = flush_outbox(retro_workspace)
     assert len(results) == 1
     assert results[0].status == "transmitted"
-    updated = json.loads(path.read_text(encoding="utf-8"))
+    assert not path.is_file()
+    archived = retro_workspace.ai_team / "metrics" / "outbox" / "transmitted" / f"{export_id}.json"
+    assert archived.is_file()
+    updated = json.loads(archived.read_text(encoding="utf-8"))
     assert updated["transmission"]["status"] == "transmitted"
     assert updated["transmission"]["ack_id"] == "ACK-FLUSH-1"

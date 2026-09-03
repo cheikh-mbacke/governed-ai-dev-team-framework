@@ -38,6 +38,7 @@ from governed_ai.core.orchestrator.git_workspace import (
     merge_and_revalidate,
 )
 from governed_ai.core.workspace import Workspace
+from governed_ai.feedback.domain.auto_observation import classify_auto_observation
 
 # Document 6 §9.3 / orchestrator.json — which dispatch step corresponds to a
 # Work Unit's current status, where a *succeeded* attempt at that step
@@ -1073,36 +1074,42 @@ def run_scheduling_tick(
             # human or agent remembers to record an observation by hand. Never
             # blocks the tick — an installed client project may disable
             # feedback recording, and that must not affect scheduling.
+            auto_fields = classify_auto_observation(step=step, status=status)
+            auto_payload = {
+                "category": auto_fields["category"],
+                "symptom": (
+                    result.get("summary")
+                    or f"execution attempt for step {step!r} ended with status {status!r}"
+                ),
+                "severity": (
+                    "high"
+                    if str(run_document.get("autonomy_preset", "")).startswith(
+                        "unattended_"
+                    )
+                    else "medium"
+                ),
+                "classification": auto_fields["classification"],
+                "work_unit": work_unit_id,
+                "phase": step,
+                "recorded_by": "orchestrator:auto",
+                "impact": {
+                    "blocked_minutes": 0,
+                    "rework_required": status in {"failed", "timed_out"},
+                    "human_intervention": status == "blocked",
+                    "affected_work_units": [work_unit_id],
+                },
+                "evidence_refs": [attempt_id, execution_id],
+                "recurrence_key": f"auto:{step}:{status}",
+            }
+            if auto_fields.get("candidate_improvement"):
+                auto_payload["candidate_improvement"] = auto_fields[
+                    "candidate_improvement"
+                ]
             gateway.execute_command(
                 _envelope(
                     "RecordObservation",
                     target={"kind": "observation", "id": "new"},
-                    payload={
-                        "category": "orchestration",
-                        "symptom": (
-                            result.get("summary")
-                            or f"execution attempt for step {step!r} ended with status {status!r}"
-                        ),
-                        "severity": (
-                            "high"
-                            if str(run_document.get("autonomy_preset", "")).startswith(
-                                "unattended_"
-                            )
-                            else "medium"
-                        ),
-                        "classification": {"origin": "unknown", "confidence": "low"},
-                        "work_unit": work_unit_id,
-                        "phase": step,
-                        "recorded_by": "orchestrator:auto",
-                        "impact": {
-                            "blocked_minutes": 0,
-                            "rework_required": status in {"failed", "timed_out"},
-                            "human_intervention": status == "blocked",
-                            "affected_work_units": [work_unit_id],
-                        },
-                        "evidence_refs": [attempt_id, execution_id],
-                        "recurrence_key": f"auto:{step}:{status}",
-                    },
+                    payload=auto_payload,
                 )
             )
 

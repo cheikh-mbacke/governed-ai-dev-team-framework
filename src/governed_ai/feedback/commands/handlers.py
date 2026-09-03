@@ -262,6 +262,9 @@ def build_retrospective_document(
         ],
         "notes": params.notes,
         "status": "generated",
+        "revision": 1,
+        "reviewed_at": None,
+        "reviewed_by": None,
     }
     common.validate_payload(workspace, payload, "retrospective.schema.json")
     if params.output:

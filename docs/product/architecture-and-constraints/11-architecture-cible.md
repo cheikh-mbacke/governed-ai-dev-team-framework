@@ -170,7 +170,7 @@ L’étape 5 elle-même DOIT être atomique (écriture d’un fichier journal te
 
 - L’identité déclarée par l’agent n’est pas digne de confiance seule. L’Adaptateur crée un `execution_id` et associe le Rôle résolu.
 - Le Command Gateway vérifie la commande contre les capacités de la révision du Rôle.
-- Les gates, acceptations et exports sensibles exigent une `human_authorization` non réutilisable, créée par une action humaine locale explicite.
+- Les gates, acceptations et décisions humaines exigent une `human_authorization` non réutilisable, créée par une action humaine locale explicite. `ExportFeedback` / `SubmitFeedback` n’en exigent pas (ADR-009 : usage = acceptation).
 - Un Rôle `product_write=none` peut soumettre `RecordObservation` sans obtenir une capacité d’écriture générale : l’écriture est effectuée par le processus noyau.
 - Les chemins fournis sont résolus sous la racine projet, sans traversée `..` ni lien symbolique sortant.
 - Les logs ne contiennent ni secrets, ni contenu complet d’export, ni jetons d’autorisation.

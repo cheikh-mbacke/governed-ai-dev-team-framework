@@ -41,9 +41,9 @@
 
 | Terme | Définition | Qualification |
 |---|---|---|
-| **Observation** | Signal structuré de friction ou d’apprentissage. | Observé. Le schéma accepte plusieurs statuts, mais le script actuel ne met pas à jour une Observation existante. |
-| **Retrospective** | Snapshot de synthèse généré pour une Work Unit ou un projet. | Observé. Le scope `increment` n’existe ni dans le schéma ni dans le CLI actuel. |
-| **Feedback Export** | Export JSON d’observations et de rétrospectives, complet ou anonymisé. | Observé. Il est persisté par défaut sous `.ai-team/metrics/`; le consentement humain est une règle cible non encore imposée. |
+| **Observation** | Signal structuré de friction ou d’apprentissage. | Observé. Création ou coalesce via `RecordObservation` ; cycle de statut via `TransitionObservation` (`revision` / `expected_revision`). |
+| **Retrospective** | Snapshot de synthèse généré pour une Work Unit ou un projet. | Observé. Générée en `generated` ; revue optionnelle `generated` → `reviewed` via `ReviewRetrospective` (statut seulement). |
+| **Feedback Export** | Export JSON d’observations, rétrospectives et exécutions (format `1.2`). | Observé. Sous `consented_share` (ADR-009), export **full** avec `project_id`, sans anonymisation ni `human_authorization` par export ; `SubmitFeedback` / outbox vers `telemetry.submit_url`. |
 
 ## 4. Distribution
 

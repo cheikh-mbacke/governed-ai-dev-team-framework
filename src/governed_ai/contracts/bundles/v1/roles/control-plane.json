@@ -13,7 +13,8 @@
       "RegisterEvidence",
       "CreateDecisionRequest",
       "TransitionObservation",
-      "GenerateRetrospective"
+      "GenerateRetrospective",
+      "ReviewRetrospective"
     ],
     "non_authoritative_signal_commands": ["RecordObservation"]
   },

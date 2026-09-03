@@ -1,6 +1,6 @@
 # Document 10 — Modèle tactique : Feedback/Apprentissage
 
-**Statut** : version 1.5 — coalesce + `TransitionObservation`.
+**Statut** : version 1.6 — ReviewRetrospective + learning aggregate + transport hardening.
 
 ## 1. Réalité observée
 
@@ -98,12 +98,17 @@ Une Retrospective compte ou référence observations, events/messages, décision
 
 ## 6. Limites
 
-- La revue de Retrospective (`ReviewRetrospective`) n’existe toujours pas.
-  L’orchestrateur déclenche `RecordObservation` sur échec/timeout/blocage (avec
-  coalesce sur `auto:{step}:{status}`), `GenerateRetrospective` à la clôture
+- `ReviewRetrospective` passe `generated` → `reviewed` (statut + métadonnées de
+  revue uniquement). L’orchestrateur déclenche `RecordObservation` sur
+  échec/timeout/blocage (avec coalesce sur `auto:{step}:{status}` et
+  classification auto par step/status), `GenerateRetrospective` à la clôture
   WU/Run, et `SubmitFeedback` à toute clôture terminale de Run (`completed` ou
   `stopped`) sous `consented_share`. L’outbox locale est retentée via
-  `flush-outbox` / `SubmitFeedback`.
+  `flush-outbox` / `SubmitFeedback` ; les items `transmitted` sont archivés sous
+  `metrics/outbox/transmitted/`.
+- Côté fabricant : `scripts/ai-team/ingest_feedback.py` et
+  `scripts/ai-team/receive_feedback.py` alimentent `learning/inbox/` puis
+  `learning/aggregate/latest.json`.
 - Sous `consented_share`, ADR-009 impose l’absence de précaution de contenu sur le Feedback Export transmis.
 
 ## Sources

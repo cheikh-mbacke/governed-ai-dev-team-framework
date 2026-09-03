@@ -93,6 +93,8 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_register_release_candidate(raw)
     elif raw["type"] == "GenerateRetrospective":
         _validate_generate_retrospective(raw)
+    elif raw["type"] == "ReviewRetrospective":
+        _validate_review_retrospective(raw)
     elif raw["type"] == "ExportFeedback":
         _validate_export_feedback(raw)
     elif raw["type"] == "SubmitFeedback":
@@ -424,6 +426,31 @@ def _validate_generate_retrospective(raw: dict[str, Any]) -> None:
             "payload.work_unit_id is required for work_unit scope",
             "/payload/work_unit_id",
         )
+
+
+def _validate_review_retrospective(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "retrospective":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "ReviewRetrospective target.kind must be retrospective",
+            "/target/kind",
+        )
+    if "expected_revision" not in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision is required",
+            "/target/expected_revision",
+        )
+    if not isinstance(target.get("expected_revision"), int) or target["expected_revision"] < 1:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision must be an integer >= 1",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
 
 
 def _validate_open_run(raw: dict[str, Any]) -> None:

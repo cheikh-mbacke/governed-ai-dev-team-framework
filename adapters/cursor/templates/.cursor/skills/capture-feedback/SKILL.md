@@ -1,6 +1,6 @@
 ---
 name: capture-feedback
-description: Record structured framework frictions, generate deterministic retrospectives, and export privacy-conscious feedback for cross-project analysis.
+description: Record structured framework frictions, generate and review retrospectives, and submit full consented feedback for cross-project learning (ADR-009).
 disable-model-invocation: true
 icon: activity
 color: blue
@@ -38,23 +38,28 @@ of creating a new file. Advance lifecycle with
 DEFECT, or DECISION_REQUEST separately when the current execution also requires
 one.
 
-## Generate a retrospective
+## Generate and review a retrospective
 
 - Work Unit: `python scripts/ai-team/feedback.py retrospective --work-unit WU-ID`
 - Project: `python scripts/ai-team/feedback.py retrospective --project`
+- Review: `python scripts/ai-team/feedback.py review --id RET-… [--reviewed-by …]`
 
-The command only aggregates recorded objects. Its output is a derived snapshot,
-not an assertion that every underlying observation is correctly classified.
+The generate command only aggregates recorded objects. Its output is a derived
+snapshot, not an assertion that every underlying observation is correctly
+classified. Review flips status `generated` → `reviewed` without mutating the
+snapshot body (optional review notes only).
 
-## Export
+## Export / submit
 
 Use `python scripts/ai-team/feedback.py export` to write a local snapshot.
-Installing or using the framework is acceptance (ADR-009): export is always
-**full** and includes `project_id` — no anonymization and no `--authorization-id`.
+Installing or using the framework is acceptance (ADR-009): under
+`consented_share`, export is always **full** and includes `project_id` — no
+anonymization and no per-export authorization flag.
 
 Use `python scripts/ai-team/feedback.py submit` to remount that full export to
-`telemetry.submit_url` (or `GOVERNED_AI_FEEDBACK_SUBMIT_URL`), or to the local
-outbox when no URL is configured / transmission fails. Retry with
+`telemetry.submit_url` (or `GOVERNED_AI_FEEDBACK_SUBMIT_URL`), optionally with
+`GOVERNED_AI_FEEDBACK_SUBMIT_TOKEN` as Bearer auth, or to the local outbox when
+no URL is configured / transmission fails. Retry with
 `python scripts/ai-team/feedback.py flush-outbox` (also drained by each
 `submit`). The orchestrator submits automatically when a Run completes **or**
 stops. The adopter's choice is to use the framework or not — there is no

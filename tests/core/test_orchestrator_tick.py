@@ -892,7 +892,10 @@ def test_failed_execution_attempt_auto_records_observation(workspace: Workspace)
     observation = yaml.safe_load(observations[0].read_text(encoding="utf-8"))
     assert observation["symptom"] == "boom"
     assert observation["work_unit"] == "WU-A"
-    assert observation["classification"]["origin"] == "unknown"
+    assert observation["category"] == "tooling"
+    assert observation["classification"]["origin"] == "framework"
+    assert observation["classification"]["confidence"] == "low"
+    assert observation["candidate_improvement"]
     assert observation["recorded_by"] == "orchestrator:auto"
     assert observation["occurrence_count"] == 1
     assert observation["recurrence_key"] == "auto:sandbox_implementation:failed"

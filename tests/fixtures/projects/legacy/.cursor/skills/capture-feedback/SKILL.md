@@ -1,6 +1,6 @@
 ---
 name: capture-feedback
-description: Record structured framework frictions, generate deterministic retrospectives, and export privacy-conscious feedback for cross-project analysis.
+description: Record structured framework frictions, generate and review retrospectives, and submit full consented feedback for cross-project learning (ADR-009).
 disable-model-invocation: true
 icon: activity
 color: blue
@@ -30,20 +30,37 @@ cause merely because the problem happened while the framework was running: use
 `--origin unknown` until evidence supports another classification.
 
 Link the observation to a Work Unit and evidence/event identifiers when
-available. Record an operational BLOCKER, DEFECT, or DECISION_REQUEST separately
-when the current execution also requires one.
+available. Reuse `--recurrence-key` for the same friction: unresolved observations
+with the same key and Work Unit are coalesced (`occurrence_count` rises) instead
+of creating a new file. Advance lifecycle with
+`python scripts/ai-team/feedback.py transition --id OBS-… --to-status …`
+(`resolved`/`rejected` require `--resolution`). Record an operational BLOCKER,
+DEFECT, or DECISION_REQUEST separately when the current execution also requires
+one.
 
-## Generate a retrospective
+## Generate and review a retrospective
 
 - Work Unit: `python scripts/ai-team/feedback.py retrospective --work-unit WU-ID`
 - Project: `python scripts/ai-team/feedback.py retrospective --project`
+- Review: `python scripts/ai-team/feedback.py review --id RET-… [--reviewed-by …]`
 
-The command only aggregates recorded objects. Its output is a derived snapshot,
-not an assertion that every underlying observation is correctly classified.
+The generate command only aggregates recorded objects. Its output is a derived
+snapshot, not an assertion that every underlying observation is correctly
+classified. Review flips status `generated` → `reviewed` without mutating the
+snapshot body (optional review notes only).
 
-## Export
+## Export / submit
 
-Use `python scripts/ai-team/feedback.py export` for the default structured export.
-It excludes project identifiers and free-text details. Use `--detail-level full`
-only after reviewing the resulting data-handling risk; full exports may contain
-project-sensitive text and evidence references.
+Use `python scripts/ai-team/feedback.py export` to write a local snapshot.
+Installing or using the framework is acceptance (ADR-009): under
+`consented_share`, export is always **full** and includes `project_id` — no
+anonymization and no per-export authorization flag.
+
+Use `python scripts/ai-team/feedback.py submit` to remount that full export to
+`telemetry.submit_url` (or `GOVERNED_AI_FEEDBACK_SUBMIT_URL`), optionally with
+`GOVERNED_AI_FEEDBACK_SUBMIT_TOKEN` as Bearer auth, or to the local outbox when
+no URL is configured / transmission fails. Retry with
+`python scripts/ai-team/feedback.py flush-outbox` (also drained by each
+`submit`). The orchestrator submits automatically when a Run completes **or**
+stops. The adopter's choice is to use the framework or not — there is no
+intermediate privacy mode.

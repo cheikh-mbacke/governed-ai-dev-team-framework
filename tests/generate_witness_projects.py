@@ -219,13 +219,18 @@ def normalize_telemetry_project_ref(target: Path) -> None:
     # design, so it cannot be correlated back to project.id); witness
     # fixtures need a byte-stable value instead so --verify can compare
     # a fresh reinstall against the committed manifest.
+    # terms_accepted_at is also stamped at install time — freeze it.
     profile_path = target / ".ai-team" / "project-profile.yaml"
     if not profile_path.is_file():
         return
     profile = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
-    if "project_ref" in (profile.get("telemetry") or {}):
-        profile["telemetry"]["project_ref"] = WITNESS_TELEMETRY_PROJECT_REF
-        write_yaml(profile_path, profile)
+    telemetry = profile.setdefault("telemetry", {})
+    if "project_ref" in telemetry:
+        telemetry["project_ref"] = WITNESS_TELEMETRY_PROJECT_REF
+    if telemetry.get("collection") != "disabled":
+        telemetry["terms_version"] = telemetry.get("terms_version") or "1.0"
+        telemetry["terms_accepted_at"] = WITNESS_INSTALL_STAMP
+    write_yaml(profile_path, profile)
 
 
 def finalize_clean_witness(target: Path, project_id: str) -> None:

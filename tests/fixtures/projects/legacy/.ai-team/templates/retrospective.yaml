@@ -29,3 +29,6 @@ observation_refs: []
 unresolved_observation_refs: []
 notes: null
 status: generated
+revision: 1
+reviewed_at: null
+reviewed_by: null

@@ -117,12 +117,17 @@ class FeedbackRetrospectiveArgs:
 
 @dataclass(frozen=True, slots=True)
 class FeedbackExportArgs:
-    detail_level: str = "structured"
+    detail_level: str = "full"
     include_project_id: bool = False
     output: str | None = None
-    authorization_id: str = ""
-    authorization_granted_by: str = ""
-    authorization_scope: str = "export:full"
+
+
+@dataclass(frozen=True, slots=True)
+class FeedbackReviewArgs:
+    retrospective_id: str
+    expected_revision: int
+    reviewed_by: str | None = None
+    notes: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -305,6 +310,28 @@ def translate_feedback_retrospective(args: FeedbackRetrospectiveArgs) -> dict[st
         payload["notes"] = args.notes
     if args.output:
         payload["output"] = args.output
+    envelope["payload"] = payload
+    return envelope
+
+
+def translate_feedback_review(args: FeedbackReviewArgs) -> dict[str, Any]:
+    if args.expected_revision < 1:
+        raise TranslationError("expected-revision must be >= 1")
+    envelope = _base_envelope(
+        command_type="ReviewRetrospective",
+        prefix="legacy-feedback-review",
+        actor_role="control-plane",
+    )
+    envelope["target"] = {
+        "kind": "retrospective",
+        "id": args.retrospective_id,
+        "expected_revision": args.expected_revision,
+    }
+    payload: dict[str, Any] = {}
+    if args.reviewed_by:
+        payload["reviewed_by"] = args.reviewed_by
+    if args.notes is not None:
+        payload["notes"] = args.notes
     envelope["payload"] = payload
     return envelope
 
@@ -496,6 +523,23 @@ def format_feedback_retrospective_stdout(receipt: dict[str, Any], *, lang: str) 
     if _is_french(lang):
         return f"Genere {retro_id} : {display}\n"
     return f"Generated {retro_id}: {display}\n"
+
+
+def format_feedback_review_stdout(receipt: dict[str, Any], *, lang: str) -> str:
+    retro_id = None
+    status = None
+    revision = None
+    for item in receipt.get("affected") or []:
+        if item.get("kind") == "retrospective":
+            retro_id = item.get("id")
+            status = item.get("status")
+            revision = item.get("revision")
+            break
+    if not retro_id:
+        raise TranslationError("gateway receipt missing retrospective metadata")
+    if _is_french(lang):
+        return f"Retrospective {retro_id} revue : status={status} revision={revision}\n"
+    return f"Reviewed retrospective {retro_id}: status={status} revision={revision}\n"
 
 
 def format_feedback_export_stdout(receipt: dict[str, Any], *, lang: str) -> tuple[str, bool]:

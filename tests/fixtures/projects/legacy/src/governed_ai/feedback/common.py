@@ -15,6 +15,10 @@ from jsonschema import Draft202012Validator, FormatChecker
 from governed_ai.core.persistence.io import load_json
 from governed_ai.core.persistence.io import load_yaml as _load_yaml
 from governed_ai.core.workspace import Workspace
+from governed_ai.feedback.domain.observation import (
+    UNRESOLVED_STATUSES,
+    occurrence_count_of,
+)
 
 
 def now_utc() -> datetime:
@@ -60,7 +64,19 @@ def metadata(workspace: Workspace) -> dict:
         ),
         "phase": state.get("phase"),
         "telemetry_project_ref": telemetry.get("project_ref"),
+        "telemetry_collection": telemetry.get("collection") or "consented_share",
+        "telemetry_submit_url": telemetry.get("submit_url"),
+        "telemetry_terms_version": telemetry.get("terms_version"),
+        "telemetry_terms_accepted_at": telemetry.get("terms_accepted_at"),
     }
+
+
+def collection_is_consented_share(workspace: Workspace) -> bool:
+    return metadata(workspace).get("telemetry_collection") != "disabled"
+
+
+def collection_allows_submit(workspace: Workspace) -> bool:
+    return metadata(workspace).get("telemetry_collection") != "disabled"
 
 
 def validate_payload(workspace: Workspace, payload: dict, schema_name: str) -> None:
@@ -127,10 +143,10 @@ def relates_to_work_unit(payload: dict, work_unit_id: str | None) -> bool:
 
 
 def observation_summary(observations: list[dict]) -> tuple[dict, dict]:
-    unresolved = {"open", "acknowledged", "candidate_change"}
     summary = {
         "total": len(observations),
-        "open": sum(item.get("status") in unresolved for item in observations),
+        "open": sum(item.get("status") in UNRESOLVED_STATUSES for item in observations),
+        "occurrences": sum(occurrence_count_of(item) for item in observations),
         "by_category": dict(sorted(Counter(item.get("category") for item in observations).items())),
         "by_origin": dict(
             sorted(
