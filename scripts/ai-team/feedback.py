@@ -27,6 +27,7 @@ from governed_ai.core.commands.legacy_cli import (
     FeedbackExportArgs,
     FeedbackRecordArgs,
     FeedbackRetrospectiveArgs,
+    FeedbackSubmitArgs,
     TranslationError,
     format_feedback_export_stdout,
     format_feedback_record_stdout,
@@ -34,6 +35,7 @@ from governed_ai.core.commands.legacy_cli import (
     translate_feedback_export,
     translate_feedback_record,
     translate_feedback_retrospective,
+    translate_feedback_submit,
 )
 from governed_ai.core.workspace import Workspace
 
@@ -121,6 +123,12 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--authorization-id", default="")
     export.add_argument("--authorization-granted-by", default="")
     export.add_argument("--authorization-scope", default="export:full")
+
+    submit = subparsers.add_parser(
+        "submit",
+        help="submit full consented feedback to the framework learning ingest (ADR-009)",
+    )
+    submit.add_argument("--output")
     return parser
 
 
@@ -227,12 +235,30 @@ def export_feedback(args: argparse.Namespace) -> int:
     return 0
 
 
+def submit_feedback(args: argparse.Namespace) -> int:
+    print(DEPRECATION_FEEDBACK, file=sys.stderr)
+    try:
+        envelope = translate_feedback_submit(FeedbackSubmitArgs(output=args.output))
+    except TranslationError as exc:
+        print(t(LANG, f"WRAPPER TRANSLATION ERROR: {exc}", f"ERREUR TRADUCTION WRAPPER : {exc}"), file=sys.stderr)
+        return EXIT_CLI
+
+    receipt, exit_code = _execute(envelope)
+    if exit_code != 0:
+        _handle_gateway_failure(receipt, exit_code)
+    line, _show_warning = format_feedback_export_stdout(receipt, lang=LANG)
+    print(line, end="")
+    return 0
+
+
 def main() -> int:
     args = build_parser().parse_args()
     if args.command == "record":
         return record_observation(args)
     if args.command == "retrospective":
         return generate_retrospective(args)
+    if args.command == "submit":
+        return submit_feedback(args)
     return export_feedback(args)
 
 

@@ -125,6 +125,11 @@ class FeedbackExportArgs:
     authorization_scope: str = "export:full"
 
 
+@dataclass(frozen=True, slots=True)
+class FeedbackSubmitArgs:
+    output: str | None = None
+
+
 def _now_iso() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
@@ -294,6 +299,25 @@ def translate_feedback_retrospective(args: FeedbackRetrospectiveArgs) -> dict[st
     return envelope
 
 
+def _telemetry_collection() -> str:
+    profile_path = Path.cwd() / ".ai-team" / "project-profile.yaml"
+    if not profile_path.is_file():
+        return "consented_share"
+    try:
+        data = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return "consented_share"
+    if not isinstance(data, dict):
+        return "consented_share"
+    telemetry = data.get("telemetry") or {}
+    if not isinstance(telemetry, dict):
+        return "consented_share"
+    collection = telemetry.get("collection")
+    if isinstance(collection, str) and collection.strip():
+        return collection.strip()
+    return "consented_share"
+
+
 def translate_feedback_export(args: FeedbackExportArgs) -> dict[str, Any]:
     if args.detail_level not in EXPORT_DETAIL_LEVELS:
         raise TranslationError(f"unsupported detail level {args.detail_level!r}")
@@ -311,24 +335,20 @@ def translate_feedback_export(args: FeedbackExportArgs) -> dict[str, Any]:
     if args.output:
         payload["output"] = args.output
     envelope["payload"] = payload
+    # ADR-009: installing/using the framework is acceptance — no export auth gate.
+    return envelope
 
-    if args.detail_level == "full" or args.include_project_id:
-        if not args.authorization_id.strip():
-            raise TranslationError(
-                "--authorization-id is required for full or identified export via the Command Gateway"
-            )
-        expected_scope = (
-            "export:full+identified"
-            if args.detail_level == "full" and args.include_project_id
-            else "export:full"
-            if args.detail_level == "full"
-            else "export:identified"
-        )
-        envelope["human_authorization"] = _human_authorization(
-            authorization_id=args.authorization_id.strip(),
-            granted_by=(args.authorization_granted_by or "human-operator").strip(),
-            scope=expected_scope,
-        )
+def translate_feedback_submit(args: FeedbackSubmitArgs) -> dict[str, Any]:
+    envelope = _base_envelope(
+        command_type="SubmitFeedback",
+        prefix="legacy-feedback-submit",
+        actor_role="control-plane",
+    )
+    envelope["target"] = {"kind": "feedback_export", "id": "new"}
+    payload: dict[str, Any] = {}
+    if args.output:
+        payload["output"] = args.output
+    envelope["payload"] = payload
     return envelope
 
 
@@ -400,16 +420,31 @@ def format_feedback_retrospective_stdout(receipt: dict[str, Any], *, lang: str) 
 def format_feedback_export_stdout(receipt: dict[str, Any], *, lang: str) -> tuple[str, bool]:
     detail_level = "structured"
     rel_path = None
+    transmission_status = None
+    submitted = False
     for item in receipt.get("affected") or []:
         if item.get("kind") == "feedback_export":
             detail_level = item.get("detail_level", detail_level)
             rel_path = item.get("path")
+            transmission_status = item.get("transmission_status")
+            submitted = bool(item.get("submitted"))
             break
     if not rel_path:
         raise TranslationError("gateway receipt missing export path")
     display = rel_path.replace("/", "\\")
+    if submitted:
+        if _is_french(lang):
+            line = (
+                f"Feedback soumis ({detail_level}, transmission={transmission_status}) : {display}\n"
+            )
+        else:
+            line = (
+                f"Submitted {detail_level} feedback "
+                f"(transmission={transmission_status}): {display}\n"
+            )
+        return line, False
     if _is_french(lang):
         line = f"Export {detail_level} genere : {display}\n"
     else:
         line = f"Exported {detail_level} feedback: {display}\n"
-    return line, detail_level == "full"
+    return line, detail_level == "full" and not submitted

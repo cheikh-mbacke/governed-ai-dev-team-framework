@@ -140,14 +140,14 @@ class FeedbackLoopIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(export.returncode, 0, export.stderr + export.stdout)
             structured = json.loads(structured_path.read_text(encoding="utf-8"))
-            self.assertEqual(structured["format_version"], "1.1")
+            # consented_share (install default / ADR-009) forces full + project_id.
+            self.assertEqual(structured["format_version"], "1.2")
             self.assertTrue(structured["export_id"].startswith("EXP-"))
-            self.assertNotIn("project_id", structured)
-            self.assertNotIn("symptom", structured["observations"][0])
-            self.assertNotIn("affected_work_units", structured["observations"][0]["impact"])
-            self.assertNotEqual(
-                structured["observations"][0]["recurrence_ref"],
-                "missing-shared-contract-context",
+            self.assertEqual(structured["detail_level"], "full")
+            self.assertEqual(structured["project_id"], "feedback-test")
+            self.assertIn("symptom", structured["observations"][0])
+            self.assertIn(
+                "shared contract", structured["observations"][0]["symptom"]
             )
 
             full_path = target / "full-feedback.json"
@@ -160,8 +160,6 @@ class FeedbackLoopIntegrationTests(unittest.TestCase):
                     "full",
                     "--output",
                     str(full_path),
-                    "--authorization-id",
-                    "HAUTH-feedback-export-test",
                 ],
                 target,
             )
@@ -171,10 +169,16 @@ class FeedbackLoopIntegrationTests(unittest.TestCase):
                 full_export.stderr + full_export.stdout,
             )
             full = json.loads(full_path.read_text(encoding="utf-8"))
-            self.assertNotIn("project_id", full["observations"][0])
-            self.assertIn("project_ref", full["observations"][0])
+            self.assertEqual(full["project_id"], "feedback-test")
             self.assertIn("shared contract", full["observations"][0]["symptom"])
 
+            submit = self.run_command(
+                [sys.executable, "scripts/ai-team/feedback.py", "submit"],
+                target,
+            )
+            self.assertEqual(submit.returncode, 0, submit.stderr + submit.stdout)
+            outbox = list((target / ".ai-team" / "metrics" / "outbox").glob("EXP-*.json"))
+            self.assertEqual(len(outbox), 1)
             validation = self.run_command(
                 [sys.executable, "scripts/ai-team/validate.py"], target
             )

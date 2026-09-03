@@ -14,7 +14,6 @@ from tests.core.workspace_helpers import (
     write_installed_client_profile,
 )
 
-from governed_ai.core.commands.errors import ErrorCode
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.workspace import Workspace
 
@@ -27,7 +26,9 @@ def retro_workspace(tmp_path: Path) -> Workspace:
     source = PAYLOAD_AI_TEAM
     for name in ("schemas", "constitution", "contracts"):
         shutil.copytree(source / name, ai_team / name)
-    write_installed_client_profile(ai_team, project_id="retro-test")
+    write_installed_client_profile(
+        ai_team, project_id="retro-test", telemetry_collection="consented_share"
+    )
     shutil.copy2(FABRIC_ROOT / "framework-version.json", ai_team / "framework-version.json")
     for directory in (
         "observations",
@@ -127,16 +128,6 @@ def _control_plane_actor() -> dict:
     }
 
 
-def _human_auth(auth_id: str = "HAUTH-export-full") -> dict:
-    return {
-        "authorization_id": auth_id,
-        "granted_by": "test-human",
-        "granted_at": "2026-08-29T18:05:00Z",
-        "scope": "export:full",
-        "consumed_at": None,
-    }
-
-
 def test_generate_retrospective_via_gateway(retro_workspace: Workspace) -> None:
     envelope = {
         "protocol_version": "1.0",
@@ -163,11 +154,11 @@ def test_generate_retrospective_via_gateway(retro_workspace: Workspace) -> None:
     assert document["signals"]["executions"]["total_tokens"] == 15
 
 
-def test_export_structured_without_human_auth(retro_workspace: Workspace) -> None:
+def test_export_is_full_without_human_authorization(retro_workspace: Workspace) -> None:
     envelope = {
         "protocol_version": "1.0",
-        "command_id": "CMD-export-structured",
-        "idempotency_key": "idem-export-structured",
+        "command_id": "CMD-export-full",
+        "idempotency_key": "idem-export-full",
         "correlation_id": "COR-export-001",
         "type": "ExportFeedback",
         "issued_at": "2026-08-29T18:06:00Z",
@@ -180,92 +171,14 @@ def test_export_structured_without_human_auth(retro_workspace: Workspace) -> Non
     assert exit_code == 0
     export_path = retro_workspace.root / receipt["affected"][0]["path"]
     assert export_path.is_file()
-    assert "observations" not in receipt["affected"][0]
     assert receipt["affected"][0]["observation_count"] == 1
     document = json.loads(export_path.read_text(encoding="utf-8"))
-    assert document["format_version"] == "1.1"
-    assert document["export_id"].startswith("EXP-")
+    assert document["format_version"] == "1.2"
+    assert document["detail_level"] == "full"
+    assert document["project_id"] == "retro-test"
+    assert document["observations"][0]["symptom"] == "Test friction"
     assert document["executions"][0]["duration_ms"] == 2000
     assert document["executions"][0]["usage"]["total_tokens"] == 15
-    assert "WU-RETRO-TEST" not in json.dumps(document)
-
-
-def test_identified_export_requires_scoped_human_authorization(
-    retro_workspace: Workspace,
-) -> None:
-    envelope = {
-        "protocol_version": "1.0",
-        "command_id": "CMD-export-identified",
-        "idempotency_key": "idem-export-identified",
-        "correlation_id": "COR-export-identified",
-        "type": "ExportFeedback",
-        "issued_at": "2026-08-29T18:06:00Z",
-        "actor": _control_plane_actor(),
-        "target": {"kind": "feedback_export", "id": "new"},
-        "payload": {"detail_level": "structured", "include_project_id": True},
-    }
-    gateway = CommandGateway(retro_workspace)
-    receipt, exit_code = gateway.execute_command(envelope)
-    assert exit_code == 4
-    assert receipt["errors"][0]["code"] == ErrorCode.HUMAN_AUTH_REQUIRED.value
-
-    envelope["command_id"] = "CMD-export-identified-authorized"
-    envelope["idempotency_key"] = "idem-export-identified-authorized"
-    envelope["human_authorization"] = _human_auth("HAUTH-identified")
-    envelope["human_authorization"]["scope"] = "export:identified"
-    receipt, exit_code = gateway.execute_command(envelope)
-    assert exit_code == 0
-    document = json.loads(
-        (retro_workspace.root / receipt["affected"][0]["path"]).read_text(encoding="utf-8")
-    )
-    assert document["project_id"] == "retro-test"
-
-
-def test_export_full_requires_human_authorization(retro_workspace: Workspace) -> None:
-    envelope = {
-        "protocol_version": "1.0",
-        "command_id": "CMD-export-full",
-        "idempotency_key": "idem-export-full-noauth",
-        "correlation_id": "COR-export-002",
-        "type": "ExportFeedback",
-        "issued_at": "2026-08-29T18:06:00Z",
-        "actor": _control_plane_actor(),
-        "target": {"kind": "feedback_export", "id": "new"},
-        "payload": {"detail_level": "full"},
-    }
-    gateway = CommandGateway(retro_workspace)
-    receipt, exit_code = gateway.execute_command(envelope)
-    assert exit_code == 4
-    assert receipt["errors"][0]["code"] == ErrorCode.HUMAN_AUTH_REQUIRED.value
-    assert not list((retro_workspace.ai_team / "metrics").glob("*.json"))
-
-
-def test_export_full_with_human_authorization(retro_workspace: Workspace) -> None:
-    envelope = {
-        "protocol_version": "1.0",
-        "command_id": "CMD-export-full-auth",
-        "idempotency_key": "idem-export-full-auth",
-        "correlation_id": "COR-export-003",
-        "type": "ExportFeedback",
-        "issued_at": "2026-08-29T18:06:00Z",
-        "actor": _control_plane_actor(),
-        "target": {"kind": "feedback_export", "id": "new"},
-        "payload": {"detail_level": "full"},
-        "human_authorization": _human_auth(),
-    }
-    gateway = CommandGateway(retro_workspace)
-    receipt, exit_code = gateway.execute_command(envelope)
-    assert exit_code == 0
-    export_path = retro_workspace.root / receipt["affected"][0]["path"]
-    document = json.loads(export_path.read_text(encoding="utf-8"))
-    assert document["detail_level"] == "full"
-    auth_record = json.loads(
-        (retro_workspace.ai_team / "authorizations" / "HAUTH-export-full.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert auth_record["consumed_at"]
-    assert "symptom" not in str(receipt)
 
 
 def test_receipt_excludes_full_export_body(retro_workspace: Workspace) -> None:
@@ -281,8 +194,32 @@ def test_receipt_excludes_full_export_body(retro_workspace: Workspace) -> None:
             "actor": _control_plane_actor(),
             "target": {"kind": "feedback_export", "id": "new"},
             "payload": {"detail_level": "full"},
-            "human_authorization": _human_auth("HAUTH-receipt-check"),
         }
     )
     serialized = json.dumps(receipt)
     assert "Test friction" not in serialized
+
+
+def test_submit_feedback_writes_local_outbox_without_url(retro_workspace: Workspace) -> None:
+    gateway = CommandGateway(retro_workspace)
+    receipt, exit_code = gateway.execute_command(
+        {
+            "protocol_version": "1.0",
+            "command_id": "CMD-submit-001",
+            "idempotency_key": "idem-submit-001",
+            "correlation_id": "COR-submit-001",
+            "type": "SubmitFeedback",
+            "issued_at": "2026-08-29T18:06:00Z",
+            "actor": _control_plane_actor(),
+            "target": {"kind": "feedback_export", "id": "new"},
+            "payload": {},
+        }
+    )
+    assert exit_code == 0, receipt
+    assert receipt["affected"][0]["transmission_status"] == "local_outbox"
+    export_path = retro_workspace.root / receipt["affected"][0]["path"]
+    assert "outbox" in export_path.as_posix()
+    document = json.loads(export_path.read_text(encoding="utf-8"))
+    assert document["detail_level"] == "full"
+    assert document["project_id"] == "retro-test"
+    assert document["transmission"]["status"] == "local_outbox"

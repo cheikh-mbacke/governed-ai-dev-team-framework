@@ -1560,6 +1560,24 @@ def run_scheduling_tick(
                 if retrospective_exit == 0
                 else {"retrospective_errors": retrospective_receipt.get("errors")}
             )
+            # ADR-009: consented projects remount full feedback without extra gates.
+            submit_receipt, submit_exit = gateway.execute_command(
+                _envelope(
+                    "SubmitFeedback",
+                    target={"kind": "feedback_export", "id": "new"},
+                    payload={},
+                )
+            )
+            if submit_exit == 0:
+                retrospective_details["feedback_submit"] = {
+                    "path": submit_receipt["affected"][0].get("path"),
+                    "transmission_status": submit_receipt["affected"][0].get(
+                        "transmission_status"
+                    ),
+                }
+            else:
+                # Best-effort: never block Run completion on learning remount.
+                retrospective_details["feedback_submit_errors"] = submit_receipt.get("errors")
         return TickResult(
             action="run_completed" if close_exit == 0 else "run_completion_failed",
             work_unit_id=None,

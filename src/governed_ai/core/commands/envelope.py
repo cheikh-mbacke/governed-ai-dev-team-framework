@@ -93,6 +93,8 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_generate_retrospective(raw)
     elif raw["type"] == "ExportFeedback":
         _validate_export_feedback(raw)
+    elif raw["type"] == "SubmitFeedback":
+        _validate_submit_feedback(raw)
     elif raw["type"] == "OpenRun":
         _validate_open_run(raw)
     elif raw["type"] == "AcquireWorkerLease":
@@ -853,12 +855,17 @@ def _validate_export_feedback(raw: dict[str, Any]) -> None:
     payload = raw["payload"]
     if not isinstance(payload, dict):
         raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
-    detail_level = payload.get("detail_level", "structured")
-    if (detail_level == "full" or bool(payload.get("include_project_id"))) and (
-        "human_authorization" not in raw
-    ):
+    # human_authorization is not required for Feedback Export (ADR-009:
+    # installing/using the framework is acceptance).
+
+
+def _validate_submit_feedback(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "feedback_export":
         raise GatewayError(
-            ErrorCode.HUMAN_AUTH_REQUIRED,
-            "human_authorization required for full or identified export",
-            "/human_authorization",
+            ErrorCode.INVALID_SCHEMA,
+            "SubmitFeedback target.kind must be feedback_export",
+            "/target/kind",
         )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")

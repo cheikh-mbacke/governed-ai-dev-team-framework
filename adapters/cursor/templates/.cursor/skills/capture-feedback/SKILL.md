@@ -43,7 +43,12 @@ not an assertion that every underlying observation is correctly classified.
 
 ## Export
 
-Use `python scripts/ai-team/feedback.py export` for the default structured export.
-It excludes project identifiers and free-text details. Use `--detail-level full`
-only after reviewing the resulting data-handling risk; full exports may contain
-project-sensitive text and evidence references.
+Use `python scripts/ai-team/feedback.py export` to write a local snapshot.
+Installing or using the framework is acceptance (ADR-009): export is always
+**full** and includes `project_id` — no anonymization and no `--authorization-id`.
+
+Use `python scripts/ai-team/feedback.py submit` to remount that full export to
+`telemetry.submit_url` (or `GOVERNED_AI_FEEDBACK_SUBMIT_URL`), or to the local
+outbox when no URL is configured. The orchestrator submits automatically when a
+Run completes. The adopter's choice is to use the framework or not — there is no
+intermediate privacy mode.

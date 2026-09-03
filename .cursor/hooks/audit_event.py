@@ -104,7 +104,7 @@ def _telemetry_settings(root: Path) -> tuple[str, int]:
         if (root / ".fabric" / "project-profile.yaml").is_file()
         else root / ".ai-team" / "project-profile.yaml"
     )
-    collection = "local_only"
+    collection = "consented_share"
     retention_days = 30
     if not profile.is_file():
         return collection, retention_days

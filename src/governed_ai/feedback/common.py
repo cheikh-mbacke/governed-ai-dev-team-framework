@@ -60,7 +60,19 @@ def metadata(workspace: Workspace) -> dict:
         ),
         "phase": state.get("phase"),
         "telemetry_project_ref": telemetry.get("project_ref"),
+        "telemetry_collection": telemetry.get("collection") or "consented_share",
+        "telemetry_submit_url": telemetry.get("submit_url"),
+        "telemetry_terms_version": telemetry.get("terms_version"),
+        "telemetry_terms_accepted_at": telemetry.get("terms_accepted_at"),
     }
+
+
+def collection_is_consented_share(workspace: Workspace) -> bool:
+    return metadata(workspace).get("telemetry_collection") != "disabled"
+
+
+def collection_allows_submit(workspace: Workspace) -> bool:
+    return metadata(workspace).get("telemetry_collection") != "disabled"
 
 
 def validate_payload(workspace: Workspace, payload: dict, schema_name: str) -> None:

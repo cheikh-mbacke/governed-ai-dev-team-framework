@@ -1,6 +1,6 @@
 # Document 10 — Modèle tactique : Feedback/Apprentissage
 
-**Statut** : version 1.1 corrigée. Le modèle observé et la cible sont séparés.
+**Statut** : version 1.3 — aligné ADR-009 (usage = acceptation).
 
 ## 1. Réalité observée
 
@@ -16,11 +16,22 @@ Le script génère un snapshot `generated` pour une Work Unit ou un projet. Il n
 
 Conclusion : la Retrospective se comporte actuellement comme un rapport/snapshot persisté. Son évolution `generated` → `reviewed` est seulement prévue par le schéma.
 
-### Feedback Export
+### Feedback Export et transmission
 
-L’export est un artefact sans `status`, au format `1.1` (un `export_id` identifie chaque snapshot, mais rien n’indique s’il a été transmis, accusé réception ou doit être rejoué). Par défaut, il est conservé sous `.ai-team/metrics/framework-feedback-*.json`. Il n’est donc pas seulement « destiné à quitter le projet ».
+L’export est au format `1.2` (`export_id`, `transmission`). Par défaut il est aussi conservé sous `.ai-team/metrics/framework-feedback-*.json`.
 
-Un export `full`, ou un export de tout niveau incluant `include_project_id`, exige désormais une `human_authorization` dont le `scope` correspond exactement au niveau demandé (`export:full`, `export:identified` ou `export:full+identified`). Le `project_ref` exposé dans l’export est un identifiant d’installation aléatoire et indépendant de `project.id` (`telemetry.project_ref`, écrit par l’installateur) — un projet installé avant cette évolution retombe sur une référence `LEGACY-` clairement marquée comme telle.
+**Installer ou utiliser le framework vaut acceptation** (ADR-009). Il n’y a pas de mode privacy intermédiaire : le choix de l’adoptant est d’utiliser le framework ou de ne pas l’utiliser.
+
+Quand `telemetry.collection` vaut `consented_share` (défaut à l’installation) :
+
+- l’export **full** avec `project_id` est le défaut ;
+- **aucune** anonymisation, **aucune** `human_authorization` par export, **aucune** restriction de contenu Feedback ;
+- `SubmitFeedback` pousse l’artefact vers `telemetry.submit_url` (ou l’outbox locale si l’URL est absente) ;
+- l’orchestrateur déclenche cette soumission en best-effort à la clôture d’un Run.
+
+Quand `collection` vaut `disabled`, aucune soumission sortante n’est tentée (exception hors ligne).
+
+Le `project_ref` reste un identifiant d’installation (`telemetry.project_ref`) ; le `project_id` réel est aussi transmis sous `consented_share`.
 
 ## 2. Cible Observation
 
@@ -54,16 +65,13 @@ Une Retrospective compte ou référence observations, events/messages, décision
 | Observation | `.ai-team/observations/{id}.yaml` |
 | Retrospective | `.ai-team/retrospectives/{id}.yaml` |
 | Feedback Export | `.ai-team/metrics/framework-feedback-*.json` par défaut, ou chemin fourni. |
-
-Pour l’export, la cible impose une commande humaine ou un consentement vérifiable, un choix anonymisé/complet, un contrôle des données sensibles et une politique de rétention. L’autorisation humaine et le choix de niveau sont désormais imposés par la Command Gateway (voir §1) ; le contrôle des données sensibles reste partiel (`structured` retire les identifiants directs mais conserve des compteurs d’impact) et la politique de rétention de `.ai-team/metrics/` n’est toujours pas définie.
+| Outbox / transmis | `.ai-team/metrics/outbox/` puis destination `telemetry.submit_url` ; ingest framework sous `learning/inbox/`. |
 
 ## 6. Limites
 
-- Les dossiers Observation et Retrospective du gabarit ne contiennent pas d’instances métier.
-- Les commandes de transition d’Observation (`Acknowledge`/`Qualify`/`Resolve`/`Reject`) et de revue de Retrospective n’existent toujours pas. L’orchestrateur déclenche désormais `RecordObservation` automatiquement sur un échec/timeout/blocage d’exécution et `GenerateRetrospective` automatiquement à la clôture d’une Work Unit ou d’un Run — ce qui réduit, sans l’éliminer, le biais de sélection décrit par l’analyse externe du 2026-09-02 — mais cela ne remplace pas un cycle de vie d’Agrégat avec transitions gouvernées.
-- Le consentement export est désormais imposé par la Command Gateway pour les niveaux `full` et pour tout export incluant `include_project_id` (voir §1) ; il reste absent des exports `structured`/`aggregate` par conception, ce qui est le comportement voulu.
-- La politique de conservation de `.ai-team/metrics/` reste à définir. (Les journaux bruts Cursor, eux, ont désormais une rétention et une rotation configurables via `telemetry.raw_log_retention_days`.)
+- Les commandes de transition d’Observation et de revue de Retrospective n’existent toujours pas. L’orchestrateur déclenche `RecordObservation` sur échec/timeout/blocage, `GenerateRetrospective` à la clôture WU/Run, et `SubmitFeedback` à la clôture de Run sous `consented_share`.
+- Sous `consented_share`, ADR-009 impose l’absence de précaution de contenu sur le Feedback Export transmis.
 
 ## Sources
 
-`.ai-team/schemas/observation.schema.json`, `retrospective.schema.json`, `feedback-export.schema.json`, `scripts/ai-team/feedback.py`, `tools/install.py:PROJECT_OWNED_PATTERNS`.
+`.ai-team/schemas/observation.schema.json`, `retrospective.schema.json`, `feedback-export.schema.json`, `scripts/ai-team/feedback.py`, ADR-009.

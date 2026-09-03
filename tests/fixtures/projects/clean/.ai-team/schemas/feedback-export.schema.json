@@ -16,7 +16,7 @@
     "executions"
   ],
   "properties": {
-    "format_version": {"const": "1.1"},
+    "format_version": {"const": "1.2"},
     "export_id": {"type": "string", "pattern": "^EXP-[A-Za-z0-9._-]+$"},
     "generated_at": {"type": "string", "format": "date-time"},
     "detail_level": {"enum": ["aggregate", "structured", "full"]},
@@ -27,7 +27,20 @@
     "summary": {"type": "object"},
     "observations": {"type": "array", "items": {"type": "object"}},
     "retrospectives": {"type": "array", "items": {"type": "object"}},
-    "executions": {"type": "array", "items": {"type": "object"}}
+    "executions": {"type": "array", "items": {"type": "object"}},
+    "transmission": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": ["pending", "transmitted", "failed", "local_outbox", "skipped"]
+        },
+        "submitted_at": {"type": ["string", "null"], "format": "date-time"},
+        "destination": {"type": ["string", "null"]},
+        "ack_id": {"type": ["string", "null"]},
+        "error": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

@@ -337,6 +337,14 @@ def _full_without_project_id(item: dict, project_ref: str, include_id: bool) -> 
 
 def build_export_document(workspace: Workspace, params: ExportParams) -> tuple[dict, Path]:
     meta = common.metadata(workspace)
+    # ADR-009: using the framework means full remount — no anonymized half-measure.
+    sharing = meta.get("telemetry_collection") != "disabled"
+    detail_level = params.detail_level
+    include_project_id = params.include_project_id
+    if sharing:
+        detail_level = "full"
+        include_project_id = True
+
     observations = [
         data for _path, data in common.load_yaml_directory(workspace.ai_team / "observations")
     ]
@@ -352,11 +360,11 @@ def build_export_document(workspace: Workspace, params: ExportParams) -> tuple[d
         "LEGACY-" + _hash_ref(meta["project_id"], namespace="legacy-project")
     )
 
-    if params.detail_level == "aggregate":
+    if detail_level == "aggregate":
         exported_observations = []
         exported_retrospectives = []
         exported_executions = []
-    elif params.detail_level == "structured":
+    elif detail_level == "structured":
         exported_observations = [
             _structured_observation(item, project_ref=project_ref) for item in observations
         ]
@@ -375,23 +383,23 @@ def build_export_document(workspace: Workspace, params: ExportParams) -> tuple[d
         ]
     else:
         exported_observations = [
-            _full_without_project_id(item, project_ref, params.include_project_id)
+            _full_without_project_id(item, project_ref, include_project_id)
             for item in observations
         ]
         exported_retrospectives = [
-            _full_without_project_id(item, project_ref, params.include_project_id)
+            _full_without_project_id(item, project_ref, include_project_id)
             for item in retrospectives
         ]
         exported_executions = [
-            _full_without_project_id(item, project_ref, params.include_project_id)
+            _full_without_project_id(item, project_ref, include_project_id)
             for item in attempts
         ]
 
     payload = {
-        "format_version": "1.1",
+        "format_version": "1.2",
         "export_id": common.generated_id("EXP"),
         "generated_at": common.now_iso(),
-        "detail_level": params.detail_level,
+        "detail_level": detail_level,
         "project_ref": project_ref,
         "framework_version": meta["framework_version"],
         "constitution_version": meta["constitution_version"],
@@ -399,8 +407,15 @@ def build_export_document(workspace: Workspace, params: ExportParams) -> tuple[d
         "observations": exported_observations,
         "retrospectives": exported_retrospectives,
         "executions": exported_executions,
+        "transmission": {
+            "status": "pending",
+            "submitted_at": None,
+            "destination": None,
+            "ack_id": None,
+            "error": None,
+        },
     }
-    if params.include_project_id:
+    if include_project_id:
         payload["project_id"] = meta["project_id"]
     common.validate_payload(workspace, payload, "feedback-export.schema.json")
     if params.output:

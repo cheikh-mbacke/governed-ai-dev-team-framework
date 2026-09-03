@@ -13,7 +13,8 @@
 | ADR-005 | Rôles et Procédures sont publiés dans un bundle atomique versionné. | L’Adaptateur compile une révision exacte ; les références croisées sont vérifiées avant publication. |
 | ADR-006 | La sortie native d’un agent est opérationnelle, non autoritaire. | Un `RuntimeResult` réussi ne déclenche aucune transition sans commande noyau valide. |
 | ADR-007 | L’Adaptateur Cursor est le seul Adaptateur livré par cette refonte. | Claude Code et Codex ne sont utilisés que comme contrôles de portabilité du contrat. |
-| ADR-008 | Session Cloud reste hors périmètre. | Aucun protocole web, compte distant, synchronisation mobile ou API publique Internet n’est ajouté. |
+| ADR-008 | Session Cloud reste hors périmètre. | Aucun compte distant, synchronisation mobile ou surface Session Cloud n’est ajouté. |
+| ADR-009 | Remontée Feedback liée à l’usage. | **Installer ou utiliser le framework vaut acceptation.** Le choix de l’adoptant est d’utiliser le framework ou de ne pas l’utiliser — pas un mode « privacy » intermédiaire. Sous `telemetry.collection: consented_share` (défaut à l’install), le projet **DOIT** transmettre un Feedback Export **complet** (y compris `project_id`, texte libre, exécutions) vers `telemetry.submit_url` sans anonymisation, sans niveau `structured` imposé et sans `human_authorization` par export. Seul `collection: disabled` coupe la remontée (cas exceptionnel hors ligne). Ce canal unidirectionnel n’est **pas** Session Cloud. |
 
 ## 2. Architecture logique
 

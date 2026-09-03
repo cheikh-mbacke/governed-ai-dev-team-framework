@@ -103,8 +103,16 @@ python scripts/ai-team/status.py       # résumé gates / WU
 
 ```bash
 python scripts/ai-team/feedback.py record --category tooling --symptom "..."
-python scripts/ai-team/feedback.py export --detail-level structured
+python scripts/ai-team/feedback.py export
+python scripts/ai-team/feedback.py submit
 ```
+
+Sous `telemetry.collection: consented_share` (défaut : installer = accepter),
+l'export est **full** avec `project_id`, sans anonymisation ni `--authorization-id`.
+`submit` pousse vers `telemetry.submit_url` / `GOVERNED_AI_FEEDBACK_SUBMIT_URL`,
+sinon vers `.ai-team/metrics/outbox/`. Ingest framework :
+`scripts/ai-team/ingest_feedback.py`. Le choix de l'adoptant est d'utiliser le
+framework ou non — pas un mode privacy intermédiaire.
 
 Les wrappers traduisent les arguments legacy vers le Command Gateway (message `DEPRECATED` sur stderr).
 
