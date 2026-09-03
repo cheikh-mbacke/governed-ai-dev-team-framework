@@ -20,12 +20,12 @@ import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
-from governed_ai.compat.datetime import UTC, datetime, timedelta
 from typing import Any
 
 import yaml
 
 from governed_ai.adapters.spi import AdapterSPI, ExecutionRequest
+from governed_ai.compat.datetime import UTC, datetime, timedelta
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.domain.run.autonomy_policy import effective_policy_hash
 from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
@@ -699,6 +699,7 @@ def run_scheduling_tick(
                 target={"kind": "execution_attempt", "id": attempt_id},
                 payload={
                     "run_id": run_id,
+                    "execution_id": execution_id,
                     "work_unit_id": work_unit_id,
                     "worker_lease_id": lease_ref["lease_id"],
                     "epoch": lease_ref["epoch"],
@@ -738,6 +739,7 @@ def run_scheduling_tick(
                     },
                     payload={
                         "run_id": run_id,
+                        "execution_id": execution_id,
                         "work_unit_id": work_unit_id,
                         "worker_lease_id": lease_ref["lease_id"],
                         "epoch": lease_ref["epoch"],
@@ -795,6 +797,7 @@ def run_scheduling_tick(
                         },
                         payload={
                             "run_id": run_id,
+                            "execution_id": execution_id,
                             "work_unit_id": work_unit_id,
                             "worker_lease_id": lease_ref["lease_id"],
                             "epoch": lease_ref["epoch"],
@@ -965,6 +968,7 @@ def run_scheduling_tick(
                 },
                 payload={
                     "run_id": run_id,
+                    "execution_id": execution_id,
                     "work_unit_id": work_unit_id,
                     "worker_lease_id": lease_ref["lease_id"],
                     "epoch": lease_ref["epoch"],
@@ -977,6 +981,8 @@ def run_scheduling_tick(
                     "contract": result.get("contract", request["contract"]),
                     "requested_commands": result.get("requested_commands", []),
                     "usage": result.get("usage", {}),
+                    "duration_ms": result.get("duration_ms"),
+                    "provider": result.get("provider", {}),
                 },
                 actor_role_id=attempt_actor_role,
             )
@@ -1011,6 +1017,45 @@ def run_scheduling_tick(
                 action="attempt_recording_failed",
                 work_unit_id=work_unit_id,
                 details={"errors": attempt_receipt.get("errors")},
+            )
+
+        if status in {"failed", "timed_out", "blocked", "cancelled"}:
+            # Best-effort: a friction signal derived from the attempt itself,
+            # so silent failures still surface in retrospectives even when no
+            # human or agent remembers to record an observation by hand. Never
+            # blocks the tick — an installed client project may disable
+            # feedback recording, and that must not affect scheduling.
+            gateway.execute_command(
+                _envelope(
+                    "RecordObservation",
+                    target={"kind": "observation", "id": "new"},
+                    payload={
+                        "category": "orchestration",
+                        "symptom": (
+                            result.get("summary")
+                            or f"execution attempt for step {step!r} ended with status {status!r}"
+                        ),
+                        "severity": (
+                            "high"
+                            if str(run_document.get("autonomy_preset", "")).startswith(
+                                "unattended_"
+                            )
+                            else "medium"
+                        ),
+                        "classification": {"origin": "unknown", "confidence": "low"},
+                        "work_unit": work_unit_id,
+                        "phase": step,
+                        "recorded_by": "orchestrator:auto",
+                        "impact": {
+                            "blocked_minutes": 0,
+                            "rework_required": status in {"failed", "timed_out"},
+                            "human_intervention": status == "blocked",
+                            "affected_work_units": [work_unit_id],
+                        },
+                        "evidence_refs": [attempt_id, execution_id],
+                        "recurrence_key": f"auto:{step}:{status}",
+                    },
+                )
             )
 
         if boundary_stop_condition:
@@ -1311,10 +1356,29 @@ def run_scheduling_tick(
                             work_unit_id=work_unit_id,
                             details={"errors": release_receipt.get("errors")},
                         )
+                    retrospective_receipt, retrospective_exit = gateway.execute_command(
+                        _envelope(
+                            "GenerateRetrospective",
+                            target={"kind": "retrospective", "id": "new"},
+                            payload={"scope": "work_unit", "work_unit_id": work_unit_id},
+                        )
+                    )
+                    retrospective_details = (
+                        {"retrospective_id": retrospective_receipt["affected"][0]["id"]}
+                        if retrospective_exit == 0
+                        else {"retrospective_errors": retrospective_receipt.get("errors")}
+                    )
+                else:
+                    retrospective_details = {}
                 return TickResult(
                     action="advanced_work_unit",
                     work_unit_id=work_unit_id,
-                    details={"attempt_id": attempt_id, "from": current_status, "to": next_status},
+                    details={
+                        "attempt_id": attempt_id,
+                        "from": current_status,
+                        "to": next_status,
+                        **retrospective_details,
+                    },
                 )
         else:
             if status == "blocked":
@@ -1482,10 +1546,24 @@ def run_scheduling_tick(
                 },
             )
         )
+        retrospective_details = {}
+        if close_exit == 0:
+            retrospective_receipt, retrospective_exit = gateway.execute_command(
+                _envelope(
+                    "GenerateRetrospective",
+                    target={"kind": "retrospective", "id": "new"},
+                    payload={"scope": "project"},
+                )
+            )
+            retrospective_details = (
+                {"retrospective_id": retrospective_receipt["affected"][0]["id"]}
+                if retrospective_exit == 0
+                else {"retrospective_errors": retrospective_receipt.get("errors")}
+            )
         return TickResult(
             action="run_completed" if close_exit == 0 else "run_completion_failed",
             work_unit_id=None,
-            details={"errors": close_receipt.get("errors")},
+            details={"errors": close_receipt.get("errors"), **retrospective_details},
         )
 
     return TickResult(action="idle", work_unit_id=None)

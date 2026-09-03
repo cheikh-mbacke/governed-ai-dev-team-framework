@@ -78,6 +78,7 @@ WITNESS_V2_STAMP = {
 }
 
 WITNESS_INSTALL_STAMP = "2026-01-01T00:00:00+00:00"
+WITNESS_TELEMETRY_PROJECT_REF = "PRJ-00000000000000000000000000000000"
 
 IGNORE_NAMES = {"__pycache__", ".pytest_cache", ".git"}
 IGNORE_SUFFIXES = {".pyc", ".pyo"}
@@ -210,6 +211,21 @@ def normalize_installation_record(target: Path) -> None:
         json.dumps(record, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+    normalize_telemetry_project_ref(target)
+
+
+def normalize_telemetry_project_ref(target: Path) -> None:
+    # The installer mints a random telemetry.project_ref per install (by
+    # design, so it cannot be correlated back to project.id); witness
+    # fixtures need a byte-stable value instead so --verify can compare
+    # a fresh reinstall against the committed manifest.
+    profile_path = target / ".ai-team" / "project-profile.yaml"
+    if not profile_path.is_file():
+        return
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
+    if "project_ref" in (profile.get("telemetry") or {}):
+        profile["telemetry"]["project_ref"] = WITNESS_TELEMETRY_PROJECT_REF
+        write_yaml(profile_path, profile)
 
 
 def finalize_clean_witness(target: Path, project_id: str) -> None:

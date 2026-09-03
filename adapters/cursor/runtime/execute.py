@@ -37,6 +37,14 @@ def execute_runtime(project_root: Path, request: ExecutionRequest) -> RuntimeRes
             requested_commands=outcome.requested_commands,
             usage=outcome.usage,
             result_sha=outcome.result_sha,
+            started_at=outcome.started_at,
+            finished_at=outcome.finished_at,
+            duration_ms=outcome.duration_ms,
+            provider={
+                "session_id": outcome.provider_session_id,
+                "request_id": outcome.provider_request_id,
+                "model": request.get("model"),
+            },
         )
     else:
         result = build_runtime_result(

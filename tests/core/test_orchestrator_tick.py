@@ -12,18 +12,21 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from governed_ai.compat.datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 import yaml
+from tests.core.workspace_helpers import (
+    FABRIC_ROOT,
+    PAYLOAD_AI_TEAM,
+    write_installed_client_profile,
+)
 
+from governed_ai.compat.datetime import UTC, datetime, timedelta
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.orchestrator.git_workspace import head_sha
 from governed_ai.core.orchestrator.tick import run_scheduling_tick
 from governed_ai.core.workspace import Workspace
-
-from tests.core.workspace_helpers import FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_GRANT_ID = "GRANT-DEFAULT"
@@ -525,6 +528,8 @@ def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(
     assert audit.action == "advanced_work_unit"
     assert audit.details["from"] == "audit"
     assert audit.details["to"] == "human_test"
+    assert audit.details["retrospective_id"].startswith("RET-")
+    assert len(list((workspace.ai_team / "retrospectives").glob("*.yaml"))) == 1
 
     wu_document = yaml.safe_load(
         (workspace.ai_team / "work-units" / "WU-A.yaml").read_text(encoding="utf-8")
@@ -537,6 +542,28 @@ def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(
         gateway, workspace, run_id="RUN-TICK-006", adapter=FakeAdapter([]), worker_id="w1"
     )
     assert idle.action == "idle"
+
+
+def test_unattended_run_completion_generates_project_retrospective(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-RETRO", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="human_test")
+    run_path = workspace.ai_team / "runs" / "RUN-RETRO.yaml"
+    run = yaml.safe_load(run_path.read_text(encoding="utf-8"))
+    run["autonomy_preset"] = "unattended_conservative"
+    run_path.write_text(yaml.safe_dump(run), encoding="utf-8")
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-RETRO", adapter=FakeAdapter([]), worker_id="w1"
+    )
+
+    assert result.action == "run_completed"
+    assert result.details["retrospective_id"].startswith("RET-")
+    retrospective_path = next((workspace.ai_team / "retrospectives").glob("*.yaml"))
+    retrospective = yaml.safe_load(retrospective_path.read_text(encoding="utf-8"))
+    assert retrospective["scope"]["type"] == "project"
 
 
 def test_tick_demotes_work_unit_on_convergence_exhaustion(workspace: Workspace) -> None:
@@ -826,6 +853,42 @@ def test_restart_resumes_from_persisted_checkpoint(workspace: Workspace) -> None
     )
     assert resumed.action == "advanced_work_unit"
     assert resumed.details["to"] == "verification"
+
+
+def test_failed_execution_attempt_auto_records_observation(workspace: Workspace) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-AUTO-OBS", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-AUTO-OBS"},
+            payload={
+                "id": "LEASE-AUTO-OBS",
+                "run_id": "RUN-AUTO-OBS",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="auto-obs-lease",
+        )
+    )
+
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-AUTO-OBS",
+        adapter=FakeAdapter([{"status": "failed", "summary": "boom"}]),
+        worker_id="w1",
+    )
+
+    assert result.action == "recorded_attempt"
+    observations = list((workspace.ai_team / "observations").glob("*.yaml"))
+    assert len(observations) == 1
+    observation = yaml.safe_load(observations[0].read_text(encoding="utf-8"))
+    assert observation["symptom"] == "boom"
+    assert observation["work_unit"] == "WU-A"
+    assert observation["classification"]["origin"] == "unknown"
+    assert observation["recorded_by"] == "orchestrator:auto"
 
 
 def test_flaky_failure_can_recover_on_bounded_retry(workspace: Workspace) -> None:

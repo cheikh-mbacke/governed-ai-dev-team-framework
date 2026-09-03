@@ -8,12 +8,15 @@ from pathlib import Path
 
 import pytest
 import yaml
+from tests.core.workspace_helpers import (
+    FABRIC_ROOT,
+    PAYLOAD_AI_TEAM,
+    write_installed_client_profile,
+)
 
 from governed_ai.core.commands.errors import ErrorCode
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.workspace import Workspace
-
-from tests.core.workspace_helpers import FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -33,6 +36,7 @@ def retro_workspace(tmp_path: Path) -> Workspace:
         "work-units",
         "state",
         "authorizations",
+        "runs/execution-attempts",
     ):
         (ai_team / directory).mkdir(parents=True)
     (ai_team / "state" / "project-state.yaml").write_text(
@@ -82,6 +86,34 @@ def retro_workspace(tmp_path: Path) -> Workspace:
         ),
         encoding="utf-8",
     )
+    (ai_team / "runs" / "execution-attempts" / "ATTEMPT-RETRO-001.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "id": "ATTEMPT-RETRO-001",
+                "revision": 2,
+                "run_id": "RUN-RETRO-001",
+                "execution_id": "EXE-RETRO-001",
+                "work_unit_id": "WU-RETRO-TEST",
+                "worker_lease_id": "LEASE-RETRO-001",
+                "epoch": 1,
+                "step": "verification",
+                "status": "succeeded",
+                "started_at": "2026-08-29T18:00:00+00:00",
+                "ended_at": "2026-08-29T18:00:02+00:00",
+                "duration_ms": 2000,
+                "contract": {"role_id": "qa-test", "procedure_id": "verify-work-unit"},
+                "usage": {
+                    "input_tokens": 10,
+                    "output_tokens": 5,
+                    "total_tokens": 15,
+                    "cost": 0.02,
+                    "currency": "USD",
+                },
+                "provider": {"model": "test-model"},
+            }
+        ),
+        encoding="utf-8",
+    )
     return Workspace.from_root(tmp_path)
 
 
@@ -127,6 +159,8 @@ def test_generate_retrospective_via_gateway(retro_workspace: Workspace) -> None:
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     assert document["scope"]["type"] == "work_unit"
     assert "OBS-RETRO-001" in document["observation_refs"]
+    assert document["signals"]["executions"]["total"] == 1
+    assert document["signals"]["executions"]["total_tokens"] == 15
 
 
 def test_export_structured_without_human_auth(retro_workspace: Workspace) -> None:
@@ -148,6 +182,43 @@ def test_export_structured_without_human_auth(retro_workspace: Workspace) -> Non
     assert export_path.is_file()
     assert "observations" not in receipt["affected"][0]
     assert receipt["affected"][0]["observation_count"] == 1
+    document = json.loads(export_path.read_text(encoding="utf-8"))
+    assert document["format_version"] == "1.1"
+    assert document["export_id"].startswith("EXP-")
+    assert document["executions"][0]["duration_ms"] == 2000
+    assert document["executions"][0]["usage"]["total_tokens"] == 15
+    assert "WU-RETRO-TEST" not in json.dumps(document)
+
+
+def test_identified_export_requires_scoped_human_authorization(
+    retro_workspace: Workspace,
+) -> None:
+    envelope = {
+        "protocol_version": "1.0",
+        "command_id": "CMD-export-identified",
+        "idempotency_key": "idem-export-identified",
+        "correlation_id": "COR-export-identified",
+        "type": "ExportFeedback",
+        "issued_at": "2026-08-29T18:06:00Z",
+        "actor": _control_plane_actor(),
+        "target": {"kind": "feedback_export", "id": "new"},
+        "payload": {"detail_level": "structured", "include_project_id": True},
+    }
+    gateway = CommandGateway(retro_workspace)
+    receipt, exit_code = gateway.execute_command(envelope)
+    assert exit_code == 4
+    assert receipt["errors"][0]["code"] == ErrorCode.HUMAN_AUTH_REQUIRED.value
+
+    envelope["command_id"] = "CMD-export-identified-authorized"
+    envelope["idempotency_key"] = "idem-export-identified-authorized"
+    envelope["human_authorization"] = _human_auth("HAUTH-identified")
+    envelope["human_authorization"]["scope"] = "export:identified"
+    receipt, exit_code = gateway.execute_command(envelope)
+    assert exit_code == 0
+    document = json.loads(
+        (retro_workspace.root / receipt["affected"][0]["path"]).read_text(encoding="utf-8")
+    )
+    assert document["project_id"] == "retro-test"
 
 
 def test_export_full_requires_human_authorization(retro_workspace: Workspace) -> None:

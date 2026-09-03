@@ -105,7 +105,7 @@
     {
       "kind": "hook",
       "path": ".cursor/hooks/audit_event.py",
-      "sha256": "sha256:139e82b770cc5cb13e6978909e081b9e281714cc518005fd5085e15372ed86c3"
+      "sha256": "sha256:e73bea6ef809c52e0ec592f3fefe81946c5781f4dd8987849b5c5d8c6d0061d2"
     },
     {
       "kind": "hook",

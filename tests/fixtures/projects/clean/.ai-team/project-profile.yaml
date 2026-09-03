@@ -49,3 +49,7 @@ setup_status:
   cursor_compile_opt_in: true
   note: Witness clean fixture — minimal post-install project data.
 active_adapter_id: cursor
+telemetry:
+  project_ref: PRJ-00000000000000000000000000000000
+  collection: local_only
+  raw_log_retention_days: 30

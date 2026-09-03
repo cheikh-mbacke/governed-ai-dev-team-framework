@@ -854,9 +854,11 @@ def _validate_export_feedback(raw: dict[str, Any]) -> None:
     if not isinstance(payload, dict):
         raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
     detail_level = payload.get("detail_level", "structured")
-    if detail_level == "full" and "human_authorization" not in raw:
+    if (detail_level == "full" or bool(payload.get("include_project_id"))) and (
+        "human_authorization" not in raw
+    ):
         raise GatewayError(
             ErrorCode.HUMAN_AUTH_REQUIRED,
-            "human_authorization required for full export",
+            "human_authorization required for full or identified export",
             "/human_authorization",
         )

@@ -183,6 +183,7 @@ class RuntimeResult(TypedDict, total=False):
     status: RuntimeStatus
     started_at: str
     finished_at: str
+    duration_ms: int
     adapter: AdapterIdentity
     contract: RuntimeResultContract
     workspace: RuntimeWorkspace
@@ -192,6 +193,7 @@ class RuntimeResult(TypedDict, total=False):
     limitations: list[str]
     requested_commands: list[object]
     usage: dict[str, object]
+    provider: dict[str, object]
     # Document 6 §5.3 — adapter/mandate-matcher may propose a typed menu match;
     # only ResolveRunDecision (Core) can accept it.
     decision_proposal: dict[str, object]

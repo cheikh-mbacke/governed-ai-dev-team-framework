@@ -40,11 +40,12 @@ import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field
-from governed_ai.compat.datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from governed_ai.compat.datetime import UTC, datetime
 
 DEFAULT_TIMEOUT_SECONDS = 600.0
 ENABLE_ENV_VAR = "GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH"
@@ -64,6 +65,11 @@ class AgentInvocationOutcome:
     requested_commands: list[object] = field(default_factory=list)
     usage: dict[str, Any] = field(default_factory=dict)
     result_sha: str | None = None
+    started_at: str | None = None
+    finished_at: str | None = None
+    duration_ms: int | None = None
+    provider_session_id: str | None = None
+    provider_request_id: str | None = None
 
 
 def resolve_agent_binary() -> str | None:
@@ -145,6 +151,8 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
     input_tokens = int(outer_usage.get("inputTokens", 0) or 0)
     output_tokens = int(outer_usage.get("outputTokens", 0) or 0)
     usage = dict(structured.get("usage") or {})
+    usage.setdefault("input_tokens", input_tokens)
+    usage.setdefault("output_tokens", output_tokens)
     usage.setdefault("total_tokens", input_tokens + output_tokens)
     limitations = []
     if status == "succeeded" and not structured:
@@ -157,6 +165,13 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
         artifacts=list(structured.get("artifacts") or []),
         requested_commands=list(structured.get("requested_commands") or []),
         usage=usage,
+        duration_ms=(
+            int(payload["duration_ms"])
+            if isinstance(payload.get("duration_ms"), (int, float))
+            else None
+        ),
+        provider_session_id=(str(payload["session_id"]) if payload.get("session_id") else None),
+        provider_request_id=(str(payload["request_id"]) if payload.get("request_id") else None),
     )
 
 
@@ -233,6 +248,7 @@ def _run_agent_process(
     allowed_shell_commands: list[str],
     allowed_paths: list[str],
     accessible_secrets: list[str] | None = None,
+    telemetry_context: dict[str, str] | None = None,
 ) -> tuple[subprocess.CompletedProcess[str] | None, str | None]:
     """Run the CLI with a bounded watchdog that observes grant revocation."""
     process_env = _sanitized_process_env(accessible_secrets or [])
@@ -240,6 +256,7 @@ def _run_agent_process(
     process_env["GOVERNED_AI_ALLOWED_SHELL_COMMANDS"] = json.dumps(allowed_shell_commands)
     process_env["GOVERNED_AI_ALLOWED_PATHS"] = json.dumps(allowed_paths)
     process_env["CURSOR_PROJECT_DIR"] = str(project_root.resolve())
+    process_env.update(telemetry_context or {})
     process = subprocess.Popen(
         command,
         cwd=str(project_root),
@@ -277,13 +294,27 @@ def invoke_agent_cli(
     *,
     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
 ) -> AgentInvocationOutcome:
+    started_at = datetime.now(UTC)
+
+    def _with_timing(outcome: AgentInvocationOutcome) -> AgentInvocationOutcome:
+        finished_at = datetime.now(UTC)
+        object.__setattr__(outcome, "started_at", started_at.isoformat())
+        object.__setattr__(outcome, "finished_at", finished_at.isoformat())
+        if outcome.duration_ms is None:
+            object.__setattr__(
+                outcome,
+                "duration_ms",
+                max(0, int((finished_at - started_at).total_seconds() * 1000)),
+            )
+        return outcome
+
     binary = resolve_agent_binary()
     if binary is None:
-        return AgentInvocationOutcome(
+        return _with_timing(AgentInvocationOutcome(
             status="blocked",
             summary="Cursor `agent` CLI not found on PATH.",
             limitations=["agent binary unavailable"],
-        )
+        ))
 
     command = [
         binary,
@@ -300,6 +331,13 @@ def invoke_agent_cli(
         command.extend(["--model", str(model)])
     command.append(build_prompt(project_root, request))
 
+    telemetry_context = {
+        "GOVERNED_AI_EXECUTION_ID": str(request.get("execution_id") or ""),
+        "GOVERNED_AI_RUN_ID": str(request.get("correlation_id") or ""),
+        "GOVERNED_AI_WORK_UNIT_ID": str(request.get("work_unit_id") or ""),
+        "GOVERNED_AI_ROLE_ID": str((request.get("contract") or {}).get("role_id") or ""),
+    }
+
     kill_switch = request.get("kill_switch_path")
     try:
         if kill_switch:
@@ -315,31 +353,38 @@ def invoke_agent_cli(
                 accessible_secrets=[
                     str(item) for item in request.get("accessible_secrets") or []
                 ],
+                telemetry_context=telemetry_context,
             )
             if cancellation_reason is not None:
-                return AgentInvocationOutcome(
+                return _with_timing(AgentInvocationOutcome(
                     status="cancelled",
                     summary=f"agent CLI stopped: {cancellation_reason}",
                     limitations=[],
-                )
+                ))
             assert completed is not None
         else:
+            process_env = _sanitized_process_env(
+                [str(item) for item in request.get("accessible_secrets") or []]
+            )
+            process_env["CURSOR_PROJECT_DIR"] = str(project_root.resolve())
+            process_env.update(telemetry_context)
             completed = subprocess.run(
                 command,
                 cwd=str(project_root),
+                env=process_env,
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,
                 check=False,
             )
     except subprocess.TimeoutExpired:
-        return AgentInvocationOutcome(
+        return _with_timing(AgentInvocationOutcome(
             status="timed_out",
             summary=f"agent CLI exceeded {timeout_seconds}s timeout",
             limitations=[],
-        )
+        ))
 
     outcome = _parse_agent_stdout(completed.stdout, completed.stderr, completed.returncode)
     if outcome.status == "succeeded":
         object.__setattr__(outcome, "result_sha", _git_head(project_root))
-    return outcome
+    return _with_timing(outcome)

@@ -18,7 +18,9 @@ Conclusion : la Retrospective se comporte actuellement comme un rapport/snapshot
 
 ### Feedback Export
 
-L’export est un artefact sans `status`, au format `1.0`. Par défaut, il est conservé sous `.ai-team/metrics/framework-feedback-*.json`. Il n’est donc pas seulement « destiné à quitter le projet ».
+L’export est un artefact sans `status`, au format `1.1` (un `export_id` identifie chaque snapshot, mais rien n’indique s’il a été transmis, accusé réception ou doit être rejoué). Par défaut, il est conservé sous `.ai-team/metrics/framework-feedback-*.json`. Il n’est donc pas seulement « destiné à quitter le projet ».
+
+Un export `full`, ou un export de tout niveau incluant `include_project_id`, exige désormais une `human_authorization` dont le `scope` correspond exactement au niveau demandé (`export:full`, `export:identified` ou `export:full+identified`). Le `project_ref` exposé dans l’export est un identifiant d’installation aléatoire et indépendant de `project.id` (`telemetry.project_ref`, écrit par l’installateur) — un projet installé avant cette évolution retombe sur une référence `LEGACY-` clairement marquée comme telle.
 
 ## 2. Cible Observation
 
@@ -53,14 +55,14 @@ Une Retrospective compte ou référence observations, events/messages, décision
 | Retrospective | `.ai-team/retrospectives/{id}.yaml` |
 | Feedback Export | `.ai-team/metrics/framework-feedback-*.json` par défaut, ou chemin fourni. |
 
-Pour l’export, la cible impose une commande humaine ou un consentement vérifiable, un choix anonymisé/complet, un contrôle des données sensibles et une politique de rétention. Aucun de ces contrôles n’est présenté comme déjà implémenté.
+Pour l’export, la cible impose une commande humaine ou un consentement vérifiable, un choix anonymisé/complet, un contrôle des données sensibles et une politique de rétention. L’autorisation humaine et le choix de niveau sont désormais imposés par la Command Gateway (voir §1) ; le contrôle des données sensibles reste partiel (`structured` retire les identifiants directs mais conserve des compteurs d’impact) et la politique de rétention de `.ai-team/metrics/` n’est toujours pas définie.
 
 ## 6. Limites
 
 - Les dossiers Observation et Retrospective du gabarit ne contiennent pas d’instances métier.
-- Les commandes de transition et de revue n’existent pas.
-- Le consentement export n’est pas imposé par le script actuel.
-- La politique de conservation de `.ai-team/metrics/` reste à définir.
+- Les commandes de transition d’Observation (`Acknowledge`/`Qualify`/`Resolve`/`Reject`) et de revue de Retrospective n’existent toujours pas. L’orchestrateur déclenche désormais `RecordObservation` automatiquement sur un échec/timeout/blocage d’exécution et `GenerateRetrospective` automatiquement à la clôture d’une Work Unit ou d’un Run — ce qui réduit, sans l’éliminer, le biais de sélection décrit par l’analyse externe du 2026-09-02 — mais cela ne remplace pas un cycle de vie d’Agrégat avec transitions gouvernées.
+- Le consentement export est désormais imposé par la Command Gateway pour les niveaux `full` et pour tout export incluant `include_project_id` (voir §1) ; il reste absent des exports `structured`/`aggregate` par conception, ce qui est le comportement voulu.
+- La politique de conservation de `.ai-team/metrics/` reste à définir. (Les journaux bruts Cursor, eux, ont désormais une rétention et une rotation configurables via `telemetry.raw_log_retention_days`.)
 
 ## Sources
 

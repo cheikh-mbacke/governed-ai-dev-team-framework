@@ -49,3 +49,7 @@ setup_status:
   cursor_compile_opt_in: false
   note: "The installer rewrites project.id, project.name and template=false. Fill repository-specific commands, paths and human authorities before production use."
 active_adapter_id: cursor
+telemetry:
+  project_ref: null
+  collection: local_only
+  raw_log_retention_days: 30

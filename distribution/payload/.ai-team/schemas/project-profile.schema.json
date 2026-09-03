@@ -72,6 +72,15 @@
     },
     "setup_status": {
       "type": "object"
+    },
+    "telemetry": {
+      "type": "object",
+      "properties": {
+        "project_ref": {"type": ["string", "null"], "pattern": "^PRJ-[a-f0-9]{32}$"},
+        "collection": {"enum": ["disabled", "local_only"]},
+        "raw_log_retention_days": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": true
