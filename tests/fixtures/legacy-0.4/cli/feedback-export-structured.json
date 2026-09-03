@@ -4,6 +4,6 @@
   "platform": "win32",
   "scenario": "feedback-export-structured",
   "exit_code": 0,
-  "stdout": "Export structured genere : export.json\n",
+  "stdout": "Export full genere : export.json\nATTENTION : un export complet peut contenir du texte libre et des references sensibles au projet.\n",
   "stderr": "DEPRECATED: scripts/ai-team/feedback.py direct writes are replaced by the Command Gateway; this wrapper translates legacy arguments automatically.\n"
 }

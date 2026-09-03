@@ -9,6 +9,8 @@ from governed_ai.core.commands.handlers.create_work_unit import handle_create_wo
 from governed_ai.core.commands.handlers.escalate_work_unit_risk import handle_escalate_work_unit_risk
 from governed_ai.core.commands.handlers.export_feedback import handle_export_feedback
 from governed_ai.core.commands.handlers.generate_retrospective import handle_generate_retrospective
+from governed_ai.core.commands.handlers.review_retrospective import handle_review_retrospective
+from governed_ai.core.commands.handlers.submit_feedback import handle_submit_feedback
 from governed_ai.core.commands.handlers.issue_run_authorization_grant import (
     handle_issue_run_authorization_grant,
 )
@@ -41,6 +43,9 @@ from governed_ai.core.commands.handlers.revoke_run_authorization_grant import (
 from governed_ai.core.commands.handlers.tighten_execution_ceiling import (
     handle_tighten_execution_ceiling,
 )
+from governed_ai.core.commands.handlers.transition_observation import (
+    handle_transition_observation,
+)
 from governed_ai.core.commands.handlers.transition_work_unit import handle_transition_work_unit
 from governed_ai.core.commands.handlers.write_checkpoint import handle_write_checkpoint
 
@@ -48,13 +53,16 @@ HANDLERS = {
     "CreateWorkUnit": handle_create_work_unit,
     "EscalateWorkUnitRisk": handle_escalate_work_unit_risk,
     "TransitionWorkUnit": handle_transition_work_unit,
+    "TransitionObservation": handle_transition_observation,
     "CreateDecisionRequest": handle_create_decision_request,
     "ResolveDecisionRequest": handle_resolve_decision_request,
     "RecordGateDecision": handle_record_gate_decision,
     "RecordAcceptance": handle_record_acceptance,
     "RegisterReleaseCandidate": handle_register_release_candidate,
     "GenerateRetrospective": handle_generate_retrospective,
+    "ReviewRetrospective": handle_review_retrospective,
     "ExportFeedback": handle_export_feedback,
+    "SubmitFeedback": handle_submit_feedback,
     "RegisterFinding": handle_register_finding,
     "RecordObservation": handle_record_observation,
     "RegisterEvidence": handle_register_evidence,

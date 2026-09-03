@@ -47,9 +47,12 @@ human_authorities:
 setup_status:
   template: true
   cursor_compile_opt_in: false
-  note: "The installer rewrites project.id, project.name and template=false. Fill repository-specific commands, paths and human authorities before production use."
+  note: "The installer rewrites project.id, project.name and template=false. Fill repository-specific commands, paths and human authorities before production use. Installing this framework means acceptance of full feedback remount (ADR-009)."
 active_adapter_id: cursor
 telemetry:
   project_ref: null
-  collection: local_only
+  collection: consented_share
+  submit_url: null
+  terms_version: "1.0"
+  terms_accepted_at: null
   raw_log_retention_days: 30

@@ -183,7 +183,7 @@ Claude Code et Codex ne sont pas déclarés conformes tant qu’ils n’impléme
 7. Invalidation après changement de SHA.
 8. Préparation release et G3 humain.
 9. Acceptation/G4 humaine.
-10. Observation readonly médiée, rétrospective et export avec consentement.
+10. Observation readonly médiée, rétrospective, revue et export/submit sous ADR-009.
 
 À chaque étape, comparer objets, décisions, preuves, codes de sortie et capacités au comportement attendu ; ne pas exiger l’identité textuelle des réponses IA.
 
@@ -233,7 +233,7 @@ Tester explicitement le runtime disponible sur Windows natif. Si `workspace_read
 - Usurpation de `role_id`, `execution_id` ou `human_authorization`.
 - Modification d’un bundle publié ou d’une Evidence.
 - Course entre deux commandes avec même révision.
-- Export complet sans consentement, vers chemin externe non autorisé, ou contenant des champs sensibles non signalés.
+- Export hors workspace, ou remount alors que `telemetry.collection` est `disabled` / termes non acceptés.
 
 Les tests vérifient le refus et l’absence d’effet, pas seulement le message d’erreur.
 

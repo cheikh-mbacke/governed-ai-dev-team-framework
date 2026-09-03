@@ -10,7 +10,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-from governed_ai.core.commands.errors import EXIT_CLI
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.commands.legacy_cli import (
     DEPRECATION_FEEDBACK,
@@ -36,7 +35,9 @@ def wrapper_workspace(tmp_path: Path) -> Workspace:
     source = PAYLOAD_AI_TEAM
     for name in ("schemas", "constitution", "contracts"):
         shutil.copytree(source / name, ai_team / name)
-    write_installed_client_profile(ai_team, project_id="wrapper-test")
+    write_installed_client_profile(
+        ai_team, project_id="wrapper-test", telemetry_collection="consented_share"
+    )
     shutil.copy2(FABRIC_ROOT / "framework-version.json", ai_team / "framework-version.json")
     for directory in (
         "observations",
@@ -68,9 +69,10 @@ def test_translate_record_gate_requires_authorization() -> None:
         )
 
 
-def test_translate_feedback_export_full_requires_authorization() -> None:
-    with pytest.raises(TranslationError, match="authorization-id"):
-        translate_feedback_export(FeedbackExportArgs(detail_level="full"))
+def test_translate_feedback_export_full_needs_no_authorization() -> None:
+    envelope = translate_feedback_export(FeedbackExportArgs(detail_level="full"))
+    assert "human_authorization" not in envelope
+    assert envelope["payload"]["detail_level"] == "full"
 
 
 def test_record_gate_wrapper_executes_via_gateway(wrapper_workspace: Workspace) -> None:
@@ -102,7 +104,7 @@ def test_feedback_record_wrapper_executes_via_gateway(wrapper_workspace: Workspa
     assert observation_id in stdout
 
 
-def test_feedback_export_script_translation_failure_exits_before_gateway(
+def test_feedback_export_script_full_runs_without_authorization(
     wrapper_workspace: Workspace,
 ) -> None:
     result = subprocess.run(
@@ -117,7 +119,6 @@ def test_feedback_export_script_translation_failure_exits_before_gateway(
         text=True,
         capture_output=True,
     )
-    assert result.returncode == EXIT_CLI
-    assert "authorization-id" in result.stderr
+    assert result.returncode == 0, result.stderr + result.stdout
     assert DEPRECATION_FEEDBACK in result.stderr
-    assert not list((wrapper_workspace.ai_team / "metrics").glob("*.json"))
+    assert list((wrapper_workspace.ai_team / "metrics").glob("*.json"))

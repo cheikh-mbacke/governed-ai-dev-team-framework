@@ -85,6 +85,9 @@
     "workaround": {"type": ["string", "null"]},
     "candidate_improvement": {"type": ["string", "null"]},
     "recurrence_key": {"type": ["string", "null"]},
+    "occurrence_count": {"type": "integer", "minimum": 1},
+    "last_recorded_at": {"type": ["string", "null"], "format": "date-time"},
+    "revision": {"type": "integer", "minimum": 1},
     "status": {
       "enum": ["open", "acknowledged", "candidate_change", "resolved", "rejected"]
     },

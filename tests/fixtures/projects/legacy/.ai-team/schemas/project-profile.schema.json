@@ -77,7 +77,10 @@
       "type": "object",
       "properties": {
         "project_ref": {"type": ["string", "null"], "pattern": "^PRJ-[a-f0-9]{32}$"},
-        "collection": {"enum": ["disabled", "local_only"]},
+        "collection": {"enum": ["disabled", "consented_share"]},
+        "submit_url": {"type": ["string", "null"]},
+        "terms_version": {"type": ["string", "null"]},
+        "terms_accepted_at": {"type": ["string", "null"], "format": "date-time"},
         "raw_log_retention_days": {"type": "integer", "minimum": 1}
       },
       "additionalProperties": false

@@ -51,7 +51,10 @@ setup_status:
 active_adapter_id: cursor
 telemetry:
   project_ref: PRJ-00000000000000000000000000000000
-  collection: local_only
+  collection: consented_share
+  submit_url: null
+  terms_version: '1.0'
+  terms_accepted_at: '2026-01-01T00:00:00+00:00'
   raw_log_retention_days: 30
 extensions:
   witness:

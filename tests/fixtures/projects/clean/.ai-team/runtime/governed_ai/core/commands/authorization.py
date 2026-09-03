@@ -19,6 +19,7 @@ SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
             "RecordGateDecision",
             "RecordAcceptance",
             "ExportFeedback",
+            "SubmitFeedback",
             # Document 6 §10.2 — run-reliability-controller is a mechanical Core
             # component, not a distinct judgment-bearing role; it is exercised
             # through the control-plane actor identity.

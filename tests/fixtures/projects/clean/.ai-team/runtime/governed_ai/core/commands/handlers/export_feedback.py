@@ -6,12 +6,9 @@ from pathlib import Path
 from typing import Any
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
-from governed_ai.core.commands.human_authorization import consume_human_authorization
 from governed_ai.core.persistence.transaction import Transaction
 from governed_ai.core.workspace_mode import ensure_feedback_allowed
 from governed_ai.feedback.commands.handlers import ExportParams, build_export_document
-
-SENSITIVE_DETAIL_LEVELS = frozenset({"full"})
 
 
 def _resolve_output_path(workspace_root, raw_path: str | None) -> str | None:
@@ -49,31 +46,10 @@ def handle_export_feedback(
             "/payload/detail_level",
         )
 
-    identified = bool(payload.get("include_project_id"))
-    if detail_level in SENSITIVE_DETAIL_LEVELS or identified:
-        expected_scope = (
-            "export:full+identified"
-            if detail_level == "full" and identified
-            else "export:full"
-            if detail_level == "full"
-            else "export:identified"
-        )
-        authorization = envelope.get("human_authorization") or {}
-        if authorization.get("scope") != expected_scope:
-            raise GatewayError(
-                ErrorCode.UNAUTHORIZED,
-                f"human_authorization.scope must be {expected_scope!r}",
-                "/human_authorization/scope",
-            )
-        consume_human_authorization(
-            envelope,
-            workspace_ai_team=workspace_root.ai_team,
-            transaction=transaction,
-        )
-
+    # ADR-009: using the framework is acceptance — no per-export human_authorization.
     params = ExportParams(
         detail_level=detail_level,
-        include_project_id=identified,
+        include_project_id=bool(payload.get("include_project_id")),
         output=_resolve_output_path(workspace_root, payload.get("output")),
     )
     try:
@@ -94,7 +70,7 @@ def handle_export_feedback(
         "affected": [
             {
                 "kind": "feedback_export",
-                "detail_level": detail_level,
+                "detail_level": document["detail_level"],
                 "path": relative,
                 "observation_count": document["summary"].get("total", 0),
                 "retrospective_count": document["summary"].get("retrospectives", 0),

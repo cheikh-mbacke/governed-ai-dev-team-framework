@@ -38,6 +38,7 @@ from governed_ai.core.orchestrator.git_workspace import (
     merge_and_revalidate,
 )
 from governed_ai.core.workspace import Workspace
+from governed_ai.feedback.domain.auto_observation import classify_auto_observation
 
 # Document 6 §9.3 / orchestrator.json — which dispatch step corresponds to a
 # Work Unit's current status, where a *succeeded* attempt at that step
@@ -154,6 +155,42 @@ def _envelope(
         "target": target,
         "payload": payload,
     }
+
+
+def _best_effort_submit_feedback(gateway: CommandGateway) -> dict[str, Any]:
+    """ADR-009 remount after Run terminal close — never blocks scheduling."""
+    submit_receipt, submit_exit = gateway.execute_command(
+        _envelope(
+            "SubmitFeedback",
+            target={"kind": "feedback_export", "id": "new"},
+            payload={},
+        )
+    )
+    if submit_exit == 0:
+        affected = (submit_receipt.get("affected") or [{}])[0]
+        return {
+            "feedback_submit": {
+                "path": affected.get("path"),
+                "transmission_status": affected.get("transmission_status"),
+            }
+        }
+    return {"feedback_submit_errors": submit_receipt.get("errors")}
+
+
+def _terminal_run_result(
+    gateway: CommandGateway,
+    *,
+    close_exit: int,
+    action_ok: str,
+    action_fail: str,
+    work_unit_id: str | None,
+    details: dict[str, Any],
+) -> TickResult:
+    merged = dict(details)
+    if close_exit == 0:
+        merged.update(_best_effort_submit_feedback(gateway))
+        return TickResult(action=action_ok, work_unit_id=work_unit_id, details=merged)
+    return TickResult(action=action_fail, work_unit_id=work_unit_id, details=merged)
 
 
 def _read_yaml(path) -> dict[str, Any] | None:
@@ -535,8 +572,11 @@ def run_scheduling_tick(
                 },
             )
         )
-        return TickResult(
-            action="run_stopped" if exit_code == 0 else "run_stop_failed",
+        return _terminal_run_result(
+            gateway,
+            close_exit=exit_code,
+            action_ok="run_stopped",
+            action_fail="run_stop_failed",
             work_unit_id=None,
             details={"stop_condition": stop_condition, "errors": receipt.get("errors")},
         )
@@ -773,8 +813,11 @@ def run_scheduling_tick(
                     },
                 )
             )
-            return TickResult(
-                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
                 work_unit_id=work_unit_id,
                 details={
                     "stop_condition": "worker_isolation_unguaranteed",
@@ -828,8 +871,11 @@ def run_scheduling_tick(
                         },
                     )
                 )
-                return TickResult(
-                    action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+                return _terminal_run_result(
+                    gateway,
+                    close_exit=stop_exit,
+                    action_ok="run_stopped",
+                    action_fail="run_stop_failed",
                     work_unit_id=work_unit_id,
                     details={
                         "stop_condition": "worker_isolation_unguaranteed",
@@ -1005,8 +1051,11 @@ def run_scheduling_tick(
                         },
                     )
                 )
-                return TickResult(
-                    action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+                return _terminal_run_result(
+                    gateway,
+                    close_exit=stop_exit,
+                    action_ok="run_stopped",
+                    action_fail="run_stop_failed",
                     work_unit_id=work_unit_id,
                     details={
                         "stop_condition": stop_condition,
@@ -1025,36 +1074,42 @@ def run_scheduling_tick(
             # human or agent remembers to record an observation by hand. Never
             # blocks the tick — an installed client project may disable
             # feedback recording, and that must not affect scheduling.
+            auto_fields = classify_auto_observation(step=step, status=status)
+            auto_payload = {
+                "category": auto_fields["category"],
+                "symptom": (
+                    result.get("summary")
+                    or f"execution attempt for step {step!r} ended with status {status!r}"
+                ),
+                "severity": (
+                    "high"
+                    if str(run_document.get("autonomy_preset", "")).startswith(
+                        "unattended_"
+                    )
+                    else "medium"
+                ),
+                "classification": auto_fields["classification"],
+                "work_unit": work_unit_id,
+                "phase": step,
+                "recorded_by": "orchestrator:auto",
+                "impact": {
+                    "blocked_minutes": 0,
+                    "rework_required": status in {"failed", "timed_out"},
+                    "human_intervention": status == "blocked",
+                    "affected_work_units": [work_unit_id],
+                },
+                "evidence_refs": [attempt_id, execution_id],
+                "recurrence_key": f"auto:{step}:{status}",
+            }
+            if auto_fields.get("candidate_improvement"):
+                auto_payload["candidate_improvement"] = auto_fields[
+                    "candidate_improvement"
+                ]
             gateway.execute_command(
                 _envelope(
                     "RecordObservation",
                     target={"kind": "observation", "id": "new"},
-                    payload={
-                        "category": "orchestration",
-                        "symptom": (
-                            result.get("summary")
-                            or f"execution attempt for step {step!r} ended with status {status!r}"
-                        ),
-                        "severity": (
-                            "high"
-                            if str(run_document.get("autonomy_preset", "")).startswith(
-                                "unattended_"
-                            )
-                            else "medium"
-                        ),
-                        "classification": {"origin": "unknown", "confidence": "low"},
-                        "work_unit": work_unit_id,
-                        "phase": step,
-                        "recorded_by": "orchestrator:auto",
-                        "impact": {
-                            "blocked_minutes": 0,
-                            "rework_required": status in {"failed", "timed_out"},
-                            "human_intervention": status == "blocked",
-                            "affected_work_units": [work_unit_id],
-                        },
-                        "evidence_refs": [attempt_id, execution_id],
-                        "recurrence_key": f"auto:{step}:{status}",
-                    },
+                    payload=auto_payload,
                 )
             )
 
@@ -1077,8 +1132,11 @@ def run_scheduling_tick(
                     },
                 )
             )
-            return TickResult(
-                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
                 work_unit_id=work_unit_id,
                 details={
                     "stop_condition": boundary_stop_condition,
@@ -1132,8 +1190,11 @@ def run_scheduling_tick(
                     },
                 )
             )
-            return TickResult(
-                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
                 work_unit_id=work_unit_id,
                 details={"stop_condition": stop_condition, "errors": stop_receipt.get("errors")},
             )
@@ -1154,8 +1215,11 @@ def run_scheduling_tick(
                     },
                 )
             )
-            return TickResult(
-                action="run_stopped" if stop_exit == 0 else "run_stop_failed",
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
                 work_unit_id=work_unit_id,
                 details={"stop_condition": systemic_stop, "errors": stop_receipt.get("errors")},
             )
@@ -1560,6 +1624,8 @@ def run_scheduling_tick(
                 if retrospective_exit == 0
                 else {"retrospective_errors": retrospective_receipt.get("errors")}
             )
+            # ADR-009: consented projects remount full feedback without extra gates.
+            retrospective_details.update(_best_effort_submit_feedback(gateway))
         return TickResult(
             action="run_completed" if close_exit == 0 else "run_completion_failed",
             work_unit_id=None,

@@ -9,8 +9,9 @@ from governed_ai.core.persistence.transaction import Transaction
 from governed_ai.core.workspace_mode import ensure_feedback_allowed
 from governed_ai.feedback.commands.handlers import (
     RecordObservationParams,
-    build_observation_document,
+    prepare_observation_write,
 )
+from governed_ai.feedback.domain.observation import occurrence_count_of
 
 
 def handle_record_observation(
@@ -55,12 +56,13 @@ def handle_record_observation(
         raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload.symptom is required", "/payload/symptom")
 
     try:
-        document = build_observation_document(workspace_root, params)
+        prepared = prepare_observation_write(workspace_root, params)
     except ValueError as exc:
         raise GatewayError(ErrorCode.INVALID_SCHEMA, str(exc), "/payload") from exc
 
-    path = workspace_root.ai_team / "observations" / f"{document['id']}.yaml"
-    if path.is_file():
+    path = prepared.path
+    document = prepared.document
+    if not prepared.coalesced and path.is_file():
         raise GatewayError(
             ErrorCode.ALREADY_EXISTS,
             f"observation {document['id']!r} already exists",
@@ -69,5 +71,12 @@ def handle_record_observation(
 
     transaction.plan_yaml_write(path, document)
     return {
-        "affected": [{"kind": "observation", "id": document["id"]}],
+        "affected": [
+            {
+                "kind": "observation",
+                "id": document["id"],
+                "coalesced": prepared.coalesced,
+                "occurrence_count": occurrence_count_of(document),
+            }
+        ],
     }, []

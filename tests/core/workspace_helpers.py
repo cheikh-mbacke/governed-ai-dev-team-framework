@@ -6,6 +6,9 @@ from pathlib import Path
 
 import yaml
 
+from governed_ai.compat.datetime import UTC, datetime
+from governed_ai.feedback.submit import CURRENT_TERMS_VERSION
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PAYLOAD_AI_TEAM = REPO_ROOT / "distribution" / "payload" / ".ai-team"
 FABRIC_ROOT = REPO_ROOT / ".fabric"
@@ -20,6 +23,7 @@ def write_installed_client_profile(
     ai_team: Path,
     *,
     project_id: str = "test-project",
+    telemetry_collection: str | None = None,
 ) -> None:
     source_profile = SEED_PROFILE
     profile = yaml.safe_load(source_profile.read_text(encoding="utf-8")) or {}
@@ -27,6 +31,18 @@ def write_installed_client_profile(
     project["id"] = project_id
     project["repository_kind"] = "existing_or_greenfield_project"
     profile.setdefault("setup_status", {})["template"] = False
+    telemetry = profile.setdefault("telemetry", {})
+    if telemetry_collection is not None:
+        telemetry["collection"] = telemetry_collection
+    elif "collection" not in telemetry:
+        telemetry["collection"] = "consented_share"
+    if not telemetry.get("project_ref"):
+        telemetry["project_ref"] = "PRJ-" + ("a" * 32)
+    # Simulate installer acceptance under consented_share (ADR-009).
+    if telemetry.get("collection") != "disabled":
+        telemetry.setdefault("terms_version", CURRENT_TERMS_VERSION)
+        if not telemetry.get("terms_accepted_at"):
+            telemetry["terms_accepted_at"] = datetime.now(UTC).isoformat()
     (ai_team / "project-profile.yaml").write_text(
         yaml.safe_dump(profile, sort_keys=False, allow_unicode=True),
         encoding="utf-8",

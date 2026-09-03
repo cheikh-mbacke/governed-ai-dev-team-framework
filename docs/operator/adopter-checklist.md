@@ -45,6 +45,7 @@ Checklist pour mettre en service un projet avec le framework `0.7.0`.
 - [ ] Work Units travaillées sur branches isolées `wu/<id>`.
 - [ ] Mutations d'état via Command Gateway (`gov.py`) ou wrappers approuvés.
 - [ ] Observations enregistrées avec `feedback.py record` quand friction réutilisable.
+- [ ] Feedback remonté via `feedback.py submit` (ou clôture de Run) — usage du framework = acceptation.
 - [ ] Gates G2–G4 enregistrées avec `--authorization-id` quand requis.
 
 ## 7. Avant release candidate

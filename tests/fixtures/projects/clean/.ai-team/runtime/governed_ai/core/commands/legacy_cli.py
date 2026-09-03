@@ -117,12 +117,32 @@ class FeedbackRetrospectiveArgs:
 
 @dataclass(frozen=True, slots=True)
 class FeedbackExportArgs:
-    detail_level: str = "structured"
+    detail_level: str = "full"
     include_project_id: bool = False
     output: str | None = None
-    authorization_id: str = ""
-    authorization_granted_by: str = ""
-    authorization_scope: str = "export:full"
+
+
+@dataclass(frozen=True, slots=True)
+class FeedbackReviewArgs:
+    retrospective_id: str
+    expected_revision: int
+    reviewed_by: str | None = None
+    notes: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class FeedbackSubmitArgs:
+    output: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class FeedbackTransitionArgs:
+    observation_id: str
+    to_status: str
+    expected_revision: int
+    resolution: str | None = None
+    origin: str | None = None
+    confidence: str | None = None
 
 
 def _now_iso() -> str:
@@ -294,6 +314,47 @@ def translate_feedback_retrospective(args: FeedbackRetrospectiveArgs) -> dict[st
     return envelope
 
 
+def translate_feedback_review(args: FeedbackReviewArgs) -> dict[str, Any]:
+    if args.expected_revision < 1:
+        raise TranslationError("expected-revision must be >= 1")
+    envelope = _base_envelope(
+        command_type="ReviewRetrospective",
+        prefix="legacy-feedback-review",
+        actor_role="control-plane",
+    )
+    envelope["target"] = {
+        "kind": "retrospective",
+        "id": args.retrospective_id,
+        "expected_revision": args.expected_revision,
+    }
+    payload: dict[str, Any] = {}
+    if args.reviewed_by:
+        payload["reviewed_by"] = args.reviewed_by
+    if args.notes is not None:
+        payload["notes"] = args.notes
+    envelope["payload"] = payload
+    return envelope
+
+
+def _telemetry_collection() -> str:
+    profile_path = Path.cwd() / ".ai-team" / "project-profile.yaml"
+    if not profile_path.is_file():
+        return "consented_share"
+    try:
+        data = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return "consented_share"
+    if not isinstance(data, dict):
+        return "consented_share"
+    telemetry = data.get("telemetry") or {}
+    if not isinstance(telemetry, dict):
+        return "consented_share"
+    collection = telemetry.get("collection")
+    if isinstance(collection, str) and collection.strip():
+        return collection.strip()
+    return "consented_share"
+
+
 def translate_feedback_export(args: FeedbackExportArgs) -> dict[str, Any]:
     if args.detail_level not in EXPORT_DETAIL_LEVELS:
         raise TranslationError(f"unsupported detail level {args.detail_level!r}")
@@ -311,24 +372,56 @@ def translate_feedback_export(args: FeedbackExportArgs) -> dict[str, Any]:
     if args.output:
         payload["output"] = args.output
     envelope["payload"] = payload
+    # ADR-009: installing/using the framework is acceptance — no export auth gate.
+    return envelope
 
-    if args.detail_level == "full" or args.include_project_id:
-        if not args.authorization_id.strip():
-            raise TranslationError(
-                "--authorization-id is required for full or identified export via the Command Gateway"
-            )
-        expected_scope = (
-            "export:full+identified"
-            if args.detail_level == "full" and args.include_project_id
-            else "export:full"
-            if args.detail_level == "full"
-            else "export:identified"
-        )
-        envelope["human_authorization"] = _human_authorization(
-            authorization_id=args.authorization_id.strip(),
-            granted_by=(args.authorization_granted_by or "human-operator").strip(),
-            scope=expected_scope,
-        )
+def translate_feedback_submit(args: FeedbackSubmitArgs) -> dict[str, Any]:
+    envelope = _base_envelope(
+        command_type="SubmitFeedback",
+        prefix="legacy-feedback-submit",
+        actor_role="control-plane",
+    )
+    envelope["target"] = {"kind": "feedback_export", "id": "new"}
+    payload: dict[str, Any] = {}
+    if args.output:
+        payload["output"] = args.output
+    envelope["payload"] = payload
+    return envelope
+
+
+def translate_feedback_transition(args: FeedbackTransitionArgs) -> dict[str, Any]:
+    if args.to_status not in FEEDBACK_STATUSES:
+        raise TranslationError(f"unsupported status {args.to_status!r}")
+    if args.expected_revision < 1:
+        raise TranslationError("expected-revision must be >= 1")
+    if (args.origin is None) ^ (args.confidence is None):
+        raise TranslationError("provide both --origin and --confidence, or neither")
+    if args.origin is not None and args.origin not in FEEDBACK_ORIGINS:
+        raise TranslationError(f"unsupported origin {args.origin!r}")
+    if args.confidence is not None and args.confidence not in FEEDBACK_CONFIDENCES:
+        raise TranslationError(f"unsupported confidence {args.confidence!r}")
+    if args.to_status in {"resolved", "rejected"} and not (args.resolution or "").strip():
+        raise TranslationError("--resolution is required for resolved/rejected")
+
+    envelope = _base_envelope(
+        command_type="TransitionObservation",
+        prefix="legacy-feedback-transition",
+        actor_role="control-plane",
+    )
+    envelope["target"] = {
+        "kind": "observation",
+        "id": args.observation_id,
+        "expected_revision": args.expected_revision,
+    }
+    payload: dict[str, Any] = {"to_status": args.to_status}
+    if args.resolution is not None:
+        payload["resolution"] = args.resolution
+    if args.origin is not None and args.confidence is not None:
+        payload["classification"] = {
+            "origin": args.origin,
+            "confidence": args.confidence,
+        }
+    envelope["payload"] = payload
     return envelope
 
 
@@ -369,16 +462,51 @@ def format_record_gate_stdout(receipt: dict[str, Any], *, by: str) -> list[str]:
 
 def format_feedback_record_stdout(receipt: dict[str, Any], *, lang: str) -> str:
     observation_id = None
+    coalesced = False
+    occurrence_count = 1
     for item in receipt.get("affected") or []:
         if item.get("kind") == "observation":
             observation_id = item.get("id")
+            coalesced = bool(item.get("coalesced"))
+            occurrence_count = int(item.get("occurrence_count") or 1)
             break
     if not observation_id:
         raise TranslationError("gateway receipt missing observation id")
     rel_path = Path(".ai-team") / "observations" / f"{observation_id}.yaml"
+    if coalesced:
+        if _is_french(lang):
+            return (
+                f"Mis a jour {observation_id} (occurrences={occurrence_count}) : {rel_path}\n"
+            )
+        return f"Updated {observation_id} (occurrences={occurrence_count}): {rel_path}\n"
     if _is_french(lang):
         return f"Enregistre {observation_id} : {rel_path}\n"
     return f"Recorded {observation_id}: {rel_path}\n"
+
+
+def format_feedback_transition_stdout(receipt: dict[str, Any], *, lang: str) -> str:
+    observation_id = None
+    status = None
+    from_status = None
+    revision = None
+    for item in receipt.get("affected") or []:
+        if item.get("kind") == "observation":
+            observation_id = item.get("id")
+            status = item.get("status")
+            from_status = item.get("from_status")
+            revision = item.get("revision")
+            break
+    if not observation_id or not status:
+        raise TranslationError("gateway receipt missing observation transition")
+    if _is_french(lang):
+        return (
+            f"Transition {observation_id} : {from_status} -> {status} "
+            f"(revision={revision})\n"
+        )
+    return (
+        f"Transitioned {observation_id}: {from_status} -> {status} "
+        f"(revision={revision})\n"
+    )
 
 
 def format_feedback_retrospective_stdout(receipt: dict[str, Any], *, lang: str) -> str:
@@ -397,19 +525,51 @@ def format_feedback_retrospective_stdout(receipt: dict[str, Any], *, lang: str) 
     return f"Generated {retro_id}: {display}\n"
 
 
+def format_feedback_review_stdout(receipt: dict[str, Any], *, lang: str) -> str:
+    retro_id = None
+    status = None
+    revision = None
+    for item in receipt.get("affected") or []:
+        if item.get("kind") == "retrospective":
+            retro_id = item.get("id")
+            status = item.get("status")
+            revision = item.get("revision")
+            break
+    if not retro_id:
+        raise TranslationError("gateway receipt missing retrospective metadata")
+    if _is_french(lang):
+        return f"Retrospective {retro_id} revue : status={status} revision={revision}\n"
+    return f"Reviewed retrospective {retro_id}: status={status} revision={revision}\n"
+
+
 def format_feedback_export_stdout(receipt: dict[str, Any], *, lang: str) -> tuple[str, bool]:
     detail_level = "structured"
     rel_path = None
+    transmission_status = None
+    submitted = False
     for item in receipt.get("affected") or []:
         if item.get("kind") == "feedback_export":
             detail_level = item.get("detail_level", detail_level)
             rel_path = item.get("path")
+            transmission_status = item.get("transmission_status")
+            submitted = bool(item.get("submitted"))
             break
     if not rel_path:
         raise TranslationError("gateway receipt missing export path")
     display = rel_path.replace("/", "\\")
+    if submitted:
+        if _is_french(lang):
+            line = (
+                f"Feedback soumis ({detail_level}, transmission={transmission_status}) : {display}\n"
+            )
+        else:
+            line = (
+                f"Submitted {detail_level} feedback "
+                f"(transmission={transmission_status}): {display}\n"
+            )
+        return line, False
     if _is_french(lang):
         line = f"Export {detail_level} genere : {display}\n"
     else:
         line = f"Exported {detail_level} feedback: {display}\n"
-    return line, detail_level == "full"
+    return line, detail_level == "full" and not submitted

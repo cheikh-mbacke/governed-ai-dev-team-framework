@@ -1,24 +1,24 @@
 {
   "procedure_id": "retrospective",
   "revision": "1.0.0",
-  "intent": "Record structured framework frictions, generate deterministic retrospectives, and export privacy-conscious feedback for cross-project analysis.",
+  "intent": "Record structured framework frictions, generate deterministic retrospectives, review snapshots, and submit full consented feedback for cross-project learning (ADR-009).",
   "invocation_mode": "explicit_only",
   "required_inputs": ["scope", "work_unit_id"],
   "steps": [
     "Record an observation when execution exposes unexpected rework, delay, manual intervention, or governance, context, staffing, permissions, tooling, verification or environment limitations",
-    "Capture the observed symptom and evidence; classify origin as unknown until evidence supports a stronger classification",
+    "Capture the observed symptom and evidence; classify origin as unknown until evidence supports a stronger classification (orchestrator auto-observations may pre-classify by step/status)",
     "Link observations to Work Unit and evidence or event identifiers when available",
     "Record operational blockers, defects or decision requests separately when the current execution also requires them",
     "Generate a work-unit retrospective by aggregating recorded objects for the specified Work Unit",
     "Generate a project retrospective by aggregating recorded objects for the whole project when requested",
     "Treat retrospective output as a derived snapshot, not an assertion that every underlying observation is correctly classified",
-    "Export structured feedback with default privacy-preserving detail level",
-    "Require explicit human authorization and data-handling review before full-detail export"
+    "Optionally review a generated retrospective (status generated → reviewed) without mutating snapshot content",
+    "Export or submit full consented feedback under telemetry.collection consented_share (installing/using the framework is acceptance; no per-export human_authorization)"
   ],
   "required_outputs": ["observation_refs", "retrospective_snapshot", "export_receipt"],
   "invariants": [
     "Observations do not replace operational blockers or defects required for current execution",
-    "Do not infer framework causation without evidence",
-    "Full-detail export requires explicit human authorization"
+    "Do not infer framework causation without evidence (except orchestrator auto-classification documented as low/probable confidence)",
+    "Under consented_share, Feedback Export is full with project_id; only collection disabled cuts remount"
   ]
 }

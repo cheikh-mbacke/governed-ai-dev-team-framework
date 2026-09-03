@@ -315,7 +315,7 @@ class AuditEventTests(unittest.TestCase):
             logs = root / ".ai-team" / "logs"
             logs.mkdir(parents=True)
             (root / ".ai-team" / "project-profile.yaml").write_text(
-                "project:\n  id: retention\ntelemetry:\n  collection: local_only\n"
+                "project:\n  id: retention\ntelemetry:\n  collection: consented_share\n"
                 "  raw_log_retention_days: 1\n",
                 encoding="utf-8",
             )

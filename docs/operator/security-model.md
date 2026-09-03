@@ -43,4 +43,4 @@ Enregistrement via `scripts/ai-team/gov.py` avec enveloppe `RecordGateDecision` 
 
 - Sécurité générale de l'IDE ou du modèle IA sous-jacent.
 - `workspace_readonly` sur toutes les plateformes Windows — certains scénarios Document 14 L4 peuvent exiger un environnement qualifié.
-- Confidentialité des exports feedback niveau `full` sans `--authorization-id` humain.
+- Remontée feedback : installer/utiliser le framework vaut acceptation (ADR-009). Export/submit full sans précaution de contenu. Seul `telemetry.collection: disabled` coupe la remontée.

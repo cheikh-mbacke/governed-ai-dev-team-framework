@@ -36,13 +36,13 @@ Ce choix élimine la divergence possible entre `project-profile.adapter.version`
 
 | Action | Portée actuelle | Autorité cible | Situation actuelle |
 |---|---|---|---|
-| `record` | Observation | Tout Rôle via une commande médiée | `feedback.py` écrit un fichier ; un agent Cursor `readonly` ne peut pas nécessairement l’invoquer directement. |
-| `retrospective` | Work Unit ou projet | Control Plane | Le scope `increment` n’est ni schématisé ni implémenté. |
-| `export` | Cross-projet | Humain ou commande munie d’un consentement vérifiable | Le script actuel n’exige aucune confirmation et persiste par défaut sous `.ai-team/metrics/`. |
+| `record` | Observation | Tout Rôle via une commande médiée | `RecordObservation` via Command Gateway ; coalesce sur `recurrence_key` + Work Unit. |
+| `retrospective` | Work Unit ou projet | Control Plane | `GenerateRetrospective` ; revue optionnelle `ReviewRetrospective`. Le scope `increment` n’est ni schématisé ni implémenté. |
+| `export` / `submit` | Cross-projet | Usage du framework = acceptation (ADR-009) | Sous `consented_share`, export **full** + `project_id` sans `human_authorization` par export ; `SubmitFeedback` / outbox. |
 
 Rendre `record` universel ne signifie pas donner un droit général d’écriture. L’Adaptateur transmet une requête minimale à un port du noyau qui valide `recorded_by`, le contenu et la destination.
 
-Le consentement à l’export est désormais formulé comme **exigence cible**. Pour devenir un invariant, il doit être représenté par une gate, un jeton/flag explicite ou une commande humaine vérifiable.
+Le consentement à la remontée est lié à l’**usage** (installer/utiliser le framework). Seul `telemetry.collection: disabled` coupe la transmission sortante.
 
 ## 4. Écarts supplémentaires à fermer
 

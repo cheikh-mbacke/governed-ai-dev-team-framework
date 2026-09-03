@@ -75,6 +75,8 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_transition_work_unit(raw)
     elif raw["type"] == "RecordObservation":
         _validate_record_observation(raw)
+    elif raw["type"] == "TransitionObservation":
+        _validate_transition_observation(raw)
     elif raw["type"] == "RegisterEvidence":
         _validate_register_evidence(raw)
     elif raw["type"] == "CreateDecisionRequest":
@@ -91,8 +93,12 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_register_release_candidate(raw)
     elif raw["type"] == "GenerateRetrospective":
         _validate_generate_retrospective(raw)
+    elif raw["type"] == "ReviewRetrospective":
+        _validate_review_retrospective(raw)
     elif raw["type"] == "ExportFeedback":
         _validate_export_feedback(raw)
+    elif raw["type"] == "SubmitFeedback":
+        _validate_submit_feedback(raw)
     elif raw["type"] == "OpenRun":
         _validate_open_run(raw)
     elif raw["type"] == "AcquireWorkerLease":
@@ -198,6 +204,29 @@ def _validate_record_observation(raw: dict[str, Any]) -> None:
             ErrorCode.INVALID_SCHEMA,
             "payload.symptom is required",
             "/payload/symptom",
+        )
+
+
+def _validate_transition_observation(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "observation":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "TransitionObservation target.kind must be observation",
+            "/target/kind",
+        )
+    if "expected_revision" not in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision is required",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("to_status"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.to_status is required",
+            "/payload/to_status",
         )
 
 
@@ -397,6 +426,31 @@ def _validate_generate_retrospective(raw: dict[str, Any]) -> None:
             "payload.work_unit_id is required for work_unit scope",
             "/payload/work_unit_id",
         )
+
+
+def _validate_review_retrospective(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "retrospective":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "ReviewRetrospective target.kind must be retrospective",
+            "/target/kind",
+        )
+    if "expected_revision" not in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision is required",
+            "/target/expected_revision",
+        )
+    if not isinstance(target.get("expected_revision"), int) or target["expected_revision"] < 1:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision must be an integer >= 1",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
 
 
 def _validate_open_run(raw: dict[str, Any]) -> None:
@@ -853,12 +907,17 @@ def _validate_export_feedback(raw: dict[str, Any]) -> None:
     payload = raw["payload"]
     if not isinstance(payload, dict):
         raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
-    detail_level = payload.get("detail_level", "structured")
-    if (detail_level == "full" or bool(payload.get("include_project_id"))) and (
-        "human_authorization" not in raw
-    ):
+    # human_authorization is not required for Feedback Export (ADR-009:
+    # installing/using the framework is acceptance).
+
+
+def _validate_submit_feedback(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "feedback_export":
         raise GatewayError(
-            ErrorCode.HUMAN_AUTH_REQUIRED,
-            "human_authorization required for full or identified export",
-            "/human_authorization",
+            ErrorCode.INVALID_SCHEMA,
+            "SubmitFeedback target.kind must be feedback_export",
+            "/target/kind",
         )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")

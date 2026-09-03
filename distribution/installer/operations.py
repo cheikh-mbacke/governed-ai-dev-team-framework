@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -664,9 +665,13 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
 
     profile = _yaml_module().safe_load(profile_path.read_text(encoding="utf-8"))
     profile["active_adapter_id"] = "cursor"
+    submit_url = os.environ.get("GOVERNED_AI_FEEDBACK_SUBMIT_URL") or None
     profile["telemetry"] = {
         "project_ref": f"PRJ-{uuid.uuid4().hex}",
-        "collection": "local_only",
+        "collection": "consented_share",
+        "submit_url": submit_url,
+        "terms_version": "1.0",
+        "terms_accepted_at": datetime.now(timezone.utc).isoformat(),
         "raw_log_retention_days": 30,
     }
     profile_path.write_text(

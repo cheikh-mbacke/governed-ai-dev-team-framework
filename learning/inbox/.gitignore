@@ -1,0 +1,5 @@
+# Framework learning inbox — consented Feedback Exports (ADR-009).
+# Populated by scripts/ai-team/ingest_feedback.py. Do not put client
+# governance artifacts here.
+*
+!.gitignore
