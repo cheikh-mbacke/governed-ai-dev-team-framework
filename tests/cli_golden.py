@@ -111,6 +111,7 @@ def install_baseline_target(parent: Path) -> Path:
             "golden-baseline",
             "--project-name",
             "Golden Baseline",
+            "--skip-assessment-gate",
         ],
         cwd=ROOT,
         text=True,

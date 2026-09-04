@@ -1,0 +1,42 @@
+{
+  "procedure_id": "reconcile-project",
+  "revision": "1.0.0",
+  "intent": "Reconcile authoritative human intent with observed repository reality, resolve or explicitly waive every material gap, apply an approved convergence plan, and establish a current baseline before project compilation.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": [
+    "constitution",
+    "project_profile",
+    "source_registry",
+    "authoritative_product_sources",
+    "observed_repository_state"
+  ],
+  "steps": [
+    "Collect the minimum human material for the requested scope: objectives, users, business rules, constraints, exclusions, prior decisions, and acceptance criteria",
+    "Inventory observed code, architecture, tests, data, dependencies, documentation, infrastructure, and technical debt without treating them as product authority",
+    "Compare every material observed surface with referenced human intent",
+    "Classify each surface as conformant, requiring adaptation, obsolete or out of scope, conflicting, or undetermined",
+    "Build an explicit convergence plan using keep, migrate, rewrite, isolate, delete, or clarify actions",
+    "Stop for human decisions on ambiguity and obtain explicit human approval before any migrate, rewrite, isolate, or delete action",
+    "Apply only approved convergence actions within the declared scope and preserve evidence of their result",
+    "Run relevant verification and leave every failed or unrun required check blocking",
+    "Produce a machine-readable reconciliation report with no unresolved decision or convergence item",
+    "Fingerprint the reconciled project-owned content and mark the baseline ready",
+    "Stop without compiling the project"
+  ],
+  "required_outputs": [
+    "human_material_assessment",
+    "as_built_inventory",
+    "convergence_matrix",
+    "human_decisions",
+    "applied_action_evidence",
+    "verification_results",
+    "reconciliation_baseline"
+  ],
+  "invariants": [
+    "Repository content is observed reality and never substitutes for authoritative human intent",
+    "No destructive or behavior-changing convergence action proceeds without an explicit human approval reference",
+    "Missing or contradictory human material blocks the affected scope",
+    "A ready baseline contains no unresolved decision, unapplied convergence item, or failed required verification",
+    "Project compilation remains a separate subsequent operation"
+  ]
+}

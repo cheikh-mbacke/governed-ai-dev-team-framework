@@ -130,6 +130,7 @@ def install_target(parent: Path, project_id: str, project_name: str) -> Path:
             project_id,
             "--project-name",
             project_name,
+            "--skip-assessment-gate",
         ],
         cwd=ROOT,
         text=True,

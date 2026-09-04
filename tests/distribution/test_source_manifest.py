@@ -29,6 +29,17 @@ def test_project_profile_declares_framework_source() -> None:
     assert profile["project"]["repository_kind"] == "framework_source"
 
 
+def test_framework_source_documentation_boundary() -> None:
+    profile = yaml.safe_load(PROJECT_PROFILE.read_text(encoding="utf-8"))
+    assert profile["paths"]["product_docs"] == "docs/framework-design"
+    assert (REPO_ROOT / "docs" / "framework-design").is_dir()
+    assert (REPO_ROOT / "docs" / "framework-maintenance").is_dir()
+    assert (REPO_ROOT / "docs" / "adopter-guide").is_dir()
+    assert (REPO_ROOT / "docs" / "integration-contracts").is_dir()
+    assert not (REPO_ROOT / "docs" / "product").exists()
+    assert not (REPO_ROOT / "docs" / "operator").exists()
+
+
 def test_source_repo_has_no_installation_record() -> None:
     assert not (REPO_ROOT / ".ai-team" / "installation-record.json").exists()
     assert not (REPO_ROOT / ".ai-team").exists()
@@ -43,6 +54,7 @@ def test_framework_version_uses_source_layout_only() -> None:
     assert any(path.startswith("adapters/cursor/") for path in managed)
     assert any(path.startswith("distribution/payload/.ai-team/") for path in managed)
     assert not any(path.startswith(".cursor/") for path in managed)
+    assert not any(path.startswith("docs/") for path in managed)
     for path in managed:
         assert (REPO_ROOT / path).is_file(), f"missing managed source file: {path}"
 

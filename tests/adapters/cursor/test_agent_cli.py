@@ -4,7 +4,7 @@ No test here ever spends real API credits: `invoke_agent_cli` is only
 exercised with `subprocess.run` monkeypatched. The contract asserted below
 (JSON envelope shape, --trust/--force flags, opt-in env var) was verified
 against a real, live, authenticated invocation once, manually — see
-docs/product/requirements/mode-nuit-preuve-resilience-couverture.md for why
+docs/framework-design/requirements/mode-nuit-preuve-resilience-couverture.md for why
 that kind of proof cannot live in the automated suite.
 """
 

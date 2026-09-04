@@ -9,6 +9,7 @@ rules:
   - "Limit size by complexity, expected duration, touched components, risk and context volume."
   - "Attach acceptance criteria, risk and required verification to every Work Unit."
   - "When human material is insufficient for non-ambiguous decomposition, create a clarification/decision request instead of inventing product structure."
+  - "On brownfield targets, turn inventoried as-built gaps (non-conformance, out-of-scope, cleanup) into explicit Work Units or human decisions; never absorb them as silent scope."
 size_reference_defaults:
   implementation_default: true
   target_changed_components_max: 3

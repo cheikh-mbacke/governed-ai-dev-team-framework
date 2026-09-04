@@ -27,6 +27,10 @@ que sur les projets **après installation**.
 | Zone | Contenu |
 |------|---------|
 | `.fabric/` | Identité fabrication (`project-profile.yaml`, manifeste source) |
+| `docs/framework-design/` | Spécification normative du produit framework fabriqué ici |
+| `docs/framework-maintenance/` | Fabrication, gouvernance et release du dépôt source |
+| `docs/adopter-guide/` | Utilisation du framework après installation |
+| `docs/integration-contracts/` | Frontières publiques du framework, jamais l’architecture d’un système externe |
 | `distribution/payload/.ai-team/` | Payload installable (constitution, schémas, contrats, templates) |
 | `distribution/payload/seeds/` | Graines fresh-install (profil, état vierge, source-registry) |
 | `src/governed_ai/` | Noyau Python |
@@ -50,11 +54,13 @@ python scripts/ai-team/validate.py
 
 ## Règles générales
 
-1. Intention produit : `docs/product/` — ne pas inventer.
-2. Ne pas modifier `tests/fixtures/projects/clean|legacy/` pour changer le comportement produit.
-3. Versions et releases : `VERSIONING.md`.
+1. Intention du produit framework : `docs/framework-design/` — ne pas inventer.
+2. `docs/product/` est réservé aux produits des projets clients et NE DOIT PAS exister dans ce dépôt source.
+3. Les systèmes externes ont leur propre dépôt ; seul leur contrat d’intégration public peut être référencé ici.
+4. Ne pas modifier `tests/fixtures/projects/clean|legacy/` pour changer le comportement produit.
+5. Versions et releases : `VERSIONING.md`.
 
 ## Projets cibles (après installation)
 
-Cycle gouverné client : voir [docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md)
+Cycle gouverné client : voir [docs/adopter-guide/adopter-checklist.md](docs/adopter-guide/adopter-checklist.md)
 et le `AGENTS.md` généré à l'installation.

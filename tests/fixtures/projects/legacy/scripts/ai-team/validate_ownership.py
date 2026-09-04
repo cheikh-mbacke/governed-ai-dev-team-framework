@@ -59,6 +59,8 @@ def classify_owner(path: str) -> str:
         return "core"
     if p == "README.md":
         return "core"
+    # Historical 0.4–0.6 installed paths only. Current framework-source docs
+    # are source-only and never enter the installation ownership inventory.
     if p.startswith("docs/product/"):
         return "core"
     if p.startswith("docs/operator/"):
@@ -118,6 +120,7 @@ def classify_owner(path: str) -> str:
         ".ai-team/metrics/",
         ".ai-team/observations/",
         ".ai-team/retrospectives/",
+        ".ai-team/reconciliation/",
         ".ai-team/migration-backups/",
     )
     for prefix in project_prefixes:

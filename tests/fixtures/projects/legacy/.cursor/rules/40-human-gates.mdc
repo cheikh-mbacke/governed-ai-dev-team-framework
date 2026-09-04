@@ -4,7 +4,10 @@ alwaysApply: true
 ---
 # Human gates
 
-G0 — Readiness: insufficient or ambiguous authoritative inputs.
+G0 — Readiness: insufficient or ambiguous authoritative inputs; on brownfield,
+     also uninventoried as-built gaps (code vs intent, out-of-scope, cleanup)
+     that would make the first compile incoherent. `/compile-project` must first
+     pass the machine reconciliation check.
 G1 — Execution plan: Project State and proposed plan must be approved before activating runtime.
 G2 — Reserved decision: product decision, policy change, sensitive permission, or source conflict.
 G3 — Release / production: protected environment deployment authorization.

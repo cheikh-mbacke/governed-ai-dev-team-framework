@@ -4,7 +4,7 @@ One tick, one decision: start a ready Work Unit, reassign a stale lease,
 dispatch an execution attempt via a fake AdapterSPI, or stay idle. Real
 wall-clock looping lives only in scripts/ai-team/orchestrate.py and is
 deliberately not unit tested here — see
-docs/product/requirements/mode-nuit-preuve-resilience-couverture.md.
+docs/framework-design/requirements/mode-nuit-preuve-resilience-couverture.md.
 """
 
 from __future__ import annotations

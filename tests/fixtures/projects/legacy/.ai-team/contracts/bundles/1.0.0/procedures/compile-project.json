@@ -3,8 +3,9 @@
   "revision": "1.0.0",
   "intent": "Compile authoritative human product material and the Engineering Constitution into a readiness report, project state, dependency graph, Work Units, risk, context plan and initial staffing. Must run before first runtime activation or after material source changes.",
   "invocation_mode": "explicit_only",
-  "required_inputs": ["constitution", "project_profile", "source_registry", "authoritative_product_sources"],
+  "required_inputs": ["constitution", "project_profile", "source_registry", "authoritative_product_sources", "current_reconciliation_baseline"],
   "steps": [
+    "Verify the machine-readable reconciliation baseline and stop if it is missing, incomplete, or stale",
     "Read the constitution, project profile, source registry, registered authoritative product sources, and repository state only as observed reality when relevant",
     "Run Definition of Ready against the requested scope",
     "If blocking ambiguity exists, emit readiness gate issues and stop the affected scope",
@@ -24,6 +25,7 @@
   ],
   "required_outputs": [
     "readiness_summary",
+    "verified_reconciliation_baseline",
     "work_units",
     "dependency_graph",
     "risk_assignments",
@@ -35,6 +37,7 @@
   ],
   "invariants": [
     "Planning only; do not implement product code",
+    "Do not compile without a current ready reconciliation baseline",
     "Do not activate runtime before execution plan gate approval",
     "Do not invent product intent or structure",
     "Do not apply permission or allowlist changes without human action"

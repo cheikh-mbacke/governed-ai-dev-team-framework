@@ -1,5 +1,5 @@
 policy: authority_and_sources
-version: "1.0.0"
+version: "1.1.0"
 principles:
   - id: human_product_authority
     rule: "Humans are authoritative for product intent, scope, business rules, requirements, expected architecture/constraints, and acceptance criteria."
@@ -33,6 +33,9 @@ conflict_policy:
   human_source_conflict: escalate_g2
   policy_vs_product_conflict: stop_affected_scope_and_escalate_g2
   repository_vs_intent: report_conformance_gap_do_not_rewrite_intent
+brownfield_baseline:
+  rule: "Before compile, /reconcile-project must bind authoritative product material for the requested scope to an explicit inventory of as-built gaps (non-conformance, out-of-scope, cleanup), apply only human-approved convergence actions, and produce a current project-owned content fingerprint. Assessment category baseline surfaces this commitment; the reconciliation fence and G0 enforce readiness."
+  forbidden: "Deriving product intent from as-built code to clear readiness."
 change_policy:
   source_change_during_cycle:
     action: impact_analysis

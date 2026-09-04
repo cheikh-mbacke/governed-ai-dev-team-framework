@@ -1,0 +1,28 @@
+{
+  "role_id": "reconciliation-steward",
+  "revision": "1.0.0",
+  "mandate": "Reconcile observed repository reality with authoritative human intent and apply only explicitly approved pre-compilation convergence actions within the declared scope.",
+  "writes": {
+    "product": {
+      "level": "scoped",
+      "paths": ["<approved-reconciliation-scope>"]
+    },
+    "authoritative_governance_commands": [],
+    "non_authoritative_signal_commands": ["RecordObservation"]
+  },
+  "capabilities": {
+    "repository_read": true,
+    "shell": "scoped",
+    "network": "deny_by_default",
+    "external_tools": []
+  },
+  "approval_policy": {
+    "mode": "constitution",
+    "cannot_relax": true
+  },
+  "procedure_refs": [
+    {"procedure_id": "reconcile-project", "revision": "1.0.0"}
+  ],
+  "model_preference": "inherit",
+  "isolation": "required_for_concurrent_product_write"
+}

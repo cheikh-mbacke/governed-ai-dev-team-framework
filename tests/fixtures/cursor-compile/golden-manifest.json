@@ -74,6 +74,11 @@
     },
     {
       "kind": "agent",
+      "path": ".cursor/agents/reconciliation-steward.md",
+      "sha256": "sha256:e2012644f66cb70c99c29d05a2a799568094f89934c8b18000f3944a988acb19"
+    },
+    {
+      "kind": "agent",
       "path": ".cursor/agents/release-agent.md",
       "sha256": "sha256:e1df816fd0918e30b3f31035c354a38871f9b18fda47039275a003ef3b324434"
     },
@@ -160,7 +165,7 @@
     {
       "kind": "rule",
       "path": ".cursor/rules/40-human-gates.mdc",
-      "sha256": "sha256:894dd8cf29dfe11c3f170184e8d9b0546915814ee6fa931f1241736bb9038c7b"
+      "sha256": "sha256:339eff394df6cf94073eb03246e55d7587c892332f9b245adfdb6fd001d95927"
     },
     {
       "kind": "skill",
@@ -185,7 +190,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/compile-project/SKILL.md",
-      "sha256": "sha256:3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
+      "sha256": "sha256:ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
     },
     {
       "kind": "skill",
@@ -236,6 +241,11 @@
       "kind": "skill",
       "path": ".cursor/skills/propose-profile/SKILL.md",
       "sha256": "sha256:544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
+    },
+    {
+      "kind": "skill",
+      "path": ".cursor/skills/reconcile-project/SKILL.md",
+      "sha256": "sha256:38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
     },
     {
       "kind": "skill",

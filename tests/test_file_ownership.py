@@ -102,6 +102,12 @@ class FileOwnershipInventoryTests(unittest.TestCase):
                 f"managed_file {path} must not be classified as project",
             )
 
+    def test_reconciliation_report_is_project_owned(self):
+        self.assertEqual(
+            classify_owner(".ai-team/reconciliation/baseline.yaml"),
+            "project",
+        )
+
 
 class GoldenObjectFixturesTests(unittest.TestCase):
     @classmethod

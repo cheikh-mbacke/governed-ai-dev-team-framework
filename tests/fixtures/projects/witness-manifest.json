@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-03T12:05:05+00:00",
+  "generated_at": "2026-09-04T18:33:13+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -33,11 +33,11 @@
     {
       "name": "clean",
       "root": "clean",
-      "file_count": 382,
+      "file_count": 393,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
-          "sha256": "953f5e9bff0058c1ab8d23c7ec738cdc5f3d6201fe922526de8a4589c998596c"
+          "sha256": "1e4933dcaa4f27d8ac26dc7abf059838f2375afcb7f8d481f4de3c64c6f674ca"
         },
         {
           "path": ".ai-team/constitution/10-project-strategy.yaml",
@@ -49,7 +49,7 @@
         },
         {
           "path": ".ai-team/constitution/20-decomposition-strategy.yaml",
-          "sha256": "5da34e63244cf056e4ec34112f8282b5c43343fd45b9f21f60647b7ba91ca544"
+          "sha256": "543afc483841dfed010f1134fbb806a2e51b278c4de72724c30247cd3e31a04b"
         },
         {
           "path": ".ai-team/constitution/30-context-strategy.yaml",
@@ -97,7 +97,7 @@
         },
         {
           "path": ".ai-team/constitution/definition-of-ready.yaml",
-          "sha256": "f7b7ddf8a424549bb9ecd161b938df3d29939e3eec3a76b445e1450b60d4547b"
+          "sha256": "0fb453429df0369392ef463f0a29907a9baef8ced696634be7529b85b2391ede"
         },
         {
           "path": ".ai-team/constitution/definition-of-unattended-ready.yaml",
@@ -105,11 +105,11 @@
         },
         {
           "path": ".ai-team/contracts/active-bundle.json",
-          "sha256": "968ae338bdf244ab5774d1fccae31b4737f60d056c2b895c73580ffc686182d3"
+          "sha256": "f36d4384b163c6dbfc2772962d8b2d376d50cf05f782ea47900badd97f50e87b"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/manifest.json",
-          "sha256": "e920d74514350f001c78f6ac034f20cb6fb516c9066086a5e2b3104f392ce8c0"
+          "sha256": "1aa48c8c3326811e9a581fa8d356b83c378b7971380dda62bfb381b795d0aff3"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/audit-release.json",
@@ -125,7 +125,7 @@
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/compile-project.json",
-          "sha256": "2716e06361fb87b3488b6ae28c6be4cd4b3f09bf4673a3053097d6a55023e90b"
+          "sha256": "53cd4d38a4b95dbed09c5c326685a8458d844ebc425bf619003178afc2d9b1d1"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/design-verification.json",
@@ -162,6 +162,10 @@
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/propose-profile.json",
           "sha256": "deed080675187250f5377d5bff7737c9bd193eded820631aa82098be2f656b73"
+        },
+        {
+          "path": ".ai-team/contracts/bundles/1.0.0/procedures/reconcile-project.json",
+          "sha256": "08221fd9eba82ea3b7b73df4cf3a4561f280b0369280162ad65beb943eb0245a"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/retrospective.json",
@@ -220,6 +224,10 @@
           "sha256": "71828107e80c164cd7bfb7e41c0b50ded83fe0f71e7da05d751b7f651415b8d3"
         },
         {
+          "path": ".ai-team/contracts/bundles/1.0.0/roles/reconciliation-steward.json",
+          "sha256": "c266e95d48900973ea08bed1985451ecd8970a277a08a8e514870c0b21f87284"
+        },
+        {
           "path": ".ai-team/contracts/bundles/1.0.0/roles/release-agent.json",
           "sha256": "53f309299f2773af3e7c79f9d1cae08d2392f8c79dfd4e57f08bd0480ab0d337"
         },
@@ -237,11 +245,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "25450a7561bf70635a1f0ebe21f2ee7796c1d84dd5b098d865e23ca57d95e5c5"
+          "sha256": "1228d4233246d970e0010fa355191de40640c110980195cdfe17e347338b6029"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "e52ef7d038ea6e491ba863806dc4b47cfd991a3cf8178a85872e52febdf4263a"
+          "sha256": "8207404fc1d16dd163d2dafce09ee1578d672a1070e5b70091151ff60cd6fd10"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -281,7 +289,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler-notes.yaml",
-          "sha256": "37845d2820cc96adb6b0d57df1afd2c6d3be73efbaa32efbf967cc8b317e6b7a"
+          "sha256": "0efc2bbffa779bfca3cbbef5d9db8f7a3d8b2db79e75a09dd517b7cb46e6b056"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/__init__.py",
@@ -293,7 +301,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/compile.py",
-          "sha256": "dce8fce53a522f82e0eca5afe97a55beab5721705a7207971d18b0643332a0a4"
+          "sha256": "96ddf8fb241121dab5b73eece7d42978eccf21dde3415f20bed51c8b4fc3e6a0"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/install_support.py",
@@ -384,6 +392,10 @@
           "sha256": "9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
         },
         {
+          "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/agents/reconciliation-steward.md",
+          "sha256": "e2012644f66cb70c99c29d05a2a799568094f89934c8b18000f3944a988acb19"
+        },
+        {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/agents/release-agent.md",
           "sha256": "e1df816fd0918e30b3f31035c354a38871f9b18fda47039275a003ef3b324434"
         },
@@ -453,7 +465,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/40-human-gates.mdc",
-          "sha256": "894dd8cf29dfe11c3f170184e8d9b0546915814ee6fa931f1241736bb9038c7b"
+          "sha256": "339eff394df6cf94073eb03246e55d7587c892332f9b245adfdb6fd001d95927"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/audit-release/SKILL.md",
@@ -473,7 +485,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/compile-project/SKILL.md",
-          "sha256": "3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
+          "sha256": "ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/design-verification/SKILL.md",
@@ -516,6 +528,10 @@
           "sha256": "544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
         },
         {
+          "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/reconcile-project/SKILL.md",
+          "sha256": "38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
+        },
+        {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/verify-work-unit/SKILL.md",
           "sha256": "4af0a0c7c1b32c17016004a2b21dfd76bfc1ae6be6e14fc181c4dba699304d3c"
         },
@@ -533,7 +549,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/AGENTS.md",
-          "sha256": "646342e6a2bf654166f2e2e748ecb525825bd7e824d4e3e5a84cabf7bdaa324c"
+          "sha256": "746fb0e932e22c964580d8c1e12dc57e6c80f98997c444d702299cd4c40689fd"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/spi.py",
@@ -557,7 +573,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/manifest.json",
-          "sha256": "910016b22dc20ec97168e1fbba0382672c42ead548e9207707ad4e8cb228bf27"
+          "sha256": "bf05fb72685b70da1f01fe096dfbcb991a53ca8ef914cceaaf56a2b7947c2e65"
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/audit-release.json",
@@ -573,7 +589,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/compile-project.json",
-          "sha256": "2716e06361fb87b3488b6ae28c6be4cd4b3f09bf4673a3053097d6a55023e90b"
+          "sha256": "53cd4d38a4b95dbed09c5c326685a8458d844ebc425bf619003178afc2d9b1d1"
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/design-verification.json",
@@ -610,6 +626,10 @@
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/propose-profile.json",
           "sha256": "deed080675187250f5377d5bff7737c9bd193eded820631aa82098be2f656b73"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/reconcile-project.json",
+          "sha256": "08221fd9eba82ea3b7b73df4cf3a4561f280b0369280162ad65beb943eb0245a"
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/retrospective.json",
@@ -666,6 +686,10 @@
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/roles/qa-test.json",
           "sha256": "71828107e80c164cd7bfb7e41c0b50ded83fe0f71e7da05d751b7f651415b8d3"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/roles/reconciliation-steward.json",
+          "sha256": "c266e95d48900973ea08bed1985451ecd8970a277a08a8e514870c0b21f87284"
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/roles/release-agent.json",
@@ -1001,7 +1025,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/fabrication_overlay.py",
-          "sha256": "d81d4dc074c5a20fe14868b8aa0c22a506bb3a194c10c3413b32c3ad4e90accc"
+          "sha256": "b4e6466aa715575a3985504a5773998a507ae676e4ee991fe8c813193d23462d"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/__init__.py",
@@ -1013,7 +1037,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-          "sha256": "0d98cf8391f5aa16fe79a4081c5a34c566a490356b36447a10604065c0aeb195"
+          "sha256": "10fe217d945ef4e77488d9e18a5896ef32ea59e7c35ba4d6385047150e90b44e"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -1062,6 +1086,10 @@
         {
           "path": ".ai-team/runtime/governed_ai/core/queries/__init__.py",
           "sha256": "47f1e2c081622a725c293d001546a7456f68435fa82ee9a97d0776fcbad2743d"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/core/reconciliation.py",
+          "sha256": "d47d0718df65b0a9571640c91b367987deca39b5d9d8e9e539542df497d11195"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/workspace.py",
@@ -1178,6 +1206,10 @@
         {
           "path": ".ai-team/schemas/project-state.schema.json",
           "sha256": "42dda99267e16f2539b6569804c4354b53ef3a0afa738d68f8efc20fd459ee93"
+        },
+        {
+          "path": ".ai-team/schemas/reconciliation.schema.json",
+          "sha256": "91ceed7678ba0623e7cb5e5db91e16db64bdb02b35d32267fc9a24e19b308ab2"
         },
         {
           "path": ".ai-team/schemas/release-candidate.schema.json",
@@ -1324,6 +1356,10 @@
           "sha256": "9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
         },
         {
+          "path": ".cursor/agents/reconciliation-steward.md",
+          "sha256": "e2012644f66cb70c99c29d05a2a799568094f89934c8b18000f3944a988acb19"
+        },
+        {
           "path": ".cursor/agents/release-agent.md",
           "sha256": "e1df816fd0918e30b3f31035c354a38871f9b18fda47039275a003ef3b324434"
         },
@@ -1393,7 +1429,7 @@
         },
         {
           "path": ".cursor/rules/40-human-gates.mdc",
-          "sha256": "894dd8cf29dfe11c3f170184e8d9b0546915814ee6fa931f1241736bb9038c7b"
+          "sha256": "339eff394df6cf94073eb03246e55d7587c892332f9b245adfdb6fd001d95927"
         },
         {
           "path": ".cursor/skills/audit-release/SKILL.md",
@@ -1413,7 +1449,7 @@
         },
         {
           "path": ".cursor/skills/compile-project/SKILL.md",
-          "sha256": "3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
+          "sha256": "ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
         },
         {
           "path": ".cursor/skills/design-verification/SKILL.md",
@@ -1456,6 +1492,10 @@
           "sha256": "544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
         },
         {
+          "path": ".cursor/skills/reconcile-project/SKILL.md",
+          "sha256": "38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
+        },
+        {
           "path": ".cursor/skills/verify-work-unit/SKILL.md",
           "sha256": "4af0a0c7c1b32c17016004a2b21dfd76bfc1ae6be6e14fc181c4dba699304d3c"
         },
@@ -1473,7 +1513,7 @@
         },
         {
           "path": "AGENTS.md",
-          "sha256": "39f1855994d38b9239d63a99b0e1efd5d29fb3d354cd477f5731f31da57f4759"
+          "sha256": "1805e12a6c0f031775f6166e446373b8a47adb23dc1ceb078febc8978a805658"
         },
         {
           "path": "DO_NOT_EDIT_AS_PRODUCT.md",
@@ -1497,7 +1537,7 @@
         },
         {
           "path": "scripts/ai-team/diagnose.py",
-          "sha256": "0a30566982754495b9812092da14ec989ecaf009e0f22474f5fade8497440a84"
+          "sha256": "09429d6b1f4449a4cd112c0572d1c1cc04ec710079d20eab5ce635c4acc04d58"
         },
         {
           "path": "scripts/ai-team/feedback.py",
@@ -1525,7 +1565,7 @@
         },
         {
           "path": "scripts/ai-team/orchestrate.py",
-          "sha256": "10f628843651b9715423cd4e781df476b457a5dd52425a701e6a381bbbcdf92d"
+          "sha256": "400eb21a66656b274c6be28eba4ec3a9e4eb6f72aca6016a53915cd1fdc56721"
         },
         {
           "path": "scripts/ai-team/preflight.py",
@@ -1548,6 +1588,10 @@
           "sha256": "64a482a596d239181b38e4d4c37fa525856c3c0cb8a67a340604dc2bc932c9b9"
         },
         {
+          "path": "scripts/ai-team/reconcile_project.py",
+          "sha256": "0cdc3aeff30f77db126fad66790dd8ab2ca77767ca07533d41d14559650b4d03"
+        },
+        {
           "path": "scripts/ai-team/status.py",
           "sha256": "fccb3eded355fbe565d81cdacb9b6f4e7f869f9431b1c8d3e71ae20ddca917fd"
         },
@@ -1557,22 +1601,22 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "8bda8a9ced0f440944aded76aee0b7aebe14480642733be21aadee6cb7202789"
+          "sha256": "1bafbb197f4c8cba3f212109441450a485d6d6ed961c84fc5c0f180b0cd4b5b0"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "3fa57977130e8d5b4fc313f277752ae69ac7c996376f16a47f7812cb38571626"
+          "sha256": "782482fe98b4c24848c682a6e2a7bef14929d26187daa63af19e79d18fa46cec"
         }
       ]
     },
     {
       "name": "legacy",
       "root": "legacy",
-      "file_count": 398,
+      "file_count": 409,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
-          "sha256": "953f5e9bff0058c1ab8d23c7ec738cdc5f3d6201fe922526de8a4589c998596c"
+          "sha256": "1e4933dcaa4f27d8ac26dc7abf059838f2375afcb7f8d481f4de3c64c6f674ca"
         },
         {
           "path": ".ai-team/constitution/10-project-strategy.yaml",
@@ -1584,7 +1628,7 @@
         },
         {
           "path": ".ai-team/constitution/20-decomposition-strategy.yaml",
-          "sha256": "5da34e63244cf056e4ec34112f8282b5c43343fd45b9f21f60647b7ba91ca544"
+          "sha256": "543afc483841dfed010f1134fbb806a2e51b278c4de72724c30247cd3e31a04b"
         },
         {
           "path": ".ai-team/constitution/30-context-strategy.yaml",
@@ -1632,7 +1676,7 @@
         },
         {
           "path": ".ai-team/constitution/definition-of-ready.yaml",
-          "sha256": "f7b7ddf8a424549bb9ecd161b938df3d29939e3eec3a76b445e1450b60d4547b"
+          "sha256": "0fb453429df0369392ef463f0a29907a9baef8ced696634be7529b85b2391ede"
         },
         {
           "path": ".ai-team/constitution/definition-of-unattended-ready.yaml",
@@ -1644,11 +1688,11 @@
         },
         {
           "path": ".ai-team/contracts/active-bundle.json",
-          "sha256": "968ae338bdf244ab5774d1fccae31b4737f60d056c2b895c73580ffc686182d3"
+          "sha256": "f36d4384b163c6dbfc2772962d8b2d376d50cf05f782ea47900badd97f50e87b"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/manifest.json",
-          "sha256": "e920d74514350f001c78f6ac034f20cb6fb516c9066086a5e2b3104f392ce8c0"
+          "sha256": "1aa48c8c3326811e9a581fa8d356b83c378b7971380dda62bfb381b795d0aff3"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/audit-release.json",
@@ -1664,7 +1708,7 @@
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/compile-project.json",
-          "sha256": "2716e06361fb87b3488b6ae28c6be4cd4b3f09bf4673a3053097d6a55023e90b"
+          "sha256": "53cd4d38a4b95dbed09c5c326685a8458d844ebc425bf619003178afc2d9b1d1"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/design-verification.json",
@@ -1701,6 +1745,10 @@
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/propose-profile.json",
           "sha256": "deed080675187250f5377d5bff7737c9bd193eded820631aa82098be2f656b73"
+        },
+        {
+          "path": ".ai-team/contracts/bundles/1.0.0/procedures/reconcile-project.json",
+          "sha256": "08221fd9eba82ea3b7b73df4cf3a4561f280b0369280162ad65beb943eb0245a"
         },
         {
           "path": ".ai-team/contracts/bundles/1.0.0/procedures/retrospective.json",
@@ -1759,6 +1807,10 @@
           "sha256": "71828107e80c164cd7bfb7e41c0b50ded83fe0f71e7da05d751b7f651415b8d3"
         },
         {
+          "path": ".ai-team/contracts/bundles/1.0.0/roles/reconciliation-steward.json",
+          "sha256": "c266e95d48900973ea08bed1985451ecd8970a277a08a8e514870c0b21f87284"
+        },
+        {
           "path": ".ai-team/contracts/bundles/1.0.0/roles/release-agent.json",
           "sha256": "53f309299f2773af3e7c79f9d1cae08d2392f8c79dfd4e57f08bd0480ab0d337"
         },
@@ -1804,11 +1856,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "135277739a04632c17847862a57d18c0d88aa7fd4da45fd0e23c6dd4ca4a3984"
+          "sha256": "071c806d089600ef40551f0a27aba8fb156067eebb642d33af4d171af114c642"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "d3fa2343aa995897cd057ddfe64c9f000a16b18206cef272568286e826b9fc89"
+          "sha256": "571ab763daba34cccb0596ebd02d9632e21cd130a644fa10a8806dff0eee839a"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1889,6 +1941,10 @@
         {
           "path": ".ai-team/schemas/project-state.schema.json",
           "sha256": "42dda99267e16f2539b6569804c4354b53ef3a0afa738d68f8efc20fd459ee93"
+        },
+        {
+          "path": ".ai-team/schemas/reconciliation.schema.json",
+          "sha256": "91ceed7678ba0623e7cb5e5db91e16db64bdb02b35d32267fc9a24e19b308ab2"
         },
         {
           "path": ".ai-team/schemas/release-candidate.schema.json",
@@ -2051,6 +2107,10 @@
           "sha256": "9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
         },
         {
+          "path": ".cursor/agents/reconciliation-steward.md",
+          "sha256": "e2012644f66cb70c99c29d05a2a799568094f89934c8b18000f3944a988acb19"
+        },
+        {
           "path": ".cursor/agents/release-agent.md",
           "sha256": "e1df816fd0918e30b3f31035c354a38871f9b18fda47039275a003ef3b324434"
         },
@@ -2120,7 +2180,7 @@
         },
         {
           "path": ".cursor/rules/40-human-gates.mdc",
-          "sha256": "894dd8cf29dfe11c3f170184e8d9b0546915814ee6fa931f1241736bb9038c7b"
+          "sha256": "339eff394df6cf94073eb03246e55d7587c892332f9b245adfdb6fd001d95927"
         },
         {
           "path": ".cursor/skills/audit-release/SKILL.md",
@@ -2140,7 +2200,7 @@
         },
         {
           "path": ".cursor/skills/compile-project/SKILL.md",
-          "sha256": "3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
+          "sha256": "ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
         },
         {
           "path": ".cursor/skills/design-verification/SKILL.md",
@@ -2187,6 +2247,10 @@
           "sha256": "544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
         },
         {
+          "path": ".cursor/skills/reconcile-project/SKILL.md",
+          "sha256": "38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
+        },
+        {
           "path": ".cursor/skills/verify-work-unit/SKILL.md",
           "sha256": "4af0a0c7c1b32c17016004a2b21dfd76bfc1ae6be6e14fc181c4dba699304d3c"
         },
@@ -2204,7 +2268,7 @@
         },
         {
           "path": "AGENTS.md",
-          "sha256": "39f1855994d38b9239d63a99b0e1efd5d29fb3d354cd477f5731f31da57f4759"
+          "sha256": "1805e12a6c0f031775f6166e446373b8a47adb23dc1ceb078febc8978a805658"
         },
         {
           "path": "DO_NOT_EDIT_AS_PRODUCT.md",
@@ -2220,7 +2284,7 @@
         },
         {
           "path": "adapters/cursor/compiler-notes.yaml",
-          "sha256": "37845d2820cc96adb6b0d57df1afd2c6d3be73efbaa32efbf967cc8b317e6b7a"
+          "sha256": "0efc2bbffa779bfca3cbbef5d9db8f7a3d8b2db79e75a09dd517b7cb46e6b056"
         },
         {
           "path": "adapters/cursor/compiler/__init__.py",
@@ -2232,7 +2296,7 @@
         },
         {
           "path": "adapters/cursor/compiler/compile.py",
-          "sha256": "dce8fce53a522f82e0eca5afe97a55beab5721705a7207971d18b0643332a0a4"
+          "sha256": "96ddf8fb241121dab5b73eece7d42978eccf21dde3415f20bed51c8b4fc3e6a0"
         },
         {
           "path": "adapters/cursor/compiler/install_support.py",
@@ -2323,6 +2387,10 @@
           "sha256": "9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
         },
         {
+          "path": "adapters/cursor/templates/.cursor/agents/reconciliation-steward.md",
+          "sha256": "e2012644f66cb70c99c29d05a2a799568094f89934c8b18000f3944a988acb19"
+        },
+        {
           "path": "adapters/cursor/templates/.cursor/agents/release-agent.md",
           "sha256": "e1df816fd0918e30b3f31035c354a38871f9b18fda47039275a003ef3b324434"
         },
@@ -2392,7 +2460,7 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/rules/40-human-gates.mdc",
-          "sha256": "894dd8cf29dfe11c3f170184e8d9b0546915814ee6fa931f1241736bb9038c7b"
+          "sha256": "339eff394df6cf94073eb03246e55d7587c892332f9b245adfdb6fd001d95927"
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/audit-release/SKILL.md",
@@ -2412,7 +2480,7 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/compile-project/SKILL.md",
-          "sha256": "3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
+          "sha256": "ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/design-verification/SKILL.md",
@@ -2455,6 +2523,10 @@
           "sha256": "544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
         },
         {
+          "path": "adapters/cursor/templates/.cursor/skills/reconcile-project/SKILL.md",
+          "sha256": "38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
+        },
+        {
           "path": "adapters/cursor/templates/.cursor/skills/verify-work-unit/SKILL.md",
           "sha256": "4af0a0c7c1b32c17016004a2b21dfd76bfc1ae6be6e14fc181c4dba699304d3c"
         },
@@ -2472,7 +2544,7 @@
         },
         {
           "path": "adapters/cursor/templates/AGENTS.md",
-          "sha256": "646342e6a2bf654166f2e2e748ecb525825bd7e824d4e3e5a84cabf7bdaa324c"
+          "sha256": "746fb0e932e22c964580d8c1e12dc57e6c80f98997c444d702299cd4c40689fd"
         },
         {
           "path": "requirements.txt",
@@ -2496,7 +2568,7 @@
         },
         {
           "path": "scripts/ai-team/diagnose.py",
-          "sha256": "0a30566982754495b9812092da14ec989ecaf009e0f22474f5fade8497440a84"
+          "sha256": "09429d6b1f4449a4cd112c0572d1c1cc04ec710079d20eab5ce635c4acc04d58"
         },
         {
           "path": "scripts/ai-team/feedback.py",
@@ -2524,7 +2596,7 @@
         },
         {
           "path": "scripts/ai-team/orchestrate.py",
-          "sha256": "10f628843651b9715423cd4e781df476b457a5dd52425a701e6a381bbbcdf92d"
+          "sha256": "400eb21a66656b274c6be28eba4ec3a9e4eb6f72aca6016a53915cd1fdc56721"
         },
         {
           "path": "scripts/ai-team/preflight.py",
@@ -2547,6 +2619,10 @@
           "sha256": "64a482a596d239181b38e4d4c37fa525856c3c0cb8a67a340604dc2bc932c9b9"
         },
         {
+          "path": "scripts/ai-team/reconcile_project.py",
+          "sha256": "0cdc3aeff30f77db126fad66790dd8ab2ca77767ca07533d41d14559650b4d03"
+        },
+        {
           "path": "scripts/ai-team/status.py",
           "sha256": "fccb3eded355fbe565d81cdacb9b6f4e7f869f9431b1c8d3e71ae20ddca917fd"
         },
@@ -2556,11 +2632,11 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "8bda8a9ced0f440944aded76aee0b7aebe14480642733be21aadee6cb7202789"
+          "sha256": "1bafbb197f4c8cba3f212109441450a485d6d6ed961c84fc5c0f180b0cd4b5b0"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "3fa57977130e8d5b4fc313f277752ae69ac7c996376f16a47f7812cb38571626"
+          "sha256": "782482fe98b4c24848c682a6e2a7bef14929d26187daa63af19e79d18fa46cec"
         },
         {
           "path": "src/governed_ai/__init__.py",
@@ -2604,7 +2680,7 @@
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/manifest.json",
-          "sha256": "910016b22dc20ec97168e1fbba0382672c42ead548e9207707ad4e8cb228bf27"
+          "sha256": "bf05fb72685b70da1f01fe096dfbcb991a53ca8ef914cceaaf56a2b7947c2e65"
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/procedures/audit-release.json",
@@ -2620,7 +2696,7 @@
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/procedures/compile-project.json",
-          "sha256": "2716e06361fb87b3488b6ae28c6be4cd4b3f09bf4673a3053097d6a55023e90b"
+          "sha256": "53cd4d38a4b95dbed09c5c326685a8458d844ebc425bf619003178afc2d9b1d1"
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/procedures/design-verification.json",
@@ -2657,6 +2733,10 @@
         {
           "path": "src/governed_ai/contracts/bundles/v1/procedures/propose-profile.json",
           "sha256": "deed080675187250f5377d5bff7737c9bd193eded820631aa82098be2f656b73"
+        },
+        {
+          "path": "src/governed_ai/contracts/bundles/v1/procedures/reconcile-project.json",
+          "sha256": "08221fd9eba82ea3b7b73df4cf3a4561f280b0369280162ad65beb943eb0245a"
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/procedures/retrospective.json",
@@ -2713,6 +2793,10 @@
         {
           "path": "src/governed_ai/contracts/bundles/v1/roles/qa-test.json",
           "sha256": "71828107e80c164cd7bfb7e41c0b50ded83fe0f71e7da05d751b7f651415b8d3"
+        },
+        {
+          "path": "src/governed_ai/contracts/bundles/v1/roles/reconciliation-steward.json",
+          "sha256": "c266e95d48900973ea08bed1985451ecd8970a277a08a8e514870c0b21f87284"
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/roles/release-agent.json",
@@ -3048,7 +3132,7 @@
         },
         {
           "path": "src/governed_ai/core/fabrication_overlay.py",
-          "sha256": "d81d4dc074c5a20fe14868b8aa0c22a506bb3a194c10c3413b32c3ad4e90accc"
+          "sha256": "b4e6466aa715575a3985504a5773998a507ae676e4ee991fe8c813193d23462d"
         },
         {
           "path": "src/governed_ai/core/orchestrator/__init__.py",
@@ -3060,7 +3144,7 @@
         },
         {
           "path": "src/governed_ai/core/orchestrator/tick.py",
-          "sha256": "0d98cf8391f5aa16fe79a4081c5a34c566a490356b36447a10604065c0aeb195"
+          "sha256": "10fe217d945ef4e77488d9e18a5896ef32ea59e7c35ba4d6385047150e90b44e"
         },
         {
           "path": "src/governed_ai/core/persistence/__init__.py",
@@ -3109,6 +3193,10 @@
         {
           "path": "src/governed_ai/core/queries/__init__.py",
           "sha256": "47f1e2c081622a725c293d001546a7456f68435fa82ee9a97d0776fcbad2743d"
+        },
+        {
+          "path": "src/governed_ai/core/reconciliation.py",
+          "sha256": "d47d0718df65b0a9571640c91b367987deca39b5d9d8e9e539542df497d11195"
         },
         {
           "path": "src/governed_ai/core/workspace.py",

@@ -16,7 +16,7 @@ Workflow détaillé : [`AGENTS.md`](AGENTS.md).
 ## Projets installés
 
 Politique Git client (branches `wu/…`, commits `type(WU-ID): …`) :
-[`docs/operator/client-git-policy.md`](docs/operator/client-git-policy.md).
+[`docs/adopter-guide/client-git-policy.md`](docs/adopter-guide/client-git-policy.md).
 
 ## Version produit
 
@@ -28,7 +28,7 @@ Le framework suit Semantic Versioning `MAJOR.MINOR.PATCH` :
 
 `pyproject.toml` est la source canonique. `.fabric/framework-version.json` et
 `adapters/cursor/manifest.json` → `adapter_version` doivent rester alignés (voir
-[`docs/operator/versioning-policy.md`](docs/operator/versioning-policy.md)).
+[`docs/framework-maintenance/versioning-policy.md`](docs/framework-maintenance/versioning-policy.md)).
 
 ## Releases et tags
 
@@ -51,4 +51,4 @@ contrôles, traçabilité et autorité humaine conservés.
 
 ## Rupture historique 0.4.x
 
-Voir [`docs/operator/history-cutover-0.4.md`](docs/operator/history-cutover-0.4.md).
+Voir [`docs/framework-maintenance/history-cutover-0.4.md`](docs/framework-maintenance/history-cutover-0.4.md).

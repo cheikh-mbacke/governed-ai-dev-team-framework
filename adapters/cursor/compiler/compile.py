@@ -32,6 +32,7 @@ BUNDLE_ROLE_AGENT = {
     "mandate-matcher",
     "test-strategist",
     "integration-steward",
+    "reconciliation-steward",
 }
 
 
