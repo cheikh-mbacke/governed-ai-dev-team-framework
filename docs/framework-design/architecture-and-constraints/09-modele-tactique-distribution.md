@@ -67,6 +67,18 @@ Le manifeste réel doit conserver la liste complète des fichiers. L’exemple n
 
 Les migrations peuvent modifier des données projet, mais uniquement comme opérations explicites, versionnées, validées et réversibles. La règle précédente « Distribution ne modifie jamais l’état » est remplacée par cette contrainte vérifiable.
 
+## 4bis. Assessment d’adoption (cible, Document 19)
+
+Avant une **install fraîche**, Distribution DOIT offrir (cible) un parcours d’**assessment** non mutant qui inventorie les conflits de gouvernance et d’artefacts sur la cible et produit un verdict `go` / `go_with_backlog` / `no_go`. Cet assessment :
+
+- n’écrit pas l’arbre cible ;
+- n’est pas une Gate G0–G4 ;
+- ne constitue pas un mode de gouvernance partielle ;
+- précède la Décision d’adoption humaine puis l’écriture de l’Installation Record ;
+- expose la catégorie `baseline` (matière humaine / inventaire as-built) comme engagement **post-install pré-compile**, sans traiter le dépôt comme autorité produit.
+
+Les collisions de chemins à l’install restent un garde-fou technique ; elles ne remplacent pas l’inventaire d’autorité / process / artefacts concurrents ni la baseline produit.
+
 ## 5. Domain Events de Distribution
 
 Les faits candidats sont `InstallationCompleted`, `UpdateApplied` et `UpdateRolledBack`. Ils ne peuvent pas être injectés tels quels dans `event.schema.json`, dont l’énumération Gouvernance est fermée et dont le modèle mélange plusieurs natures de messages.
@@ -85,6 +97,7 @@ La liste de possession reste définie actuellement dans Distribution. La cible d
 - La matrice de compatibilité, la désinstallation et le multi-adaptateur restent à spécifier.
 - La migration v1 → v2 doit préserver les anciens `managed_files`.
 - Le modèle des événements de Distribution n’est pas implémenté.
+- L’assessment d’adoption (Document 19) est livré via `tools/assess.py` ; le garde-fou install `--assessment-report` est actif. La détection `authority` reste partielle ; la catégorie `baseline` est heuristique (racines de code / `docs/product/`).
 
 ## Sources
 

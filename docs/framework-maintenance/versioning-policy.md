@@ -86,7 +86,7 @@ L’installateur **refuse** :
 |---|---|---|---|
 | `0.7.0` | `schema_version` ≥ 3 | champs v2 (`revision`, timestamps) | `schema_version` 1 |
 
-Une rétrogradation de **fichiers** (rollback installateur) ne convertit pas automatiquement les données vers un schéma antérieur. Voir [upgrading.md](upgrading.md).
+Une rétrogradation de **fichiers** (rollback installateur) ne convertit pas automatiquement les données vers un schéma antérieur. Voir [upgrading.md](../adopter-guide/upgrading.md).
 
 ## Fichiers synchronisés avec la version produit
 
@@ -112,6 +112,6 @@ python -m pytest tests/distribution/test_version_alignment.py tests/distribution
 ## Références
 
 - [`VERSIONING.md`](../../VERSIONING.md) — SemVer produit et séquence de release
-- [`upgrading.md`](upgrading.md) — migrations installées
-- [`deprecations.md`](deprecations.md) — remplacements et échéances
+- [`upgrading.md`](../adopter-guide/upgrading.md) — migrations installées
+- [`deprecations.md`](../adopter-guide/deprecations.md) — remplacements et échéances
 - Document 12 — contrats noyau ↔ adaptateur

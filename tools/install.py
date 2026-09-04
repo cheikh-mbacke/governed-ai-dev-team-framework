@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -14,6 +15,7 @@ SRC_ROOT = SOURCE_ROOT / "src"
 if SRC_ROOT.is_dir() and str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from distribution.installer.assessment import ASSESSMENT_SKIP_ENV, assessment_gate_error
 from distribution.installer.operations import install_fresh, run_update
 
 
@@ -24,6 +26,21 @@ def parse_args():
     parser.add_argument("--target", required=True)
     parser.add_argument("--project-id")
     parser.add_argument("--project-name")
+    parser.add_argument(
+        "--assessment-report",
+        help=(
+            "Fresh install: path to JSON report from tools/assess.py with verdict "
+            "go or go_with_backlog (Document 19)."
+        ),
+    )
+    parser.add_argument(
+        "--skip-assessment-gate",
+        action="store_true",
+        help=(
+            "Fresh install: explicitly bypass the assessment gate (prints a warning). "
+            f"Automation may set {ASSESSMENT_SKIP_ENV}=1 instead."
+        ),
+    )
     parser.add_argument(
         "--force",
         action="store_true",
@@ -79,6 +96,8 @@ def parse_args():
         )
     if not args.update and (not args.project_id or not args.project_name):
         parser.error("--project-id and --project-name are required for a fresh install")
+    if args.update and (args.assessment_report or args.skip_assessment_gate):
+        parser.error("--assessment-report and --skip-assessment-gate apply only to fresh install")
     return args
 
 
@@ -87,6 +106,23 @@ def main() -> int:
     target = Path(args.target).expanduser().resolve()
     if args.update:
         return run_update(SOURCE_ROOT, args, target)
+    gate_error = assessment_gate_error(
+        assessment_report=args.assessment_report,
+        skip_assessment_gate=bool(args.skip_assessment_gate),
+    )
+    if gate_error:
+        print(gate_error)
+        return 2
+    skipped = bool(args.skip_assessment_gate) or (
+        not args.assessment_report and os.environ.get(ASSESSMENT_SKIP_ENV) == "1"
+    )
+    if skipped:
+        print(
+            "WARNING: assessment gate skipped — exclusive governance still required; "
+            "hybrid adoption is not supported."
+        )
+    elif args.assessment_report:
+        print(f"Assessment gate: accepted report {args.assessment_report}")
     return install_fresh(SOURCE_ROOT, args, target)
 
 

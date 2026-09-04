@@ -162,10 +162,10 @@ def main() -> int:
         print(t(
             LANG,
             "If Cursor's own UI shows a subagent stalled with no recent hook activity above,\n"
-            "that's a real stall with no recorded reason. See docs/operator/operator-guide.md\n"
+            "that's a real stall with no recorded reason. Consult the Governed AI adopter guide\n"
             "before stopping/restarting.",
             "Si l'interface Cursor montre un subagent bloque sans activite (hook) recente ci-dessus,\n"
-            "c'est un vrai blocage sans raison enregistree. Voir docs/operator/operator-guide.md\n"
+            "c'est un vrai blocage sans raison enregistree. Consulter le guide d'adoption Governed AI\n"
             "avant d'arreter/redemarrer quoi que ce soit.",
         ))
     else:

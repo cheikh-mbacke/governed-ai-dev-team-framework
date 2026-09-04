@@ -52,6 +52,11 @@
 | **Project Profile** | Identité et configuration fonctionnelle du projet, comprenant à terme l’identifiant de l’Adaptateur actif. | Observé + extension cible. |
 | **Source Registry** | Registre explicite des sources produit faisant autorité. | Observé. |
 | **Installation Record** | Manifeste des versions du noyau et des Adaptateurs, des fichiers gérés et des horodatages d’installation. | Cible à partir de `framework-version.json`. |
+| **Gouvernance exclusive** | Une fois l’adoption engagée, le framework est la seule autorité de gouvernance du développement assisté par IA sur le dépôt ; toute autorité concurrente doit être éliminée, remappée ou dérogée explicitement. Une demi-gouvernance n’est pas un mode supporté. | Règle cible (Document 19). |
+| **Assessment d’adoption** | Diagnostic pré-installation, non mutant, qui inventorie les conflits (engagement, autorité, artefacts, prérequis, **baseline** matière/as-built, remodelage) et produit un verdict `go` / `go_with_backlog` / `no_go`. Distinct de G0, de `preflight` et de `diagnose`. CLI : `tools/assess.py`. | Observé (rapport JSON v1) ; couverture `authority` partielle ; `baseline` heuristique. |
+| **Décision d’adoption** | Acceptation humaine explicite des principes d’adoption et du backlog de résolution, enregistrée avant l’install mutante. | Cible. |
+| **Constat d’assessment** | Entrée du rapport pré-adoption : catégorie, sévérité, preuve, options et statut de résolution (`eliminate`, `remap`, `waive`, `defer_blocks_adoption`, `unresolved`). | Cible. |
+| **Inventaire as-built** | Inventaire humain, avant première compile, des écarts entre le dépôt observé et l’intention produit (non-conformité, hors-scope, nettoyage) destinés à devenir Work Units ou décisions explicites. | Règle Document 19 §2.4 / Definition of Ready. |
 
 ## 5. Limites
 

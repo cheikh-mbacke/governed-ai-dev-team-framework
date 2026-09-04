@@ -5,7 +5,7 @@ did — it never loops, sleeps, or blocks itself. The only part of this
 feature that becomes a genuine long-running process is the thin CLI wrapper
 in `scripts/ai-team/orchestrate.py`, which is deliberately not covered by
 unit tests: real wall-clock behavior is not something a unit test can prove
-(see docs/product/requirements/mode-nuit-preuve-resilience-couverture.md).
+(see docs/framework-design/requirements/mode-nuit-preuve-resilience-couverture.md).
 
 Every write goes through `CommandGateway.execute_command()` like any other
 caller — this module has no special access and cannot bypass fencing,

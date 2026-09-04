@@ -26,7 +26,7 @@ Cette édition révise les Documents 00 à 10 après audit indépendant du dép�
 | Feedback | Mutations non implémentées reconnues ; export persistant et consentement cible explicités. |
 | Codex | Hooks et skills par agent reconnus selon la documentation actuelle. |
 
-## Emplacement dans `docs/product/`
+## Emplacement dans `docs/framework-design/`
 
 | Doc | Titre | Catégorie | Fichier |
 |---|---|---|---|
@@ -45,10 +45,12 @@ Cette édition révise les Documents 00 à 10 après audit indépendant du dép�
 | 12 | Contrats noyau ↔ Adaptateur | `architecture-and-constraints/` | [`12-contrats-noyau-adaptateur.md`](../architecture-and-constraints/12-contrats-noyau-adaptateur.md) |
 | 13 | Plan de migration | `architecture-and-constraints/` | [`13-plan-de-migration.md`](../architecture-and-constraints/13-plan-de-migration.md) |
 | 14 | Tests de conformité | `acceptance-criteria/` | [`14-tests-de-conformite.md`](../acceptance-criteria/14-tests-de-conformite.md) |
+| 19 | Gouvernance exclusive et assessment d’adoption | `requirements/` | [`19-gouvernance-exclusive-et-assessment-adoption.md`](../requirements/19-gouvernance-exclusive-et-assessment-adoption.md) |
+| 20 | Conformité assessment d’adoption | `acceptance-criteria/` | [`20-conformite-assessment-adoption.md`](../acceptance-criteria/20-conformite-assessment-adoption.md) |
 
 ## Ordre de lecture
 
-00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10, puis les spécifications techniques 11 → 14 (voir tableau ci-dessus).
+00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10, puis les spécifications techniques 11 → 14. Les Documents **19–20** (assessment d’adoption) se lisent avec le Document 9 (Distribution) et le guide [`docs/adopter-guide/adoption-assessment.md`](../../adopter-guide/adoption-assessment.md). Les systèmes consommateurs externes disposent de leur propre corpus ; seule leur frontière contractuelle avec le framework est référencée sous [`docs/integration-contracts/`](../../integration-contracts/).
 
 Le rapport d’audit d’origine reste disponible à la racine du dépôt sous `rapport-audit-ddd-governed-ai.md` s’il y est ajouté.
 

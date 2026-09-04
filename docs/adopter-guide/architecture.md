@@ -1,6 +1,6 @@
 # Architecture — vue opérateur
 
-Résumé opérationnel de l'architecture refondue (`0.7.0`). Pour le détail normatif, voir [`docs/product/architecture-and-constraints/11-architecture-cible.md`](../product/architecture-and-constraints/11-architecture-cible.md).
+Résumé opérationnel de l'architecture refondue (`0.7.0`). Pour le détail normatif, voir [l’architecture cible](../framework-design/architecture-and-constraints/11-architecture-cible.md).
 
 ## Composants
 
@@ -59,6 +59,7 @@ Le runtime framework **n'est plus copié** à la racine sous `src/`, `adapters/`
 - Seul l'**Adaptateur Cursor** est livré en `0.7.0`. Aucun Adaptateur Claude Code ou Codex n'est fourni.
 - Le comportement d'un Cursor réel dépend de la version et de la plateforme ; qualification via Document 14 (niveaux L3/L4).
 - Distribution ne dépend pas du noyau à l'exécution ; le noyau ne dépend pas de Distribution.
+- L'**assessment d'adoption** est livré (`tools/assess.py`, Documents 19–20) — voir [adoption-assessment.md](adoption-assessment.md).
 
 ## Dépôt framework vs projet installé
 

@@ -6,14 +6,18 @@ Ce document résume les garanties et frontières **prouvées par la refonte `0.5
 
 | Acteur | Peut | Ne peut pas |
 |---|---|---|
-| **Opérateur humain** | Approuver gates G0–G4, consentir migrations, autoriser exports sensibles | Déléguer une décision produit à un agent sans gate |
+| **Opérateur humain** | Approuver l’adoption, les gates G0–G4, consentir migrations, autoriser exports sensibles | Déléguer une décision produit à un agent sans gate ; adopter à moitié |
 | **Command Gateway** | Valider et persister les commandes noyau autorisées | Exécuter une commande sans enveloppe valide ou sans autorisation humaine quand requise |
 | **Adaptateur** | Compiler le bundle, exécuter le runtime, produire des `RuntimeResult` | Écrire directement Work Units, Project State, décisions, preuves |
 | **Agents / skills** | Agir dans les capacités du rôle et de l'outil | Contourner gates, auto-déclarer DONE, modifier l'allowlist sans revue humaine |
 
+Une fois l’adoption engagée, la gouvernance du framework est **exclusive** sur le dépôt : toute autorité concurrente (process, bots, agents hors Gateway) doit être éliminée, remappée ou dérogée explicitement. Voir [adoption-assessment.md](adoption-assessment.md).
+
 ## Gates humaines (G0–G4)
 
-- **G0** — baseline et sources autoritaires prêtes.
+L’**assessment d’adoption** précède l’install et n’est pas une gate G0–G4.
+
+- **G0** — baseline et sources autoritaires prêtes ; en brownfield, inventaire as-built (écarts code↔intention, hors-scope, nettoyage) explicite pour le périmètre compilé.
 - **G1** — plan d'exécution approuvé.
 - **G2** — décisions produit/architecture verrouillées pour la phase.
 - **G3** — release candidate prête.

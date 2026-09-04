@@ -4,7 +4,7 @@
 Thin wrapper around `run_scheduling_tick` (fully unit-tested, see
 tests/core/test_orchestrator_tick.py). This script itself is not unit
 tested: real wall-clock behavior over a real interval is exactly what
-docs/product/requirements/mode-nuit-preuve-resilience-couverture.md flags
+docs/framework-design/requirements/mode-nuit-preuve-resilience-couverture.md flags
 as needing a real run, not a unit test.
 
 `adapters/cursor/runtime/execute.py::execute_runtime()` launches the native

@@ -19,6 +19,20 @@ pip install -r .ai-team/requirements.txt
 
 Depuis la racine du dépôt framework (ou une copie extraite), toutes les commandes d'installation ci-dessous utilisent `tools/install.py`.
 
+## Avant d’installer — assessment d’adoption
+
+Le framework exige une **gouvernance exclusive** : pas d’adoption partielle. Avant toute écriture sur la cible :
+
+```bash
+python tools/assess.py --target /chemin/vers/mon-projet --json --report-file assessment.json
+```
+
+Inventaire des conflits (process Git, `.cursor/` existant, autorités concurrentes, prérequis, **baseline** matière humaine / inventaire as-built) et verdict `go` / `go_with_backlog` / `no_go`. Un `no_go` signifie **ne pas installer**, pas « installer en mode hybride ». Un `go_with_backlog` surtout dû à `baseline` signifie : installer possible, mais **pas de première compile** tant que matière + inventaire as-built ne sont pas tenus.
+
+Détail et résolutions : [adoption-assessment.md](adoption-assessment.md).
+
+L’install fraîche exige `--assessment-report` (verdict `go` ou `go_with_backlog`), sauf contournement explicite `--skip-assessment-gate`.
+
 ## Installation fraîche
 
 Installe les composants gérés, initialise le profil projet et écrit `installation-record.json` **en dernier**.
@@ -27,7 +41,8 @@ Installe les composants gérés, initialise le profil projet et écrit `installa
 python tools/install.py \
   --target /chemin/vers/mon-projet \
   --project-id mon-projet \
-  --project-name "Mon Projet"
+  --project-name "Mon Projet" \
+  --assessment-report assessment.json
 ```
 
 Effets principaux (layout Document 11 §4) :
@@ -35,7 +50,8 @@ Effets principaux (layout Document 11 §4) :
 - Copie `.ai-team/` (constitution, schémas, contrats, templates), `.cursor/` (compilé), `scripts/ai-team/`, `AGENTS.md`.
 - Copie le runtime Python sous `.ai-team/runtime/governed_ai/` et l'adaptateur Cursor sous `.ai-team/runtime/governed_ai/adapters/cursor/`.
 - Copie les dépendances framework dans `.ai-team/requirements.txt` (plus à la racine du projet cible).
-- **Ne copie pas** `README.md`, `docs/product/`, `docs/operator/` dans le projet cible.
+- **Ne copie pas** le `README.md` ni les dossiers source `docs/framework-design/`, `docs/framework-maintenance/` et `docs/adopter-guide/`.
+- Ne crée ni n’écrase le `docs/product/` du projet cible : ce chemin est project-owned.
 - Détecte les collisions avec des répertoires projet existants (`src/`, `docs/`, …) **avant** toute écriture ; utilise `--force` pour outrepasser.
 - Si `AGENTS.md` existe déjà, fusionne un bloc `<!-- governed-ai:start -->` … `<!-- governed-ai:end -->` sans écraser le reste.
 
@@ -61,6 +77,8 @@ python tools/install.py --target /chemin/vers/mon-projet --update
 | Option | Effet |
 |---|---|
 | `--dry-run` | Affiche le plan sans modifier le disque |
+| `--assessment-report` | Install fraîche : rapport `tools/assess.py` avec verdict `go` / `go_with_backlog` |
+| `--skip-assessment-gate` | Install fraîche : contourne le garde-fou assessment (avertissement) |
 | `--force` | Install fraîche : ignore les collisions de chemins projet |
 | `--allow-dirty` | Autorise un dépôt Git sale (non recommandé) |
 | `--skip-validation` | Ignore `validate.py` post-update (non recommandé) |

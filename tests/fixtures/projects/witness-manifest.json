@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-02T21:18:12+00:00",
+  "generated_at": "2026-09-03T17:43:09+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -241,7 +241,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "57779fe319343719719261ec7169653b3c66b62291d0023446d23d655fdf3849"
+          "sha256": "1ff2e81dca3eb08bb0af16d43f3859b8249cc7476839844050e29c6c88ffc58b"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1001,7 +1001,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-          "sha256": "b94595276fbd4266d3f88a7ce56e53d78f709ad1522bc66ea2be939e8c32f7df"
+          "sha256": "eda97bdc41be381aad0ebdc75e50377d51aaf6986443ca8d5f824a92092a37b5"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -1457,7 +1457,7 @@
         },
         {
           "path": "scripts/ai-team/diagnose.py",
-          "sha256": "0a30566982754495b9812092da14ec989ecaf009e0f22474f5fade8497440a84"
+          "sha256": "09429d6b1f4449a4cd112c0572d1c1cc04ec710079d20eab5ce635c4acc04d58"
         },
         {
           "path": "scripts/ai-team/feedback.py",
@@ -1481,7 +1481,7 @@
         },
         {
           "path": "scripts/ai-team/orchestrate.py",
-          "sha256": "10f628843651b9715423cd4e781df476b457a5dd52425a701e6a381bbbcdf92d"
+          "sha256": "400eb21a66656b274c6be28eba4ec3a9e4eb6f72aca6016a53915cd1fdc56721"
         },
         {
           "path": "scripts/ai-team/preflight.py",
@@ -1513,7 +1513,7 @@
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "3fa57977130e8d5b4fc313f277752ae69ac7c996376f16a47f7812cb38571626"
+          "sha256": "b2dd9fce332f4cea4d647042f5c2ff29b082d41922210abcf0e112ead2794837"
         }
       ]
     },
@@ -1760,7 +1760,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "6620e1f9c2f365256b9529ddb48f0b6672bee4ce448c941efe28c170603b3c03"
+          "sha256": "3f2b37eef8264b1082101e5ad0a95f8b60bb5719b118f0679d2438ae06d876ee"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2444,7 +2444,7 @@
         },
         {
           "path": "scripts/ai-team/diagnose.py",
-          "sha256": "0a30566982754495b9812092da14ec989ecaf009e0f22474f5fade8497440a84"
+          "sha256": "09429d6b1f4449a4cd112c0572d1c1cc04ec710079d20eab5ce635c4acc04d58"
         },
         {
           "path": "scripts/ai-team/feedback.py",
@@ -2468,7 +2468,7 @@
         },
         {
           "path": "scripts/ai-team/orchestrate.py",
-          "sha256": "10f628843651b9715423cd4e781df476b457a5dd52425a701e6a381bbbcdf92d"
+          "sha256": "400eb21a66656b274c6be28eba4ec3a9e4eb6f72aca6016a53915cd1fdc56721"
         },
         {
           "path": "scripts/ai-team/preflight.py",
@@ -2500,7 +2500,7 @@
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "3fa57977130e8d5b4fc313f277752ae69ac7c996376f16a47f7812cb38571626"
+          "sha256": "b2dd9fce332f4cea4d647042f5c2ff29b082d41922210abcf0e112ead2794837"
         },
         {
           "path": "src/governed_ai/__init__.py",
@@ -2988,7 +2988,7 @@
         },
         {
           "path": "src/governed_ai/core/orchestrator/tick.py",
-          "sha256": "b94595276fbd4266d3f88a7ce56e53d78f709ad1522bc66ea2be939e8c32f7df"
+          "sha256": "eda97bdc41be381aad0ebdc75e50377d51aaf6986443ca8d5f824a92092a37b5"
         },
         {
           "path": "src/governed_ai/core/persistence/__init__.py",

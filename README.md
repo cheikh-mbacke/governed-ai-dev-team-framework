@@ -7,7 +7,9 @@ vit sous [`.fabric/`](.fabric/project-profile.yaml) ; le payload installable sou
 [`distribution/payload/`](distribution/payload/). Voir [`AGENTS.md`](AGENTS.md).
 
 Framework multi-agents gouverné par l'humain, livré aux **projets cibles après
-installation** — voir [docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md).
+installation** — assessment préalable puis checklist :
+[adoption-assessment.md](docs/adopter-guide/adoption-assessment.md),
+[adopter-checklist.md](docs/adopter-guide/adopter-checklist.md).
 
 **Version cible :** `0.7.0`
 
@@ -15,23 +17,18 @@ installation** — voir [docs/operator/adopter-checklist.md](docs/operator/adopt
 
 [`AGENTS.md`](AGENTS.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`VERSIONING.md`](VERSIONING.md)
 
-## Documentation opérateur
+## Documentation
 
-| Guide | Contenu |
+| Espace | Contenu |
 |---|---|
-| [Architecture](docs/operator/architecture.md) | Noyau, Adaptateur, Distribution — vue d'ensemble |
-| [Politique de versionnement](docs/operator/versioning-policy.md) | Axes de version, bumps, matrice de compatibilité |
-| [Modèle de sécurité](docs/operator/security-model.md) | Autorité, gates, capacités, frontières |
-| [Guide opérateur](docs/operator/operator-guide.md) | Install, update, validation, rollback, CLI |
-| [Upgrading](docs/operator/upgrading.md) | Migration `0.4.x` → `0.7.0` |
-| [Checklist adoptant](docs/operator/adopter-checklist.md) | Mise en service d'un projet |
-| [Dépréciations](docs/operator/deprecations.md) | Échéances et remplacements |
-| [Gouvernance GitHub](docs/operator/github-governance.md) | Protections de branches, tags et réglages de fusion |
-| [Rupture historique 0.4.x](docs/operator/history-cutover-0.4.md) | Décision et conséquences de la nouvelle lignée Git |
+| [Carte documentaire](docs/README.md) | Frontières entre fabrication, framework installé, produit client et intégrations |
+| [Conception du framework](docs/framework-design/) | Spécifications normatives du produit fabriqué ici |
+| [Maintenance du framework](docs/framework-maintenance/) | Gouvernance GitHub, versions et historique du dépôt source |
+| [Guide d’adoption](docs/adopter-guide/) | Assessment pré-install, installation, utilisation, sécurité et mise à jour |
+| [Contrats d’intégration](docs/integration-contracts/) | Contrats publics produits par le framework, sans architecture des consommateurs |
 
-## Documentation produit (normative)
-
-[`docs/product/`](docs/product/) — spécifications du framework livré aux projets installés.
+Dans un projet client installé, `docs/product/` appartient exclusivement au
+produit client. Ce chemin est volontairement absent du dépôt source du framework.
 
 ## Prérequis
 

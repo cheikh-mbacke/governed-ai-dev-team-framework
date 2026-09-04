@@ -20,8 +20,8 @@ Parcours minimal :
 ## Projets installés
 
 Après `tools/install.py` sur un projet cible : voir
-[docs/operator/adopter-checklist.md](docs/operator/adopter-checklist.md) et
-[docs/operator/client-git-policy.md](docs/operator/client-git-policy.md).
+[docs/adopter-guide/adopter-checklist.md](docs/adopter-guide/adopter-checklist.md) et
+[docs/adopter-guide/client-git-policy.md](docs/adopter-guide/client-git-policy.md).
 
 ## Changement de version
 

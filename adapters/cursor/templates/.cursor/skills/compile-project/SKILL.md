@@ -31,24 +31,34 @@ Read:
 
 ## Procedure
 
-1. Run Definition of Ready against the requested scope.
-2. If blocking ambiguity exists, emit G0 issues and stop the affected scope.
-3. Build capabilities/features without inventing a new product structure.
-4. Decompose into small, observable, testable Work Units.
-5. Build explicit dependencies and identify the critical path.
-6. Assign risk class from policy and record reasons.
-7. Determine required verification from behavior + risk.
-8. Build a Context Package plan for each Work Unit.
-9. Propose staffing from staffing policy.
-10. Update `.ai-team/state/project-state.yaml` and `.ai-team/work-units/`.
-11. Run `python scripts/ai-team/propose_allowlist.py` and attach its output to
+1. Run Definition of Ready against the requested scope, including the
+   brownfield `as_built_inventory` dimension when application code already
+   exists.
+2. Treat the repository as observed reality only. If code contradicts or
+   exceeds human intent, report conformance gaps — do not rewrite intent from
+   as-built code.
+3. If blocking ambiguity exists (missing product material, unclear in/out of
+   scope, uninventoried legacy/cleanup), emit G0 issues and stop the affected
+   scope.
+4. Build capabilities/features without inventing a new product structure.
+5. Decompose into small, observable, testable Work Units — including explicit
+   remediation / alignment / cleanup units for inventoried as-built gaps when
+   humans have authorized that work in scope.
+6. Build explicit dependencies and identify the critical path.
+7. Assign risk class from policy and record reasons.
+8. Determine required verification from behavior + risk.
+9. Build a Context Package plan for each Work Unit.
+10. Propose staffing from staffing policy.
+11. Update `.ai-team/state/project-state.yaml` and `.ai-team/work-units/`.
+12. Run `python scripts/ai-team/propose_allowlist.py` and attach its output to
     the G1 decision package as a proposed allowlist diff — do not edit
     `.cursor/permissions.json` or `.cursor/cli.json` yourself (agents cannot
     write either file; this is a proposal for the human to apply alongside
     the G1 decision, not a change you make).
-12. Produce a concise execution-plan summary.
-13. Set phase to `awaiting_g1_approval`.
-14. STOP. Do not activate developers until a human records G1 approval.
+13. Produce a concise execution-plan summary that states residual as-built
+    gaps left out of scope (if any).
+14. Set phase to `awaiting_g1_approval`.
+15. STOP. Do not activate developers until a human records G1 approval.
 
 ## Required outputs
 

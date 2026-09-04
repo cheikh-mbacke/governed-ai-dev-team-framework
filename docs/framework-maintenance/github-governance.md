@@ -2,7 +2,7 @@
 
 Réglages du dépôt **source** du framework (fabrication) lui-même — pas un guide à
 livrer aux projets clients. Pour la politique Git normative des projets où le
-framework a été installé, voir [`client-git-policy.md`](client-git-policy.md).
+framework a été installé, voir [`client-git-policy.md`](../adopter-guide/client-git-policy.md).
 
 Les hooks locaux ne remplacent pas les protections serveur. Un administrateur du dépôt
 doit appliquer les réglages suivants, puis joindre une capture ou un export de règles à la
@@ -46,7 +46,7 @@ git push origin v0.7.1
 | Hotfix urgent | `hotfix/WU-<ID>-<slug>` depuis le dernier tag stable | `vX.Y.Z` patch suivant |
 | Ligne `0.7.x` maintenue | `release/0.7` (pas `release/0.7.0`) | `v0.7.1`, `v0.7.2`, … |
 
-Voir [`VERSIONING.md`](../VERSIONING.md) pour le détail normatif.
+Voir [`VERSIONING.md`](../../VERSIONING.md) pour le détail normatif.
 
 Les tags historiques `v0.4.0` et `v0.6.0` sont conservés tels quels. La nouvelle règle
 s'applique à toute création future et ne justifie pas leur déplacement.

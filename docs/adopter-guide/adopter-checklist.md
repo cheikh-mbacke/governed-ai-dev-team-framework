@@ -2,6 +2,16 @@
 
 Checklist pour mettre en service un projet avec le framework `0.7.0`.
 
+## 0. Assessment d’adoption (avant toute écriture)
+
+La gouvernance est **exclusive** : pas d’adoption à moitié. Inventaire des conflits **avant** l’install — voir [adoption-assessment.md](adoption-assessment.md) (Documents 19–20).
+
+- [ ] `python tools/assess.py --target . --json --report-file assessment.json` (lecture seule).
+- [ ] Constats `blocking` résolus via `--resolutions` (`eliminate` / `remap` / `waive` tracé) — sinon **ne pas installer** (`no_go`).
+- [ ] Décision d’adoption humaine enregistrée (qui, date, lien vers le rapport).
+- [ ] Install avec `--assessment-report assessment.json` (pas de mode hybride).
+- [ ] Équipe alignée : pas d’autorité agent/process concurrente laissée non résolue.
+
 ## 1. Préparation du dépôt
 
 - [ ] Dépôt Git initialisé (recommandé pour updates transactionnelles).
@@ -13,19 +23,29 @@ Checklist pour mettre en service un projet avec le framework `0.7.0`.
 - [ ] Installation fraîche exécutée :
 
   ```bash
-  python tools/install.py --target . --project-id <id> --project-name "<nom>"
+  python tools/install.py --target . --project-id <id> --project-name "<nom>" \
+    --assessment-report assessment.json
   ```
 
 - [ ] `.ai-team/installation-record.json` présent (`schema_version: 3`).
 - [ ] `.ai-team/project-profile.yaml` complété (identité, commandes, `active_adapter_id`).
 - [ ] `.ai-team/sources/source-registry.yaml` renseigné (sources autoritaires).
 
+## 2bis. Baseline avant première compile (surtout brownfield)
+
+Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le dépôt existant est une **réalité observée**, pas l’intention produit.
+
+- [ ] Matière humaine autoritaire suffisante pour le premier périmètre (`docs/product/` ou sources enregistrées) — Definition of Ready.
+- [ ] Inventaire as-built écrit : écarts de conformité, surfaces hors-scope, nettoyage / remediation prévus.
+- [ ] Warnings `baseline.*` du rapport d’assessment traités (`remap` / `waive` tracé) ou reportés explicitement hors du premier périmètre.
+- [ ] Aucune règle produit inventée « parce que le code le fait déjà ».
+
 ## 3. Gouvernance initiale
 
 - [ ] Constitution lue (`.ai-team/constitution/`).
 - [ ] `AGENTS.md` lu par les contributeurs.
-- [ ] Gate **G0** enregistrée (baseline prête).
-- [ ] Gate **G1** enregistrée (plan d'exécution / WU approuvés).
+- [ ] Gate **G0** enregistrée (baseline prête, y compris inventaire as-built si brownfield) — distincte de l’assessment pré-install.
+- [ ] Gate **G1** enregistrée (plan d'exécution / WU approuvés, y compris WU de cleanup/alignement si inventoriés).
 
 ## 4. Vérifications post-install
 
@@ -60,6 +80,7 @@ Checklist pour mettre en service un projet avec le framework `0.7.0`.
 
 ## Références
 
+- [adoption-assessment.md](adoption-assessment.md)
 - [operator-guide.md](operator-guide.md)
 - [architecture.md](architecture.md)
 - [security-model.md](security-model.md)

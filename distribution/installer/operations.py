@@ -706,6 +706,9 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
         print(install_error)
         return 2
 
+    # Assessment gate is enforced in tools/install.py before this call so that
+    # library callers (tests) can still invoke install_fresh directly.
+
     try:
         import yaml as _yaml
     except ModuleNotFoundError:

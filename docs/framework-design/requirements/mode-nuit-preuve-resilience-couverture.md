@@ -2,7 +2,7 @@
 
 **Statut** : couverture fonctionnelle automatisée disponible ; **preuve L4 réelle non encore acquise**. Ce document répond à une question précise : sur les 14 scénarios de résilience listés au §15 de la spécification *« Document 6 — Autonomie avancée et exécution non supervisée (mode nuit) »* (fichier utilisateur `autonomie-avancee-mode-nuit-spec.md`, hors dépôt), lesquels sont aujourd'hui vérifiés par les tests, et avec quel degré de réalisme. Conformément au §15, un test de fonction ou un sous-processus court ne doit pas être présenté comme un run non supervisé réel de plusieurs heures.
 
-Ce numéro de document (« Document 6 ») appartient à la numérotation propre de cette spécification mode nuit, distincte de la numérotation `docs/product/**/NN-*.md` déjà utilisée dans ce dépôt (où le Document 05 est *Résolution des écarts du protocole* et le Document 06 est *Catalogue des contrats de rôle* — sans rapport avec le mode nuit). Aucun renommage n'a été fait pour éviter la confusion : ce fichier reste volontairement hors de cette numérotation.
+Ce numéro de document (« Document 6 ») appartient à la numérotation propre de cette spécification mode nuit, distincte de la numérotation `docs/framework-design/**/NN-*.md` déjà utilisée dans ce dépôt (où le Document 05 est *Résolution des écarts du protocole* et le Document 06 est *Catalogue des contrats de rôle* — sans rapport avec le mode nuit). Aucun renommage n'a été fait pour éviter la confusion : ce fichier reste volontairement hors de cette numérotation.
 
 ## 1. Ce qui a été construit (rappel factuel)
 

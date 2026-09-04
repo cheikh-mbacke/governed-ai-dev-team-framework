@@ -35,7 +35,7 @@ Vérifiez :
 | `src/governed_ai/**` | `.ai-team/runtime/governed_ai/**` |
 | `adapters/cursor/**` | `.ai-team/runtime/governed_ai/adapters/cursor/**` |
 | `requirements.txt` (racine) | `.ai-team/requirements.txt` |
-| `docs/product/`, `docs/operator/` | **non installés** dans le projet cible |
+| anciens `docs/product/`, `docs/operator/` gérés par le framework 0.6.x | **retirés du payload** ; les documents propres au projet cible sont préservés |
 | `README.md` (racine framework) | **non installé** |
 
 Chemins déplacés automatiquement lors de l'update depuis 0.6.x. Fichiers ambigus à la racine (`README.md`, `requirements.txt`, `AGENTS.md`) **ne sont jamais déplacés/supprimés automatiquement** : un événement `DECISION_REQUEST` est émis pour revue humaine.
@@ -107,10 +107,9 @@ L'installation fraîche utilise le même mécanisme de rollback transactionnel.
 |---|---|---|---|
 | `0.7.0` | `schema_version` ≥ 3 | champs v2 (`revision`, `created_at`, `updated_at`) | `schema_version` 1 |
 
-Détail et règles de bump : [versioning-policy.md](versioning-policy.md).
+Détail et règles de bump : [versioning-policy.md](../framework-maintenance/versioning-policy.md).
 
 ## Limites résiduelles
 
 - Qualification Cursor réelle : voir Document 14 niveaux L3/L4.
 - Tests L4 indisponibles ne comptent pas comme succès pour une release candidate.
-

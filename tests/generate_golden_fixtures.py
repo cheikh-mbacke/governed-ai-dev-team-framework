@@ -43,6 +43,7 @@ def main() -> int:
                 "golden-baseline",
                 "--project-name",
                 "Golden Baseline",
+                "--skip-assessment-gate",
             ],
             cwd=ROOT,
             text=True,

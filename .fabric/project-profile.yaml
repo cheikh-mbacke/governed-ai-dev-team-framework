@@ -16,7 +16,7 @@ autonomy:
   preset: supervised_copilots
   level: 3
 paths:
-  product_docs: docs/product
+  product_docs: docs/framework-design
   source_roots:
   - scripts
   - src
