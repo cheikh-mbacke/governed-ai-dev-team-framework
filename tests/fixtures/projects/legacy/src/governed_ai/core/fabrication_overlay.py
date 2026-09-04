@@ -19,6 +19,7 @@ FABRICATION_FORBIDDEN_SKILL_DIRS = frozenset(
         "orchestrator",
         "prepare-acceptance",
         "propose-profile",
+        "reconcile-project",
         "verify-work-unit",
     }
 )

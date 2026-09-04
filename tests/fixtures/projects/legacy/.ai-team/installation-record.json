@@ -7,7 +7,7 @@
     "managed_files": [
       {
         "path": ".ai-team/constitution/00-authority.yaml",
-        "installed_sha256": "sha256:953f5e9bff0058c1ab8d23c7ec738cdc5f3d6201fe922526de8a4589c998596c"
+        "installed_sha256": "sha256:1e4933dcaa4f27d8ac26dc7abf059838f2375afcb7f8d481f4de3c64c6f674ca"
       },
       {
         "path": ".ai-team/constitution/10-project-strategy.yaml",
@@ -19,7 +19,7 @@
       },
       {
         "path": ".ai-team/constitution/20-decomposition-strategy.yaml",
-        "installed_sha256": "sha256:5da34e63244cf056e4ec34112f8282b5c43343fd45b9f21f60647b7ba91ca544"
+        "installed_sha256": "sha256:543afc483841dfed010f1134fbb806a2e51b278c4de72724c30247cd3e31a04b"
       },
       {
         "path": ".ai-team/constitution/30-context-strategy.yaml",
@@ -67,7 +67,7 @@
       },
       {
         "path": ".ai-team/constitution/definition-of-ready.yaml",
-        "installed_sha256": "sha256:f7b7ddf8a424549bb9ecd161b938df3d29939e3eec3a76b445e1450b60d4547b"
+        "installed_sha256": "sha256:0fb453429df0369392ef463f0a29907a9baef8ced696634be7529b85b2391ede"
       },
       {
         "path": ".ai-team/constitution/definition-of-unattended-ready.yaml",
@@ -75,11 +75,11 @@
       },
       {
         "path": ".ai-team/contracts/active-bundle.json",
-        "installed_sha256": "sha256:968ae338bdf244ab5774d1fccae31b4737f60d056c2b895c73580ffc686182d3"
+        "installed_sha256": "sha256:8609e5deb80ca2532c83df0d46db4758071f16b2393c66c0a822c0377169dd8a"
       },
       {
         "path": ".ai-team/contracts/bundles/1.0.0/manifest.json",
-        "installed_sha256": "sha256:49f8130cf7e88e824779104fc726fbccbc3fb0bf9997d8f1323cdd29d048ae3f"
+        "installed_sha256": "sha256:a9433c5841aaf472c634f290ec5c35829c5d4119bafaa6daae644bb515faa472"
       },
       {
         "path": ".ai-team/contracts/bundles/1.0.0/procedures/audit-release.json",
@@ -95,7 +95,7 @@
       },
       {
         "path": ".ai-team/contracts/bundles/1.0.0/procedures/compile-project.json",
-        "installed_sha256": "sha256:2716e06361fb87b3488b6ae28c6be4cd4b3f09bf4673a3053097d6a55023e90b"
+        "installed_sha256": "sha256:53cd4d38a4b95dbed09c5c326685a8458d844ebc425bf619003178afc2d9b1d1"
       },
       {
         "path": ".ai-team/contracts/bundles/1.0.0/procedures/design-verification.json",
@@ -132,6 +132,10 @@
       {
         "path": ".ai-team/contracts/bundles/1.0.0/procedures/propose-profile.json",
         "installed_sha256": "sha256:deed080675187250f5377d5bff7737c9bd193eded820631aa82098be2f656b73"
+      },
+      {
+        "path": ".ai-team/contracts/bundles/1.0.0/procedures/reconcile-project.json",
+        "installed_sha256": "sha256:08221fd9eba82ea3b7b73df4cf3a4561f280b0369280162ad65beb943eb0245a"
       },
       {
         "path": ".ai-team/contracts/bundles/1.0.0/procedures/retrospective.json",
@@ -190,6 +194,10 @@
         "installed_sha256": "sha256:71828107e80c164cd7bfb7e41c0b50ded83fe0f71e7da05d751b7f651415b8d3"
       },
       {
+        "path": ".ai-team/contracts/bundles/1.0.0/roles/reconciliation-steward.json",
+        "installed_sha256": "sha256:c266e95d48900973ea08bed1985451ecd8970a277a08a8e514870c0b21f87284"
+      },
+      {
         "path": ".ai-team/contracts/bundles/1.0.0/roles/release-agent.json",
         "installed_sha256": "sha256:53f309299f2773af3e7c79f9d1cae08d2392f8c79dfd4e57f08bd0480ab0d337"
       },
@@ -243,7 +251,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/manifest.json",
-        "installed_sha256": "sha256:3b91267e1d4d3003e01979e6abd3c525ebc6448a983b12cdebdefedc747ab32e"
+        "installed_sha256": "sha256:83e679885a86a145e87c04ec60caf2ef167225730f6816563c1b6b4e0bc8ba36"
       },
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/audit-release.json",
@@ -259,7 +267,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/compile-project.json",
-        "installed_sha256": "sha256:2716e06361fb87b3488b6ae28c6be4cd4b3f09bf4673a3053097d6a55023e90b"
+        "installed_sha256": "sha256:53cd4d38a4b95dbed09c5c326685a8458d844ebc425bf619003178afc2d9b1d1"
       },
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/design-verification.json",
@@ -296,6 +304,10 @@
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/propose-profile.json",
         "installed_sha256": "sha256:deed080675187250f5377d5bff7737c9bd193eded820631aa82098be2f656b73"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/reconcile-project.json",
+        "installed_sha256": "sha256:08221fd9eba82ea3b7b73df4cf3a4561f280b0369280162ad65beb943eb0245a"
       },
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/retrospective.json",
@@ -352,6 +364,10 @@
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/roles/qa-test.json",
         "installed_sha256": "sha256:71828107e80c164cd7bfb7e41c0b50ded83fe0f71e7da05d751b7f651415b8d3"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/roles/reconciliation-steward.json",
+        "installed_sha256": "sha256:c266e95d48900973ea08bed1985451ecd8970a277a08a8e514870c0b21f87284"
       },
       {
         "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/roles/release-agent.json",
@@ -675,7 +691,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/fabrication_overlay.py",
-        "installed_sha256": "sha256:d81d4dc074c5a20fe14868b8aa0c22a506bb3a194c10c3413b32c3ad4e90accc"
+        "installed_sha256": "sha256:b4e6466aa715575a3985504a5773998a507ae676e4ee991fe8c813193d23462d"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/__init__.py",
@@ -736,6 +752,10 @@
       {
         "path": ".ai-team/runtime/governed_ai/core/queries/__init__.py",
         "installed_sha256": "sha256:47f1e2c081622a725c293d001546a7456f68435fa82ee9a97d0776fcbad2743d"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/core/reconciliation.py",
+        "installed_sha256": "sha256:d47d0718df65b0a9571640c91b367987deca39b5d9d8e9e539542df497d11195"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/workspace.py",
@@ -830,6 +850,10 @@
         "installed_sha256": "sha256:42dda99267e16f2539b6569804c4354b53ef3a0afa738d68f8efc20fd459ee93"
       },
       {
+        "path": ".ai-team/schemas/reconciliation.schema.json",
+        "installed_sha256": "sha256:91ceed7678ba0623e7cb5e5db91e16db64bdb02b35d32267fc9a24e19b308ab2"
+      },
+      {
         "path": ".ai-team/schemas/release-candidate.schema.json",
         "installed_sha256": "sha256:065303775b13101e8317eec22c8b44a9ba56ce5138e2a91e1194368bf0d6429f"
       },
@@ -919,7 +943,7 @@
       },
       {
         "path": "AGENTS.md",
-        "installed_sha256": "sha256:fc280f693062aee71c2784a86df02e314432adae5338c920bf253cf8185e339b"
+        "installed_sha256": "sha256:5ef1031f0118f99a70822a09e34ce35b42cee543753a8e6f9dc6445c3028bf50"
       },
       {
         "path": "scripts/ai-team/check_done.py",
@@ -978,6 +1002,10 @@
         "installed_sha256": "sha256:bbf4c68cbb73fbb837f485679d8fb47f8ad3286de84018650579add2c49dc61d"
       },
       {
+        "path": "scripts/ai-team/reconcile_project.py",
+        "installed_sha256": "sha256:0cdc3aeff30f77db126fad66790dd8ab2ca77767ca07533d41d14559650b4d03"
+      },
+      {
         "path": "scripts/ai-team/status.py",
         "installed_sha256": "sha256:fccb3eded355fbe565d81cdacb9b6f4e7f869f9431b1c8d3e71ae20ddca917fd"
       },
@@ -987,11 +1015,11 @@
       },
       {
         "path": "scripts/ai-team/validate.py",
-        "installed_sha256": "sha256:8bda8a9ced0f440944aded76aee0b7aebe14480642733be21aadee6cb7202789"
+        "installed_sha256": "sha256:1bafbb197f4c8cba3f212109441450a485d6d6ed961c84fc5c0f180b0cd4b5b0"
       },
       {
         "path": "scripts/ai-team/validate_ownership.py",
-        "installed_sha256": "sha256:b2dd9fce332f4cea4d647042f5c2ff29b082d41922210abcf0e112ead2794837"
+        "installed_sha256": "sha256:782482fe98b4c24848c682a6e2a7bef14929d26187daa63af19e79d18fa46cec"
       }
     ]
   },
@@ -1018,7 +1046,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler-notes.yaml",
-          "installed_sha256": "sha256:37845d2820cc96adb6b0d57df1afd2c6d3be73efbaa32efbf967cc8b317e6b7a"
+          "installed_sha256": "sha256:0efc2bbffa779bfca3cbbef5d9db8f7a3d8b2db79e75a09dd517b7cb46e6b056"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/__init__.py",
@@ -1030,7 +1058,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/compile.py",
-          "installed_sha256": "sha256:dce8fce53a522f82e0eca5afe97a55beab5721705a7207971d18b0643332a0a4"
+          "installed_sha256": "sha256:96ddf8fb241121dab5b73eece7d42978eccf21dde3415f20bed51c8b4fc3e6a0"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/install_support.py",
@@ -1121,6 +1149,10 @@
           "installed_sha256": "sha256:9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
         },
         {
+          "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/agents/reconciliation-steward.md",
+          "installed_sha256": "sha256:e2012644f66cb70c99c29d05a2a799568094f89934c8b18000f3944a988acb19"
+        },
+        {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/agents/release-agent.md",
           "installed_sha256": "sha256:e1df816fd0918e30b3f31035c354a38871f9b18fda47039275a003ef3b324434"
         },
@@ -1190,7 +1222,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/rules/40-human-gates.mdc",
-          "installed_sha256": "sha256:894dd8cf29dfe11c3f170184e8d9b0546915814ee6fa931f1241736bb9038c7b"
+          "installed_sha256": "sha256:339eff394df6cf94073eb03246e55d7587c892332f9b245adfdb6fd001d95927"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/audit-release/SKILL.md",
@@ -1210,7 +1242,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/compile-project/SKILL.md",
-          "installed_sha256": "sha256:3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
+          "installed_sha256": "sha256:ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/design-verification/SKILL.md",
@@ -1253,6 +1285,10 @@
           "installed_sha256": "sha256:544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
         },
         {
+          "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/reconcile-project/SKILL.md",
+          "installed_sha256": "sha256:38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
+        },
+        {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/verify-work-unit/SKILL.md",
           "installed_sha256": "sha256:4af0a0c7c1b32c17016004a2b21dfd76bfc1ae6be6e14fc181c4dba699304d3c"
         },
@@ -1270,7 +1306,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/AGENTS.md",
-          "installed_sha256": "sha256:646342e6a2bf654166f2e2e748ecb525825bd7e824d4e3e5a84cabf7bdaa324c"
+          "installed_sha256": "sha256:746fb0e932e22c964580d8c1e12dc57e6c80f98997c444d702299cd4c40689fd"
         },
         {
           "path": ".cursor/.gitattributes",
@@ -1319,6 +1355,10 @@
         {
           "path": ".cursor/agents/qa-test.md",
           "installed_sha256": "sha256:9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
+        },
+        {
+          "path": ".cursor/agents/reconciliation-steward.md",
+          "installed_sha256": "sha256:e2012644f66cb70c99c29d05a2a799568094f89934c8b18000f3944a988acb19"
         },
         {
           "path": ".cursor/agents/release-agent.md",
@@ -1390,7 +1430,7 @@
         },
         {
           "path": ".cursor/rules/40-human-gates.mdc",
-          "installed_sha256": "sha256:894dd8cf29dfe11c3f170184e8d9b0546915814ee6fa931f1241736bb9038c7b"
+          "installed_sha256": "sha256:339eff394df6cf94073eb03246e55d7587c892332f9b245adfdb6fd001d95927"
         },
         {
           "path": ".cursor/skills/audit-release/SKILL.md",
@@ -1410,7 +1450,7 @@
         },
         {
           "path": ".cursor/skills/compile-project/SKILL.md",
-          "installed_sha256": "sha256:3ce1313527add8b2dab5b43bc5d9c5ccca862bd49962538afca90383936b8a26"
+          "installed_sha256": "sha256:ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
         },
         {
           "path": ".cursor/skills/design-verification/SKILL.md",
@@ -1451,6 +1491,10 @@
         {
           "path": ".cursor/skills/propose-profile/SKILL.md",
           "installed_sha256": "sha256:544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
+        },
+        {
+          "path": ".cursor/skills/reconcile-project/SKILL.md",
+          "installed_sha256": "sha256:38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
         },
         {
           "path": ".cursor/skills/verify-work-unit/SKILL.md",

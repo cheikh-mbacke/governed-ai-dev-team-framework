@@ -69,6 +69,7 @@ if IS_FABRICATION:
         AI / "schemas" / "observation.schema.json",
         AI / "schemas" / "retrospective.schema.json",
         AI / "schemas" / "feedback-export.schema.json",
+        AI / "schemas" / "reconciliation.schema.json",
     ]
 else:
     required = [
@@ -86,6 +87,7 @@ else:
         AI / "schemas" / "observation.schema.json",
         AI / "schemas" / "retrospective.schema.json",
         AI / "schemas" / "feedback-export.schema.json",
+        AI / "schemas" / "reconciliation.schema.json",
     ]
 for p in required:
     if not p.exists():
@@ -355,6 +357,10 @@ if (AI / "sources" / "source-registry.yaml").exists():
                 warnings.append(f"Registered source path does not exist: {src['path']}")
 if IS_FABRICATION and (SEEDS / "source-registry.yaml").exists():
     validate_instance(SEEDS / "source-registry.yaml", "source-registry.schema.json")
+
+reconciliation_path = AI / "reconciliation" / "baseline.yaml"
+if reconciliation_path.exists():
+    validate_instance(reconciliation_path, "reconciliation.schema.json")
 
 state_path = AI / "state" / "project-state.yaml"
 if state_path.exists():

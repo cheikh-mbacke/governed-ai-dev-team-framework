@@ -34,7 +34,7 @@ conflict_policy:
   policy_vs_product_conflict: stop_affected_scope_and_escalate_g2
   repository_vs_intent: report_conformance_gap_do_not_rewrite_intent
 brownfield_baseline:
-  rule: "Before first compile on a repository with existing application code, humans must provide authoritative product material for the requested scope and an explicit inventory of as-built gaps (non-conformance, out-of-scope, cleanup). Assessment category baseline surfaces this commitment; G0 enforces readiness."
+  rule: "Before compile, /reconcile-project must bind authoritative product material for the requested scope to an explicit inventory of as-built gaps (non-conformance, out-of-scope, cleanup), apply only human-approved convergence actions, and produce a current project-owned content fingerprint. Assessment category baseline surfaces this commitment; the reconciliation fence and G0 enforce readiness."
   forbidden: "Deriving product intent from as-built code to clear readiness."
 change_policy:
   source_change_during_cycle:

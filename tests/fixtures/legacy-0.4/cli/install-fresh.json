@@ -4,6 +4,6 @@
   "platform": "win32",
   "scenario": "install-fresh",
   "exit_code": 0,
-  "stdout": "Installed governed AI team framework 0.7.0 into <PATH>\nNext:\n  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)\n  2. Add and register authoritative product documents\n  3. Run: python scripts/ai-team/validate.py\n  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py\n  5. In Cursor UI or interactive CLI, invoke /compile-project\n",
+  "stdout": "WARNING: assessment gate skipped — exclusive governance still required; hybrid adoption is not supported.\nInstalled governed AI team framework 0.7.0 into <PATH>\nNext:\n  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)\n  2. Add and register authoritative product documents\n  3. Run: python scripts/ai-team/validate.py\n  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py\n  5. In Cursor UI or interactive CLI, invoke /reconcile-project\n  6. After reconciliation is ready, invoke /compile-project\n",
   "stderr": ""
 }

@@ -87,7 +87,7 @@ S’ils sont nécessaires, Distribution doit publier son propre schéma d’év�
 
 ## 6. Possession des fichiers observée
 
-`PROJECT_OWNED_PATTERNS` protège les principaux objets Gouvernance, `project-profile.yaml.bak`, ainsi que les espaces Feedback. Quatre familles supplémentaires ne correspondent pas directement à un Agrégat Gouvernance : `audits/`, `logs/`, `metrics/`, `migration-backups/`. `observations/` et `retrospectives/` appartiennent à Feedback ; `metrics/` conserve notamment les exports par défaut.
+`PROJECT_OWNED_PATTERNS` protège les principaux objets Gouvernance, `project-profile.yaml.bak`, la baseline sous `reconciliation/`, ainsi que les espaces Feedback. Quatre familles supplémentaires ne correspondent pas directement à un Agrégat Gouvernance : `audits/`, `logs/`, `metrics/`, `migration-backups/`. `observations/` et `retrospectives/` appartiennent à Feedback ; `metrics/` conserve notamment les exports par défaut.
 
 La liste de possession reste définie actuellement dans Distribution. La cible doit la publier par composant dans le manifeste et la valider contre une politique commune.
 

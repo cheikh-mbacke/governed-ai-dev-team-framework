@@ -23,6 +23,13 @@ Depuis la racine du dépôt framework (ou une copie extraite), toutes les comman
 
 Le framework exige une **gouvernance exclusive** : pas d’adoption partielle. Avant toute écriture sur la cible :
 
+```text
+/assess-adoption /chemin/vers/mon-projet
+```
+
+La commande slash est disponible depuis Cursor ouvert sur le dépôt framework.
+Son équivalent CLI est :
+
 ```bash
 python tools/assess.py --target /chemin/vers/mon-projet --json --report-file assessment.json
 ```
@@ -96,6 +103,20 @@ python scripts/ai-team/validate.py
 ```
 
 Contrôle schémas, cohérence Project State, Work Units et installation record.
+
+## Réconciliation avant compilation
+
+Après installation et enregistrement des sources produit, invoquez
+`/reconcile-project`. La commande inventorie l’existant, compare chaque surface à
+l’intention humaine, fait approuver le plan de convergence, applique les seules
+actions approuvées, puis crée la baseline requise par `/compile-project`.
+
+```bash
+python scripts/ai-team/reconcile_project.py check
+```
+
+Le contrôle doit réussir avant toute compilation. Détails :
+[project-reconciliation.md](project-reconciliation.md).
 
 ## Command Gateway (recommandé)
 

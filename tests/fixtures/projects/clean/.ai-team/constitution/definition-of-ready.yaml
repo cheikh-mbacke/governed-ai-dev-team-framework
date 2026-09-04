@@ -1,5 +1,5 @@
 policy: definition_of_ready
-version: "1.0.0"
+version: "1.1.0"
 rule: "No product implementation begins for a scope that has not passed readiness."
 dimensions:
   intention: "Objective and expected result are understandable."
@@ -12,4 +12,6 @@ dimensions:
   constitution: "Policies required for the mission are present and versioned."
   dependencies: "Major dependencies and external decisions are known or explicitly unknown."
   verification: "Risk level and verification requirements can be determined."
+  as_built_inventory: "On brownfield targets, conformance gaps, out-of-scope surfaces, and required cleanup versus human intent are inventoried as explicit work (or explicitly waived) — never inferred silently from the repository."
 blocking_rule: "Readiness requires sufficient precision for the considered scope, not exhaustive documentation for the whole product."
+brownfield_rule: "Existing repository content is observed reality. Missing or contradictory human material blocks the affected scope at G0; do not compile an execution plan by inventing product rules from as-built code."

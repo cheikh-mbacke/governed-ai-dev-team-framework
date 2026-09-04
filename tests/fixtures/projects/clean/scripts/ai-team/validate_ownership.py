@@ -120,6 +120,7 @@ def classify_owner(path: str) -> str:
         ".ai-team/metrics/",
         ".ai-team/observations/",
         ".ai-team/retrospectives/",
+        ".ai-team/reconciliation/",
         ".ai-team/migration-backups/",
     )
     for prefix in project_prefixes:

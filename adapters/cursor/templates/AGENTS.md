@@ -7,8 +7,10 @@ This repository uses the Engineering Constitution under `.ai-team/constitution/`
 Read `.ai-team/project-profile.yaml` and `.ai-team/state/project-state.yaml`
 before runtime activation.
 
-- Use `/compile-project` when no approved execution plan exists or after
-  material human source changes.
+- Use `/reconcile-project` after install and whenever human sources or
+  project-owned content change; `/compile-project` requires its current baseline.
+- Use `/compile-project` after reconciliation when no approved execution plan
+  exists or after material human source changes.
 - Product work is attributable to Work Units under `.ai-team/work-units/`.
 - Respect human gates G0–G4 and the orchestrator Control Plane.
 - Record reusable friction with `python scripts/ai-team/feedback.py record`

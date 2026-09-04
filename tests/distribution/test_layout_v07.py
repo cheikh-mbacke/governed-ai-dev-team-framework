@@ -8,6 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
 from distribution.installer.agents_md import MARKER_END, MARKER_START, merge_agents_md
 from distribution.installer.migrate_layout import apply_layout_migration
 from distribution.installer.record import INSTALLATION_RECORD_FILE, is_v3_record
@@ -138,6 +139,142 @@ def test_fresh_install_uses_runtime_layout(tmp_path: Path) -> None:
     assert not (target / "README.md").exists()
     record = json.loads((target / INSTALLATION_RECORD_FILE).read_text(encoding="utf-8"))
     assert is_v3_record(record)
+
+
+def test_fresh_install_delivers_reconciliation_command_and_compile_fence(tmp_path: Path) -> None:
+    target = tmp_path / "reconciliation-layout"
+    result = _run_install(target)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (target / "scripts" / "ai-team" / "reconcile_project.py").is_file()
+    assert (target / ".ai-team" / "schemas" / "reconciliation.schema.json").is_file()
+    assert (target / ".cursor" / "skills" / "reconcile-project" / "SKILL.md").is_file()
+
+    check = subprocess.run(
+        [sys.executable, "scripts/ai-team/reconcile_project.py", "check"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    assert check.returncode == 1
+    assert "Run /reconcile-project first" in check.stdout
+
+    init = subprocess.run(
+        [sys.executable, "scripts/ai-team/reconcile_project.py", "init"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    assert init.returncode == 0, init.stdout + init.stderr
+    report_path = target / ".ai-team" / "reconciliation" / "baseline.yaml"
+    assert report_path.is_file()
+
+    product_doc = target / "docs" / "product" / "baseline.md"
+    product_doc.parent.mkdir(parents=True)
+    product_doc.write_text("# Human baseline\n", encoding="utf-8")
+    registry_path = target / ".ai-team" / "sources" / "source-registry.yaml"
+    registry_path.write_text(
+        yaml.safe_dump(
+            {
+                "registry_version": "1.0",
+                "sources": [
+                    {
+                        "id": "SRC-BASELINE",
+                        "type": "human_construction_material",
+                        "path": "docs/product/baseline.md",
+                        "authority": "human",
+                        "scope": "initial",
+                        "version": "1",
+                        "status": "active",
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    report = yaml.safe_load(report_path.read_text(encoding="utf-8"))
+    report["status"] = "approved"
+    for entry in report["human_material"].values():
+        entry.update(
+            {
+                "status": "sufficient",
+                "source_refs": ["SRC-BASELINE"],
+                "note": "Covered by the approved baseline.",
+            }
+        )
+    report["verification"] = {
+        "commands": [
+            {
+                "command": "project verification",
+                "status": "not_applicable",
+                "evidence": "No application code exists yet.",
+            }
+        ],
+        "blocking_conflicts": 0,
+    }
+    report["convergence"] = [
+        {
+            "id": "REC-DOCS-001",
+            "subject": "docs",
+            "classification": "conformant",
+            "intent_refs": ["SRC-BASELINE"],
+            "evidence": "The baseline document is the registered human source.",
+            "action": "keep",
+            "resolution_status": "completed",
+            "verification": "Registered source exists and was reviewed.",
+        }
+    ]
+    report_path.write_text(
+        yaml.safe_dump(report, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+
+    finalize = subprocess.run(
+        [sys.executable, "scripts/ai-team/reconcile_project.py", "finalize"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    assert finalize.returncode == 0, finalize.stdout + finalize.stderr
+
+    current = subprocess.run(
+        [sys.executable, "scripts/ai-team/reconcile_project.py", "check"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    assert current.returncode == 0, current.stdout + current.stderr
+
+    (target / "README.md").write_text("changed after reconciliation\n", encoding="utf-8")
+    stale = subprocess.run(
+        [sys.executable, "scripts/ai-team/reconcile_project.py", "check"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    assert stale.returncode == 1
+    assert "baseline is stale" in stale.stdout
+
+    restamp = subprocess.run(
+        [sys.executable, "scripts/ai-team/reconcile_project.py", "finalize"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    assert restamp.returncode == 1
+    assert "status must be 'approved' or 'applying'" in restamp.stdout
 
 
 def test_dry_run_legacy_v1_writes_nothing(tmp_path: Path) -> None:

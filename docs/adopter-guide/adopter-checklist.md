@@ -6,7 +6,9 @@ Checklist pour mettre en service un projet avec le framework `0.7.0`.
 
 La gouvernance est **exclusive** : pas d’adoption à moitié. Inventaire des conflits **avant** l’install — voir [adoption-assessment.md](adoption-assessment.md) (Documents 19–20).
 
-- [ ] `python tools/assess.py --target . --json --report-file assessment.json` (lecture seule).
+- [ ] `/assess-adoption <cible>` depuis Cursor sur le dépôt framework, ou
+      `python tools/assess.py --target . --json --report-file assessment.json`
+      (lecture seule).
 - [ ] Constats `blocking` résolus via `--resolutions` (`eliminate` / `remap` / `waive` tracé) — sinon **ne pas installer** (`no_go`).
 - [ ] Décision d’adoption humaine enregistrée (qui, date, lien vers le rapport).
 - [ ] Install avec `--assessment-report assessment.json` (pas de mode hybride).
@@ -39,6 +41,8 @@ Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le d�
 - [ ] Inventaire as-built écrit : écarts de conformité, surfaces hors-scope, nettoyage / remediation prévus.
 - [ ] Warnings `baseline.*` du rapport d’assessment traités (`remap` / `waive` tracé) ou reportés explicitement hors du premier périmètre.
 - [ ] Aucune règle produit inventée « parce que le code le fait déjà ».
+- [ ] `/reconcile-project` exécuté jusqu’à une baseline `ready`.
+- [ ] `python scripts/ai-team/reconcile_project.py check` réussit sur le contenu actuel.
 
 ## 3. Gouvernance initiale
 

@@ -766,5 +766,6 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
     print("  2. Add and register authoritative product documents")
     print("  3. Run: python scripts/ai-team/validate.py")
     print("  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py")
-    print("  5. In Cursor UI or interactive CLI, invoke /compile-project")
+    print("  5. In Cursor UI or interactive CLI, invoke /reconcile-project")
+    print("  6. After reconciliation is ready, invoke /compile-project")
     return 0

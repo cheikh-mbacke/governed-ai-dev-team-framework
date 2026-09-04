@@ -25,12 +25,13 @@ Tout Rôle :
 | `release-agent` | Préparer un candidat, ses preuves, migrations et rollback sans autoriser G3. | `none` | Aucune | Aucune référence explicite supplémentaire. |
 | `architect` | Analyser architecture, contrats et impact ; proposer sans autorité produit. | `none` | Aucune | Aucune référence explicite supplémentaire. |
 | `product-analyst` | Structurer le matériau produit humain sans arbitrer les conflits d’autorité. | `none` | Aucune | Aucune référence explicite supplémentaire. |
+| `reconciliation-steward` | Comparer l’existant à l’intention et appliquer uniquement les actions de convergence pré-compilation explicitement approuvées. | `scoped` | Aucune | `reconcile-project`. |
 
 Le Control Plane est défini au Document 5. Pour tous les Rôles délégués, `record_observation` est une capacité **cible médiée**, pas une capacité actuellement observée dans leur frontmatter.
 
 ## 3. Traduction Cursor actuelle
 
-- `backend-developer`, `frontend-developer` et `qa-test` ont `readonly: false`.
+- Les rôles à écriture produit ou tests, dont `reconciliation-steward`, ont `readonly: false`.
 - Les six autres Rôles métier ci-dessus ont `readonly: true`.
 - Cursor interprète `readonly` comme une restriction d’écriture de fichiers et de commandes à changement d’état, pas seulement comme « lecture seule produit ».
 - Le futur Adaptateur doit donc offrir `record_observation` sans élargir arbitrairement l’écriture de ces Rôles.
@@ -47,7 +48,7 @@ Le Control Plane est défini au Document 5. Pour tous les Rôles délégués, `r
 
 ## 6. Traceabilité bundle v1 (WU-P2-ROLES, WU-P2-PROCEDURES)
 
-Les dix `RoleDefinitionRevision` agnostiques (neuf rôles métier + `control-plane`) sont transcrits sous `src/governed_ai/contracts/bundles/v1/roles/`. Les treize `ProcedureRevision` référencées par ces rôles sont transcrites sous `src/governed_ai/contracts/bundles/v1/procedures/` (révision `1.0.0`, contenu agnostique complet). Les étapes propres à l'Adaptateur Cursor sont documentées hors manifeste dans `src/governed_ai/contracts/bundles/v1/cursor-compiler-notes.yaml` pour le compilateur WU-P4. `auth-smoke` reste exclu (§4). Le manifeste `bundles/v1/manifest.json` assemble rôles et procédures pour validation atomique.
+Les quinze `RoleDefinitionRevision` agnostiques, dont `control-plane` et `reconciliation-steward`, sont transcrits sous `src/governed_ai/contracts/bundles/v1/roles/`. Les dix-huit `ProcedureRevision` référencées par ces rôles sont transcrites sous `src/governed_ai/contracts/bundles/v1/procedures/` (révision `1.0.0`, contenu agnostique complet). Les étapes propres à l'Adaptateur Cursor sont documentées hors manifeste dans `adapters/cursor/compiler-notes.yaml`. `auth-smoke` reste exclu (§4). Le manifeste `bundles/v1/manifest.json` assemble rôles et procédures pour validation atomique.
 
 ## Sources
 

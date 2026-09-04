@@ -9,6 +9,7 @@ vit sous [`.fabric/`](.fabric/project-profile.yaml) ; le payload installable sou
 Framework multi-agents gouverné par l'humain, livré aux **projets cibles après
 installation** — assessment préalable puis checklist :
 [adoption-assessment.md](docs/adopter-guide/adoption-assessment.md),
+[project-reconciliation.md](docs/adopter-guide/project-reconciliation.md),
 [adopter-checklist.md](docs/adopter-guide/adopter-checklist.md).
 
 **Version cible :** `0.7.0`

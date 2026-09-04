@@ -13,7 +13,7 @@ Ces critères portent sur :
 - l’absence de mode hybride ;
 - la catégorie `baseline` (matière humaine / inventaire as-built).
 
-Ils ne portent pas sur le cycle G0–G4 post-install (Document 14), sauf pour exiger que la documentation adoptant décrive l’étape matière + inventaire **entre** install et G0/compile.
+Ils ne portent pas sur le cycle G0–G4 post-install (Document 14), sauf pour exiger que la documentation adoptant décrive `/reconcile-project` **entre** install et G0/compile.
 
 ## 2. Scénarios obligatoires
 
@@ -57,7 +57,7 @@ Ils ne portent pas sur le cycle G0–G4 post-install (Document 14), sauf pour ex
 
 **Étant donné** la documentation opérateur et les points d’entrée CLI  
 **Quand** on compare assessment, `preflight` et `diagnose`  
-**Alors** leurs rôles sont distincts : pré-adoption / pré-Run / post-install opérationnel.
+**Alors** leurs rôles sont distincts : pré-adoption / réconciliation pré-compile / pré-Run / post-install opérationnel.
 
 ### ADO-AC-008 — Waive sans trace refusé
 

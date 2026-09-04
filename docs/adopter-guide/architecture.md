@@ -60,6 +60,7 @@ Le runtime framework **n'est plus copié** à la racine sous `src/`, `adapters/`
 - Le comportement d'un Cursor réel dépend de la version et de la plateforme ; qualification via Document 14 (niveaux L3/L4).
 - Distribution ne dépend pas du noyau à l'exécution ; le noyau ne dépend pas de Distribution.
 - L'**assessment d'adoption** est livré (`tools/assess.py`, Documents 19–20) — voir [adoption-assessment.md](adoption-assessment.md).
+- La **réconciliation pré-compilation** est livrée (`/reconcile-project`, Documents 21–22) — voir [project-reconciliation.md](project-reconciliation.md).
 
 ## Dépôt framework vs projet installé
 
@@ -73,7 +74,7 @@ Le **dépôt source** (`repository_kind: framework_source`) n'est pas une cible 
 | Adaptateur Cursor | `adapters/cursor/` | sous `.ai-team/runtime/…` |
 | Manifeste de version | `.fabric/framework-version.json` (chemins **source**) | `.ai-team/installation-record.json` v3 |
 | Doc opérateur / tests | présents | absents |
-| Cycle client (WU, gates, `/compile-project`) | **absent** — pas de `.ai-team/` racine | actif |
+| Cycle client (réconciliation, WU, gates, `/compile-project`) | **absent** — pas de `.ai-team/` racine | actif |
 
 Regénérer le manifeste source après modification du payload installable :
 

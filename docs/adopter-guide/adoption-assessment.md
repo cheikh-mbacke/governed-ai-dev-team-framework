@@ -7,7 +7,7 @@ Guide opérateur pour la **porte d’entrée** du framework : inventaire des con
 Le framework revendique une **gouvernance exclusive**. L’adopter, c’est accepter d’aligner outils, process et artefacts — pas de mode hybride. Le coût est volontairement élevé. Pour que cet engagement soit responsable, un **assessment** (lecture seule) révèle les conflits avant toute mutation.
 
 ```text
-Assessment (lecture seule) → Décision d’adoption → Install → Matière + inventaire as-built → G0 / compile → …
+Assessment (lecture seule) → Décision → Install → /reconcile-project → G0 / compile → …
 ```
 
 - **Assessment** ≠ `preflight.py` (avant un Run) ≠ `diagnose.py` (après install).
@@ -26,10 +26,22 @@ Assessment (lecture seule) → Décision d’adoption → Install → Matière +
 |---|---|
 | Principes et catégories (Documents 19–20) | Spécifiés |
 | Guide et checklist adoptant | Le présent document |
+| Commande slash Cursor (depuis le dépôt framework) | **Livrée** — `/assess-adoption <cible>` (lecture seule) |
 | Commande CLI | **Livrée** — `tools/assess.py` (lecture seule) |
 | Lien Assessment → install | **Livré** — `--assessment-report` obligatoire sauf `--skip-assessment-gate` / `GOVERNED_AI_SKIP_ASSESSMENT_GATE=1` |
 
 ## Commande
+
+Depuis Cursor ouvert sur le dépôt framework, la façade opérateur est :
+
+```text
+/assess-adoption /chemin/vers/mon-projet
+```
+
+Elle exécute la CLI ci-dessous sans modifier la cible. Les résolutions et le
+chemin d'un éventuel rapport doivent rester des choix humains explicites. Cette
+commande est volontairement dans l'overlay source `.cursor/` : elle doit être
+disponible **avant** l'installation, contrairement aux commandes du cycle client.
 
 Depuis le dépôt framework :
 
@@ -150,6 +162,7 @@ Ces constats sont en général des `warning` : l’install peut passer en `go_wi
    - produire ou aligner la matière humaine autoritaire pour le premier périmètre ;
    - rédiger l’inventaire as-built (écarts, hors-scope, nettoyage) si du code existait déjà ;
    - résoudre / suivre les warnings `baseline` du backlog.
+   - invoquer `/reconcile-project` jusqu’à une baseline `ready` et vérifiée.
 4. Enchaîner la [checklist adoptant](adopter-checklist.md) (G0…).
 
 Un `go_with_backlog` dû uniquement à `baseline` signifie : **installer oui, compiler non** tant que matière + inventaire ne sont pas tenus.

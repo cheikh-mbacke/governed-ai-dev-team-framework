@@ -24,6 +24,7 @@ from distribution.installer.assessment import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ASSESS = REPO_ROOT / "tools" / "assess.py"
+ASSESS_SKILL = REPO_ROOT / ".cursor" / "skills" / "assess-adoption" / "SKILL.md"
 INSTALL = REPO_ROOT / "tools" / "install.py"
 
 
@@ -232,6 +233,25 @@ def test_ado_ac_010_adopter_docs_describe_sequence() -> None:
     assert "no_go" in guide
     assert "as-built" in guide.lower() or "as_built" in guide.lower() or "baseline" in guide
     assert "2bis" in checklist or "as-built" in checklist.lower() or "Baseline" in checklist
+
+
+def test_assess_adoption_slash_facade_is_source_only_and_read_only() -> None:
+    skill = ASSESS_SKILL.read_text(encoding="utf-8")
+    assert "name: assess-adoption" in skill
+    assert "disable-model-invocation: true" in skill
+    assert "python tools/assess.py --target <target-path>" in skill
+    assert "read-only" in skill
+    assert "Do not install" in skill
+    assert "/reconcile-project" in skill
+    assert not (
+        REPO_ROOT
+        / "adapters"
+        / "cursor"
+        / "templates"
+        / ".cursor"
+        / "skills"
+        / "assess-adoption"
+    ).exists()
 
 
 def test_ado_ac_011_baseline_brownfield_without_product_docs(tmp_path: Path) -> None:

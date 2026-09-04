@@ -35,6 +35,7 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/metrics/*",
     ".ai-team/observations/*",
     ".ai-team/retrospectives/*",
+    ".ai-team/reconciliation/*",
     ".ai-team/runs/*",
     ".ai-team/runs/leases/*",
     ".ai-team/runs/execution-attempts/*",

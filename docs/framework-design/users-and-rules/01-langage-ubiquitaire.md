@@ -57,6 +57,8 @@
 | **Décision d’adoption** | Acceptation humaine explicite des principes d’adoption et du backlog de résolution, enregistrée avant l’install mutante. | Cible. |
 | **Constat d’assessment** | Entrée du rapport pré-adoption : catégorie, sévérité, preuve, options et statut de résolution (`eliminate`, `remap`, `waive`, `defer_blocks_adoption`, `unresolved`). | Cible. |
 | **Inventaire as-built** | Inventaire humain, avant première compile, des écarts entre le dépôt observé et l’intention produit (non-conformité, hors-scope, nettoyage) destinés à devenir Work Units ou décisions explicites. | Règle Document 19 §2.4 / Definition of Ready. |
+| **Réconciliation projet** | Procédure post-installation qui relie matière humaine et inventaire observé, fait arbitrer les écarts, applique les actions approuvées et établit la baseline exigée avant compilation. | Règle Document 21. |
+| **Baseline de réconciliation** | Manifeste project-owned `baseline.yaml` dont l’état `ready` atteste l’absence de décisions ou vérifications bloquantes et empreinte le contenu project-owned réconcilié. | Observé : schéma et contrôle `reconcile_project.py`. |
 
 ## 5. Limites
 

@@ -76,6 +76,16 @@ procedures:
         adapter_artefacts:
           - scripts/ai-team/propose_allowlist.py
         adapter_notes: "Attach output to execution plan gate package; never edit adapter permission or CLI config directly"
+  reconcile-project:
+    adapter_sources:
+      - skills/reconcile-project/SKILL.md
+      - agents/reconciliation-steward.md
+    adapter_only_steps:
+      - agnostic_step: "Produce a machine-readable reconciliation report with no unresolved decision or convergence item"
+        adapter_artefacts:
+          - scripts/ai-team/reconcile_project.py
+          - .ai-team/schemas/reconciliation.schema.json
+        adapter_notes: "Create, finalize, fingerprint, and validate .ai-team/reconciliation/baseline.yaml"
   frontend-design:
     adapter_sources:
       - skills/frontend-design/SKILL.md

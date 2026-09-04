@@ -125,6 +125,7 @@ def main() -> int:
             "check_done.py",
             "preflight.py",
             "diagnose.py",
+            "reconcile_project.py",
             "status.py",
             "tools/install.py",
         ],

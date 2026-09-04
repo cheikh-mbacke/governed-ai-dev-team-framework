@@ -27,7 +27,7 @@ La détection actuelle de collisions à l’installation (chemins) et les outils
 ## 4. Séquence d’adoption
 
 ```text
-[Assessment] → [Décision] → [Install] → [Matière + inventaire as-built] → [G0 / compile] → …
+[Assessment] → [Décision] → [Install] → [/reconcile-project] → [G0 / compile] → …
  lecture seule   humain      mutation     project-owned (humain)           gouvernance
 ```
 
@@ -36,7 +36,7 @@ La détection actuelle de collisions à l’installation (chemins) et les outils
 | Assessment | Aucune (hors éventuel rapport exporté hors arbre managé, si demandé explicitement) | Rapport d’assessment (GO / NO-GO + backlog, y compris `baseline`) |
 | Décision d’adoption | Artefact project-owned ou enregistrement humain hors install | Acceptation explicite des principes §2 et du backlog résolu |
 | Install fraîche | Oui | `installation-record.json` v3 |
-| Matière humaine + inventaire as-built | Project-owned (`docs/product/`, décisions, source-registry) | Intention cohérente + backlog d’écarts explicite avant compile |
+| `/reconcile-project` | Project-owned (`docs/product/`, décisions, source-registry, rapport de réconciliation) | Intention cohérente + convergence approuvée + baseline empreintée avant compile |
 | G0 / compile et suite | Via Command Gateway / skills | Plan dérivé ; gaps code↔intention signalés, jamais réécriture de l’intention |
 
 ## 5. Exigences — Assessment d’adoption
@@ -105,4 +105,5 @@ Chaque constat DOIT porter au minimum : `id`, `category`, `severity`, `summary`,
 - Document 9 — Distribution / Installation
 - Document 11 — Architecture cible (séquence install)
 - Document 20 — Critères de conformité assessment d’adoption
+- Document 21 — Réconciliation pré-compilation
 - Guide adoptant — [adoption-assessment.md](../../adopter-guide/adoption-assessment.md)

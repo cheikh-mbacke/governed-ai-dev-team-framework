@@ -34,6 +34,7 @@ EXPECTED_ROLE_IDS = (
     "mandate-matcher",
     "test-strategist",
     "integration-steward",
+    "reconciliation-steward",
 )
 
 WRITES_AXES = (
@@ -118,6 +119,7 @@ def test_product_write_levels_match_catalogue(role_documents: dict[str, dict]) -
         "mandate-matcher": "none",
         "test-strategist": "tests_only",
         "integration-steward": "none",
+        "reconciliation-steward": "scoped",
     }
     for role_id, level in expected.items():
         assert role_documents[role_id]["writes"]["product"]["level"] == level

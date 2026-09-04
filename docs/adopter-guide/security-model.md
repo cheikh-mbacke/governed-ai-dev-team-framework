@@ -16,8 +16,10 @@ Une fois l’adoption engagée, la gouvernance du framework est **exclusive** su
 ## Gates humaines (G0–G4)
 
 L’**assessment d’adoption** précède l’install et n’est pas une gate G0–G4.
+Après installation, `/reconcile-project` impose une baseline empreintée avant la
+première compilation et après toute dérive project-owned.
 
-- **G0** — baseline et sources autoritaires prêtes ; en brownfield, inventaire as-built (écarts code↔intention, hors-scope, nettoyage) explicite pour le périmètre compilé.
+- **G0** — baseline de réconciliation et sources autoritaires prêtes ; en brownfield, inventaire as-built (écarts code↔intention, hors-scope, nettoyage) explicite pour le périmètre compilé.
 - **G1** — plan d'exécution approuvé.
 - **G2** — décisions produit/architecture verrouillées pour la phase.
 - **G3** — release candidate prête.

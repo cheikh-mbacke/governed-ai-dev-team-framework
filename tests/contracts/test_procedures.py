@@ -35,6 +35,7 @@ EXPECTED_PROCEDURE_IDS = (
     "match-mandate",
     "prepare-acceptance",
     "propose-profile",
+    "reconcile-project",
     "retrospective",
     "security-review",
     "verify-work-unit",

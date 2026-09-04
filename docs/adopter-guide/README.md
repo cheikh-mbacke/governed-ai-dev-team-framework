@@ -5,6 +5,7 @@ Guides pratiques pour **décider d’adopter**, installer, migrer, valider et ex
 | Document | Usage |
 |---|---|
 | [adoption-assessment.md](adoption-assessment.md) | **Avant install** — gouvernance exclusive, grille des conflits, verdict GO/NO-GO |
+| [project-reconciliation.md](project-reconciliation.md) | **Après install, avant compile** — matière humaine, inventaire as-built, convergence et baseline |
 | [architecture.md](architecture.md) | Comprendre les composants et leurs responsabilités |
 | [security-model.md](security-model.md) | Autorité humaine, gates et frontières de confiance |
 | [operator-guide.md](operator-guide.md) | Commandes quotidiennes (install, update, validate, rollback) |

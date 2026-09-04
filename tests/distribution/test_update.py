@@ -5,11 +5,9 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import yaml
-
 from distribution.installer.record import INSTALLATION_RECORD_FILE
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -108,6 +106,34 @@ def test_di004_project_owned_profile_preserved_on_update(tmp_path: Path) -> None
     assert profile_path.read_bytes() == before
     updated = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
     assert updated["extensions"]["user_marker"] == "keep-me"
+
+
+def test_reconciliation_baseline_is_preserved_on_update(tmp_path: Path) -> None:
+    target = tmp_path / "project"
+    _install(target)
+    baseline = target / ".ai-team" / "reconciliation" / "baseline.yaml"
+    baseline.parent.mkdir(parents=True, exist_ok=True)
+    baseline.write_text("project_owned_marker: keep-me\n", encoding="utf-8")
+    before = baseline.read_bytes()
+    _git_init(target)
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(INSTALL),
+            "--target",
+            str(target),
+            "--update",
+            "--skip-validation",
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        timeout=180,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert baseline.read_bytes() == before
 
 
 def test_di011_dirty_git_refused_without_override(tmp_path: Path) -> None:
