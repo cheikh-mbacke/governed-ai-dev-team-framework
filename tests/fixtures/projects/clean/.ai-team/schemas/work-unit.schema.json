@@ -192,6 +192,30 @@
       },
       "additionalProperties": false
     },
+    "human_ui_review": {
+      "type": "object",
+      "required": ["required", "reason", "surface"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "reason": {
+          "enum": [
+            "first_testable_slice",
+            "new_user_journey",
+            "information_architecture_change",
+            "critical_user_journey",
+            "high_product_ambiguity",
+            "material_surface_change",
+            "not_required"
+          ]
+        },
+        "surface": {"type": ["string", "null"]},
+        "planned_after": {"enum": ["qa"]},
+        "blocking_behavior": {
+          "enum": ["non_blocking", "pause_affected_surface_when_supervised"]
+        }
+      },
+      "additionalProperties": false
+    },
     "context_package_ref": {
       "type": [
         "string",
@@ -267,6 +291,11 @@
             "rejected",
             "remediation_required"
           ]
+        },
+        "human_feedback": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^HF-[A-Za-z0-9._-]+$"},
+          "uniqueItems": true
         },
         "critical_open_items": {
           "type": "array",

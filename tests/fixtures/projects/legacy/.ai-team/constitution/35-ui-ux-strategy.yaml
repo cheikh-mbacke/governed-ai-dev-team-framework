@@ -1,5 +1,5 @@
 policy: ui_ux_strategy
-version: "1.0.0"
+version: "1.1.0"
 
 applies_to:
   # Work Units where zone.area is one of these. A Work Unit outside these
@@ -132,6 +132,36 @@ principle: >
     - personal_data_handling_follows_security-and-compliance/
     - an_irreversible_action_requires_confirmation
     - a_requested_permission_or_piece_of_information_explains_why_its_needed
+
+10_formative_human_review:
+  principle: >
+    A human visual checkpoint is a non-blocking opportunity to observe and
+    comment on a coherent UI revision. It is not an approval gate and it is
+    distinct from final human acceptance at G4.
+  select_during_compilation_when:
+    - first_testable_slice_of_a_surface
+    - new_user_journey
+    - information_architecture_change
+    - critical_user_journey
+    - high_product_ambiguity
+    - material_change_to_a_previously_reviewed_surface
+  normally_skip_when:
+    - invisible_refactor
+    - technical_fix_with_sufficient_automated_coverage
+    - isolated_design_token_change
+    - no_user_perceptible_effect
+  timing: >
+    Emit after independent QA has observed the applicable required states on
+    an exact commit, while remediation is still local. Do not wait for release
+    preparation or G4.
+  package: >
+    Prepare a short human-executable package containing the URL or command,
+    exact commit, preconditions, data, three to seven high-value scenarios,
+    expected observations, known limitations and evidence references.
+  asynchronous_feedback: >
+    Feedback may arrive after execution has continued. Record it against the
+    observed commit, then reconcile it against current project state before
+    the next affected dispatch. Continue unrelated Work Units.
 
 definition_of_done_addition:
   # Referenced from definition-of-done.yaml for Work Units in

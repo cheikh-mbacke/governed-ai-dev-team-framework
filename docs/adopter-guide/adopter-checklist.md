@@ -71,6 +71,10 @@ Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le d�
 - [ ] Observations enregistrées avec `feedback.py record` quand friction réutilisable.
 - [ ] Feedback remonté via `feedback.py submit` (ou clôture de Run) — usage du framework = acceptation.
 - [ ] Gates G2–G4 enregistrées avec `--authorization-id` quand requis.
+- [ ] Checkpoints UI sélectionnés à G1, consultés via `status.py`, puis retours
+      enregistrés avec `human_feedback.py` contre le SHA réellement testé.
+- [ ] Retours `pending_reconciliation` traités avant la prochaine exécution des
+      Work Units affectées ; aucun checkpoint formatif ne bloque le mode nuit.
 
 ## 7. Avant release candidate
 
@@ -87,6 +91,7 @@ Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le d�
 
 - [adoption-assessment.md](adoption-assessment.md)
 - [operator-guide.md](operator-guide.md)
+- [asynchronous-ui-feedback.md](asynchronous-ui-feedback.md)
 - [architecture.md](architecture.md)
 - [security-model.md](security-model.md)
 - [deprecations.md](deprecations.md)

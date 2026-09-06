@@ -139,6 +139,12 @@ def resolve_effective_policy(
             "worker_isolation_unguaranteed",
         ],
         "global_stop_behavior": "immediate_alert_plus_stop",
+        "human_feedback": {
+            "visual_checkpoints": "non_blocking",
+            "pending_feedback_behavior": "reconcile_before_next_affected_dispatch",
+            "continue_unaffected_work": True,
+            "may_reduce_execution_ceiling": False,
+        },
         "completion": {
             "target": (
                 "verified_release_candidate"
@@ -193,6 +199,17 @@ def _validate_invariants(policy: dict[str, Any]) -> None:
             raise ValueError(f"decisions.{field} must remain human_only")
     if policy.get("global_stop_behavior") != "immediate_alert_plus_stop":
         raise ValueError("global stop behavior must remain immediate_alert_plus_stop")
+    human_feedback = policy.get("human_feedback") or {}
+    if human_feedback.get("visual_checkpoints") != "non_blocking":
+        raise ValueError("formative visual checkpoints must remain non-blocking unattended")
+    if human_feedback.get("pending_feedback_behavior") != (
+        "reconcile_before_next_affected_dispatch"
+    ):
+        raise ValueError("received human feedback must be reconciled before affected dispatch")
+    if human_feedback.get("continue_unaffected_work") is not True:
+        raise ValueError("unaffected work must continue during human feedback reconciliation")
+    if human_feedback.get("may_reduce_execution_ceiling") is not False:
+        raise ValueError("formative human feedback cannot implicitly reduce execution ceiling")
 
 
 def effective_policy_hash(policy: dict[str, Any]) -> str:

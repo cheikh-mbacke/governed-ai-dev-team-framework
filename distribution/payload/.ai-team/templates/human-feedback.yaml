@@ -1,0 +1,15 @@
+id: HF-XXX
+checkpoint_ref: null
+acceptance_package_ref: null
+work_unit: WU-XXX
+surface: ""
+observed_revision:
+  commit_sha: ""
+  captured_at: null
+  evidence_refs: []
+scenario_results: []
+# scenario result fields: scenario_id, result, notes
+comment: ""
+submitted_by: ""
+status: pending_reconciliation
+reconciliation: null

@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HumanFeedback",
+  "type": "object",
+  "required": [
+    "id",
+    "work_unit",
+    "surface",
+    "observed_revision",
+    "comment",
+    "submitted_by",
+    "status",
+    "revision",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^HF-[A-Za-z0-9._-]+$"
+    },
+    "checkpoint_ref": {
+      "type": ["string", "null"]
+    },
+    "acceptance_package_ref": {
+      "type": ["string", "null"]
+    },
+    "work_unit": {
+      "type": "string",
+      "pattern": "^WU-[A-Za-z0-9._-]+$"
+    },
+    "surface": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observed_revision": {
+      "type": "object",
+      "required": ["commit_sha"],
+      "properties": {
+        "commit_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{40}$"
+        },
+        "captured_at": {
+          "type": ["string", "null"]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "scenario_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scenario_id", "result"],
+        "properties": {
+          "scenario_id": {"type": "string", "minLength": 1},
+          "result": {
+            "enum": ["passed", "failed", "not_run", "not_applicable"]
+          },
+          "notes": {"type": ["string", "null"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "comment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "submitted_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "pending_reconciliation",
+        "reconciled",
+        "needs_decision",
+        "superseded"
+      ]
+    },
+    "reconciliation": {
+      "type": "object",
+      "required": [
+        "classification",
+        "applicability",
+        "current_code_revision",
+        "affected_work_units",
+        "invalidated_evidence",
+        "actions",
+        "rationale",
+        "reconciled_by_role",
+        "reconciled_at"
+      ],
+      "properties": {
+        "classification": {
+          "enum": [
+            "defect",
+            "ux_adjustment",
+            "product_intent_change",
+            "already_satisfied",
+            "obsolete"
+          ]
+        },
+        "applicability": {
+          "enum": ["applicable", "already_satisfied", "obsolete", "needs_decision"]
+        },
+        "current_code_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{40}$"
+        },
+        "affected_work_units": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^WU-[A-Za-z0-9._-]+$"},
+          "uniqueItems": true
+        },
+        "invalidated_evidence": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kind", "ref"],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "context_refresh",
+                  "reverify_work_unit",
+                  "remediation_work_unit",
+                  "decision_request",
+                  "none"
+                ]
+              },
+              "ref": {"type": ["string", "null"]},
+              "reason": {"type": ["string", "null"]}
+            },
+            "additionalProperties": false
+          }
+        },
+        "rationale": {"type": "string", "minLength": 1},
+        "reconciled_by_role": {"type": "string", "minLength": 1},
+        "reconciled_at": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "revision": {"type": "integer", "minimum": 1},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

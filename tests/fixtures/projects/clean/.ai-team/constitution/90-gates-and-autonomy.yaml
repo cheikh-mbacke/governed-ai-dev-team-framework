@@ -1,5 +1,5 @@
 policy: human_gates_and_autonomy
-version: "1.0.0"
+version: "1.1.0"
 gates:
   G0:
     name: readiness
@@ -25,18 +25,23 @@ autonomy_profiles:
   supervised_copilots:
     supervision: continuous
     delivery_ceiling: according_to_human_gates
+    human_ui_checkpoint: may_pause_affected_surface_only_when_work_unit_requests_it
   unattended_conservative:
     supervision: absent_bounded_window
     delivery_ceiling: verified_work_unit_branch
+    human_ui_checkpoint: non_blocking_continue_to_delivery_ceiling
   unattended_extended:
     supervision: absent_extended_window
     delivery_ceiling: verified_integration_branch
+    human_ui_checkpoint: non_blocking_continue_to_delivery_ceiling
   unattended_maximal:
     supervision: absent_up_to_12_hours
     delivery_ceiling: verified_release_candidate
+    human_ui_checkpoint: non_blocking_continue_to_delivery_ceiling
   custom:
     supervision: explicitly_configured
     delivery_ceiling: bounded_by_constitution
+    human_ui_checkpoint: non_blocking_unless_explicitly_tightened
   legacy_levels_deprecated: true
   level_1:
     name: coordinated_copilots
@@ -54,3 +59,7 @@ invariants:
   product_and_policy_authority_remain_human: true
   autonomy_does_not_authorize_product_invention: true
   system_may_not_self_modify_constitution: true
+  formative_human_ui_checkpoints_are_not_gates: true
+  unattended_runs_never_wait_for_formative_ui_feedback: true
+  received_feedback_is_reconciled_before_next_affected_dispatch: true
+  unrelated_work_continues_during_feedback_reconciliation: true

@@ -1,5 +1,5 @@
 policy: structured_communication
-version: "1.0.1"
+version: "1.1.0"
 event_types:
   STATUS: "Describe an execution result or state."
   CONTEXT_REQUEST: "Request precisely delimited additional context."
@@ -40,6 +40,10 @@ details_conventions:
     shape:
       command: "exact command/URL to reach it"
       why: "one line: what is now observable"
+      surface: "stable name of the inspectable surface"
+      observed_revision: "exact 40-character commit SHA independently verified"
+      acceptance_package_ref: "path to the short manual scenario package"
+      non_blocking: true
       states_to_check: "optional list, when applicable (e.g. required UI states)"
     who_emits_it: >
       Whichever agent's Work Unit stood up or materially changed the
@@ -57,3 +61,10 @@ details_conventions:
       or when it newly became reachable/complete. status.py surfaces open
       ones deduped by work_unit - this convention exists to keep that
       list worth reading, not to log every step.
+    asynchronous_rule: >
+      An open checkpoint never blocks an unattended Run and never changes a
+      Work Unit status, gate, execution ceiling or delivery target. Human
+      feedback is recorded separately as HumanFeedback, linked to the observed
+      revision, then reconciled against current state. Only a newly discovered
+      unresolved product decision may block its dependent subgraph under the
+      normal decision policy.

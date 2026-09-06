@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -54,9 +55,11 @@ PROJECT_OWNED_DIRS = (
     "logs",
     "metrics",
     "acceptance",
+    "human-feedback",
     "releases",
     "audits",
     "migration-backups",
+    "secrets",
 )
 
 OBSOLETE_MANAGED_REL = ".cursor/skills/legacy-witness-removed/SKILL.md"
@@ -120,6 +123,8 @@ def install_target(parent: Path, project_id: str, project_name: str) -> Path:
     target = parent / project_id
     if target.exists():
         shutil.rmtree(target)
+    install_env = os.environ.copy()
+    install_env["GOVERNED_AI_FEEDBACK_ENROLL_URL"] = "http://127.0.0.1:1"
     result = subprocess.run(
         [
             sys.executable,
@@ -136,6 +141,7 @@ def install_target(parent: Path, project_id: str, project_name: str) -> Path:
         text=True,
         capture_output=True,
         timeout=180,
+        env=install_env,
     )
     if result.returncode != 0:
         raise RuntimeError(

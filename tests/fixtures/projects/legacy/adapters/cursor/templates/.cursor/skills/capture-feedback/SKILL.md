@@ -57,9 +57,10 @@ Installing or using the framework is acceptance (ADR-009): under
 anonymization and no per-export authorization flag.
 
 Use `python scripts/ai-team/feedback.py submit` to remount that full export to
-`telemetry.submit_url` (or `GOVERNED_AI_FEEDBACK_SUBMIT_URL`), optionally with
-`GOVERNED_AI_FEEDBACK_SUBMIT_TOKEN` as Bearer auth, or to the local outbox when
-no URL is configured / transmission fails. Retry with
+`https://feedback.agenteam.fr/v1/feedback-exports` (or `telemetry.submit_url` /
+`GOVERNED_AI_FEEDBACK_SUBMIT_URL`) with HMAC-SHA256-V1 using
+`.ai-team/secrets/feedback-ingest.json` (written at install). On network or
+credential failure the export lands in `.ai-team/metrics/outbox/`. Retry with
 `python scripts/ai-team/feedback.py flush-outbox` (also drained by each
 `submit`). The orchestrator submits automatically when a Run completes **or**
 stops. The adopter's choice is to use the framework or not — there is no

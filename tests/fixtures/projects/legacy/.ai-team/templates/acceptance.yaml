@@ -1,5 +1,9 @@
 id: UAT-XXX
+purpose: final_acceptance
 release_or_increment: null
+work_unit: null
+surface: null
+code_revision: null
 environment: staging
 preconditions: []
 scenarios: []

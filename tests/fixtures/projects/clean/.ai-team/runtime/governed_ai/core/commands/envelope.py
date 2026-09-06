@@ -18,10 +18,13 @@ REQUIRED_ENVELOPE_FIELDS = (
     "payload",
 )
 
-GATE_COMMANDS_REQUIRING_HUMAN_AUTH = frozenset(
+COMMANDS_REQUIRING_HUMAN_AUTH = frozenset(
     {
         "RecordGateDecision",
         "RecordAcceptance",
+        # Formative feedback is authoritative human product input, but unlike
+        # RecordAcceptance it is asynchronous and never acts as a gate.
+        "RecordHumanFeedback",
         "ResolveDecisionRequest",
         # Document 6 §8 — issuing or revoking a RunAuthorizationGrant is a
         # human act, gated the same way as a gate decision.
@@ -89,6 +92,10 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_record_gate_decision(raw)
     elif raw["type"] == "RecordAcceptance":
         _validate_record_acceptance(raw)
+    elif raw["type"] == "RecordHumanFeedback":
+        _validate_record_human_feedback(raw)
+    elif raw["type"] == "ReconcileHumanFeedback":
+        _validate_reconcile_human_feedback(raw)
     elif raw["type"] == "RegisterReleaseCandidate":
         _validate_register_release_candidate(raw)
     elif raw["type"] == "GenerateRetrospective":
@@ -129,7 +136,7 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_register_mission_artifact(raw)
     elif raw["type"] == "RecordMissionArtifactChallenge":
         _validate_record_mission_artifact_challenge(raw)
-    if raw["type"] in GATE_COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
+    if raw["type"] in COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
         raise GatewayError(
             ErrorCode.HUMAN_AUTH_REQUIRED,
             "human_authorization required",
@@ -381,6 +388,64 @@ def _validate_record_acceptance(raw: dict[str, Any]) -> None:
             ErrorCode.HUMAN_AUTH_REQUIRED,
             "human_authorization required",
             "/human_authorization",
+        )
+
+
+def _validate_record_human_feedback(raw: dict[str, Any]) -> None:
+    if raw["target"].get("kind") != "human_feedback":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "RecordHumanFeedback target.kind must be human_feedback",
+            "/target/kind",
+        )
+    if "expected_revision" in raw["target"]:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision must not be set on create",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or payload.get("id") != raw["target"]["id"]:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id must match target.id",
+            "/payload/id",
+        )
+    for field in ("work_unit", "surface", "observed_revision", "comment", "submitted_by"):
+        if not payload.get(field):
+            raise GatewayError(
+                ErrorCode.INVALID_SCHEMA,
+                f"payload.{field} is required",
+                f"/payload/{field}",
+            )
+
+
+def _validate_reconcile_human_feedback(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "human_feedback":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "ReconcileHumanFeedback target.kind must be human_feedback",
+            "/target/kind",
+        )
+    if "expected_revision" not in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision is required",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("to_status"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.to_status is required",
+            "/payload/to_status",
+        )
+    if not isinstance(payload.get("reconciliation"), dict):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.reconciliation is required",
+            "/payload/reconciliation",
         )
 
 

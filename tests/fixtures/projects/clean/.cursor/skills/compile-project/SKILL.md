@@ -51,18 +51,24 @@ Read:
 7. Build explicit dependencies and identify the critical path.
 8. Assign risk class from policy and record reasons.
 9. Determine required verification from behavior + risk.
-10. Build a Context Package plan for each Work Unit.
-11. Propose staffing from staffing policy.
-12. Update `.ai-team/state/project-state.yaml` and `.ai-team/work-units/`.
-13. Run `python scripts/ai-team/propose_allowlist.py` and attach its output to
+10. For frontend, fullstack and mobile Work Units, plan `human_ui_review`
+    explicitly. Require one only for a first testable slice, new or critical
+    journey, information-architecture change, high product ambiguity, or a
+    material change to an already reviewed surface. Do not schedule it for
+    invisible refactors or changes without user-perceptible effect. A planned
+    checkpoint is formative and non-blocking; it is not G4 acceptance.
+11. Build a Context Package plan for each Work Unit.
+12. Propose staffing from staffing policy.
+13. Update `.ai-team/state/project-state.yaml` and `.ai-team/work-units/`.
+14. Run `python scripts/ai-team/propose_allowlist.py` and attach its output to
     the G1 decision package as a proposed allowlist diff — do not edit
     `.cursor/permissions.json` or `.cursor/cli.json` yourself (agents cannot
     write either file; this is a proposal for the human to apply alongside
     the G1 decision, not a change you make).
-14. Produce a concise execution-plan summary that states residual as-built
+15. Produce a concise execution-plan summary that states residual as-built
     gaps left out of scope (if any).
-15. Set phase to `awaiting_g1_approval`.
-16. STOP. Do not activate developers until a human records G1 approval.
+16. Set phase to `awaiting_g1_approval`.
+17. STOP. Do not activate developers until a human records G1 approval.
 
 ## Required outputs
 
@@ -71,6 +77,7 @@ Read:
 - generated/updated Work Units;
 - dependency graph representation in Project State;
 - risk and verification assignments;
+- deliberately selected formative UI checkpoints, including their reason and surface;
 - staffing proposal;
 - proposed allowlist diff (from `scripts/ai-team/propose_allowlist.py`), for
   the human to review and apply — never applied automatically;

@@ -27,6 +27,12 @@ required_verification:
   security_review: false
   audit: false
   human_acceptance: true
+human_ui_review:
+  required: false
+  reason: not_required
+  surface: null
+  planned_after: qa
+  blocking_behavior: non_blocking
 context_package_ref: null
 status: draft
 events: []
@@ -38,3 +44,4 @@ outcomes:
   defects: []
   audit_findings: []
   human_acceptance: null
+  human_feedback: []

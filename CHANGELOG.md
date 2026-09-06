@@ -7,6 +7,11 @@ versions produit suivent Semantic Versioning.
 
 ### Added
 
+- Checkpoints UI formatifs planifiés à G1, non bloquants pour tous les profils
+  non supervisés, avec cahier manuel court lié au SHA vérifié.
+- `RecordHumanFeedback` / `ReconcileHumanFeedback`, stockage
+  `.ai-team/human-feedback/`, affichage `status.py` et analyse d'impact pour
+  réinjecter un retour tardif dans les Work Units affectées sans confondre G4.
 - Décision **DEC-003** — modèle `framework_source`, increment **INC-0.7.0**, clôture mode nuit, politique G3/G4 et nettoyage doc.
 - `scripts/ai-team/sync_source_manifest.py` et validation `framework_source` dans `validate.py`.
 - `RecordObservation` et `GenerateRetrospective` sont désormais déclenchés automatiquement par l'orchestrateur (échec/timeout/blocage d'une tentative d'exécution ; clôture de Work Unit ou de Run), en plus de l'invocation manuelle du skill `capture-feedback`.

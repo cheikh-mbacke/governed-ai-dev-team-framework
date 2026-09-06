@@ -30,29 +30,34 @@ Refuse runtime activation when G1 is not approved.
 
 ## Main loop
 
-1. Determine READY Work Units whose dependencies are satisfied.
-2. Respect WIP and high-risk concurrency limits.
-3. For each selected Work Unit, derive staffing from risk, touched areas, permissions and policy.
-4. Build or refresh its Context Package using `/build-context`.
-5. Delegate implementation to the appropriate developer subagent. Use isolated worktrees/environments for concurrent writers when available.
-6. Require a coherent Work Unit commit and exact SHA in the developer handoff;
+1. Inspect `.ai-team/human-feedback/` for `pending_reconciliation` objects.
+   Reconcile each with `/impact-analysis` before the next dispatch of an
+   affected Work Unit. Continue unrelated Work Units. An open visual checkpoint
+   or absent human response is never a reason to stop an unattended Run.
+2. Determine READY Work Units whose dependencies are satisfied.
+3. Respect WIP and high-risk concurrency limits.
+4. For each selected Work Unit, derive staffing from risk, touched areas, permissions and policy.
+5. Build or refresh its Context Package using `/build-context`.
+6. Delegate implementation to the appropriate developer subagent. Use isolated worktrees/environments for concurrent writers when available.
+7. Require a coherent Work Unit commit and exact SHA in the developer handoff;
    a WIP commit cannot enter verification.
-7. Record handoff/result events.
-8. Trigger QA against that exact SHA according to required verification.
-9. Trigger Code Reviewer when required.
-10. Trigger Security Reviewer when policy requires it.
-11. Trigger independent Auditor when policy requires it.
-12. Convert failures/findings into DEFECT, AUDIT_FINDING or remediation Work Units;
+8. Record handoff/result events.
+9. Trigger QA against that exact SHA according to required verification. A QA
+   visual checkpoint is informational and does not pause the loop.
+10. Trigger Code Reviewer when required.
+11. Trigger Security Reviewer when policy requires it.
+12. Trigger independent Auditor when policy requires it.
+13. Convert failures/findings into DEFECT, AUDIT_FINDING or remediation Work Units;
     require a new commit before re-verification and never let the Auditor remediate
     its own finding.
-13. Evaluate Definition of Done mechanically where possible.
-14. Prepare G2/G3/G4 decision packages when required.
-15. Update Project State after each authorized transition.
-16. When execution exposes unexpected friction, rework, avoidable human
+14. Evaluate Definition of Done mechanically where possible.
+15. Prepare G2/G3/G4 decision packages when required.
+16. Update Project State after each authorized transition.
+17. When execution exposes unexpected friction, rework, avoidable human
     intervention, or a framework/tool/environment limitation, record a
     structured observation with `python scripts/ai-team/feedback.py record`.
     Keep the origin `unknown` until evidence supports a stronger classification.
-17. Generate `python scripts/ai-team/feedback.py retrospective --work-unit WU-ID`
+18. Generate `python scripts/ai-team/feedback.py retrospective --work-unit WU-ID`
     after a Work Unit reaches a terminal state, and a project retrospective at
     the end of an increment or project when requested by the human.
 

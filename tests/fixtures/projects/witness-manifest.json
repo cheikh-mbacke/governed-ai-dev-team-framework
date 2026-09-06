@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-04T18:33:13+00:00",
+  "generated_at": "2026-09-06T16:01:25+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -33,7 +33,7 @@
     {
       "name": "clean",
       "root": "clean",
-      "file_count": 393,
+      "file_count": 400,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -57,7 +57,7 @@
         },
         {
           "path": ".ai-team/constitution/35-ui-ux-strategy.yaml",
-          "sha256": "3ce67f1e3f20a82d6a25275cf7867e1fe2d28a8c77bedd534da81b1a2752c9ee"
+          "sha256": "23879fcea89806d3a51b7313c40128b38aee44a179f5f12fb0245d6b2dce1d2f"
         },
         {
           "path": ".ai-team/constitution/40-test-strategy.yaml",
@@ -77,11 +77,11 @@
         },
         {
           "path": ".ai-team/constitution/80-communication-policy.yaml",
-          "sha256": "07b724ca8d969de6821c574c95518ebd93126a69463d837750975bea44d8b89a"
+          "sha256": "648a8ca971102db36fa808c5cb40a717258bfabd9355b7766feefb952b111fcf"
         },
         {
           "path": ".ai-team/constitution/90-gates-and-autonomy.yaml",
-          "sha256": "ed078ad1382ce3624e5c662843049a2376fe5b9b777f5f1f07ab7ec6843e63f8"
+          "sha256": "c488de9885d8de9689c36dd6d57a59d5c738fad8df09b07fdb59bbc4cf427201"
         },
         {
           "path": ".ai-team/constitution/95-git-release-policy.yaml",
@@ -89,7 +89,7 @@
         },
         {
           "path": ".ai-team/constitution/constitution.yaml",
-          "sha256": "17c5aab34a32fe9f12ed05ece97372535a66e88545a1d603109eff5c92ee6745"
+          "sha256": "0786b83836dc13bc0cb90c17baa53de8fa4bcfd7839ad718485a459a25bc30ad"
         },
         {
           "path": ".ai-team/constitution/definition-of-done.yaml",
@@ -245,11 +245,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "1228d4233246d970e0010fa355191de40640c110980195cdfe17e347338b6029"
+          "sha256": "5909bd9cfd866acafe09d6c19782f095db7991b525576df6232e4bc15d17692e"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "8207404fc1d16dd163d2dafce09ee1578d672a1070e5b70091151ff60cd6fd10"
+          "sha256": "0b884fdfdba394f25bda8f841768ce006f364cd0077e5a992a8b0107fa8ce61f"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -257,7 +257,7 @@
         },
         {
           "path": ".ai-team/project-profile.yaml",
-          "sha256": "8fa2c76e4c22138750b3b9ecbe8c593f712371a88dcc1006a351e8279036f472"
+          "sha256": "5b4f7d4122114cc7b960715a07e367eea6c246aab57e519d1ab0b745dd5284a1"
         },
         {
           "path": ".ai-team/requirements.txt",
@@ -389,7 +389,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/agents/qa-test.md",
-          "sha256": "9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
+          "sha256": "31fac8a8752d0580bf5f0c55087d7cec17ffbc9d19d3fef9d319ba648f5dd231"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/agents/reconciliation-steward.md",
@@ -413,7 +413,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/cli.json",
-          "sha256": "bbe34c66ecb4c4c80d2433fdc16619a2f1cd58e52db4bfbbff28471bad041bd2"
+          "sha256": "0c5993d1ae382270765fdc8ae36b75901d3c46e5d7cc648b132b24629f71e93a"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/hooks.json",
@@ -477,7 +477,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/capture-feedback/SKILL.md",
-          "sha256": "e67c66de71629211b70503fcf0f0069c08eef5be99080eb391d8dff7723a980b"
+          "sha256": "0e09392da7fff85ba5e1cce15d13b97ed679177c052226c9d92c31c88fd9cb29"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/challenge-requirements/SKILL.md",
@@ -485,7 +485,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/compile-project/SKILL.md",
-          "sha256": "ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
+          "sha256": "725a37bd412498376e9402431a3f4d5a0dee7870cca372e1e1d5fb6eee35b29f"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/design-verification/SKILL.md",
@@ -505,7 +505,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/impact-analysis/SKILL.md",
-          "sha256": "2c93c6f492d5a0130f2200cc3ec99105056239e4329e126a92e23bcbe9a65909"
+          "sha256": "4e616431853c9e63138d9405097dd6aacea3607352897c0863953766b4a835b9"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/integrate-work-units/SKILL.md",
@@ -517,11 +517,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/orchestrator/SKILL.md",
-          "sha256": "244431af182de433244a2b8608415f2b48759713d66a15fcd8f1828db1174666"
+          "sha256": "74e135a5b2dc66a97fb5c8d64e33df6c088f7300b745e77107eb6202c6f77622"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/prepare-acceptance/SKILL.md",
-          "sha256": "48c06b8c1b24be04b965b943eabbd7edd7967d22c6f36abf573c012fdb83dba1"
+          "sha256": "acb4b7d730986675657683027d493c4b0b67277d9880c46035c310a268ebf2ea"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/skills/propose-profile/SKILL.md",
@@ -749,11 +749,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/authorization.py",
-          "sha256": "13437ff6f2652cf8e8050e1c931be322241f051e1b20a8c176fed7c22acec440"
+          "sha256": "266c30d048ba4740b3eb86cae7a8e548dc3f5b9e40ad7d1737a111ae50925ccd"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/envelope.py",
-          "sha256": "473fe1ae0fb361cb4a062c8b169b94ac9f312d64c166690ab6ae6d159cd3b7bb"
+          "sha256": "164977f994f8eca7fc5e4ae874a364947092b13a4cb1b23338f2f5af25c5de6e"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/errors.py",
@@ -765,7 +765,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/__init__.py",
-          "sha256": "e7c5cd66e26ab91b57837fc31624ab5c6001a198a8a07eb3b85deabc40c62240"
+          "sha256": "00b26ff2acda11ef634d6ac4ff12dce1ff68a5541010cf35b23be9434f587524"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/acquire_worker_lease.py",
@@ -804,6 +804,10 @@
           "sha256": "5f6123549128d27ae5a85a4fb943f9979cb265d5cb519feed4c0a9ca18274520"
         },
         {
+          "path": ".ai-team/runtime/governed_ai/core/commands/handlers/reconcile_human_feedback.py",
+          "sha256": "7930745656f116a031345d35a8c1b1f7aa1afb8ca76b6968f4cde139a669d1d9"
+        },
+        {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/record_acceptance.py",
           "sha256": "263b757238484a5e1a5217799017260981890bcaab78ad2fb786521fcf2d85f2"
         },
@@ -814,6 +818,10 @@
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/record_gate_decision.py",
           "sha256": "a94cdd1d89966886372b142f6314851a6abf26447b0cd9c59c8a3a18935cb5f2"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/core/commands/handlers/record_human_feedback.py",
+          "sha256": "c09483842753fa7b8594ac758fd0f108d136860eaea234e33c3020d093d1ba5f"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/commands/handlers/record_integration_merge.py",
@@ -953,7 +961,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/domain/run/autonomy_policy.py",
-          "sha256": "185cbc8c9b28623663f8f6d0753c3742a8999ff9c7a53f4dab9cd65263676c74"
+          "sha256": "22cdc64c453699dd2cfaf51ba0d65a41f5158ad4879a8a80fdfc06b2a1556244"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/domain/run/convergence.py",
@@ -1116,6 +1124,10 @@
           "sha256": "d9856c0b894798f9cf182ac5757710063986b57f4ef3220eff6e1d94dc74dab7"
         },
         {
+          "path": ".ai-team/runtime/governed_ai/feedback/constants.py",
+          "sha256": "8c768d634cf17137d787506b84b5d2ed97057f3f2ec4d37599ca10278199b590"
+        },
+        {
           "path": ".ai-team/runtime/governed_ai/feedback/domain/__init__.py",
           "sha256": "6bb47ae4e52a518f444d675914a9f55fea188ee45ef7df264e1483530fcb4888"
         },
@@ -1132,8 +1144,12 @@
           "sha256": "05879af12cd901343b1f9a04180ce45229032da2c85d2a2f575a9be58dafbbd5"
         },
         {
+          "path": ".ai-team/runtime/governed_ai/feedback/hmac_v1.py",
+          "sha256": "446a80db6e1540097dbf10cb07b1d33f6b97f90342e8081997a23808216fd7a3"
+        },
+        {
           "path": ".ai-team/runtime/governed_ai/feedback/submit.py",
-          "sha256": "59e247c00f5725ec2f9d8389eddc49e93e2871d0aa68707a8f839bd02d247604"
+          "sha256": "630872ab5d93c796a91e3efe8e5395a5b2925b15eef453f1a96f4ac62a18d6b3"
         },
         {
           "path": ".ai-team/runtime/governed_ai/learning/__init__.py",
@@ -1145,7 +1161,7 @@
         },
         {
           "path": ".ai-team/schemas/acceptance.schema.json",
-          "sha256": "c76c963c43aa9376d69dd502ea123141636e05bdee60a561122da4797d34d0b2"
+          "sha256": "1834a23888ee5784916ed99c06664cccaca1b76abf94609e54de1e655cf696f4"
         },
         {
           "path": ".ai-team/schemas/checkpoint.schema.json",
@@ -1186,6 +1202,10 @@
         {
           "path": ".ai-team/schemas/gate-decision.schema.json",
           "sha256": "726ec43f2cf5cad5ef98e7cb0a70a28dd2d9c9f2d7592b75390def57a949431c"
+        },
+        {
+          "path": ".ai-team/schemas/human-feedback.schema.json",
+          "sha256": "980bbcc572132f1ac9f3b473cdf759e97f06b244a956be36e92669271bd655bd"
         },
         {
           "path": ".ai-team/schemas/integration-merge.schema.json",
@@ -1237,7 +1257,7 @@
         },
         {
           "path": ".ai-team/schemas/work-unit.schema.json",
-          "sha256": "1016b5ead92723b63d360f03f0ee3851097fabccc15c3385daaf21eccacc638c"
+          "sha256": "f39d2ea1a4512888d6c7a1633adddaa0b9766b40a9539c58ad6ebab3dc6dc1d0"
         },
         {
           "path": ".ai-team/schemas/worker-lease.schema.json",
@@ -1249,11 +1269,11 @@
         },
         {
           "path": ".ai-team/state/project-state.yaml",
-          "sha256": "1155e310267eddcfa3044be63a6b45c59c60a1195afc4d47b5632811e11f565f"
+          "sha256": "753e9b38509ea2954f9a6ba228c574a9d2328060f63fc6be84f070ed7fd51b4a"
         },
         {
           "path": ".ai-team/templates/acceptance.yaml",
-          "sha256": "2c13dfa1076435814498239ad1a06951a9890f8d2fbaf2e5e2e2a790e9fe525b"
+          "sha256": "020873bdcf6e8adce698f1986d52222fc3c4176561d1a6ebf3eefdcd2d901a92"
         },
         {
           "path": ".ai-team/templates/checkpoint.yaml",
@@ -1284,6 +1304,10 @@
           "sha256": "a2a0955a99a9a04d5483ffe71102716285c30bbf212e2ed6539957980d13a93a"
         },
         {
+          "path": ".ai-team/templates/human-feedback.yaml",
+          "sha256": "baee5677590102ce03cbe2539db00258f8d55a643a7b6196be5fce81de45ca54"
+        },
+        {
           "path": ".ai-team/templates/observation.yaml",
           "sha256": "fee31b43bde3f64dd6963329caf6774b0001372e9963b807a1ccdc9d44686556"
         },
@@ -1301,7 +1325,7 @@
         },
         {
           "path": ".ai-team/templates/work-unit.yaml",
-          "sha256": "0cb633c4dd63fa1adad5f00d5bf7a33f07bc772773e70065bec1dce5da96f002"
+          "sha256": "174a395ba957d884e12dbeac8e524fffc50365deebb96e50a6bc411e8cac875d"
         },
         {
           "path": ".ai-team/templates/worker-lease.yaml",
@@ -1353,7 +1377,7 @@
         },
         {
           "path": ".cursor/agents/qa-test.md",
-          "sha256": "9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
+          "sha256": "31fac8a8752d0580bf5f0c55087d7cec17ffbc9d19d3fef9d319ba648f5dd231"
         },
         {
           "path": ".cursor/agents/reconciliation-steward.md",
@@ -1377,7 +1401,7 @@
         },
         {
           "path": ".cursor/cli.json",
-          "sha256": "bbe34c66ecb4c4c80d2433fdc16619a2f1cd58e52db4bfbbff28471bad041bd2"
+          "sha256": "0c5993d1ae382270765fdc8ae36b75901d3c46e5d7cc648b132b24629f71e93a"
         },
         {
           "path": ".cursor/hooks.json",
@@ -1441,7 +1465,7 @@
         },
         {
           "path": ".cursor/skills/capture-feedback/SKILL.md",
-          "sha256": "e67c66de71629211b70503fcf0f0069c08eef5be99080eb391d8dff7723a980b"
+          "sha256": "0e09392da7fff85ba5e1cce15d13b97ed679177c052226c9d92c31c88fd9cb29"
         },
         {
           "path": ".cursor/skills/challenge-requirements/SKILL.md",
@@ -1449,7 +1473,7 @@
         },
         {
           "path": ".cursor/skills/compile-project/SKILL.md",
-          "sha256": "ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
+          "sha256": "725a37bd412498376e9402431a3f4d5a0dee7870cca372e1e1d5fb6eee35b29f"
         },
         {
           "path": ".cursor/skills/design-verification/SKILL.md",
@@ -1469,7 +1493,7 @@
         },
         {
           "path": ".cursor/skills/impact-analysis/SKILL.md",
-          "sha256": "2c93c6f492d5a0130f2200cc3ec99105056239e4329e126a92e23bcbe9a65909"
+          "sha256": "4e616431853c9e63138d9405097dd6aacea3607352897c0863953766b4a835b9"
         },
         {
           "path": ".cursor/skills/integrate-work-units/SKILL.md",
@@ -1481,11 +1505,11 @@
         },
         {
           "path": ".cursor/skills/orchestrator/SKILL.md",
-          "sha256": "244431af182de433244a2b8608415f2b48759713d66a15fcd8f1828db1174666"
+          "sha256": "74e135a5b2dc66a97fb5c8d64e33df6c088f7300b745e77107eb6202c6f77622"
         },
         {
           "path": ".cursor/skills/prepare-acceptance/SKILL.md",
-          "sha256": "48c06b8c1b24be04b965b943eabbd7edd7967d22c6f36abf573c012fdb83dba1"
+          "sha256": "acb4b7d730986675657683027d493c4b0b67277d9880c46035c310a268ebf2ea"
         },
         {
           "path": ".cursor/skills/propose-profile/SKILL.md",
@@ -1548,6 +1572,10 @@
           "sha256": "f1503f9f1e8c7fdb29d519e40670d5703d774e10f215154b3285e6fde7cbbe36"
         },
         {
+          "path": "scripts/ai-team/human_feedback.py",
+          "sha256": "4e924862949bb569ad83d7f2c4401611b24bd82c4c09e19d4112c561dad2e0db"
+        },
+        {
           "path": "scripts/ai-team/i18n.py",
           "sha256": "e73c1fdde4a34ea855c27638ba26416c8205692cd31edfc00847eb9147eaed9a"
         },
@@ -1593,7 +1621,7 @@
         },
         {
           "path": "scripts/ai-team/status.py",
-          "sha256": "fccb3eded355fbe565d81cdacb9b6f4e7f869f9431b1c8d3e71ae20ddca917fd"
+          "sha256": "2b6488921f4f265de36c51f21ddaa290c3a5d2c08b69c8ae41b6b1e120edcb9e"
         },
         {
           "path": "scripts/ai-team/sync_source_manifest.py",
@@ -1605,14 +1633,14 @@
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "782482fe98b4c24848c682a6e2a7bef14929d26187daa63af19e79d18fa46cec"
+          "sha256": "7879ab9323bf2af180eef7408b11aafc42e9adc1184295f3318ff02b93b8c27b"
         }
       ]
     },
     {
       "name": "legacy",
       "root": "legacy",
-      "file_count": 409,
+      "file_count": 416,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -1636,7 +1664,7 @@
         },
         {
           "path": ".ai-team/constitution/35-ui-ux-strategy.yaml",
-          "sha256": "3ce67f1e3f20a82d6a25275cf7867e1fe2d28a8c77bedd534da81b1a2752c9ee"
+          "sha256": "23879fcea89806d3a51b7313c40128b38aee44a179f5f12fb0245d6b2dce1d2f"
         },
         {
           "path": ".ai-team/constitution/40-test-strategy.yaml",
@@ -1656,11 +1684,11 @@
         },
         {
           "path": ".ai-team/constitution/80-communication-policy.yaml",
-          "sha256": "07b724ca8d969de6821c574c95518ebd93126a69463d837750975bea44d8b89a"
+          "sha256": "648a8ca971102db36fa808c5cb40a717258bfabd9355b7766feefb952b111fcf"
         },
         {
           "path": ".ai-team/constitution/90-gates-and-autonomy.yaml",
-          "sha256": "ed078ad1382ce3624e5c662843049a2376fe5b9b777f5f1f07ab7ec6843e63f8"
+          "sha256": "c488de9885d8de9689c36dd6d57a59d5c738fad8df09b07fdb59bbc4cf427201"
         },
         {
           "path": ".ai-team/constitution/95-git-release-policy.yaml",
@@ -1668,7 +1696,7 @@
         },
         {
           "path": ".ai-team/constitution/constitution.yaml",
-          "sha256": "17c5aab34a32fe9f12ed05ece97372535a66e88545a1d603109eff5c92ee6745"
+          "sha256": "0786b83836dc13bc0cb90c17baa53de8fa4bcfd7839ad718485a459a25bc30ad"
         },
         {
           "path": ".ai-team/constitution/definition-of-done.yaml",
@@ -1856,11 +1884,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "071c806d089600ef40551f0a27aba8fb156067eebb642d33af4d171af114c642"
+          "sha256": "27708c8a89a5cdb2a5a94f0e6e714e6e8a5bf852a21f3af5e19b4d70062d97d9"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "571ab763daba34cccb0596ebd02d9632e21cd130a644fa10a8806dff0eee839a"
+          "sha256": "dafea4e50007e061988e93273f1f202fea132ef544cfce601b9640c64f30f315"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1868,19 +1896,19 @@
         },
         {
           "path": ".ai-team/observations/OBS-WITNESS-001.yaml",
-          "sha256": "bebd7209c2e3166f9d28621def6549d32e7b30c155d83300a6a51a5b08fddb67"
+          "sha256": "5686038e4dd66ed4ae18af2842609bd986722067614f53423ca634fc37cd0707"
         },
         {
           "path": ".ai-team/project-profile.yaml",
-          "sha256": "00c331df85fbcd9eff62468ca758811ba348eaddafab6303291d3ff386702227"
+          "sha256": "f22818862e79bdd3809af9d879fc867f0e5405bb4a2647b39263c8b81c4f0a1c"
         },
         {
           "path": ".ai-team/retrospectives/RET-WITNESS-001.yaml",
-          "sha256": "336177f07a3018014a54be0861362720b90837bb21b929e0c1021d68006566fc"
+          "sha256": "5d9ce766753a48660db21a17ac1ada37f03c094a6d6b50c461a12d4929906426"
         },
         {
           "path": ".ai-team/schemas/acceptance.schema.json",
-          "sha256": "c76c963c43aa9376d69dd502ea123141636e05bdee60a561122da4797d34d0b2"
+          "sha256": "1834a23888ee5784916ed99c06664cccaca1b76abf94609e54de1e655cf696f4"
         },
         {
           "path": ".ai-team/schemas/checkpoint.schema.json",
@@ -1921,6 +1949,10 @@
         {
           "path": ".ai-team/schemas/gate-decision.schema.json",
           "sha256": "726ec43f2cf5cad5ef98e7cb0a70a28dd2d9c9f2d7592b75390def57a949431c"
+        },
+        {
+          "path": ".ai-team/schemas/human-feedback.schema.json",
+          "sha256": "980bbcc572132f1ac9f3b473cdf759e97f06b244a956be36e92669271bd655bd"
         },
         {
           "path": ".ai-team/schemas/integration-merge.schema.json",
@@ -1972,7 +2004,7 @@
         },
         {
           "path": ".ai-team/schemas/work-unit.schema.json",
-          "sha256": "1016b5ead92723b63d360f03f0ee3851097fabccc15c3385daaf21eccacc638c"
+          "sha256": "f39d2ea1a4512888d6c7a1633adddaa0b9766b40a9539c58ad6ebab3dc6dc1d0"
         },
         {
           "path": ".ai-team/schemas/worker-lease.schema.json",
@@ -1984,11 +2016,11 @@
         },
         {
           "path": ".ai-team/state/project-state.yaml",
-          "sha256": "c365170b3cd990b0d60257ba02ed619cbf9279e27f2c48571e0a0293d0c30e27"
+          "sha256": "f6024977780c7a75dab7402d82651e9508b382b07b17b424195d95d30a13f49a"
         },
         {
           "path": ".ai-team/templates/acceptance.yaml",
-          "sha256": "2c13dfa1076435814498239ad1a06951a9890f8d2fbaf2e5e2e2a790e9fe525b"
+          "sha256": "020873bdcf6e8adce698f1986d52222fc3c4176561d1a6ebf3eefdcd2d901a92"
         },
         {
           "path": ".ai-team/templates/checkpoint.yaml",
@@ -2019,6 +2051,10 @@
           "sha256": "a2a0955a99a9a04d5483ffe71102716285c30bbf212e2ed6539957980d13a93a"
         },
         {
+          "path": ".ai-team/templates/human-feedback.yaml",
+          "sha256": "baee5677590102ce03cbe2539db00258f8d55a643a7b6196be5fce81de45ca54"
+        },
+        {
           "path": ".ai-team/templates/observation.yaml",
           "sha256": "fee31b43bde3f64dd6963329caf6774b0001372e9963b807a1ccdc9d44686556"
         },
@@ -2036,7 +2072,7 @@
         },
         {
           "path": ".ai-team/templates/work-unit.yaml",
-          "sha256": "0cb633c4dd63fa1adad5f00d5bf7a33f07bc772773e70065bec1dce5da96f002"
+          "sha256": "174a395ba957d884e12dbeac8e524fffc50365deebb96e50a6bc411e8cac875d"
         },
         {
           "path": ".ai-team/templates/worker-lease.yaml",
@@ -2104,7 +2140,7 @@
         },
         {
           "path": ".cursor/agents/qa-test.md",
-          "sha256": "9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
+          "sha256": "31fac8a8752d0580bf5f0c55087d7cec17ffbc9d19d3fef9d319ba648f5dd231"
         },
         {
           "path": ".cursor/agents/reconciliation-steward.md",
@@ -2128,7 +2164,7 @@
         },
         {
           "path": ".cursor/cli.json",
-          "sha256": "bbe34c66ecb4c4c80d2433fdc16619a2f1cd58e52db4bfbbff28471bad041bd2"
+          "sha256": "0c5993d1ae382270765fdc8ae36b75901d3c46e5d7cc648b132b24629f71e93a"
         },
         {
           "path": ".cursor/hooks.json",
@@ -2192,7 +2228,7 @@
         },
         {
           "path": ".cursor/skills/capture-feedback/SKILL.md",
-          "sha256": "e67c66de71629211b70503fcf0f0069c08eef5be99080eb391d8dff7723a980b"
+          "sha256": "0e09392da7fff85ba5e1cce15d13b97ed679177c052226c9d92c31c88fd9cb29"
         },
         {
           "path": ".cursor/skills/challenge-requirements/SKILL.md",
@@ -2200,7 +2236,7 @@
         },
         {
           "path": ".cursor/skills/compile-project/SKILL.md",
-          "sha256": "ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
+          "sha256": "725a37bd412498376e9402431a3f4d5a0dee7870cca372e1e1d5fb6eee35b29f"
         },
         {
           "path": ".cursor/skills/design-verification/SKILL.md",
@@ -2220,7 +2256,7 @@
         },
         {
           "path": ".cursor/skills/impact-analysis/SKILL.md",
-          "sha256": "2c93c6f492d5a0130f2200cc3ec99105056239e4329e126a92e23bcbe9a65909"
+          "sha256": "4e616431853c9e63138d9405097dd6aacea3607352897c0863953766b4a835b9"
         },
         {
           "path": ".cursor/skills/integrate-work-units/SKILL.md",
@@ -2236,11 +2272,11 @@
         },
         {
           "path": ".cursor/skills/orchestrator/SKILL.md",
-          "sha256": "244431af182de433244a2b8608415f2b48759713d66a15fcd8f1828db1174666"
+          "sha256": "74e135a5b2dc66a97fb5c8d64e33df6c088f7300b745e77107eb6202c6f77622"
         },
         {
           "path": ".cursor/skills/prepare-acceptance/SKILL.md",
-          "sha256": "48c06b8c1b24be04b965b943eabbd7edd7967d22c6f36abf573c012fdb83dba1"
+          "sha256": "acb4b7d730986675657683027d493c4b0b67277d9880c46035c310a268ebf2ea"
         },
         {
           "path": ".cursor/skills/propose-profile/SKILL.md",
@@ -2384,7 +2420,7 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/agents/qa-test.md",
-          "sha256": "9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
+          "sha256": "31fac8a8752d0580bf5f0c55087d7cec17ffbc9d19d3fef9d319ba648f5dd231"
         },
         {
           "path": "adapters/cursor/templates/.cursor/agents/reconciliation-steward.md",
@@ -2408,7 +2444,7 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/cli.json",
-          "sha256": "bbe34c66ecb4c4c80d2433fdc16619a2f1cd58e52db4bfbbff28471bad041bd2"
+          "sha256": "0c5993d1ae382270765fdc8ae36b75901d3c46e5d7cc648b132b24629f71e93a"
         },
         {
           "path": "adapters/cursor/templates/.cursor/hooks.json",
@@ -2472,7 +2508,7 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/capture-feedback/SKILL.md",
-          "sha256": "e67c66de71629211b70503fcf0f0069c08eef5be99080eb391d8dff7723a980b"
+          "sha256": "0e09392da7fff85ba5e1cce15d13b97ed679177c052226c9d92c31c88fd9cb29"
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/challenge-requirements/SKILL.md",
@@ -2480,7 +2516,7 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/compile-project/SKILL.md",
-          "sha256": "ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
+          "sha256": "725a37bd412498376e9402431a3f4d5a0dee7870cca372e1e1d5fb6eee35b29f"
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/design-verification/SKILL.md",
@@ -2500,7 +2536,7 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/impact-analysis/SKILL.md",
-          "sha256": "2c93c6f492d5a0130f2200cc3ec99105056239e4329e126a92e23bcbe9a65909"
+          "sha256": "4e616431853c9e63138d9405097dd6aacea3607352897c0863953766b4a835b9"
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/integrate-work-units/SKILL.md",
@@ -2512,11 +2548,11 @@
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/orchestrator/SKILL.md",
-          "sha256": "244431af182de433244a2b8608415f2b48759713d66a15fcd8f1828db1174666"
+          "sha256": "74e135a5b2dc66a97fb5c8d64e33df6c088f7300b745e77107eb6202c6f77622"
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/prepare-acceptance/SKILL.md",
-          "sha256": "48c06b8c1b24be04b965b943eabbd7edd7967d22c6f36abf573c012fdb83dba1"
+          "sha256": "acb4b7d730986675657683027d493c4b0b67277d9880c46035c310a268ebf2ea"
         },
         {
           "path": "adapters/cursor/templates/.cursor/skills/propose-profile/SKILL.md",
@@ -2579,6 +2615,10 @@
           "sha256": "f1503f9f1e8c7fdb29d519e40670d5703d774e10f215154b3285e6fde7cbbe36"
         },
         {
+          "path": "scripts/ai-team/human_feedback.py",
+          "sha256": "4e924862949bb569ad83d7f2c4401611b24bd82c4c09e19d4112c561dad2e0db"
+        },
+        {
           "path": "scripts/ai-team/i18n.py",
           "sha256": "e73c1fdde4a34ea855c27638ba26416c8205692cd31edfc00847eb9147eaed9a"
         },
@@ -2624,7 +2664,7 @@
         },
         {
           "path": "scripts/ai-team/status.py",
-          "sha256": "fccb3eded355fbe565d81cdacb9b6f4e7f869f9431b1c8d3e71ae20ddca917fd"
+          "sha256": "2b6488921f4f265de36c51f21ddaa290c3a5d2c08b69c8ae41b6b1e120edcb9e"
         },
         {
           "path": "scripts/ai-team/sync_source_manifest.py",
@@ -2636,7 +2676,7 @@
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "782482fe98b4c24848c682a6e2a7bef14929d26187daa63af19e79d18fa46cec"
+          "sha256": "7879ab9323bf2af180eef7408b11aafc42e9adc1184295f3318ff02b93b8c27b"
         },
         {
           "path": "src/governed_ai/__init__.py",
@@ -2856,11 +2896,11 @@
         },
         {
           "path": "src/governed_ai/core/commands/authorization.py",
-          "sha256": "13437ff6f2652cf8e8050e1c931be322241f051e1b20a8c176fed7c22acec440"
+          "sha256": "266c30d048ba4740b3eb86cae7a8e548dc3f5b9e40ad7d1737a111ae50925ccd"
         },
         {
           "path": "src/governed_ai/core/commands/envelope.py",
-          "sha256": "473fe1ae0fb361cb4a062c8b169b94ac9f312d64c166690ab6ae6d159cd3b7bb"
+          "sha256": "164977f994f8eca7fc5e4ae874a364947092b13a4cb1b23338f2f5af25c5de6e"
         },
         {
           "path": "src/governed_ai/core/commands/errors.py",
@@ -2872,7 +2912,7 @@
         },
         {
           "path": "src/governed_ai/core/commands/handlers/__init__.py",
-          "sha256": "e7c5cd66e26ab91b57837fc31624ab5c6001a198a8a07eb3b85deabc40c62240"
+          "sha256": "00b26ff2acda11ef634d6ac4ff12dce1ff68a5541010cf35b23be9434f587524"
         },
         {
           "path": "src/governed_ai/core/commands/handlers/acquire_worker_lease.py",
@@ -2911,6 +2951,10 @@
           "sha256": "5f6123549128d27ae5a85a4fb943f9979cb265d5cb519feed4c0a9ca18274520"
         },
         {
+          "path": "src/governed_ai/core/commands/handlers/reconcile_human_feedback.py",
+          "sha256": "7930745656f116a031345d35a8c1b1f7aa1afb8ca76b6968f4cde139a669d1d9"
+        },
+        {
           "path": "src/governed_ai/core/commands/handlers/record_acceptance.py",
           "sha256": "263b757238484a5e1a5217799017260981890bcaab78ad2fb786521fcf2d85f2"
         },
@@ -2921,6 +2965,10 @@
         {
           "path": "src/governed_ai/core/commands/handlers/record_gate_decision.py",
           "sha256": "a94cdd1d89966886372b142f6314851a6abf26447b0cd9c59c8a3a18935cb5f2"
+        },
+        {
+          "path": "src/governed_ai/core/commands/handlers/record_human_feedback.py",
+          "sha256": "c09483842753fa7b8594ac758fd0f108d136860eaea234e33c3020d093d1ba5f"
         },
         {
           "path": "src/governed_ai/core/commands/handlers/record_integration_merge.py",
@@ -3060,7 +3108,7 @@
         },
         {
           "path": "src/governed_ai/core/domain/run/autonomy_policy.py",
-          "sha256": "185cbc8c9b28623663f8f6d0753c3742a8999ff9c7a53f4dab9cd65263676c74"
+          "sha256": "22cdc64c453699dd2cfaf51ba0d65a41f5158ad4879a8a80fdfc06b2a1556244"
         },
         {
           "path": "src/governed_ai/core/domain/run/convergence.py",
@@ -3223,6 +3271,10 @@
           "sha256": "d9856c0b894798f9cf182ac5757710063986b57f4ef3220eff6e1d94dc74dab7"
         },
         {
+          "path": "src/governed_ai/feedback/constants.py",
+          "sha256": "8c768d634cf17137d787506b84b5d2ed97057f3f2ec4d37599ca10278199b590"
+        },
+        {
           "path": "src/governed_ai/feedback/domain/__init__.py",
           "sha256": "6bb47ae4e52a518f444d675914a9f55fea188ee45ef7df264e1483530fcb4888"
         },
@@ -3239,8 +3291,12 @@
           "sha256": "05879af12cd901343b1f9a04180ce45229032da2c85d2a2f575a9be58dafbbd5"
         },
         {
+          "path": "src/governed_ai/feedback/hmac_v1.py",
+          "sha256": "446a80db6e1540097dbf10cb07b1d33f6b97f90342e8081997a23808216fd7a3"
+        },
+        {
           "path": "src/governed_ai/feedback/submit.py",
-          "sha256": "59e247c00f5725ec2f9d8389eddc49e93e2871d0aa68707a8f839bd02d247604"
+          "sha256": "630872ab5d93c796a91e3efe8e5395a5b2925b15eef453f1a96f4ac62a18d6b3"
         },
         {
           "path": "src/governed_ai/learning/__init__.py",

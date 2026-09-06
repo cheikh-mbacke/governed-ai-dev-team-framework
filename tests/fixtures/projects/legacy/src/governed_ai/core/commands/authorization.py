@@ -18,6 +18,8 @@ SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
             "ResolveDecisionRequest",
             "RecordGateDecision",
             "RecordAcceptance",
+            "RecordHumanFeedback",
+            "ReconcileHumanFeedback",
             "ExportFeedback",
             "SubmitFeedback",
             # Document 6 §10.2 — run-reliability-controller is a mechanical Core

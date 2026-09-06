@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -11,16 +12,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FeedbackLoopIntegrationTests(unittest.TestCase):
-    def run_command(self, args, cwd):
+    def run_command(self, args, cwd, *, env=None):
         return subprocess.run(
             args,
             cwd=cwd,
             text=True,
             capture_output=True,
             timeout=30,
+            env=env,
         )
 
     def install_target(self, target):
+        install_env = os.environ.copy()
+        install_env["GOVERNED_AI_FEEDBACK_ENROLL_URL"] = "http://127.0.0.1:1"
         result = self.run_command(
             [
                 sys.executable,
@@ -33,6 +37,7 @@ class FeedbackLoopIntegrationTests(unittest.TestCase):
                 "Feedback Test",
             ],
             ROOT,
+            env=install_env,
         )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
 

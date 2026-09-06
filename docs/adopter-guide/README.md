@@ -9,6 +9,7 @@ Guides pratiques pour **décider d’adopter**, installer, migrer, valider et ex
 | [architecture.md](architecture.md) | Comprendre les composants et leurs responsabilités |
 | [security-model.md](security-model.md) | Autorité humaine, gates et frontières de confiance |
 | [operator-guide.md](operator-guide.md) | Commandes quotidiennes (install, update, validate, rollback) |
+| [asynchronous-ui-feedback.md](asynchronous-ui-feedback.md) | Tester une UI au bon moment et réinjecter un retour sans bloquer les modes autonomes |
 | [upgrading.md](upgrading.md) | Passage `0.4.x` → `0.7.0` et Installation Record v3 |
 | [adopter-checklist.md](adopter-checklist.md) | Checklist de mise en service (assessment → G0…) |
 | [deprecations.md](deprecations.md) | Scripts et formats dépréciés |

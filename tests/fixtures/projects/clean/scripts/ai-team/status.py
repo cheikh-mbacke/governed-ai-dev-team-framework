@@ -157,3 +157,33 @@ print(t(LANG, "Visual checkpoints available:", "Points de controle visuels dispo
 for work_unit, (event_id, checkpoint) in sorted(checkpoints.items(), key=lambda kv: kv[0] or ""):
     print(f"  {work_unit} ({event_id}): {checkpoint.get('command')}")
     print(f"    {checkpoint.get('why')}")
+    if checkpoint.get("observed_revision"):
+        print(f"    revision: {checkpoint.get('observed_revision')}")
+    if checkpoint.get("acceptance_package_ref"):
+        print(f"    scenarios: {checkpoint.get('acceptance_package_ref')}")
+
+human_feedback = []
+feedback_dir = AI / "human-feedback"
+if feedback_dir.is_dir():
+    for path in sorted(feedback_dir.glob("*.yaml")):
+        try:
+            human_feedback.append(yaml.safe_load(path.read_text(encoding="utf-8")) or {})
+        except Exception:
+            pass
+pending_human_feedback = [
+    item for item in human_feedback if item.get("status") == "pending_reconciliation"
+]
+print(
+    t(
+        LANG,
+        "Human feedback pending reconciliation:",
+        "Retours humains a reconcilier :",
+    )
+    + f" {len(pending_human_feedback)}"
+)
+for item in pending_human_feedback:
+    observed = item.get("observed_revision") or {}
+    print(
+        f"  {item.get('id')}: work_unit={item.get('work_unit')} "
+        f"surface={item.get('surface')} observed={observed.get('commit_sha')}"
+    )

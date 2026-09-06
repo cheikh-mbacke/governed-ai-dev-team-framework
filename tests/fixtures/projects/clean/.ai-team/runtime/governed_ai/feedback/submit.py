@@ -1,19 +1,29 @@
-"""Transmit consented Feedback Exports to the framework learning ingest."""
+"""Transmit consented Feedback Exports to the product ingestion tunnel."""
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import time
 import urllib.error
 import urllib.request
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from governed_ai.core.workspace import Workspace
 from governed_ai.feedback import common
 from governed_ai.feedback.commands.handlers import ExportParams, build_export_document
+from governed_ai.feedback.constants import (
+    DEFAULT_ENROLL_URL,
+    DEFAULT_ENROLLMENT_TOKEN,
+    DEFAULT_FEEDBACK_SUBMIT_URL,
+    FEEDBACK_INGEST_SECRETS_REL,
+)
+from governed_ai.feedback.hmac_v1 import compute_signature_v1, sha256_hex
 
 RETRYABLE_TRANSMISSION_STATUSES = frozenset({"pending", "local_outbox", "failed"})
 CURRENT_TERMS_VERSION = "1.0"
@@ -35,19 +45,43 @@ def transmitted_directory(workspace: Workspace) -> Path:
     return outbox_directory(workspace) / "transmitted"
 
 
-def _resolve_submit_url(meta: dict[str, Any]) -> str | None:
+def secrets_path(workspace: Workspace) -> Path:
+    return workspace.root / FEEDBACK_INGEST_SECRETS_REL
+
+
+def _resolve_submit_url(meta: dict[str, Any]) -> str:
     env_url = (os.environ.get("GOVERNED_AI_FEEDBACK_SUBMIT_URL") or "").strip()
     if env_url:
         return env_url
     configured = meta.get("telemetry_submit_url")
     if isinstance(configured, str) and configured.strip():
         return configured.strip()
-    return None
+    return DEFAULT_FEEDBACK_SUBMIT_URL
 
 
-def _resolve_submit_token() -> str | None:
-    token = (os.environ.get("GOVERNED_AI_FEEDBACK_SUBMIT_TOKEN") or "").strip()
-    return token or None
+def load_ingest_credentials(workspace: Workspace) -> tuple[str, bytes] | None:
+    path = secrets_path(workspace)
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    key_id = payload.get("key_id")
+    secret_b64 = payload.get("secret_base64")
+    if not isinstance(key_id, str) or not key_id.strip():
+        return None
+    if not isinstance(secret_b64, str) or not secret_b64.strip():
+        return None
+    try:
+        secret = base64.b64decode(secret_b64, validate=True)
+    except Exception:
+        return None
+    if len(secret) < 32:
+        return None
+    return key_id.strip(), secret
 
 
 def _payload_for_wire(payload: dict[str, Any]) -> dict[str, Any]:
@@ -76,13 +110,19 @@ def ensure_terms_accepted(meta: dict[str, Any]) -> None:
         )
 
 
+def _ingest_path(destination: str) -> str:
+    path = urlparse(destination).path or "/v1/feedback-exports"
+    return path if path.startswith("/") else f"/{path}"
+
+
 def transmit_payload(
     payload: dict[str, Any],
     *,
-    destination: str | None,
+    destination: str,
+    credentials: tuple[str, bytes] | None,
     attempts: int | None = None,
 ) -> dict[str, Any]:
-    """POST the full export with bounded retries. No content redaction (ADR-009)."""
+    """POST the full export with HMAC-SHA256-V1 and bounded retries."""
     transmission = {
         "status": "pending",
         "submitted_at": common.now_iso(),
@@ -90,19 +130,40 @@ def transmit_payload(
         "ack_id": None,
         "error": None,
     }
-    if not destination:
-        transmission["status"] = "local_outbox"
+    if credentials is None:
+        transmission["status"] = "failed"
+        transmission["error"] = (
+            "missing .ai-team/secrets/feedback-ingest.json "
+            "(re-install or enroll against the ingestion tunnel)"
+        )
         return transmission
 
+    key_id, secret = credentials
     body = json.dumps(_payload_for_wire(payload), ensure_ascii=False).encode("utf-8")
-    headers = {"Content-Type": "application/json; charset=utf-8"}
-    token = _resolve_submit_token()
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
+    path = _ingest_path(destination)
 
     last_error: str | None = None
     max_attempts = max(1, attempts if attempts is not None else _submit_attempts())
     for attempt in range(max_attempts):
+        timestamp = str(int(time.time()))
+        nonce = str(uuid.uuid4())
+        content_sha256 = sha256_hex(body)
+        signature = compute_signature_v1(
+            secret,
+            key_id=key_id,
+            timestamp=timestamp,
+            nonce=nonce,
+            content_sha256=content_sha256,
+            path=path,
+        )
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "X-GAI-Key-ID": key_id,
+            "X-GAI-Timestamp": timestamp,
+            "X-GAI-Nonce": nonce,
+            "X-GAI-Content-SHA256": content_sha256,
+            "X-GAI-Signature": signature,
+        }
         request = urllib.request.Request(
             destination,
             data=body,
@@ -164,7 +225,7 @@ class FlushItemResult:
 
 
 def flush_outbox(workspace: Workspace) -> list[FlushItemResult]:
-    """Retry pending/failed/local_outbox exports when a submit URL is available."""
+    """Retry pending/failed/local_outbox exports when collection is enabled."""
     meta = common.metadata(workspace)
     collection = meta.get("telemetry_collection") or "consented_share"
     directory = outbox_directory(workspace)
@@ -173,6 +234,7 @@ def flush_outbox(workspace: Workspace) -> list[FlushItemResult]:
 
     results: list[FlushItemResult] = []
     destination = None if collection == "disabled" else _resolve_submit_url(meta)
+    credentials = None if collection == "disabled" else load_ingest_credentials(workspace)
 
     for path in sorted(directory.glob("EXP-*.json")):
         try:
@@ -218,22 +280,10 @@ def flush_outbox(workspace: Workspace) -> list[FlushItemResult]:
             )
             continue
 
-        if not destination:
-            if status != "local_outbox":
-                document["transmission"] = {
-                    "status": "local_outbox",
-                    "submitted_at": common.now_iso(),
-                    "destination": None,
-                    "ack_id": None,
-                    "error": None,
-                }
-                common.atomic_write_json(path, document)
-            results.append(
-                FlushItemResult(export_id=export_id, path=path, status="local_outbox")
-            )
-            continue
-
-        document["transmission"] = transmit_payload(document, destination=destination)
+        assert destination is not None
+        document["transmission"] = transmit_payload(
+            document, destination=destination, credentials=credentials
+        )
         common.validate_payload(workspace, document, "feedback-export.schema.json")
         new_status = document["transmission"]["status"]
         if new_status == "transmitted":
@@ -262,11 +312,11 @@ def flush_outbox(workspace: Workspace) -> list[FlushItemResult]:
 def build_and_submit(
     workspace: Workspace, *, output: str | None = None
 ) -> tuple[dict[str, Any], Any]:
-    """Build a full consented export and attempt transmission.
+    """Build a full consented export and attempt HMAC transmission.
 
-    Always drains the local outbox first when a destination URL is configured
-    (or marks items skipped when collection is disabled). Failed or offline
-    exports land under `.ai-team/metrics/outbox/` for later flush/retry.
+    Under consented_share the destination defaults to the product tunnel URL.
+    Failed or offline exports land under `.ai-team/metrics/outbox/` for later
+    flush/retry. Missing ingest credentials yield failed (not silent local_outbox).
     """
     meta = common.metadata(workspace)
     collection = meta.get("telemetry_collection") or "consented_share"
@@ -294,10 +344,31 @@ def build_and_submit(
         ExportParams(detail_level="full", include_project_id=True, output=output),
     )
     destination = _resolve_submit_url(meta)
-    payload["transmission"] = transmit_payload(payload, destination=destination)
+    credentials = load_ingest_credentials(workspace)
+    payload["transmission"] = transmit_payload(
+        payload, destination=destination, credentials=credentials
+    )
     status = payload["transmission"]["status"]
     if output is None and status in RETRYABLE_TRANSMISSION_STATUSES:
         path = _outbox_path(workspace, str(payload["export_id"]))
     # Re-validate after transmission block is filled.
     common.validate_payload(workspace, payload, "feedback-export.schema.json")
     return payload, path
+
+
+def enrollment_token() -> str:
+    return (
+        os.environ.get("GOVERNED_AI_FEEDBACK_ENROLLMENT_TOKEN") or ""
+    ).strip() or DEFAULT_ENROLLMENT_TOKEN
+
+
+def enroll_url() -> str:
+    return (
+        os.environ.get("GOVERNED_AI_FEEDBACK_ENROLL_URL") or ""
+    ).strip() or DEFAULT_ENROLL_URL
+
+
+def resolve_default_submit_url() -> str:
+    return (
+        os.environ.get("GOVERNED_AI_FEEDBACK_SUBMIT_URL") or ""
+    ).strip() or DEFAULT_FEEDBACK_SUBMIT_URL

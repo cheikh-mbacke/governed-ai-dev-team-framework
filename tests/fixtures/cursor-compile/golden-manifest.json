@@ -70,7 +70,7 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/qa-test.md",
-      "sha256": "sha256:9cc0a447b4b7f0e2a4eb70e35c06ea5528b47b8144b133263c5358c0fda68c86"
+      "sha256": "sha256:31fac8a8752d0580bf5f0c55087d7cec17ffbc9d19d3fef9d319ba648f5dd231"
     },
     {
       "kind": "agent",
@@ -100,7 +100,7 @@
     {
       "kind": "cli_config",
       "path": ".cursor/cli.json",
-      "sha256": "sha256:bbe34c66ecb4c4c80d2433fdc16619a2f1cd58e52db4bfbbff28471bad041bd2"
+      "sha256": "sha256:0c5993d1ae382270765fdc8ae36b75901d3c46e5d7cc648b132b24629f71e93a"
     },
     {
       "kind": "hooks_config",
@@ -180,7 +180,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/capture-feedback/SKILL.md",
-      "sha256": "sha256:e67c66de71629211b70503fcf0f0069c08eef5be99080eb391d8dff7723a980b"
+      "sha256": "sha256:0e09392da7fff85ba5e1cce15d13b97ed679177c052226c9d92c31c88fd9cb29"
     },
     {
       "kind": "skill",
@@ -190,7 +190,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/compile-project/SKILL.md",
-      "sha256": "sha256:ea89095d5705414f486b22b045738636385509fa265bd3963eb80bc88f19c773"
+      "sha256": "sha256:725a37bd412498376e9402431a3f4d5a0dee7870cca372e1e1d5fb6eee35b29f"
     },
     {
       "kind": "skill",
@@ -215,7 +215,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/impact-analysis/SKILL.md",
-      "sha256": "sha256:2c93c6f492d5a0130f2200cc3ec99105056239e4329e126a92e23bcbe9a65909"
+      "sha256": "sha256:4e616431853c9e63138d9405097dd6aacea3607352897c0863953766b4a835b9"
     },
     {
       "kind": "skill",
@@ -230,12 +230,12 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/orchestrator/SKILL.md",
-      "sha256": "sha256:244431af182de433244a2b8608415f2b48759713d66a15fcd8f1828db1174666"
+      "sha256": "sha256:74e135a5b2dc66a97fb5c8d64e33df6c088f7300b745e77107eb6202c6f77622"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/prepare-acceptance/SKILL.md",
-      "sha256": "sha256:48c06b8c1b24be04b965b943eabbd7edd7967d22c6f36abf573c012fdb83dba1"
+      "sha256": "sha256:acb4b7d730986675657683027d493c4b0b67277d9880c46035c310a268ebf2ea"
     },
     {
       "kind": "skill",

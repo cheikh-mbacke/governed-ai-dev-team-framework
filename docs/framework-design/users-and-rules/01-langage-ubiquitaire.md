@@ -19,6 +19,8 @@
 | **Human Construction Material** | Sources humaines faisant autorité : intention, règles métier, exigences, contraintes et critères d’acceptation. | Règle de domaine. |
 | **Release Candidate** | Enregistrement préparatoire d’un candidat de release. | Observé. |
 | **Acceptance** | Enregistrement d’une acceptation humaine. | Observé. |
+| **Human Checkpoint** | Notification non bloquante indiquant qu'une surface UI cohérente est testable sur un SHA précis avec un cahier court de scénarios manuels. | Règle. Ce n'est ni une gate, ni une acceptation. |
+| **HumanFeedback** | Retour humain formatif rattaché à une Work Unit, une surface et au SHA effectivement observé ; il doit être réconcilié avec l'état courant avant la prochaine exécution affectée. | Observé : `RecordHumanFeedback`, `ReconcileHumanFeedback`, schéma et stockage dédiés. |
 
 ## 2. Contrat publié et Adaptateur/Runtime
 
