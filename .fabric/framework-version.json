@@ -137,6 +137,7 @@
     "distribution/payload/.ai-team/schemas/human-feedback.schema.json",
     "distribution/payload/.ai-team/schemas/integration-merge.schema.json",
     "distribution/payload/.ai-team/schemas/mission-artifact.schema.json",
+    "distribution/payload/.ai-team/schemas/notification.schema.json",
     "distribution/payload/.ai-team/schemas/observation.schema.json",
     "distribution/payload/.ai-team/schemas/project-profile.schema.json",
     "distribution/payload/.ai-team/schemas/project-state.schema.json",
@@ -158,6 +159,7 @@
     "distribution/payload/.ai-team/templates/execution-attempt.yaml",
     "distribution/payload/.ai-team/templates/finding.yaml",
     "distribution/payload/.ai-team/templates/human-feedback.yaml",
+    "distribution/payload/.ai-team/templates/notification.json",
     "distribution/payload/.ai-team/templates/observation.yaml",
     "distribution/payload/.ai-team/templates/release-candidate.yaml",
     "distribution/payload/.ai-team/templates/retrospective.yaml",
@@ -177,6 +179,7 @@
     "scripts/ai-team/ingest_feedback.py",
     "scripts/ai-team/install_paths.py",
     "scripts/ai-team/migrate.py",
+    "scripts/ai-team/notify.py",
     "scripts/ai-team/orchestrate.py",
     "scripts/ai-team/preflight.py",
     "scripts/ai-team/propose_allowlist.py",
@@ -344,6 +347,10 @@
     "src/governed_ai/feedback/hmac_v1.py",
     "src/governed_ai/feedback/submit.py",
     "src/governed_ai/learning/__init__.py",
-    "src/governed_ai/learning/aggregate.py"
+    "src/governed_ai/learning/aggregate.py",
+    "src/governed_ai/notifications/__init__.py",
+    "src/governed_ai/notifications/config.py",
+    "src/governed_ai/notifications/service.py",
+    "src/governed_ai/notifications/smtp_transport.py"
   ]
 }

@@ -55,6 +55,60 @@
         }
       }
     },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "object",
+          "required": ["enabled", "from", "transport", "recipients", "events"],
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "from": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+$"},
+            "transport": {
+              "type": "object",
+              "required": ["host", "port", "security", "username", "password_env"],
+              "properties": {
+                "host": {"type": "string", "minLength": 1},
+                "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+                "security": {"enum": ["ssl", "starttls", "none"]},
+                "username": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+$"},
+                "password_env": {"type": "string", "minLength": 1},
+                "connect_timeout_seconds": {"type": "number", "minimum": 1, "maximum": 120}
+              },
+              "additionalProperties": false
+            },
+            "recipients": {
+              "type": "object",
+              "required": ["critical", "action_required", "digest"],
+              "properties": {
+                "critical": {"type": "array", "items": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+$"}, "uniqueItems": true},
+                "action_required": {"type": "array", "items": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+$"}, "uniqueItems": true},
+                "digest": {"type": "array", "items": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+$"}, "uniqueItems": true}
+              },
+              "additionalProperties": false
+            },
+            "events": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "global_stop",
+                  "decision_required",
+                  "risk_escalation",
+                  "release_candidate_ready",
+                  "acceptance_ready",
+                  "ui_checkpoint",
+                  "human_feedback_reconciled",
+                  "run_completed"
+                ]
+              },
+              "additionalProperties": {"enum": ["immediate", "digest", "off", "profile"]}
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "paths": {
       "type": "object"
     },

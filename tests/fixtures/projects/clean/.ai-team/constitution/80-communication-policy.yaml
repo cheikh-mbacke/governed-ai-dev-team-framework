@@ -1,5 +1,5 @@
 policy: structured_communication
-version: "1.1.0"
+version: "1.2.0"
 event_types:
   STATUS: "Describe an execution result or state."
   CONTEXT_REQUEST: "Request precisely delimited additional context."
@@ -68,3 +68,27 @@ details_conventions:
       revision, then reconciled against current state. Only a newly discovered
       unresolved product decision may block its dependent subgraph under the
       normal decision policy.
+email_notifications:
+  principle: >
+    E-mail is a fallible projection of authoritative structured records. A
+    delivery failure never changes project state and never blocks execution.
+  immediate:
+    - global_stop_or_failed_run
+    - pending_human_decision
+    - risk_escalation
+    - release_candidate_ready_for_g3
+  profile_aware:
+    - ui_checkpoint
+    - increment_ready_for_human_verification
+  digest:
+    - reconciled_human_feedback
+    - completed_run_report
+  noise_excluded:
+    - ordinary_status_transition
+    - successful_test
+    - recoverable_retry
+    - commit_created
+  security:
+    - smtp_password_never_in_versioned_configuration_or_logs
+    - recipients_are_explicit_and_no_external_recipient_is_implicit
+    - certificate_validation_required_for_ssl_and_starttls

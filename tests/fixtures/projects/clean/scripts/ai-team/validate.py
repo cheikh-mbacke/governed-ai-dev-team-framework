@@ -381,6 +381,9 @@ if state_path.exists():
 for p in sorted((AI / "work-units").glob("*.yaml")):
     validate_instance(p, "work-unit.schema.json")
 
+for p in sorted((AI / "notifications").glob("NTF-*.json")):
+    validate_instance(p, "notification.schema.json")
+
 # Cross-check: a Work Unit marked done/accepted in project-state.yaml must be
 # backed by a matching work-unit file and by the artifacts it references.
 # validate_instance() above only checks each file's own schema; it cannot

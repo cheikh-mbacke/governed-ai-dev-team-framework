@@ -692,6 +692,17 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
     secrets_dir = target / ".ai-team" / "secrets"
     secrets_dir.mkdir(parents=True, exist_ok=True)
     (secrets_dir / ".gitignore").write_text("*\n!.gitignore\n", encoding="utf-8")
+    smtp_password = os.environ.get("GOVERNED_AI_SMTP_PASSWORD")
+    if smtp_password:
+        smtp_secret_path = secrets_dir / "smtp.json"
+        smtp_secret_path.write_text(
+            json.dumps({"password": smtp_password}, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        try:
+            os.chmod(smtp_secret_path, 0o600)
+        except OSError:
+            pass
     try:
         enroll_body = json.dumps(
             {

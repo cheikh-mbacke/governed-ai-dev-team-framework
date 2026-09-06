@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NotificationDeliveryRecord",
+  "type": "object",
+  "required": [
+    "id",
+    "dedupe_key",
+    "event_type",
+    "source_ref",
+    "source_version",
+    "delivery",
+    "recipient_group",
+    "subject",
+    "body",
+    "status",
+    "attempts",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {"type": "string", "pattern": "^NTF-[A-F0-9]{20}$"},
+    "dedupe_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "event_type": {
+      "enum": [
+        "global_stop",
+        "decision_required",
+        "risk_escalation",
+        "release_candidate_ready",
+        "acceptance_ready",
+        "ui_checkpoint",
+        "human_feedback_reconciled",
+        "run_completed"
+      ]
+    },
+    "source_ref": {"type": "string", "minLength": 1},
+    "source_version": {"type": "string", "minLength": 1},
+    "delivery": {"enum": ["immediate", "digest"]},
+    "recipient_group": {"enum": ["critical", "action_required", "digest"]},
+    "subject": {"type": "string", "minLength": 1},
+    "body": {"type": "string", "minLength": 1},
+    "status": {"enum": ["pending", "sent", "failed"]},
+    "attempts": {"type": "integer", "minimum": 0, "maximum": 6},
+    "next_attempt_at": {"type": ["string", "null"]},
+    "last_error": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1},
+    "sent_at": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

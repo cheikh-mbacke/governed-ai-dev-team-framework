@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import sys
 from collections import Counter
 from pathlib import Path
@@ -25,6 +26,7 @@ bootstrap_runtime(ROOT)
 from governed_ai.core.commands.errors import GatewayError, exit_code_for
 from governed_ai.core.workspace import Workspace
 from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+from governed_ai.notifications.config import load_smtp_settings, public_smtp_status
 
 WORKSPACE = Workspace.from_root(ROOT)
 try:
@@ -104,8 +106,6 @@ for run in active_or_recent_runs:
     report_path = AI / "runs" / "morning-reports" / f"{run.get('id')}.json"
     if report_path.is_file():
         try:
-            import json
-
             report = json.loads(report_path.read_text(encoding="utf-8"))
             print(
                 t(LANG, "    morning report:", "    rapport matinal :")
@@ -187,3 +187,22 @@ for item in pending_human_feedback:
         f"  {item.get('id')}: work_unit={item.get('work_unit')} "
         f"surface={item.get('surface')} observed={observed.get('commit_sha')}"
     )
+
+smtp_status = public_smtp_status(load_smtp_settings(AI))
+notification_records = []
+for path in sorted((AI / "notifications").glob("NTF-*.json")):
+    try:
+        notification_records.append(json.loads(path.read_text(encoding="utf-8")))
+    except (OSError, json.JSONDecodeError):
+        pass
+pending_notifications = [
+    item for item in notification_records if item.get("status") in {"pending", "failed"}
+]
+smtp_label = "ready" if smtp_status["ready"] else "configuration_required"
+if not smtp_status["enabled"]:
+    smtp_label = "disabled"
+print(t(LANG, "Email notifications:", "Notifications e-mail :") + f" {smtp_label}")
+print(
+    t(LANG, "Queued email notifications:", "Notifications e-mail en attente :")
+    + f" {len(pending_notifications)}"
+)

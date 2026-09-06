@@ -60,6 +60,9 @@ Refuse runtime activation when G1 is not approved.
 18. Generate `python scripts/ai-team/feedback.py retrospective --work-unit WU-ID`
     after a Work Unit reaches a terminal state, and a project retrospective at
     the end of an increment or project when requested by the human.
+19. Dispatch configured e-mail notifications after each tick and a grouped
+    digest at Run completion. SMTP failure is recorded for retry and never
+    changes scheduling, gates, Work Unit state or the Run result.
 
 ## Escalation
 
@@ -82,3 +85,5 @@ Investigate authoritative sources before asking the human. If no existing decisi
 - Operational events and framework observations are distinct: an event drives
   the current execution; an observation captures a reusable learning signal.
   Record both when a blocker is also evidence of a framework-level friction.
+- E-mail is a projection only. Never place SMTP credentials in context,
+  events, prompts or logs, and never treat successful delivery as authorization.

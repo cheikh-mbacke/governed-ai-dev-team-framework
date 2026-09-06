@@ -56,6 +56,7 @@ PROJECT_OWNED_DIRS = (
     "metrics",
     "acceptance",
     "human-feedback",
+    "notifications",
     "releases",
     "audits",
     "migration-backups",

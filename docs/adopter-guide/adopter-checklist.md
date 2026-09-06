@@ -75,6 +75,10 @@ Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le d�
       enregistrés avec `human_feedback.py` contre le SHA réellement testé.
 - [ ] Retours `pending_reconciliation` traités avant la prochaine exécution des
       Work Units affectées ; aucun checkpoint formatif ne bloque le mode nuit.
+- [ ] Destinataires SMTP renseignés, secret fourni hors Git, puis
+      `python scripts/ai-team/notify.py test --to <adresse>` exécuté avec succès.
+- [ ] Routage `critical` / `action_required` / `digest` adapté au profil ; un
+      échec SMTP a été vérifié comme non bloquant.
 
 ## 7. Avant release candidate
 
@@ -92,6 +96,7 @@ Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le d�
 - [adoption-assessment.md](adoption-assessment.md)
 - [operator-guide.md](operator-guide.md)
 - [asynchronous-ui-feedback.md](asynchronous-ui-feedback.md)
+- [email-notifications.md](email-notifications.md)
 - [architecture.md](architecture.md)
 - [security-model.md](security-model.md)
 - [deprecations.md](deprecations.md)

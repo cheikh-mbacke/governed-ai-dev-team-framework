@@ -42,6 +42,7 @@ from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.orchestrator.tick import run_scheduling_tick
 from governed_ai.core.workspace import Workspace
 from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+from governed_ai.notifications.service import dispatch_notifications
 
 _print_lock = threading.Lock()
 
@@ -69,7 +70,19 @@ def _worker_loop(
                     f"[{worker_id} tick {tick_count}] {result.action} "
                     f"work_unit={result.work_unit_id} {result.details}"
                 )
-            if result.action in {"run_completed", "run_stopped", "run_not_active"}:
+            terminal = result.action in {"run_completed", "run_stopped", "run_not_active"}
+            notification_result = dispatch_notifications(
+                workspace,
+                include_digest=terminal,
+            )
+            if notification_result.get("failed"):
+                with _print_lock:
+                    print(
+                        f"[{worker_id}] notification delivery deferred: "
+                        f"{notification_result['failed']} failure(s)",
+                        file=sys.stderr,
+                    )
+            if terminal:
                 stop_event.set()
                 return
         except Exception as exc:  # noqa: BLE001 - a worker failure must stop the session

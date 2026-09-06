@@ -1,5 +1,5 @@
 project_id: witness-legacy
-constitution_version: 1.3.0
+constitution_version: 1.4.0
 phase: execution
 gates:
   G0:

@@ -136,6 +136,7 @@ Autres sous-commandes : `recover`, `query` — voir `python scripts/ai-team/gov.
 python scripts/ai-team/preflight.py    # checks avant session
 python scripts/ai-team/diagnose.py     # rapport d'état projet
 python scripts/ai-team/status.py       # résumé gates / WU
+python scripts/ai-team/notify.py status # état public SMTP / outbox, sans secret
 ```
 
 ## Feedback et observations

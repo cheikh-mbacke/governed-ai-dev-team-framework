@@ -100,7 +100,7 @@
     {
       "kind": "cli_config",
       "path": ".cursor/cli.json",
-      "sha256": "sha256:0c5993d1ae382270765fdc8ae36b75901d3c46e5d7cc648b132b24629f71e93a"
+      "sha256": "sha256:c6f588016fea528c0f9238e197ea9f66584259affdc214edeaf6bddba3dd0651"
     },
     {
       "kind": "hooks_config",
@@ -230,7 +230,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/orchestrator/SKILL.md",
-      "sha256": "sha256:74e135a5b2dc66a97fb5c8d64e33df6c088f7300b745e77107eb6202c6f77622"
+      "sha256": "sha256:881f2a3b294d6bce6294a7dcab887a895ee467ebf108329bd9f46d3ecd70c259"
     },
     {
       "kind": "skill",

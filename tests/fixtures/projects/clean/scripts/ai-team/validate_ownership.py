@@ -115,6 +115,7 @@ def classify_owner(path: str) -> str:
         ".ai-team/releases/",
         ".ai-team/acceptance/",
         ".ai-team/human-feedback/",
+        ".ai-team/notifications/",
         ".ai-team/authorizations/",
         ".ai-team/context-packages/",
         ".ai-team/logs/",

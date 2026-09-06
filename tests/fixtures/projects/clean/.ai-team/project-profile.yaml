@@ -6,6 +6,30 @@ project:
   package_manager: pip
 communication:
   language: français
+notifications:
+  email:
+    enabled: true
+    from: support@agenteam.fr
+    transport:
+      host: mail.agenteam.fr
+      port: 465
+      security: ssl
+      username: support@agenteam.fr
+      password_env: GOVERNED_AI_SMTP_PASSWORD
+      connect_timeout_seconds: 10
+    recipients:
+      critical: []
+      action_required: []
+      digest: []
+    events:
+      global_stop: immediate
+      decision_required: immediate
+      risk_escalation: immediate
+      release_candidate_ready: immediate
+      acceptance_ready: profile
+      ui_checkpoint: profile
+      human_feedback_reconciled: digest
+      run_completed: digest
 autonomy:
   preset: supervised_copilots
   level: 3

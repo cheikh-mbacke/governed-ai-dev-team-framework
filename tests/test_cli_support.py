@@ -932,9 +932,9 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                 [sys.executable, "tools/install.py", "--target", str(target), "--update"]
             )
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-            self.assertIn("constitution_version 1.0.0 -> 1.3.0", result.stdout)
+            self.assertIn("constitution_version 1.0.0 -> 1.4.0", result.stdout)
             migrated = yaml.safe_load(state_path.read_text(encoding="utf-8"))
-            self.assertEqual(migrated["constitution_version"], "1.3.0")
+            self.assertEqual(migrated["constitution_version"], "1.4.0")
 
     def test_update_refuses_constitution_change_during_active_cycle(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
@@ -996,7 +996,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             self.assertIn("WARNING: forcing Constitution", result.stdout)
             migrated = yaml.safe_load(state_path.read_text(encoding="utf-8"))
-            self.assertEqual(migrated["constitution_version"], "1.3.0")
+            self.assertEqual(migrated["constitution_version"], "1.4.0")
 
             after_events = set(events_dir.glob("*.yaml"))
             new_events = after_events - before_events
@@ -1006,7 +1006,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertTrue(event["requires_human"])
             self.assertEqual(event["status"], "open")
             self.assertEqual(event["details"]["old_constitution_version"], "1.0.0")
-            self.assertEqual(event["details"]["new_constitution_version"], "1.3.0")
+            self.assertEqual(event["details"]["new_constitution_version"], "1.4.0")
             self.assertEqual(event["details"]["phase_at_override"], "execution")
 
     def test_force_constitution_update_requires_update_flag(self):

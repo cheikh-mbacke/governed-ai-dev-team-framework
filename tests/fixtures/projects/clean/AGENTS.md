@@ -16,6 +16,9 @@ before runtime activation.
 - Respect human gates G0–G4 and the orchestrator Control Plane.
 - Record reusable friction with `python scripts/ai-team/feedback.py record`
   on this installed target when appropriate.
+- Inspect SMTP readiness with `python scripts/ai-team/notify.py status`; delivery
+  failures stay non-blocking and credentials must remain under
+  `.ai-team/secrets/` or in environment variables.
 - Follow `.ai-team/constitution/95-git-release-policy.yaml` for branches,
   commits, evidence, and merge discipline.
 

@@ -1,0 +1,18 @@
+{
+  "id": "NTF-00000000000000000000",
+  "dedupe_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "event_type": "ui_checkpoint",
+  "source_ref": "events/EVT-XXX.yaml",
+  "source_version": "revision-or-sha",
+  "delivery": "digest",
+  "recipient_group": "digest",
+  "subject": "",
+  "body": "",
+  "status": "pending",
+  "attempts": 0,
+  "next_attempt_at": null,
+  "last_error": null,
+  "created_at": "",
+  "updated_at": "",
+  "sent_at": null
+}

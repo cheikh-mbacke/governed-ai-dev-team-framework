@@ -7,6 +7,10 @@ versions produit suivent Semantic Versioning.
 
 ### Added
 
+- Notifications SMTP non bloquantes avec outbox dédupliquée, reprise sur échec,
+  alertes immédiates, digest de fin de Run et routage adapté au profil
+  d'autonomie. Transport installé par défaut sur `mail.agenteam.fr:465` en SSL,
+  compte complet `support@agenteam.fr`, secret exclusivement hors Git.
 - Checkpoints UI formatifs planifiés à G1, non bloquants pour tous les profils
   non supervisés, avec cahier manuel court lié au SHA vérifié.
 - `RecordHumanFeedback` / `ReconcileHumanFeedback`, stockage
