@@ -296,7 +296,7 @@ def test_unattended_run_stops_when_adapter_cannot_isolate_workers(
     assert stopped.action == "run_stopped"
     assert stopped.details["stop_condition"] == "worker_isolation_unguaranteed"
     assert "feedback_submit" in stopped.details
-    assert stopped.details["feedback_submit"]["transmission_status"] == "local_outbox"
+    assert stopped.details["feedback_submit"]["transmission_status"] == "failed"
     submit_path = workspace.root / stopped.details["feedback_submit"]["path"]
     assert submit_path.is_file()
     assert "outbox" in submit_path.as_posix()

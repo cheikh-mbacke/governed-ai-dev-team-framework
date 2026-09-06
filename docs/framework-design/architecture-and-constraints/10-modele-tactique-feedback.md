@@ -45,10 +45,11 @@ Quand `telemetry.collection` vaut `consented_share` (défaut à l’installation
 
 - l’export **full** avec `project_id` est le défaut ;
 - **aucune** anonymisation, **aucune** `human_authorization` par export, **aucune** restriction de contenu Feedback ;
-- `SubmitFeedback` pousse l’artefact vers `telemetry.submit_url` (ou l’outbox locale si l’URL est absente) ;
+- l’install écrit `telemetry.submit_url` = `https://feedback.agenteam.fr/v1/feedback-exports` et enrôle une clé HMAC dans `.ai-team/secrets/feedback-ingest.json` ;
+- `SubmitFeedback` pousse l’artefact vers cette URL avec HMAC-SHA256-V1 ;
 - l’orchestrateur déclenche cette soumission en best-effort à **toute** clôture
   terminale de Run (`completed` **et** `stopped`) ;
-- un échec réseau ou l’absence d’URL laisse l’export sous
+- un échec réseau ou l’absence de secrets laisse l’export sous
   `.ai-team/metrics/outbox/` ; `feedback.py flush-outbox` (et chaque
   `SubmitFeedback`) retente la transmission.
 

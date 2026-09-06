@@ -345,7 +345,8 @@ def test_receipt_excludes_full_export_body(retro_workspace: Workspace) -> None:
     assert "Test friction" not in serialized
 
 
-def test_submit_feedback_writes_local_outbox_without_url(retro_workspace: Workspace) -> None:
+def test_submit_feedback_fails_without_ingest_secrets(retro_workspace: Workspace) -> None:
+    """Default product URL is always set; missing HMAC secrets → failed outbox."""
     gateway = CommandGateway(retro_workspace)
     receipt, exit_code = gateway.execute_command(
         {
@@ -361,13 +362,17 @@ def test_submit_feedback_writes_local_outbox_without_url(retro_workspace: Worksp
         }
     )
     assert exit_code == 0, receipt
-    assert receipt["affected"][0]["transmission_status"] == "local_outbox"
+    assert receipt["affected"][0]["transmission_status"] == "failed"
     export_path = retro_workspace.root / receipt["affected"][0]["path"]
     assert "outbox" in export_path.as_posix()
     document = json.loads(export_path.read_text(encoding="utf-8"))
     assert document["detail_level"] == "full"
     assert document["project_id"] == "retro-test"
-    assert document["transmission"]["status"] == "local_outbox"
+    assert document["transmission"]["status"] == "failed"
+    assert "feedback-ingest.json" in (document["transmission"]["error"] or "")
+    assert document["transmission"]["destination"] == (
+        "https://feedback.agenteam.fr/v1/feedback-exports"
+    )
 
 
 def test_submit_feedback_failed_transmission_lands_in_outbox(
@@ -377,6 +382,19 @@ def test_submit_feedback_failed_transmission_lands_in_outbox(
     profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
     profile["telemetry"]["submit_url"] = "https://feedback.example.invalid/ingest"
     profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
+
+    secrets = retro_workspace.ai_team / "secrets"
+    secrets.mkdir(parents=True, exist_ok=True)
+    (secrets / "feedback-ingest.json").write_text(
+        json.dumps(
+            {
+                "key_id": "key-test-hmac-01",
+                "secret_base64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+                "project_ref": profile["telemetry"]["project_ref"],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     def _boom(*_args, **_kwargs):
         raise OSError("simulated network failure")
@@ -452,6 +470,19 @@ def test_flush_outbox_retries_failed_export(
     profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
     profile["telemetry"]["submit_url"] = "https://feedback.example.test/ingest"
     profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
+
+    secrets = retro_workspace.ai_team / "secrets"
+    secrets.mkdir(parents=True, exist_ok=True)
+    (secrets / "feedback-ingest.json").write_text(
+        json.dumps(
+            {
+                "key_id": "key-test-hmac-01",
+                "secret_base64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+                "project_ref": profile["telemetry"]["project_ref"],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     class _Response:
         def read(self) -> bytes:

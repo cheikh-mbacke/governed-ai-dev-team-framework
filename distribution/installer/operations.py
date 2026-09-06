@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.request
 import uuid
 from argparse import Namespace
 from dataclasses import dataclass
@@ -665,9 +666,18 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
 
     profile = _yaml_module().safe_load(profile_path.read_text(encoding="utf-8"))
     profile["active_adapter_id"] = "cursor"
-    submit_url = os.environ.get("GOVERNED_AI_FEEDBACK_SUBMIT_URL") or None
+    from governed_ai.feedback.constants import (
+        DEFAULT_ENROLL_URL,
+        DEFAULT_ENROLLMENT_TOKEN,
+        DEFAULT_FEEDBACK_SUBMIT_URL,
+        FEEDBACK_INGEST_SECRETS_REL,
+    )
+    from governed_ai.feedback.submit import enroll_url, enrollment_token, resolve_default_submit_url
+
+    submit_url = resolve_default_submit_url()
+    project_ref = f"PRJ-{uuid.uuid4().hex}"
     profile["telemetry"] = {
-        "project_ref": f"PRJ-{uuid.uuid4().hex}",
+        "project_ref": project_ref,
         "collection": "consented_share",
         "submit_url": submit_url,
         "terms_version": "1.0",
@@ -677,6 +687,63 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
     profile_path.write_text(
         _yaml_module().safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
+
+    # Per-install HMAC credentials (gitignored). Soft-fail if tunnel unreachable.
+    secrets_dir = target / ".ai-team" / "secrets"
+    secrets_dir.mkdir(parents=True, exist_ok=True)
+    (secrets_dir / ".gitignore").write_text("*\n!.gitignore\n", encoding="utf-8")
+    try:
+        enroll_body = json.dumps(
+            {
+                "project_ref": project_ref,
+                "detail_levels": ["aggregate", "structured", "full"],
+                "allow_project_id": True,
+            }
+        ).encode("utf-8")
+        enroll_req = urllib.request.Request(
+            enroll_url(),
+            data=enroll_body,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {enrollment_token()}",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(enroll_req, timeout=30) as response:
+            enroll_payload = json.loads(response.read().decode("utf-8"))
+        if isinstance(enroll_payload, dict) and enroll_payload.get("secret_base64"):
+            secrets_file = target / FEEDBACK_INGEST_SECRETS_REL
+            secrets_file.write_text(
+                json.dumps(
+                    {
+                        "key_id": enroll_payload.get("key_id"),
+                        "secret_base64": enroll_payload.get("secret_base64"),
+                        "project_ref": project_ref,
+                        "submit_url": submit_url,
+                        "enrolled_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            try:
+                os.chmod(secrets_file, 0o600)
+            except OSError:
+                pass
+        else:
+            print(
+                "warning: enrollment response missing secret_base64; "
+                "feedback submit will retry after manual enroll",
+                file=sys.stderr,
+            )
+    except Exception as exc:  # noqa: BLE001 — install must not fail offline
+        print(
+            f"warning: feedback enrollment skipped ({exc}); "
+            f"submit_url={submit_url} default={DEFAULT_FEEDBACK_SUBMIT_URL} "
+            f"enroll={DEFAULT_ENROLL_URL} token={DEFAULT_ENROLLMENT_TOKEN[:12]}…",
+            file=sys.stderr,
+        )
 
     # Raw tool traces remain local and must not depend on the host project's
     # root .gitignore configuration.

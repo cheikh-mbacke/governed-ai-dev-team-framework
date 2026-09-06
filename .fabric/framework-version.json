@@ -331,10 +331,12 @@
     "src/governed_ai/feedback/commands/__init__.py",
     "src/governed_ai/feedback/commands/handlers.py",
     "src/governed_ai/feedback/common.py",
+    "src/governed_ai/feedback/constants.py",
     "src/governed_ai/feedback/domain/__init__.py",
     "src/governed_ai/feedback/domain/auto_observation.py",
     "src/governed_ai/feedback/domain/observation.py",
     "src/governed_ai/feedback/domain/retrospective.py",
+    "src/governed_ai/feedback/hmac_v1.py",
     "src/governed_ai/feedback/submit.py",
     "src/governed_ai/learning/__init__.py",
     "src/governed_ai/learning/aggregate.py"

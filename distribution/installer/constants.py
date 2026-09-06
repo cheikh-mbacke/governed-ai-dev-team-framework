@@ -32,6 +32,7 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/authorizations/*",
     ".ai-team/context-packages/*",
     ".ai-team/logs/*",
+    ".ai-team/secrets/*",
     ".ai-team/metrics/*",
     ".ai-team/observations/*",
     ".ai-team/retrospectives/*",

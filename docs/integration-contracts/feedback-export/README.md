@@ -10,8 +10,9 @@ Command Gateway ou du fonctionnement hors ligne du framework.
 |---|---|
 | Génération, niveaux `aggregate`/`structured`/`full`, consentement local | framework |
 | Schéma `format_version: "1.1"` | framework |
-| Transport, HMAC, endpoint HTTP, accusé distant | projet consommateur externe |
-| Stockage, rétention distante, agrégats et exploitation | projet consommateur externe |
+| Transport HMAC, endpoint HTTP produit, enrollment | framework client + tunnel `feedback.agenteam.fr` |
+| Stockage, rétention distante, agrégats et exploitation | projet consommateur externe (tunnel) |
+
 
 Le schéma distribué et validé par le framework est
 [`distribution/payload/.ai-team/schemas/feedback-export.schema.json`](../../../distribution/payload/.ai-team/schemas/feedback-export.schema.json).

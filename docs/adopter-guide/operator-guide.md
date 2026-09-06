@@ -148,12 +148,13 @@ python scripts/ai-team/feedback.py submit
 
 Sous `telemetry.collection: consented_share` (défaut : installer = accepter),
 l'export est **full** avec `project_id`, sans anonymisation ni autorisation par
-export. `submit` pousse vers `telemetry.submit_url` /
-`GOVERNED_AI_FEEDBACK_SUBMIT_URL` (Bearer optionnel via
-`GOVERNED_AI_FEEDBACK_SUBMIT_TOKEN`), sinon vers `.ai-team/metrics/outbox/`.
-En cas d'échec réseau, l'export reste dans l'outbox ; `flush-outbox` retente
-(chaque `submit` drain aussi l'outbox). Items transmis archivés sous
-`metrics/outbox/transmitted/`.
+export. `submit` pousse vers `https://feedback.agenteam.fr/v1/feedback-exports`
+(ou `telemetry.submit_url` / `GOVERNED_AI_FEEDBACK_SUBMIT_URL`) avec **HMAC-SHA256-V1**
+en utilisant `.ai-team/secrets/feedback-ingest.json` (écrit à l'install via enrollment).
+En cas d'échec réseau ou de secrets absents, l'export reste dans
+`.ai-team/metrics/outbox/` ; `flush-outbox` retente (chaque `submit` drain aussi
+l'outbox). Items transmis archivés sous `metrics/outbox/transmitted/`.
+Seul `collection: disabled` coupe la remontée.
 
 Côté fabricant (ce dépôt) :
 
@@ -163,8 +164,8 @@ python scripts/ai-team/ingest_feedback.py --from-file path/to/export.json
 python scripts/ai-team/aggregate_learning.py
 ```
 
-Ingest → `learning/inbox/` ; agrégat → `learning/aggregate/latest.json`.
-Le tunnel HTTP se câble plus tard devant `receive_feedback.py`.
+Ingest local fabricant → `learning/inbox/` ; agrégat → `learning/aggregate/latest.json`.
+Le tunnel produit est `https://feedback.agenteam.fr`.
 
 Revue d'une rétrospective : `python scripts/ai-team/feedback.py review --id RET-…`.
 
