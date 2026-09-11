@@ -175,7 +175,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/build-context/SKILL.md",
-      "sha256": "sha256:8422ea243a3c4a8f2a0a5fa1d80fff7a317c801d43ef870b5c04df339483305a"
+      "sha256": "sha256:aaf3a61cbf072ccf57297df146708b73900b8d73a2b446134ca3cc259e78814d"
     },
     {
       "kind": "skill",
@@ -240,7 +240,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/propose-profile/SKILL.md",
-      "sha256": "sha256:544f56ed2edd9631ffbc88b9d34032a56fb36b9082e0ea58958f375a5f64a8fe"
+      "sha256": "sha256:63486d7cc4e75b132728b78bd39745501d1424382ecb6a7692c8dbbcb60e1ad5"
     },
     {
       "kind": "skill",

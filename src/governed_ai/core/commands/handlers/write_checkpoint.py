@@ -62,6 +62,7 @@ def handle_write_checkpoint(
         "artifacts": payload.get("artifacts", []),
         "pending_decision": payload.get("pending_decision"),
         "next_step": payload.get("next_step"),
+        "verification_status": payload.get("verification_status"),
         "updated_at": now,
     }
     validate_against_schema(

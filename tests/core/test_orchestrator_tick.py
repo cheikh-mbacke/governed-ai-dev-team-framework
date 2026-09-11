@@ -89,13 +89,52 @@ def workspace(tmp_path: Path) -> Workspace:
     return ws
 
 
+def _seed_context_package(
+    workspace: Workspace,
+    work_unit_id: str,
+    *,
+    context_id: str | None = None,
+) -> str:
+    ctx_id = context_id or f"CTX-{work_unit_id}"
+    packages = workspace.ai_team / "context-packages"
+    packages.mkdir(parents=True, exist_ok=True)
+    document = {
+        "id": ctx_id,
+        "work_unit": work_unit_id,
+        "role": "backend-developer",
+        "required_contracts": [],
+        "completeness_status": "complete",
+        "missing_inputs": [],
+        "items": [
+            {
+                "level": "L3_work_unit",
+                "source": f".ai-team/work-units/{work_unit_id}.yaml",
+                "provenance": "authoritative",
+                "reason": "seeded for tick tests",
+            }
+        ],
+        "open_context_requests": [],
+    }
+    (packages / f"{ctx_id}.yaml").write_text(yaml.safe_dump(document), encoding="utf-8")
+    return ctx_id
+
+
 def _seed_work_unit(
     workspace: Workspace,
     work_unit_id: str,
     *,
     status: str,
     scope_include: list[str] | None = None,
+    context_package_ref: str | None | bool = True,
 ) -> None:
+    ctx_ref: str | None
+    if context_package_ref is True:
+        ctx_ref = _seed_context_package(workspace, work_unit_id)
+    elif context_package_ref is False or context_package_ref is None:
+        ctx_ref = None
+    else:
+        ctx_ref = str(context_package_ref)
+        _seed_context_package(workspace, work_unit_id, context_id=ctx_ref)
     document = {
         "id": work_unit_id,
         "title": "Test work unit",
@@ -112,6 +151,7 @@ def _seed_work_unit(
         "updated_at": "2026-08-30T00:00:00+00:00",
         "events": [],
         "evidence": [],
+        "context_package_ref": ctx_ref,
         "outcomes": {
             "review_status": "pending",
             "audit_status": "not_required",
@@ -226,6 +266,27 @@ def _succeeded_result(
     }
 
 
+def _succeeded_result_with_checks(
+    check_names: list[str], *, changed_sha: bool = True, include_artifact: bool = True
+) -> dict:
+    return {
+        "status": "succeeded",
+        "summary": "ok",
+        "checks": [
+            {"name": name, "status": "passed", "evidence_ref": f"EV-{name}"}
+            for name in check_names
+        ],
+        "artifacts": (
+            [{"kind": "test", "path": "evidence.json", "sha256": "sha256:" + "a" * 64}]
+            if include_artifact
+            else []
+        ),
+        "workspace": {"result_sha": "b" * 40 if changed_sha else "a" * 40},
+        "requested_commands": [],
+        "usage": {},
+    }
+
+
 def test_tick_starts_a_ready_work_unit(workspace: Workspace) -> None:
     gateway = CommandGateway(workspace)
     gateway.execute_command(_open_run("RUN-TICK-001", work_unit_ids=["WU-A"]))
@@ -273,6 +334,114 @@ def test_tick_executes_bounded_remediation_then_returns_to_verification(
         )
     )
     assert attempt["step"] == "remediation"
+
+
+def test_implementation_evidence_gate_accepts_explicit_ac_checks_without_implementation_name(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-AC-OK", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    wu_path = workspace.ai_team / "work-units" / "WU-A.yaml"
+    wu = yaml.safe_load(wu_path.read_text(encoding="utf-8"))
+    wu["acceptance_criteria"] = [
+        {"AC-1": "parent module wired"},
+        {"AC-2": "health endpoint public"},
+        {"AC-3": "flyway migration"},
+        {"AC-4": "compose healthy"},
+        {"AC-5": "no foreign migrations"},
+    ]
+    wu_path.write_text(yaml.safe_dump(wu), encoding="utf-8")
+    adapter = FakeAdapter(
+        [
+            _succeeded_result_with_checks(
+                ["AC-1", "AC-2", "AC-3", "AC-4", "AC-5"], changed_sha=True
+            )
+        ]
+    )
+
+    acquired = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-OK", adapter=adapter, worker_id="w1"
+    )
+    assert acquired.action == "reacquired_work_unit"
+    advanced = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-OK", adapter=adapter, worker_id="w1"
+    )
+    assert advanced.action == "advanced_work_unit"
+    assert advanced.details["from"] == "in_progress"
+    assert advanced.details["to"] == "verification"
+
+
+def test_implementation_evidence_gate_rejects_partial_ac_when_wu_declares_ids(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-AC-PARTIAL", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    wu_path = workspace.ai_team / "work-units" / "WU-A.yaml"
+    wu = yaml.safe_load(wu_path.read_text(encoding="utf-8"))
+    wu["acceptance_criteria"] = [
+        {"AC-1": "one"},
+        {"AC-2": "two"},
+        {"AC-3": "three"},
+    ]
+    wu_path.write_text(yaml.safe_dump(wu), encoding="utf-8")
+    adapter = FakeAdapter(
+        [_succeeded_result_with_checks(["AC-1", "AC-2"], changed_sha=True)]
+    )
+
+    acquired = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-PARTIAL", adapter=adapter, worker_id="w1"
+    )
+    assert acquired.action == "reacquired_work_unit"
+    failed = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-PARTIAL", adapter=adapter, worker_id="w1"
+    )
+    assert failed.action == "recorded_attempt"
+    assert failed.details["status"] == "failed"
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "failed"
+    assert "AC-3" in attempt["summary"]
+
+
+def test_implementation_evidence_gate_rejects_check_without_evidence_ref(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-AC-NOEV", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    result = _succeeded_result_with_checks(["AC-1"], changed_sha=True)
+    result["checks"] = [{"name": "AC-1", "status": "passed"}]
+    adapter = FakeAdapter([result])
+
+    acquired = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-NOEV", adapter=adapter, worker_id="w1"
+    )
+    assert acquired.action == "reacquired_work_unit"
+    failed = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-NOEV", adapter=adapter, worker_id="w1"
+    )
+    assert failed.action == "recorded_attempt"
+    assert failed.details["status"] == "failed"
+
+
+def test_review_evidence_gate_still_requires_named_check() -> None:
+    from governed_ai.core.orchestrator.tick import _evidence_error
+
+    result = _succeeded_result_with_checks(["AC-1", "AC-2"], changed_sha=False)
+    error = _evidence_error(
+        result,
+        required_checks=("code_review",),
+        require_changed_sha=False,
+        base_sha="a" * 40,
+        work_unit={"acceptance_criteria": [{"AC-1": "x"}, {"AC-2": "y"}]},
+    )
+    assert error is not None
+    assert "code_review" in error
 
 
 def test_unattended_run_stops_when_adapter_cannot_isolate_workers(
@@ -472,6 +641,140 @@ def test_out_of_scope_write_stops_the_whole_run(workspace: Workspace) -> None:
     assert lease["status"] == "revoked"
 
 
+def test_wu_evidence_write_does_not_stop_run_when_product_stays_in_scope(
+    workspace: Workspace,
+) -> None:
+    root = workspace.root
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.email", "l4@example.test")
+    _git(root, "config", "user.name", "L4 Test")
+    (root / "src").mkdir()
+    (root / "src" / "app.py").write_text("print('base')\n", encoding="utf-8")
+    _git(root, "add", "src/app.py")
+    _git(root, "commit", "-m", "test: base")
+
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-BOUNDARY-EVIDENCE", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress", scope_include=["src/**"])
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-BOUNDARY-EV"},
+            payload={
+                "id": "LEASE-BOUNDARY-EV",
+                "run_id": "RUN-BOUNDARY-EVIDENCE",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="acquire-boundary-ev",
+        )
+    )
+
+    class EvidenceAndProductAdapter:
+        def describe(self):
+            return {"capabilities": {"isolated_worktree": True}}
+
+        def check_compatibility(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def compile(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def collect(self, execution_id: str):  # pragma: no cover
+            raise NotImplementedError
+
+        def execute(self, request: dict) -> dict:
+            worker_root = Path(request["execution_workspace"])
+            product = worker_root / "src" / "app.py"
+            product.write_text("print('updated')\n", encoding="utf-8")
+            evidence = worker_root / ".ai-team" / "evidence" / "WU-A" / "ac-1.md"
+            evidence.parent.mkdir(parents=True, exist_ok=True)
+            evidence.write_text("passed\n", encoding="utf-8")
+            _git(worker_root, "add", "src/app.py", ".ai-team/evidence/WU-A/ac-1.md")
+            _git(worker_root, "commit", "-m", "feat(WU-A): product + evidence")
+            result = _succeeded_result()
+            result["workspace"] = {"result_sha": head_sha(worker_root)}
+            return result
+
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-BOUNDARY-EVIDENCE",
+        adapter=EvidenceAndProductAdapter(),
+        worker_id="w1",
+    )
+    assert result.action == "advanced_work_unit"
+    assert result.details["to"] == "verification"
+
+
+def test_work_unit_yaml_write_stops_the_whole_run(workspace: Workspace) -> None:
+    root = workspace.root
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.email", "l4@example.test")
+    _git(root, "config", "user.name", "L4 Test")
+    (root / "src").mkdir()
+    (root / "src" / "app.py").write_text("print('base')\n", encoding="utf-8")
+    _git(root, "add", "src/app.py")
+    _git(root, "commit", "-m", "test: base")
+
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-BOUNDARY-WU", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress", scope_include=["src/**"])
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-BOUNDARY-WU"},
+            payload={
+                "id": "LEASE-BOUNDARY-WU",
+                "run_id": "RUN-BOUNDARY-WU",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="acquire-boundary-wu",
+        )
+    )
+
+    class MutateWorkUnitAdapter:
+        def describe(self):
+            return {"capabilities": {"isolated_worktree": True}}
+
+        def check_compatibility(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def compile(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def collect(self, execution_id: str):  # pragma: no cover
+            raise NotImplementedError
+
+        def execute(self, request: dict) -> dict:
+            worker_root = Path(request["execution_workspace"])
+            wu_path = worker_root / ".ai-team" / "work-units" / "WU-A.yaml"
+            wu_path.parent.mkdir(parents=True, exist_ok=True)
+            wu_path.write_text("id: WU-A\nstatus: done\n", encoding="utf-8")
+            _git(worker_root, "add", ".ai-team/work-units/WU-A.yaml")
+            _git(worker_root, "commit", "-m", "feat(WU-A): mutate work unit")
+            result = _succeeded_result()
+            result["workspace"] = {"result_sha": head_sha(worker_root)}
+            return result
+
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-BOUNDARY-WU",
+        adapter=MutateWorkUnitAdapter(),
+        worker_id="w1",
+    )
+    assert result.action == "run_stopped"
+    assert result.details["stop_condition"] == "out_of_workspace_write"
+    attempt = yaml.safe_load(
+        next(
+            (workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")
+        ).read_text(encoding="utf-8")
+    )
+    assert "forbidden governance writes" in attempt["summary"]
+
+
 def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(
     workspace: Workspace,
 ) -> None:
@@ -541,12 +844,13 @@ def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(
     )
     assert wu_document["status"] == "human_test"
 
-    # human_test does not map to a dispatchable step: the loop stops, it never
-    # invents its own path to "done".
-    idle = run_scheduling_tick(
+    # human_test does not map to a dispatchable step: signal human wait instead
+    # of silent idle.
+    waiting = run_scheduling_tick(
         gateway, workspace, run_id="RUN-TICK-006", adapter=FakeAdapter([]), worker_id="w1"
     )
-    assert idle.action == "idle"
+    assert waiting.action == "awaiting_human"
+    assert "WU-A" in waiting.details["waiting_work_unit_ids"]
 
 
 def test_unattended_run_completion_generates_project_retrospective(
@@ -614,12 +918,13 @@ def test_tick_demotes_work_unit_on_convergence_exhaustion(workspace: Workspace) 
     )
     assert wu_document["status"] == "blocked"
 
-    # blocked does not map to a dispatchable step either — the loop does not
-    # auto-resume it (out of scope for this pass, an operator decides).
+    # blocked does not map to a dispatchable step — Lot 4 stops the Run when
+    # every Work Unit is stuck (no_dispatchable_work), rather than idling forever.
     third = run_scheduling_tick(
         gateway, workspace, run_id="RUN-TICK-004", adapter=FakeAdapter([]), worker_id="w1"
     )
-    assert third.action == "idle"
+    assert third.action == "run_stopped"
+    assert third.details["stop_condition"] == "no_dispatchable_work"
 
 
 def test_tick_is_idle_when_nothing_is_eligible(workspace: Workspace) -> None:
@@ -1241,3 +1546,375 @@ def test_risk_escalation_from_adapter_pauses_when_critical_wip_conflict(
     )
     assert wu["risk"]["class"] == "critical"
     assert wu["status"] == "waiting_decision"
+
+
+def test_dispatch_request_includes_timeout_seconds(workspace: Workspace) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-L4-TIMEOUT", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-L4-TIMEOUT"},
+            payload={
+                "id": "LEASE-L4-TIMEOUT",
+                "run_id": "RUN-L4-TIMEOUT",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="l4-timeout-lease",
+        )
+    )
+    adapter = FakeAdapter([{"status": "timed_out", "summary": "slow"}])
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-L4-TIMEOUT", adapter=adapter, worker_id="w1"
+    )
+    assert result.action == "recorded_attempt"
+    assert "timeout_seconds" in adapter.requests[0]
+    assert float(adapter.requests[0]["timeout_seconds"]) >= 1.0
+
+
+def test_matching_implementation_timeouts_across_work_units_are_not_systemic(
+    workspace: Workspace,
+) -> None:
+    _seed_grant(workspace, "GRANT-L4-SYS", work_unit_ids=["WU-A", "WU-B"])
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(
+        _open_run(
+            "RUN-L4-SYS",
+            work_unit_ids=["WU-A", "WU-B"],
+            grant_id="GRANT-L4-SYS",
+            maximum_parallel_workers=2,
+        )
+    )
+    for work_unit_id in ("WU-A", "WU-B"):
+        _seed_work_unit(workspace, work_unit_id, status="in_progress")
+    for work_unit_id, lease_id in (("WU-A", "LEASE-L4-SYS-A"), ("WU-B", "LEASE-L4-SYS-B")):
+        receipt, exit_code = gateway.execute_command(
+            _envelope(
+                "AcquireWorkerLease",
+                target={"kind": "worker_lease", "id": lease_id},
+                payload={
+                    "id": lease_id,
+                    "run_id": "RUN-L4-SYS",
+                    "work_unit_id": work_unit_id,
+                    "worker_id": f"worker-{work_unit_id}",
+                },
+                key=f"l4-sys-{work_unit_id}",
+            )
+        )
+        assert exit_code == 0, receipt.get("errors")
+
+    timed_out = {"status": "timed_out", "summary": "same timeout every time"}
+    for work_unit_id in ("WU-A", "WU-B"):
+        result = run_scheduling_tick(
+            gateway,
+            workspace,
+            run_id="RUN-L4-SYS",
+            adapter=FakeAdapter([timed_out]),
+            worker_id=f"worker-{work_unit_id}",
+        )
+        assert result.action == "recorded_attempt"
+        assert result.work_unit_id == work_unit_id
+
+    run = yaml.safe_load(
+        (workspace.ai_team / "runs" / "RUN-L4-SYS.yaml").read_text(encoding="utf-8")
+    )
+    assert run["status"] == "active"
+    attempts = [
+        yaml.safe_load(path.read_text(encoding="utf-8"))
+        for path in (workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")
+        if yaml.safe_load(path.read_text(encoding="utf-8")).get("status") == "timed_out"
+    ]
+    assert {item["work_unit_id"] for item in attempts} == {"WU-A", "WU-B"}
+    assert all(item.get("failure_code") == "agent_timeout" for item in attempts)
+
+
+def test_orphan_started_attempt_is_recovered_on_restart(workspace: Workspace) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-L4-ORPHAN", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-L4-ORPHAN"},
+            payload={
+                "id": "LEASE-L4-ORPHAN",
+                "run_id": "RUN-L4-ORPHAN",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="l4-orphan-lease",
+        )
+    )
+    attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
+    attempts_dir.mkdir(parents=True, exist_ok=True)
+    attempt = {
+        "id": "ATTEMPT-L4-ORPHAN",
+        "revision": 1,
+        "run_id": "RUN-L4-ORPHAN",
+        "execution_id": "EXE-L4-ORPHAN",
+        "work_unit_id": "WU-A",
+        "worker_lease_id": "LEASE-L4-ORPHAN",
+        "epoch": 1,
+        "step": "sandbox_implementation",
+        "status": "started",
+        "started_at": "2026-08-30T00:00:00+00:00",
+        "ended_at": None,
+        "summary": None,
+        "checks": [],
+        "artifacts": [],
+        "workspace": {},
+        "contract": {},
+        "requested_commands": [],
+        "usage": {},
+        "provider": {},
+    }
+    (attempts_dir / "ATTEMPT-L4-ORPHAN.yaml").write_text(
+        yaml.safe_dump(attempt), encoding="utf-8"
+    )
+    _expire_lease_heartbeat(workspace, "LEASE-L4-ORPHAN")
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-L4-ORPHAN", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    recovered = yaml.safe_load(
+        (attempts_dir / "ATTEMPT-L4-ORPHAN.yaml").read_text(encoding="utf-8")
+    )
+    assert recovered["status"] == "timed_out"
+    assert recovered["failure_code"] == "orphan_started"
+    assert recovered["failure_scope"] == "run"
+    assert result.action in {"reassigned_lease", "recorded_attempt", "idle", "started_work_unit"}
+
+
+def test_tick_propagates_context_package_ref_on_execution_request(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-OK", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready")
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-OK", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    executed = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-OK", adapter=adapter, worker_id="w1"
+    )
+    assert executed.action in {"advanced_work_unit", "recorded_attempt"}
+    assert adapter.requests
+    assert adapter.requests[0]["context_package_ref"] == (
+        ".ai-team/context-packages/CTX-WU-A.yaml"
+    )
+
+
+def test_tick_blocks_implementation_when_context_package_missing(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-MISS", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready", context_package_ref=False)
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-MISS", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    blocked = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-MISS", adapter=adapter, worker_id="w1"
+    )
+    assert blocked.action in {"recorded_attempt", "advanced_work_unit", "paused_work_unit"}
+    assert adapter.requests == []
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "blocked"
+    assert "context_package" in str(attempt.get("summary") or "")
+
+
+def test_tick_blocks_when_required_shared_contract_missing_from_context(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-CONTRACT", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready")
+    packages = workspace.ai_team / "context-packages"
+    ctx_path = packages / "CTX-WU-A.yaml"
+    document = yaml.safe_load(ctx_path.read_text(encoding="utf-8"))
+    document["required_contracts"] = ["contracts/shared/api-v1.json"]
+    document["completeness_status"] = "incomplete"
+    document["missing_inputs"] = ["contracts/shared/api-v1.json"]
+    ctx_path.write_text(yaml.safe_dump(document), encoding="utf-8")
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-CONTRACT", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    blocked = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-CONTRACT", adapter=adapter, worker_id="w1"
+    )
+    assert blocked.action == "paused_work_unit"
+    assert adapter.requests == []
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "blocked"
+    assert "incomplete" in str(attempt.get("summary") or "")
+
+
+def test_orphan_started_attempt_recovers_when_lease_document_is_gone(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-ORPHAN-GONE", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
+    attempts_dir.mkdir(parents=True, exist_ok=True)
+    attempt = {
+        "id": "ATTEMPT-ORPHAN-GONE",
+        "revision": 1,
+        "run_id": "RUN-ORPHAN-GONE",
+        "execution_id": "EXE-ORPHAN-GONE",
+        "work_unit_id": "WU-A",
+        "worker_lease_id": "LEASE-GONE",
+        "epoch": 1,
+        "step": "sandbox_implementation",
+        "status": "started",
+        "started_at": "2026-08-30T00:00:00+00:00",
+        "ended_at": None,
+        "summary": None,
+        "checks": [],
+        "artifacts": [],
+        "workspace": {},
+        "contract": {},
+        "requested_commands": [],
+        "usage": {},
+        "provider": {},
+    }
+    (attempts_dir / "ATTEMPT-ORPHAN-GONE.yaml").write_text(
+        yaml.safe_dump(attempt), encoding="utf-8"
+    )
+    # No lease file and no leases_by_work_unit entry — the failure mode from audit.
+    run_path = workspace.ai_team / "runs" / "RUN-ORPHAN-GONE.yaml"
+    run_document = yaml.safe_load(run_path.read_text(encoding="utf-8"))
+    run_document["leases_by_work_unit"] = {}
+    run_path.write_text(yaml.safe_dump(run_document), encoding="utf-8")
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-ORPHAN-GONE", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    recovered = yaml.safe_load(
+        (attempts_dir / "ATTEMPT-ORPHAN-GONE.yaml").read_text(encoding="utf-8")
+    )
+    assert recovered["status"] == "timed_out"
+    assert recovered["failure_code"] == "orphan_started"
+    assert result.action != "idle" or recovered["status"] == "timed_out"
+
+
+def test_tick_signals_awaiting_human_for_blocked_plus_human_test_mix(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-HUMAN-MIX", work_unit_ids=["WU-A", "WU-B"]))
+    _seed_work_unit(workspace, "WU-A", status="blocked")
+    _seed_work_unit(workspace, "WU-B", status="human_test")
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-HUMAN-MIX", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    assert result.action == "awaiting_human"
+    assert "WU-B" in result.details["waiting_work_unit_ids"]
+    run_document = yaml.safe_load(
+        (workspace.ai_team / "runs" / "RUN-HUMAN-MIX.yaml").read_text(encoding="utf-8")
+    )
+    assert run_document["status"] == "active"
+
+
+def test_context_package_ref_rejects_path_escape(workspace: Workspace) -> None:
+    from governed_ai.core.orchestrator.tick import _canonical_context_package_path
+
+    with pytest.raises(ValueError, match="context-packages|\\.\\."):
+        _canonical_context_package_path(workspace, "../secrets/creds.yaml")
+    with pytest.raises(ValueError, match="relative|context-packages"):
+        _canonical_context_package_path(workspace, r"C:\Windows\system32\drivers\etc\hosts")
+
+
+def test_tick_blocks_when_context_package_fails_schema_or_role_mismatch(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-SCHEMA", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready")
+    packages = workspace.ai_team / "context-packages"
+    # Schema-invalid: only id — missing work_unit, role, items.
+    (packages / "CTX-WU-A.yaml").write_text("id: CTX-WU-A\n", encoding="utf-8")
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-SCHEMA", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    blocked = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-SCHEMA", adapter=adapter, worker_id="w1"
+    )
+    assert blocked.action == "paused_work_unit"
+    assert adapter.requests == []
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "blocked"
+    assert "schema" in str(attempt.get("summary") or "").lower()
+
+
+def test_tick_blocks_when_context_package_id_mismatches_ref(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-ID", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready")
+    packages = workspace.ai_team / "context-packages"
+    document = {
+        "id": "CTX-WRONG",
+        "work_unit": "WU-A",
+        "role": "backend-developer",
+        "required_contracts": [],
+        "completeness_status": "complete",
+        "missing_inputs": [],
+        "items": [
+            {
+                "level": "L3_work_unit",
+                "source": ".ai-team/work-units/WU-A.yaml",
+                "provenance": "authoritative",
+                "reason": "id mismatch fixture",
+            }
+        ],
+        "open_context_requests": [],
+    }
+    (packages / "CTX-WU-A.yaml").write_text(yaml.safe_dump(document), encoding="utf-8")
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-ID", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    blocked = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-ID", adapter=adapter, worker_id="w1"
+    )
+    assert blocked.action == "paused_work_unit"
+    assert adapter.requests == []
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "blocked"
+    assert "CTX-WRONG" in str(attempt.get("summary") or "")
+    assert "CTX-WU-A" in str(attempt.get("summary") or "")

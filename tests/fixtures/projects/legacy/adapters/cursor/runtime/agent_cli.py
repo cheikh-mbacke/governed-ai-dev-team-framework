@@ -36,7 +36,9 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
+import signal
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -46,6 +48,8 @@ from typing import Any
 import yaml
 
 from governed_ai.compat.datetime import UTC, datetime
+
+from .results import HANDOFF_DIAGNOSTIC_MAX, HANDOFF_SUMMARY_MAX, extract_governed_handoff
 
 DEFAULT_TIMEOUT_SECONDS = 600.0
 ENABLE_ENV_VAR = "GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH"
@@ -103,9 +107,27 @@ def build_prompt(project_root: Path, request: dict[str, Any]) -> str:
     context = ""
     context_ref = request.get("context_package_ref")
     if context_ref:
-        context_path = project_root / str(context_ref)
-        if context_path.is_file():
-            context = context_path.read_text(encoding="utf-8")[:20000]
+        packages_root = (project_root / ".ai-team" / "context-packages").resolve()
+        ref_text = str(context_ref).strip().replace("\\", "/")
+        candidates: list[Path] = []
+        if ref_text and ".." not in Path(ref_text).parts and not (
+            ref_text.startswith("/") or re.match(r"^[A-Za-z]:", ref_text)
+        ):
+            if ref_text.endswith(".yaml") and ref_text.startswith(
+                ".ai-team/context-packages/"
+            ):
+                candidates.append((project_root / ref_text).resolve())
+            elif "/" not in ref_text and not ref_text.startswith("."):
+                name = ref_text if ref_text.endswith(".yaml") else f"{ref_text}.yaml"
+                candidates.append((packages_root / name).resolve())
+        for context_path in candidates:
+            try:
+                context_path.relative_to(packages_root)
+            except ValueError:
+                continue
+            if context_path.is_file():
+                context = context_path.read_text(encoding="utf-8")[:20000]
+                break
     return (
         f"{wu_summary}\n"
         f"Role: {role_id}. Procedure: {procedure_id}.\n"
@@ -132,7 +154,7 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
         fallback = (text or stderr or "agent CLI produced no parseable output").strip()
         return AgentInvocationOutcome(
             status="failed",
-            summary=fallback[:2000],
+            summary=fallback[:HANDOFF_DIAGNOSTIC_MAX],
             limitations=["agent CLI did not return the expected JSON envelope"],
         )
 
@@ -140,13 +162,16 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
     result_text = str(payload.get("result") or "")
     status = "failed" if (is_error or returncode != 0) else "succeeded"
     structured: dict[str, Any] = {}
+    limitations: list[str] = []
     if status == "succeeded":
-        try:
-            parsed = json.loads(result_text)
-            if isinstance(parsed, dict):
-                structured = parsed
-        except json.JSONDecodeError:
-            pass
+        structured_handoff, extract_error = extract_governed_handoff(result_text)
+        if structured_handoff is not None:
+            structured = structured_handoff
+        else:
+            status = "failed"
+            limitations.append(
+                extract_error or "agent result was not the required governed JSON handoff"
+            )
     outer_usage = payload.get("usage") if isinstance(payload.get("usage"), dict) else {}
     input_tokens = int(outer_usage.get("inputTokens", 0) or 0)
     output_tokens = int(outer_usage.get("outputTokens", 0) or 0)
@@ -154,12 +179,13 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
     usage.setdefault("input_tokens", input_tokens)
     usage.setdefault("output_tokens", output_tokens)
     usage.setdefault("total_tokens", input_tokens + output_tokens)
-    limitations = []
-    if status == "succeeded" and not structured:
-        limitations.append("agent result was not the required governed JSON handoff")
+    if structured:
+        summary = str(structured.get("summary") or "")[:HANDOFF_SUMMARY_MAX]
+    else:
+        summary = (result_text or stderr or text)[:HANDOFF_DIAGNOSTIC_MAX]
     return AgentInvocationOutcome(
         status=status,
-        summary=str(structured.get("summary") or result_text)[:4000],
+        summary=summary,
         limitations=limitations,
         checks=list(structured.get("checks") or []),
         artifacts=list(structured.get("artifacts") or []),
@@ -239,6 +265,31 @@ def _sanitized_process_env(accessible_secrets: list[str]) -> dict[str, str]:
     }
 
 
+def _terminate_process_tree(process: subprocess.Popen[str]) -> None:
+    """Stop the agent process and any children spawned in its group."""
+    if process.poll() is not None:
+        return
+    try:
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
+        else:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, OSError):
+                process.kill()
+    except Exception:  # noqa: BLE001 - best-effort teardown
+        try:
+            process.kill()
+        except OSError:
+            pass
+
+
 def _run_agent_process(
     command: list[str],
     *,
@@ -257,28 +308,32 @@ def _run_agent_process(
     process_env["GOVERNED_AI_ALLOWED_PATHS"] = json.dumps(allowed_paths)
     process_env["CURSOR_PROJECT_DIR"] = str(project_root.resolve())
     process_env.update(telemetry_context or {})
-    process = subprocess.Popen(
-        command,
-        cwd=str(project_root),
-        env=process_env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
+    popen_kwargs: dict[str, Any] = {
+        "cwd": str(project_root),
+        "env": process_env,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "text": True,
+    }
+    if os.name == "nt":
+        popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        popen_kwargs["start_new_session"] = True
+    process = subprocess.Popen(command, **popen_kwargs)
     deadline = time.monotonic() + timeout_seconds
     while True:
         reason = _kill_switch_reason(kill_switch_path)
         if reason is not None:
-            process.terminate()
+            _terminate_process_tree(process)
             try:
                 process.communicate(timeout=5)
             except subprocess.TimeoutExpired:
-                process.kill()
+                _terminate_process_tree(process)
                 process.communicate()
             return None, reason
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            process.kill()
+            _terminate_process_tree(process)
             process.communicate()
             raise subprocess.TimeoutExpired(cmd=command, timeout=timeout_seconds)
         try:

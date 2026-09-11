@@ -148,6 +148,147 @@ def check_hooks_config(project_root: Path) -> tuple[bool, str]:
     return True, f"{len(commands)} hook commands use the portable runner"
 
 
+_VALID_PREFLIGHT_APPROVAL_MODES = frozenset({"allowlist", "run_everything", "unknown"})
+
+
+def _parse_preflight_attestation() -> tuple[dict[str, Any] | None, str | None]:
+    """Parse ``GOVERNED_AI_PREFLIGHT_ATTESTATION`` JSON.
+
+    Returns ``(attestation, error_detail)``. ``attestation`` is set only when
+    the object is structurally valid; Core grant / ``allowed_shell_commands``
+    remain orthogonal and are never altered here.
+    """
+    raw = os.environ.get("GOVERNED_AI_PREFLIGHT_ATTESTATION")
+    if raw is None or not str(raw).strip():
+        return None, None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        return None, f"invalid GOVERNED_AI_PREFLIGHT_ATTESTATION JSON: {exc}"
+    if not isinstance(data, dict):
+        return None, "GOVERNED_AI_PREFLIGHT_ATTESTATION must be a JSON object"
+    approval_mode = data.get("approval_mode")
+    source = data.get("source")
+    attested_at = data.get("attested_at")
+    if approval_mode not in _VALID_PREFLIGHT_APPROVAL_MODES:
+        return None, (
+            "approval_mode must be one of allowlist | run_everything | unknown"
+        )
+    if not isinstance(source, str) or not source.strip():
+        return None, "source is required (non-empty string)"
+    if not isinstance(attested_at, str) or not attested_at.strip():
+        return None, "attested_at is required (ISO datetime string)"
+    attestation: dict[str, Any] = {
+        "approval_mode": approval_mode,
+        "source": source.strip(),
+        "attested_at": attested_at.strip(),
+    }
+    if "cursor_version" in data:
+        cursor_version = data["cursor_version"]
+        if cursor_version is not None and not isinstance(cursor_version, str):
+            return None, "cursor_version must be a string or null"
+        attestation["cursor_version"] = cursor_version
+    return attestation, None
+
+
+def _apply_unattended_manual_attestation(report: dict[str, Any]) -> None:
+    """Resolve Cursor-UI-only manual checks for unattended preflight.
+
+    Only typed ``GOVERNED_AI_PREFLIGHT_ATTESTATION`` with
+    ``approval_mode`` in ``allowlist|run_everything`` authorizes. Legacy
+    ``GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1`` is rejected (blocking).
+    """
+    attestation, parse_error = _parse_preflight_attestation()
+    legacy = os.environ.get("GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT") == "1"
+    if attestation is not None:
+        report["preflight_attestation"] = attestation
+
+    base_allowlist = report["global_allowlist"]["detail"]
+    base_surface = report["execution_surface"]["detail"]
+    migrate_hint = (
+        "set GOVERNED_AI_PREFLIGHT_ATTESTATION to a JSON object with "
+        "approval_mode (allowlist|run_everything), source, and attested_at"
+    )
+
+    if attestation is not None:
+        mode = attestation["approval_mode"]
+        if mode == "run_everything":
+            report["global_allowlist"] = {
+                "status": "not_applicable",
+                "detail": (
+                    f"{base_allowlist} — Approval mode is Run Everything; "
+                    "global allowlist check is not applicable (Core grant / "
+                    "allowed_shell_commands remain mandatory and orthogonal)"
+                ),
+            }
+        elif mode == "allowlist":
+            report["global_allowlist"] = {
+                "status": "pass",
+                "detail": (
+                    f"{base_allowlist} (human-attested via "
+                    "GOVERNED_AI_PREFLIGHT_ATTESTATION approval_mode=allowlist)"
+                ),
+            }
+        else:
+            report["global_allowlist"] = {
+                "status": "manual",
+                "detail": (
+                    f"{base_allowlist} — approval_mode=unknown does not satisfy "
+                    "unattended global_allowlist; attest allowlist or "
+                    "run_everything via GOVERNED_AI_PREFLIGHT_ATTESTATION"
+                ),
+            }
+
+        if mode in {"allowlist", "run_everything"}:
+            report["execution_surface"] = {
+                "status": "pass",
+                "detail": (
+                    f"{base_surface} (human-attested via "
+                    f"GOVERNED_AI_PREFLIGHT_ATTESTATION approval_mode={mode})"
+                ),
+            }
+        else:
+            report["execution_surface"] = {
+                "status": "manual",
+                "detail": (
+                    f"{base_surface} — approval_mode=unknown does not satisfy "
+                    "execution_surface; attest allowlist or run_everything"
+                ),
+            }
+        return
+
+    # No valid typed attestation — legacy blanket env is no longer authorizing.
+    detail_suffix = (
+        f" — {parse_error}; {migrate_hint}"
+        if parse_error
+        else f" — {migrate_hint}, or OpenRun will refuse this check"
+    )
+    if legacy:
+        rejected = (
+            " — GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1 is no longer accepted; "
+            "set GOVERNED_AI_PREFLIGHT_ATTESTATION with approval_mode "
+            "allowlist|run_everything"
+        )
+        report["global_allowlist"] = {
+            "status": "manual",
+            "detail": f"{base_allowlist}{rejected}",
+        }
+        report["execution_surface"] = {
+            "status": "manual",
+            "detail": f"{base_surface}{rejected}",
+        }
+        return
+
+    report["global_allowlist"] = {
+        "status": "manual",
+        "detail": f"{base_allowlist}{detail_suffix}",
+    }
+    report["execution_surface"] = {
+        "status": "manual",
+        "detail": f"{base_surface}{detail_suffix}",
+    }
+
+
 def collect_preflight_report(
     project_root: Path,
     *,
@@ -235,30 +376,9 @@ def collect_preflight_report(
             ),
         }
         # Document 6 §9.6 — manual confirmation states forbid unattended start.
-        # A human may attest those Cursor-UI-only checks via env so the report
-        # can back OpenRun without inventing a Core bypass.
-        acknowledged = os.environ.get("GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT") == "1"
-        for name in ("global_allowlist", "execution_surface"):
-            entry = report.get(name)
-            if not isinstance(entry, dict) or entry.get("status") != "manual":
-                continue
-            if acknowledged:
-                report[name] = {
-                    "status": "pass",
-                    "detail": (
-                        f"{entry.get('detail')} "
-                        "(human-attested via GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1)"
-                    ),
-                }
-            else:
-                report[name] = {
-                    "status": "manual",
-                    "detail": (
-                        f"{entry.get('detail')} — set "
-                        "GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1 after confirming, "
-                        "or OpenRun will refuse this check"
-                    ),
-                }
+        # A human may attest those Cursor-UI-only checks via typed env so the
+        # report can back OpenRun without inventing a Core bypass.
+        _apply_unattended_manual_attestation(report)
     return report
 
 

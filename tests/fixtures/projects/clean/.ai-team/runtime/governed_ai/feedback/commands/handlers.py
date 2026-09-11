@@ -295,10 +295,52 @@ def _hash_ref(value: str | None, *, namespace: str = "") -> str:
     return hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
 
 
+_MAX_FREE_TEXT = 2000
+_TRANSCRIPT_KEYS = frozenset(
+    {
+        "agent_transcript",
+        "transcript",
+        "stdout",
+        "stderr",
+        "raw_output",
+        "provider_response",
+    }
+)
+
+
+def _clip_text(value: object, *, limit: int = _MAX_FREE_TEXT) -> object:
+    if not isinstance(value, str):
+        return value
+    if len(value) <= limit:
+        return value
+    return value[: limit - 1] + "…"
+
+
+def _minimize_observation_payload(item: dict) -> dict:
+    """Bound free-text and drop transcript-like fields without anonymizing ADR-009 ids."""
+    result = dict(item)
+    for key in _TRANSCRIPT_KEYS:
+        result.pop(key, None)
+    if "symptom" in result:
+        result["symptom"] = _clip_text(result.get("symptom"))
+    if "candidate_improvement" in result:
+        result["candidate_improvement"] = _clip_text(
+            result.get("candidate_improvement"), limit=1000
+        )
+    provider = result.get("provider")
+    if isinstance(provider, dict):
+        cleaned = dict(provider)
+        cleaned.pop("api_key", None)
+        cleaned.pop("authorization", None)
+        cleaned.pop("raw", None)
+        result["provider"] = cleaned
+    return result
+
+
 def _structured_observation(item: dict, *, project_ref: str) -> dict:
     recurrence = item.get("recurrence_key")
     impact = item.get("impact") or {}
-    return {
+    payload = {
         "observation_ref": _hash_ref(item.get("id"), namespace=project_ref),
         "category": item.get("category"),
         "severity": item.get("severity"),
@@ -315,7 +357,11 @@ def _structured_observation(item: dict, *, project_ref: str) -> dict:
         ),
         "occurrence_count": occurrence_count_of(item),
         "status": item.get("status"),
+        "revision": int(item.get("revision") or 1),
+        "last_recorded_at": item.get("last_recorded_at") or item.get("recorded_at"),
+        "recorded_at": item.get("recorded_at"),
     }
+    return payload
 
 
 def _execution_attempts(workspace: Workspace, work_unit_id: str | None = None) -> list[dict]:
@@ -388,6 +434,9 @@ def _structured_execution(item: dict, *, project_ref: str) -> dict:
             for key in ("input_tokens", "output_tokens", "total_tokens", "cost", "currency")
             if key in usage
         },
+        "revision": int(item.get("revision") or 1),
+        "failure_code": item.get("failure_code"),
+        "ended_at": item.get("ended_at"),
     }
 
 
@@ -399,6 +448,17 @@ def _full_without_project_id(item: dict, project_ref: str, include_id: bool) -> 
         if (result.get("scope") or {}).get("type") == "project":
             result["scope"]["ref"] = project_ref
     return result
+
+
+def _next_snapshot_sequence(workspace: Workspace) -> int:
+    metrics = workspace.ai_team / "metrics"
+    prior = 0
+    if metrics.is_dir():
+        prior += len(list(metrics.glob("framework-feedback-*.json")))
+        outbox = metrics / "outbox"
+        if outbox.is_dir():
+            prior += len(list(outbox.glob("EXP-*.json")))
+    return prior + 1
 
 
 def build_export_document(workspace: Workspace, params: ExportParams) -> tuple[dict, Path]:
@@ -449,7 +509,9 @@ def build_export_document(workspace: Workspace, params: ExportParams) -> tuple[d
         ]
     else:
         exported_observations = [
-            _full_without_project_id(item, project_ref, include_project_id)
+            _full_without_project_id(
+                _minimize_observation_payload(item), project_ref, include_project_id
+            )
             for item in observations
         ]
         exported_retrospectives = [
@@ -469,6 +531,7 @@ def build_export_document(workspace: Workspace, params: ExportParams) -> tuple[d
         "project_ref": project_ref,
         "framework_version": meta["framework_version"],
         "constitution_version": meta["constitution_version"],
+        "snapshot_sequence": _next_snapshot_sequence(workspace),
         "summary": summary,
         "observations": exported_observations,
         "retrospectives": exported_retrospectives,

@@ -14,12 +14,13 @@ execution_ceiling, convergence bounds, or grant checks.
 
 from __future__ import annotations
 
-import fnmatch
 import json
+import re
 import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -27,14 +28,28 @@ import yaml
 from governed_ai.adapters.spi import AdapterSPI, ExecutionRequest
 from governed_ai.compat.datetime import UTC, datetime, timedelta
 from governed_ai.core.commands.gateway import CommandGateway
-from governed_ai.core.domain.run.autonomy_policy import effective_policy_hash
+from governed_ai.core.domain.run.autonomy_policy import (
+    effective_policy_hash,
+    resolve_step_timeout_seconds,
+)
+from governed_ai.core.domain.run.failure_taxonomy import (
+    classify_attempt_failure,
+    systemic_failure_signature,
+)
 from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
+from governed_ai.core.orchestrator.boundary import boundary_error_for_changed_files
+from governed_ai.core.orchestrator.context_package import (
+    completeness_error,
+    evaluate_context_package_completeness,
+)
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
     changed_files,
+    create_unverified_wip_commit,
     ensure_integration_worktree,
     ensure_work_unit_worktree,
     head_sha,
+    list_uncommitted_files,
     merge_and_revalidate,
 )
 from governed_ai.core.workspace import Workspace
@@ -108,6 +123,164 @@ def _resolve_execution_contract(
         "procedure_id": procedure["procedure_id"],
         "procedure_revision": procedure["revision"],
     }
+
+
+_MAX_AUTO_SYMPTOM = 2000
+
+
+def _procedure_required_inputs(workspace: Workspace, procedure_id: str) -> list[str]:
+    from governed_ai.contracts.compatibility import resolve_active_bundle_dir
+
+    bundle_dir = resolve_active_bundle_dir(workspace.ai_team / "contracts")
+    procedure = json.loads(
+        (bundle_dir / "procedures" / f"{procedure_id}.json").read_text(encoding="utf-8")
+    )
+    return [str(item) for item in (procedure.get("required_inputs") or [])]
+
+
+_CONTEXT_PACKAGES_REL = ".ai-team/context-packages"
+
+
+def _canonical_context_package_path(workspace: Workspace, ref: str) -> Path:
+    """Resolve a context package ref strictly under ``.ai-team/context-packages/``."""
+    text = str(ref).strip().replace("\\", "/")
+    if not text:
+        raise ValueError("empty context_package_ref")
+    if text.startswith("/") or re.match(r"^[A-Za-z]:", text):
+        raise ValueError("context_package_ref must be a relative id under context-packages")
+    parts = Path(text).parts
+    if ".." in parts:
+        raise ValueError("context_package_ref must not contain '..'")
+
+    packages_root = (workspace.ai_team / "context-packages").resolve()
+    if text.endswith(".yaml"):
+        if text.startswith(f"{_CONTEXT_PACKAGES_REL}/"):
+            candidate = (workspace.root / text).resolve()
+        elif "/" in text or text.startswith("."):
+            raise ValueError(
+                "context_package_ref path must be "
+                f"{_CONTEXT_PACKAGES_REL}/<id>.yaml or a bare package id"
+            )
+        else:
+            candidate = (packages_root / text).resolve()
+    else:
+        if "/" in text or text.startswith("."):
+            raise ValueError("context_package_ref id must not contain path separators")
+        candidate = (packages_root / f"{text}.yaml").resolve()
+
+    try:
+        candidate.relative_to(packages_root)
+    except ValueError as exc:
+        raise ValueError(
+            "context_package_ref escapes .ai-team/context-packages/"
+        ) from exc
+    return candidate
+
+
+def _resolve_context_package_ref(
+    workspace: Workspace,
+    wu_document: dict[str, Any],
+    *,
+    procedure_id: str,
+    role_id: str,
+) -> tuple[str | None, str | None]:
+    """Return (request-relative path, error). Error set when context is required but unusable."""
+    from jsonschema import Draft202012Validator, FormatChecker
+
+    from governed_ai.core.persistence.io import load_json
+
+    required = _procedure_required_inputs(workspace, procedure_id)
+    needs_context = "context_package" in required
+    raw_ref = wu_document.get("context_package_ref")
+    if raw_ref in (None, ""):
+        if needs_context:
+            return None, "context_package required but work unit has no context_package_ref"
+        return None, None
+    try:
+        path = _canonical_context_package_path(workspace, str(raw_ref))
+    except ValueError as exc:
+        if needs_context:
+            return None, str(exc)
+        return None, None
+    if not path.is_file():
+        if needs_context:
+            try:
+                display = path.relative_to(workspace.root).as_posix()
+            except ValueError:
+                display = str(path)
+            return None, f"context_package missing or unreadable: {display}"
+        return None, None
+    try:
+        document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError) as exc:
+        if needs_context:
+            return None, f"context_package invalid: {exc}"
+        return None, None
+    if not isinstance(document, dict):
+        if needs_context:
+            return None, "context_package invalid: document must be a mapping"
+        return None, None
+
+    schema_path = workspace.ai_team / "schemas" / "context-package.schema.json"
+    try:
+        schema = load_json(schema_path)
+        errors = sorted(
+            Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(
+                document
+            ),
+            key=lambda error: list(error.path),
+        )
+    except (OSError, ValueError, TypeError) as exc:
+        if needs_context:
+            return None, f"context_package schema unavailable: {exc}"
+        return None, None
+    if errors:
+        first = errors[0]
+        pointer = "/" + "/".join(str(part) for part in first.path) if first.path else "/"
+        message = f"context_package schema invalid at {pointer}: {first.message}"
+        if needs_context:
+            return None, message
+        return None, None
+
+    expected_id = path.stem
+    if str(document.get("id") or "") != expected_id:
+        message = (
+            f"context_package id {document.get('id')!r} does not match "
+            f"requested package id {expected_id!r}"
+        )
+        if needs_context:
+            return None, message
+        return None, None
+
+    work_unit_id = str(wu_document.get("id") or "")
+    if str(document.get("work_unit") or "") != work_unit_id:
+        message = (
+            f"context_package work_unit {document.get('work_unit')!r} "
+            f"does not match work unit {work_unit_id!r}"
+        )
+        if needs_context:
+            return None, message
+        return None, None
+    if str(document.get("role") or "") != str(role_id):
+        message = (
+            f"context_package role {document.get('role')!r} "
+            f"does not match dispatched role {role_id!r}"
+        )
+        if needs_context:
+            return None, message
+        return None, None
+
+    if needs_context:
+        evaluation = evaluate_context_package_completeness(
+            workspace_root=workspace.root,
+            context_document=document,
+            context_path=path,
+            wu_document=wu_document,
+        )
+        error = completeness_error(evaluation)
+        if error:
+            return None, error
+    return path.relative_to(workspace.root).as_posix(), None
 
 
 @dataclass(frozen=True, slots=True)
@@ -282,8 +455,32 @@ def _dispatch_step(workspace: Workspace, run_id: str, work_unit_id: str, status:
     return "audit"
 
 
+def _explicit_acceptance_criterion_ids(work_unit: dict[str, Any] | None) -> tuple[str, ...]:
+    """Return AC-* identifiers declared on the Work Unit, when present."""
+    if not work_unit:
+        return ()
+    ids: list[str] = []
+    for item in work_unit.get("acceptance_criteria") or []:
+        if isinstance(item, dict) and len(item) == 1:
+            key = str(next(iter(item))).strip()
+            if key.startswith("AC-"):
+                ids.append(key)
+            continue
+        if isinstance(item, str):
+            token = item.strip().split()[0] if item.strip() else ""
+            token = token.split(":", 1)[0].strip()
+            if token.startswith("AC-"):
+                ids.append(token)
+    return tuple(ids)
+
+
 def _evidence_error(
-    result: dict[str, Any], *, required_checks: tuple[str, ...], require_changed_sha: bool, base_sha: str | None
+    result: dict[str, Any],
+    *,
+    required_checks: tuple[str, ...],
+    require_changed_sha: bool,
+    base_sha: str | None,
+    work_unit: dict[str, Any] | None = None,
 ) -> str | None:
     checks = result.get("checks") or []
     passed = {
@@ -291,15 +488,37 @@ def _evidence_error(
         for item in checks
         if item.get("status") == "passed" and item.get("evidence_ref")
     }
-    missing = sorted(set(required_checks) - passed)
-    if missing:
-        return f"missing passed checks with evidence: {missing}"
     if require_changed_sha:
+        # Implementation / remediation: transport check "implementation" is optional
+        # when explicit AC-* checks (with evidence_ref) cover the Work Unit.
+        ac_ids = _explicit_acceptance_criterion_ids(work_unit)
+        ac_passed = {
+            name for name in passed if isinstance(name, str) and name.startswith("AC-")
+        }
+        has_implementation = "implementation" in passed
+        if ac_ids:
+            missing_acs = sorted(set(ac_ids) - passed)
+            ac_ok = not missing_acs
+        else:
+            missing_acs = []
+            ac_ok = bool(ac_passed)
+        if not has_implementation and not ac_ok:
+            if ac_ids:
+                return (
+                    "missing passed checks with evidence: "
+                    f"{missing_acs} (or check name 'implementation')"
+                )
+            return "missing passed checks with evidence: ['implementation'] or AC-* with evidence_ref"
         result_sha = (result.get("workspace") or {}).get("result_sha")
         if not result_sha or result_sha == base_sha:
             return "implementation did not produce a new coherent commit SHA"
         if not result.get("artifacts"):
             return "implementation produced no hashed artifact"
+        return None
+
+    missing = sorted(set(required_checks) - passed)
+    if missing:
+        return f"missing passed checks with evidence: {missing}"
     return None
 
 
@@ -428,15 +647,15 @@ def _global_stop_condition(
     if maximum_tokens is not None and int(grant.get("tokens_used", 0)) >= int(maximum_tokens):
         return "budget_exhausted"
     attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
-    failures: dict[tuple[str, str], set[str]] = {}
+    failures: dict[tuple[str, ...], set[str]] = {}
     if attempts_dir.is_dir():
         for path in attempts_dir.glob("*.yaml"):
             attempt = _read_yaml(path) or {}
             if attempt.get("run_id") != run_document.get("id"):
                 continue
-            if attempt.get("status") not in {"failed", "timed_out", "blocked"}:
+            signature = systemic_failure_signature(attempt)
+            if signature is None:
                 continue
-            signature = (str(attempt.get("step")), str(attempt.get("summary")))
             failures.setdefault(signature, set()).add(str(attempt.get("work_unit_id")))
     if any(len(work_units) >= 2 for work_units in failures.values()):
         return "repeated_systemic_failure"
@@ -460,17 +679,6 @@ def _execution_envelope_constraints(
     )
 
 
-def _path_is_allowed(path: str, patterns: list[str]) -> bool:
-    normalized = path.replace("\\", "/").lstrip("./")
-    for raw_pattern in patterns:
-        pattern = raw_pattern.replace("\\", "/").lstrip("./")
-        if pattern.endswith("/") and normalized.startswith(pattern):
-            return True
-        if fnmatch.fnmatchcase(normalized, pattern):
-            return True
-    return False
-
-
 def _implementation_boundary_error(
     *,
     execution_root,
@@ -482,10 +690,11 @@ def _implementation_boundary_error(
 ) -> tuple[str, str | None] | None:
     """Return (message, global_stop_condition) for a boundary violation, else None.
 
-    Document 6 §9.5 — a write outside the authorized workspace (scope or
-    execution envelope) is one of the fixed conditions that stops the whole
-    Run, not just this Work Unit; it is distinct from ordinary budget/tooling
-    failures below, which stay Work-Unit-scoped.
+    Document 6 §9.5 — a write outside the authorized workspace (product scope /
+    envelope, or protected governance paths) is one of the fixed conditions that
+    stops the whole Run, not just this Work Unit. Narrow Work-Unit governed
+    outputs such as ``.ai-team/evidence/<WU>/**`` are allowed separately and do
+    not relax product scope.
     """
     if base_sha is None:
         return "isolated implementation workspace has no base commit", None
@@ -500,13 +709,17 @@ def _implementation_boundary_error(
         files = changed_files(execution_root, base_sha, actual_sha)
     except GitWorkspaceError as exc:
         return f"cannot inspect worker diff: {exc}", None
-    scope_paths = [str(item) for item in (wu_document.get("scope") or {}).get("include") or []]
-    outside_scope = [path for path in files if scope_paths and not _path_is_allowed(path, scope_paths)]
-    outside_envelope = [path for path in files if allowed_paths and not _path_is_allowed(path, allowed_paths)]
-    if outside_scope:
-        return f"out-of-scope writes detected: {outside_scope}", "out_of_workspace_write"
-    if outside_envelope:
-        return f"out-of-envelope writes detected: {outside_envelope}", "out_of_workspace_write"
+
+    work_unit_id = str(wu_document.get("id") or "")
+    classification_error = boundary_error_for_changed_files(
+        files,
+        work_unit_id=work_unit_id,
+        wu_document=wu_document,
+        allowed_paths=allowed_paths,
+    )
+    if classification_error:
+        return classification_error
+
     policy_budgets = (run_document.get("effective_autonomy_policy") or {}).get("budgets") or {}
     maximum = int(policy_budgets.get("maximum_changed_files_per_work_unit", 30))
     if (wu_document.get("risk") or {}).get("class") == "critical":
@@ -533,6 +746,204 @@ def _implementation_boundary_error(
     if maximum_dependencies == 0 and touched_dependency_files:
         return f"dependency changes are forbidden: {touched_dependency_files}", None
     return None
+
+
+def _checkpoint_start_sha(workspace: Workspace, work_unit_id: str) -> str | None:
+    path = workspace.ai_team / "runs" / "checkpoints" / f"{work_unit_id}.yaml"
+    document = _read_yaml(path)
+    if not document:
+        return None
+    sha = document.get("last_commit")
+    if isinstance(sha, str) and len(sha) == 40:
+        return sha.lower()
+    return None
+
+
+def _grant_remaining_seconds(
+    workspace: Workspace, run_document: dict[str, Any], *, now: datetime
+) -> float | None:
+    grant_id = run_document.get("run_authorization_grant_id")
+    if not grant_id:
+        return None
+    grant_path = workspace.ai_team / "run-authorization-grants" / f"{grant_id}.json"
+    if not grant_path.is_file():
+        return None
+    try:
+        grant = json.loads(_read_text(grant_path))
+    except (OSError, json.JSONDecodeError):
+        return None
+    remaining: list[float] = []
+    expires_at = grant.get("expires_at")
+    if expires_at:
+        try:
+            expiry = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=UTC)
+            remaining.append(max(1.0, (expiry - now).total_seconds()))
+        except ValueError:
+            pass
+    duration = grant.get("maximum_duration_hours")
+    if duration is not None and run_document.get("created_at"):
+        opened = datetime.fromisoformat(str(run_document["created_at"]).replace("Z", "+00:00"))
+        if opened.tzinfo is None:
+            opened = opened.replace(tzinfo=UTC)
+        remaining.append(max(1.0, float(duration) * 3600 - (now - opened).total_seconds()))
+    if not remaining:
+        return None
+    return min(remaining)
+
+
+def _recover_orphan_started_attempts(
+    gateway: CommandGateway,
+    workspace: Workspace,
+    *,
+    run_id: str,
+    run_document: dict[str, Any],
+    now: datetime,
+) -> list[str]:
+    """Finalize started attempts whose lease is gone or stale."""
+    attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
+    if not attempts_dir.is_dir():
+        return []
+    recovered: list[str] = []
+    leases_by_work_unit = run_document.get("leases_by_work_unit") or {}
+    for path in sorted(attempts_dir.glob("*.yaml")):
+        attempt = _read_yaml(path) or {}
+        if attempt.get("run_id") != run_id or attempt.get("status") != "started":
+            continue
+        work_unit_id = str(attempt.get("work_unit_id") or "")
+        lease_id = str(attempt.get("worker_lease_id") or "")
+        lease_path = workspace.ai_team / "runs" / "leases" / f"{lease_id}.yaml"
+        lease = _read_yaml(lease_path) if lease_path.is_file() else None
+        current = leases_by_work_unit.get(work_unit_id) or {}
+        lease_authoritative = (
+            lease is not None
+            and lease.get("status") == "active"
+            and str(current.get("lease_id") or "") == lease_id
+            and int(current.get("epoch") or 0) == int(attempt.get("epoch") or 0)
+        )
+        if lease_authoritative and _lease_is_fresh(lease, now=now):
+            continue
+        taxonomy = classify_attempt_failure(
+            status="timed_out",
+            step=str(attempt.get("step") or ""),
+            summary="orphan started attempt recovered on restart",
+        ) or {}
+        payload = {
+            "run_id": run_id,
+            "execution_id": attempt.get("execution_id"),
+            "work_unit_id": work_unit_id,
+            "worker_lease_id": lease_id,
+            "epoch": attempt.get("epoch") or 1,
+            "step": attempt.get("step") or "sandbox_implementation",
+            "status": "timed_out",
+            "summary": "orphan started attempt recovered on restart",
+            "checks": [],
+            "artifacts": [],
+            "workspace": attempt.get("workspace") or {},
+            "contract": attempt.get("contract") or {},
+            "requested_commands": [],
+            "usage": {},
+            "provider": {},
+            **taxonomy,
+        }
+        if not lease_authoritative:
+            payload["orphan_recovery"] = True
+        receipt, exit_code = gateway.execute_command(
+            _envelope(
+                "RecordExecutionAttempt",
+                target={
+                    "kind": "execution_attempt",
+                    "id": attempt["id"],
+                    "expected_revision": attempt.get("revision", 1),
+                },
+                payload=payload,
+                actor_role_id="control-plane",
+            )
+        )
+        if exit_code == 0:
+            recovered.append(str(attempt["id"]))
+        else:
+            _ = receipt
+    return recovered
+
+
+_MACHINE_DISPATCHABLE_STATUSES = frozenset(
+    {
+        "ready",
+        "in_progress",
+        "verification",
+        "review",
+        "security_review",
+        "audit",
+        "remediation_required",
+        "integration_review",
+    }
+)
+_HUMAN_WAIT_STATUSES = frozenset(
+    {
+        "human_test",
+        "paused_for_risk_escalation",
+    }
+)
+
+
+def _run_has_dispatchable_work(
+    workspace: Workspace,
+    run_document: dict[str, Any],
+    work_unit_documents: dict[str, dict[str, Any] | None],
+    *,
+    now: datetime,
+) -> bool:
+    """True when a future tick could still acquire or dispatch machine work."""
+    for _work_unit_id, wu_document in work_unit_documents.items():
+        if wu_document is None:
+            continue
+        status = wu_document.get("status")
+        if status in _MACHINE_DISPATCHABLE_STATUSES or status in STATUS_TO_STEP:
+            return True
+    leases_dir = workspace.ai_team / "runs" / "leases"
+    if leases_dir.is_dir():
+        for lease_path in leases_dir.glob("*.yaml"):
+            lease = _read_yaml(lease_path) or {}
+            if (
+                lease.get("run_id") == run_document.get("id")
+                and lease.get("status") == "active"
+                and _lease_is_fresh(lease, now=now)
+            ):
+                return True
+    return False
+
+
+def _run_awaits_human(
+    work_unit_documents: dict[str, dict[str, Any] | None],
+) -> bool:
+    return any(
+        (document or {}).get("status") in _HUMAN_WAIT_STATUSES
+        for document in work_unit_documents.values()
+        if document is not None
+    )
+
+
+def _should_stop_for_no_dispatchable_work(
+    work_unit_documents: dict[str, dict[str, Any] | None],
+) -> bool:
+    """Close when remaining work is stuck and nothing awaits a human gate."""
+    statuses = [
+        str((document or {}).get("status") or "")
+        for document in work_unit_documents.values()
+        if document is not None
+    ]
+    if not statuses:
+        return True
+    if any(status in _MACHINE_DISPATCHABLE_STATUSES or status in STATUS_TO_STEP for status in statuses):
+        return False
+    if any(status in _HUMAN_WAIT_STATUSES for status in statuses):
+        return False
+    if all(status == "done" for status in statuses):
+        return False
+    # Stuck statuses (blocked, …), optionally mixed with done.
+    return True
 
 
 def run_scheduling_tick(
@@ -587,6 +998,17 @@ def run_scheduling_tick(
         work_unit_id: _read_yaml(workspace.ai_team / "work-units" / f"{work_unit_id}.yaml")
         for work_unit_id in work_unit_ids
     }
+
+    recovered_orphans = _recover_orphan_started_attempts(
+        gateway,
+        workspace,
+        run_id=run_id,
+        run_document=run_document,
+        now=now,
+    )
+    if recovered_orphans:
+        # Re-load run after authoritative attempt updates (budgets / events).
+        run_document = _read_yaml(run_path) or run_document
 
     # Priority 1: reassign any stale lease before anything else.
     for work_unit_id, lease_ref in leases_by_work_unit.items():
@@ -827,7 +1249,10 @@ def run_scheduling_tick(
         if isolated_worktree:
             try:
                 execution_root = ensure_work_unit_worktree(
-                    workspace.root, run_id, work_unit_id
+                    workspace.root,
+                    run_id,
+                    work_unit_id,
+                    start_sha=_checkpoint_start_sha(workspace, work_unit_id),
                 )
             except GitWorkspaceError as exc:
                 failed_receipt, failed_exit = gateway.execute_command(
@@ -909,26 +1334,96 @@ def run_scheduling_tick(
         request["allowed_shell_commands"] = allowed_shell_commands
         request["allowed_paths"] = allowed_paths
         request["accessible_secrets"] = accessible_secrets
+        request["timeout_seconds"] = resolve_step_timeout_seconds(
+            run_document.get("effective_autonomy_policy"),
+            step,
+            grant_remaining_seconds=_grant_remaining_seconds(
+                workspace, run_document, now=now
+            ),
+        )
         if base_sha is not None:
             request["base_sha"] = base_sha
-        try:
-            result = adapter.execute(request)
-        except Exception as exc:  # noqa: BLE001 - adapter boundary must fail closed
+        context_ref, context_error = _resolve_context_package_ref(
+            workspace, wu_document, procedure_id=procedure_id, role_id=role_id
+        )
+        if context_error:
             result = {
                 "status": "blocked",
-                "summary": f"adapter execution failed: {type(exc).__name__}: {exc}",
+                "summary": context_error,
                 "checks": [],
                 "artifacts": [],
                 "requested_commands": [],
                 "usage": {},
+                "limitations": ["context_package_incomplete"],
             }
+        else:
+            if context_ref:
+                request["context_package_ref"] = context_ref
+            try:
+                result = adapter.execute(request)
+            except Exception as exc:  # noqa: BLE001 - adapter boundary must fail closed
+                result = {
+                    "status": "blocked",
+                    "summary": f"adapter execution failed: {type(exc).__name__}: {exc}",
+                    "checks": [],
+                    "artifacts": [],
+                    "requested_commands": [],
+                    "usage": {},
+                }
         status = result.get("status", "failed")
+        if status == "timed_out" and isolated_worktree and execution_root != workspace.root:
+            try:
+                dirty = list_uncommitted_files(execution_root)
+                boundary = None
+                if dirty:
+                    boundary = boundary_error_for_changed_files(
+                        dirty,
+                        work_unit_id=work_unit_id,
+                        wu_document=wu_document,
+                        allowed_paths=allowed_paths,
+                    )
+                wip_sha = None
+                if dirty and boundary is None:
+                    wip_sha = create_unverified_wip_commit(
+                        execution_root,
+                        work_unit_id=work_unit_id,
+                        paths=dirty,
+                    )
+                elif dirty and boundary is not None:
+                    result = dict(result)
+                    result["summary"] = (
+                        f"{result.get('summary') or ''} "
+                        f"WIP checkpoint skipped: {boundary}"
+                    ).strip()
+                head = head_sha(execution_root)
+                salvage_sha = wip_sha or (head if base_sha and head != base_sha else None)
+                if salvage_sha and base_sha and boundary is None:
+                    files = changed_files(execution_root, base_sha, salvage_sha)
+                    boundary = boundary_error_for_changed_files(
+                        files,
+                        work_unit_id=work_unit_id,
+                        wu_document=wu_document,
+                        allowed_paths=allowed_paths,
+                    )
+                    if boundary is None:
+                        result = dict(result)
+                        workspace_meta = dict(result.get("workspace") or {})
+                        workspace_meta["base_sha"] = base_sha
+                        workspace_meta["result_sha"] = salvage_sha
+                        result["workspace"] = workspace_meta
+                        result["summary"] = (
+                            f"{result.get('summary') or ''} "
+                            f"Unverified WIP checkpoint saved at {salvage_sha}."
+                        ).strip()
+            except GitWorkspaceError:
+                pass
         if status == "succeeded":
             evidence_error = _evidence_error(
                 result,
                 required_checks=required_checks,
                 require_changed_sha=step in {"sandbox_implementation", "remediation"},
                 base_sha=base_sha,
+                work_unit=wu_document,
             )
             if evidence_error:
                 status = "failed"
@@ -1004,6 +1499,12 @@ def run_scheduling_tick(
                     },
                 ]
 
+        attempt_taxonomy = classify_attempt_failure(
+            status=status,
+            step=step,
+            summary=str(result.get("summary") or ""),
+            limitations=list(result.get("limitations") or []),
+        ) or {}
         attempt_receipt, attempt_exit = gateway.execute_command(
             _envelope(
                 "RecordExecutionAttempt",
@@ -1029,6 +1530,7 @@ def run_scheduling_tick(
                     "usage": result.get("usage", {}),
                     "duration_ms": result.get("duration_ms"),
                     "provider": result.get("provider", {}),
+                    **attempt_taxonomy,
                 },
                 actor_role_id=attempt_actor_role,
             )
@@ -1075,12 +1577,16 @@ def run_scheduling_tick(
             # blocks the tick — an installed client project may disable
             # feedback recording, and that must not affect scheduling.
             auto_fields = classify_auto_observation(step=step, status=status)
+            raw_symptom = (
+                result.get("summary")
+                or f"execution attempt for step {step!r} ended with status {status!r}"
+            )
+            symptom = str(raw_symptom)
+            if len(symptom) > _MAX_AUTO_SYMPTOM:
+                symptom = symptom[: _MAX_AUTO_SYMPTOM - 1] + "…"
             auto_payload = {
                 "category": auto_fields["category"],
-                "symptom": (
-                    result.get("summary")
-                    or f"execution attempt for step {step!r} ended with status {status!r}"
-                ),
+                "symptom": symptom,
                 "severity": (
                     "high"
                     if str(run_document.get("autonomy_preset", "")).startswith(
@@ -1251,6 +1757,14 @@ def run_scheduling_tick(
                     "executed_commands": [str(item) for item in result.get("requested_commands", [])],
                     "artifacts": [str(item.get("path")) for item in result.get("artifacts", [])],
                     "next_step": step,
+                    "verification_status": (
+                        "unverified"
+                        if status == "timed_out"
+                        and (result.get("workspace") or {}).get("result_sha")
+                        else "verified"
+                        if status == "succeeded"
+                        else None
+                    ),
                 },
             )
         )
@@ -1630,6 +2144,59 @@ def run_scheduling_tick(
             action="run_completed" if close_exit == 0 else "run_completion_failed",
             work_unit_id=None,
             details={"errors": close_receipt.get("errors"), **retrospective_details},
+        )
+
+    if (
+        not _run_has_dispatchable_work(
+            workspace, run_document, work_unit_documents, now=now
+        )
+        and _run_awaits_human(work_unit_documents)
+    ):
+        waiting = [
+            work_unit_id
+            for work_unit_id, document in work_unit_documents.items()
+            if document is not None and document.get("status") in _HUMAN_WAIT_STATUSES
+        ]
+        return TickResult(
+            action="awaiting_human",
+            work_unit_id=None,
+            details={
+                "waiting_work_unit_ids": waiting,
+                "reason": "remaining work units require human action; tick cannot progress them",
+            },
+        )
+
+    if (
+        not _run_has_dispatchable_work(
+            workspace, run_document, work_unit_documents, now=now
+        )
+        and _should_stop_for_no_dispatchable_work(work_unit_documents)
+    ):
+        stop_receipt, stop_exit = gateway.execute_command(
+            _envelope(
+                "CloseRun",
+                target={
+                    "kind": "run",
+                    "id": run_id,
+                    "expected_revision": run_document["revision"],
+                },
+                payload={
+                    "status": "stopped",
+                    "reason": "no dispatchable work remains and no active worker progress",
+                    "stop_condition": "no_dispatchable_work",
+                },
+            )
+        )
+        return _terminal_run_result(
+            gateway,
+            close_exit=stop_exit,
+            action_ok="run_stopped",
+            action_fail="run_stop_failed",
+            work_unit_id=None,
+            details={
+                "stop_condition": "no_dispatchable_work",
+                "errors": stop_receipt.get("errors"),
+            },
         )
 
     return TickResult(action="idle", work_unit_id=None)

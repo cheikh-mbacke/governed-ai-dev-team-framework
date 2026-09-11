@@ -24,6 +24,7 @@
     "project_id": {"type": "string", "minLength": 1},
     "framework_version": {"type": "string", "minLength": 1},
     "constitution_version": {"type": "string", "minLength": 1},
+    "snapshot_sequence": {"type": "integer", "minimum": 1},
     "summary": {
       "type": "object",
       "required": ["total", "open", "by_category", "by_origin", "by_severity"],
@@ -190,7 +191,10 @@
         "impact": {"$ref": "#/$defs/structuredImpact"},
         "recurrence_ref": {"type": ["string", "null"]},
         "occurrence_count": {"type": "integer", "minimum": 1},
-        "status": {"type": "string", "minLength": 1}
+        "status": {"type": "string", "minLength": 1},
+        "revision": {"type": "integer", "minimum": 1},
+        "last_recorded_at": {"type": ["string", "null"], "format": "date-time"},
+        "recorded_at": {"type": ["string", "null"], "format": "date-time"}
       },
       "additionalProperties": false
     },
@@ -225,7 +229,10 @@
         "role_id": {"type": ["string", "null"]},
         "procedure_id": {"type": ["string", "null"]},
         "model": {"type": ["string", "null"]},
-        "usage": {"type": "object"}
+        "usage": {"type": "object"},
+        "revision": {"type": "integer", "minimum": 1},
+        "failure_code": {"type": ["string", "null"]},
+        "ended_at": {"type": ["string", "null"], "format": "date-time"}
       },
       "additionalProperties": false
     },

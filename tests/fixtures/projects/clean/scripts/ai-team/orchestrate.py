@@ -30,7 +30,7 @@ import threading
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-from install_paths import bootstrap_runtime
+from install_paths import bootstrap_runtime, import_adapters_cursor
 
 bootstrap_runtime(_REPO_ROOT)
 
@@ -122,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
         print(exc.message, file=sys.stderr)
         return exit_code_for(exc.code)
 
-    from adapters.cursor.runtime.agent_cli import is_real_agent_launch_enabled
+    agent_cli = import_adapters_cursor("runtime.agent_cli")
 
     from governed_ai.adapters.cursor.adapter import CursorAdapter
     from governed_ai.contracts.compatibility import resolve_active_bundle_dir
@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
     run_document = yaml.safe_load(run_path.read_text(encoding="utf-8")) or {}
     if (
         str(run_document.get("autonomy_preset", "")).startswith("unattended_")
-        and not is_real_agent_launch_enabled()
+        and not agent_cli.is_real_agent_launch_enabled()
     ):
         print(
             "Unattended orchestration refused: native Cursor agent launch is disabled. "

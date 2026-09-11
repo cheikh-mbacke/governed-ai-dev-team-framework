@@ -1,38 +1,138 @@
 # Mode nuit — état des lieux de la preuve de résilience (§15)
 
-**Statut** : couverture fonctionnelle automatisée disponible ; **preuve L4 réelle non encore acquise**. Ce document répond à une question précise : sur les 14 scénarios de résilience listés au §15 de la spécification *« Document 6 — Autonomie avancée et exécution non supervisée (mode nuit) »* (fichier utilisateur `autonomie-avancee-mode-nuit-spec.md`, hors dépôt), lesquels sont aujourd'hui vérifiés par les tests, et avec quel degré de réalisme. Conformément au §15, un test de fonction ou un sous-processus court ne doit pas être présenté comme un run non supervisé réel de plusieurs heures.
+> **Verdict L4 : non validé.**
+>
+> Un **essai L4 réel a échoué** (exports feedback du 10–11 septembre 2026).
+> La résilience « mode nuit » **ne doit pas** être présentée comme éprouvée L4.
+> Les tests unitaires / d’intégration ci-dessous prouvent des *règles et
+> mécanismes*, pas un run non supervisé de plusieurs heures.
 
-Ce numéro de document (« Document 6 ») appartient à la numérotation propre de cette spécification mode nuit, distincte de la numérotation `docs/framework-design/**/NN-*.md` déjà utilisée dans ce dépôt (où le Document 05 est *Résolution des écarts du protocole* et le Document 06 est *Catalogue des contrats de rôle* — sans rapport avec le mode nuit). Aucun renommage n'a été fait pour éviter la confusion : ce fichier reste volontairement hors de cette numérotation.
+**Statut documentaire** : `essai_L4_reel_echoue` — écarts observés encore
+référencés ; correctifs code livrés sur la branche de rénovation, **sans**
+nouveau witness L4 archivé.
 
-## 1. Ce qui a été construit (rappel factuel)
+Ce document répond à une question précise : sur les 14 scénarios de résilience
+listés au §15 de la spécification *« Document 6 — Autonomie avancée et exécution
+non supervisée (mode nuit) »* (fichier utilisateur hors dépôt), lesquels ont
+aujourd’hui une **preuve automatisée de règle**, et avec quel degré de réalisme.
+Conformément au §15, un test de fonction ou un sous-processus court **n’est
+pas** un run non supervisé réel de plusieurs heures.
 
-**Couche 1 — moteur de règles déterministes** (étapes 1 à 9 du §14) : `src/governed_ai/core/domain/run/`, `src/governed_ai/core/commands/handlers/{open_run,acquire_worker_lease,record_execution_attempt,write_checkpoint,close_run,issue_run_authorization_grant,revoke_run_authorization_grant,resolve_run_decision,tighten_execution_ceiling,record_integration_merge}.py`, vérifiée par 54 tests dans `tests/core/test_run_handlers.py`. Ces tests reconstituent chaque scénario en écrivant directement l'état voulu (ex. `_expire_lease_heartbeat` écrit une date passée dans le fichier du lease) plutôt que d'attendre réellement — ils prouvent que **la règle est correcte une fois la condition atteinte**, pas que **le système détecte la condition en production**.
+Ce numéro de document (« Document 6 ») appartient à la numérotation propre de
+cette spécification mode nuit, distincte de la numérotation
+`docs/framework-design/**/NN-*.md` du dépôt.
 
-**Couche 2 — orchestrateur exécutable** (étape 10 du §14, construite depuis) : `src/governed_ai/core/orchestrator/tick.py` (`run_scheduling_tick`, une décision d'ordonnancement par appel — aucune boucle interne, aucun sleep), `src/governed_ai/core/orchestrator/git_workspace.py` (worktrees Git isolés par WU, merge réel + revalidation complète dans la branche d'intégration), et `adapters/cursor/runtime/agent_cli.py` (invocation du CLI `agent` de Cursor, avec watchdog qui surveille la révocation du `RunAuthorizationGrant` pendant qu'un processus agent tourne). Le lancement natif reste explicitement opt-in via `GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1`; le préflight et le CLI d'orchestration refusent désormais un run non supervisé si cette activation n'est pas présente. Les tests exercent des processus et Git, mais pas une mission réelle de plusieurs heures consommant le CLI Cursor de bout en bout.
+## 0. Essai L4 réel — échec et écarts observés
 
-Le seul élément qui reste une simulation assumée, documentée en tête de `tick.py` : « real wall-clock behavior is not something a unit test can prove » — c'est-à-dire qu'aucun test ne fait tourner l'orchestrateur pendant des heures réelles ; les tests appellent `run_scheduling_tick` un nombre borné de fois. Le seul composant destiné à tourner en continu, `scripts/ai-team/orchestrate.py`, est délibérément hors du périmètre des tests unitaires.
+### 0.1 Preuves anonymisées (non-régression, pas preuve L4)
 
-## 2. Tableau de couverture
+Les exports bruts du run réel ne sont **pas** versionnés. Une forme anonymisée,
+qui conserve les relations utiles (`revision`, `snapshot_sequence`, doublons
+d’identités, `recurrence_key`) tout en retirant identifiants projet/provider,
+chemins locaux, transcripts et textes libres, est déposée ici :
 
-| # | Scénario (§15) | Couverture | Preuve existante | Ce qu'il manque pour une preuve L4 réelle |
+- `tests/fixtures/learning/exports/EXP-ANON-*.json`
+- `tests/fixtures/learning/MANIFEST.json`
+- régénération : `python tools/anonymize_feedback_fixtures.py --source <raw>`
+- test : `tests/test_learning_anon_fixtures.py`
+
+Ces fixtures **ne vivent pas** sous `tests/fixtures/projects/clean|legacy/`.
+Elles servent uniquement à régresser l’agrégation / dédup feedback, **pas** à
+attester qu’un mode nuit multi-heures a réussi.
+
+### 0.2 Écarts observés (symptômes du run réel)
+
+Sur le dernier snapshot du projet client observé (anonymisé) :
+
+- 13 tentatives enregistrées, **0** terminale `succeeded` ;
+- timeouts d’implémentation trop courts puis relances ;
+- deux timeouts parallèles traités comme panne systémique ;
+- handoffs agent en prose + JSON rejetés ;
+- preuves AC-* rejetées faute du check nommé exactement `implementation` ;
+- écritures `.ai-team/evidence/**` refusées comme hors scope ;
+- run resté `idle` avec attempts `started` orphelines.
+
+### 0.3 Correctifs code ≠ validation L4
+
+Des correctifs ont été livrés (portabilité, handoff/evidence, boundary,
+timeouts/WIP/taxonomie, recovery orphans / `no_dispatchable_work` /
+`awaiting_human`, dédup feedback, context package). **Ils ne remplacent pas**
+un witness L4 : tant qu’un nouvel essai réel multi-heures n’est pas exécuté et
+archivé, le statut reste **échec / non validé**.
+
+| Écart observé | Scénario §15 | Correctif code (si présent) | Toujours manquant pour L4 |
+|---|---|---|---|
+| Timeout trop court / pas de WIP sûr | #2 | timeouts par étape ; WIP après contrôle de périmètre | Run réel multi-heures + WIP observé |
+| Timeouts parallèles → stop systémique | #6 / #12 | taxonomie `failure_scope` | Witness 2 WU timeout sans stop run |
+| Handoff prose + JSON | (qualité résultat) | `extract_governed_handoff` | CLI Cursor réel post-fix |
+| Evidence gate nom `implementation` | — | AC-* + SHA + artefacts | Idem |
+| Boundary evidence gouvernée | — | allowlist evidence WU | Idem |
+| Idle / orphans / attente humaine | #1 / #14 | recovery + `no_dispatchable_work` + `awaiting_human` | Redémarrage process hôte réel |
+
+### 0.4 Conditions d’un nouvel essai L4
+
+Avant de retirer le statut `essai_L4_reel_echoue`, **toutes** les conditions
+suivantes doivent être réunies et archivées :
+
+1. Run non supervisé réel de **plusieurs heures** (`orchestrate.py` + CLI
+   Cursor opt-in), pas seulement des appels unitaires à `run_scheduling_tick`.
+2. Au moins deux Work Units indépendantes avec timeouts / reprises WIP sans
+   arrêt systémique abusif.
+3. Handoffs agent réels (prose éventuelle) acceptés ou rejetés explicitement
+   avec preuve.
+4. Evidence et boundary : preuves sous `.ai-team/evidence/<WU>/` acceptées ;
+   chemins hors périmètre refusés **avant** tout commit durable.
+5. Arrêt propre : `no_dispatchable_work` ou `awaiting_human` selon l’état,
+   recovery des `started` orphelines au redémarrage process.
+6. Export feedback anonymisé déposé sous `tests/fixtures/learning/` (ou
+   successeur) + mise à jour de ce document avec le lien et le SHA du witness.
+
+Sans ce paquet de preuves, toute formulation du type « résilience L4 validée »
+est **interdite**.
+
+## 1. Ce qui a été construit (rappel factuel — hors L4)
+
+**Couche 1 — moteur de règles déterministes** (étapes 1 à 9 du §14) :
+`src/governed_ai/core/domain/run/`, handlers Run/Grant/Checkpoint, tests
+`tests/core/test_run_handlers.py`. Preuve de *règle une fois la condition
+atteinte*, pas de détection en production sur plusieurs heures.
+
+**Couche 2 — orchestrateur exécutable** :
+`tick.py`, `git_workspace.py`, `agent_cli.py`. Lancement natif opt-in
+`GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1`. Aucun test unitaire ne fait tourner
+l’orchestrateur pendant des heures réelles.
+
+## 2. Tableau de couverture automatisée (≠ preuve L4)
+
+Légende : « règle couverte » = test ciblé de mécanisme. **Aucune ligne de ce
+tableau n’autorise à dire que le mode nuit est validé L4.**
+
+| # | Scénario (§15) | Règle couverte (auto) | Preuve existante | Manque pour L4 réel |
 |---|---|---|---|---|
-| 1 | Crash et redémarrage de l'orchestrateur en cours de session | Couvert (au sens retenu par §9.2) | `test_restart_resumes_from_persisted_checkpoint` (`tests/core/test_orchestrator_tick.py`) : un nouvel appel à `run_scheduling_tick` reprend exactement depuis le dernier `Checkpoint` persisté, sans tenter de reconstituer un raisonnement interrompu — c'est la définition même de la reprise donnée par le document (§9.2), pas une case cochée par approximation. | Aucun test ne tue littéralement le process Python de l'orchestrateur (`scripts/ai-team/orchestrate.py`) au niveau OS ; la preuve reste au niveau de la fonction de tick, pas du processus hôte. |
-| 2 | Timeout d'un agent / worker qui ne répond plus | Couvert | `test_agent_watchdog_kills_a_real_timed_out_process` (`tests/adapters/cursor/test_agent_cli.py`) : un vrai sous-processus est lancé et tué par le watchdog au dépassement du délai — plus une règle réactive, un watchdog réel à intervalles de 0.5s (`_run_agent_process`). | Rien de plus requis sur le mécanisme lui-même. |
-| 3 | Perte de heartbeat et réattribution du travail | Couvert (déclenchement simulé dans le temps, mécanique réelle) | `test_tick_reassigns_a_stale_lease` : le tick détecte un heartbeat périmé et réattribue via un nouveau `WorkerLease` d'époque supérieure. Le passage du temps reste simulé (heartbeat écrit dans le passé) plutôt qu'une attente réelle de `stalled_after_minutes`. | Un test qui attend réellement l'intervalle de péremption plutôt que d'écrire une date passée — change la nature de la preuve, pas la mécanique déjà vérifiée. |
-| 4 | Réapparition d'un worker réattribué (fencing) | **Couvert** | `test_fencing_rejects_write_from_superseded_lease_epoch`, `test_write_checkpoint_fencing_rejects_stale_epoch` : l'écriture tardive avec l'ancienne époque est rejetée par le Core. Garantie d'état pur, indépendante du temps réel. | Rien de plus n'est requis sur ce point précis. |
-| 5 | Conflit Git pendant la merge queue | **Couvert** | `test_real_merge_conflict_is_detected_and_aborted` (`tests/core/test_git_workspace.py`) : un vrai conflit Git est généré entre deux branches réelles, `merge_and_revalidate` le détecte et exécute un vrai `git merge --abort`. Ce n'est plus une opération Git déclarative simulée. | Rien de plus requis sur le conflit lui-même ; le plafond de tentatives (`test_record_integration_merge_rejects_exhausted_conflict_resolution`) reste vérifié côté Control Plane. |
-| 6 | Test flaky (faux échec) | Couvert | `test_flaky_failure_can_recover_on_bounded_retry` : un échec transitoire suivi d'un succès sur une tentative ultérieure est accepté dans les limites de `maximum_attempts_per_step`, sans confondre ce cas avec un échec systémique répété (`repeated_systemic_failure` reste réservé à des échecs identiques sur des WU *différentes*, cf. `_global_stop_condition`). | Rien de plus requis sur la distinction flaky / systémique telle que spécifiée. |
-| 7 | Trois remédiations infructueuses consécutives | **Couvert** | `test_convergence_loop_remediation_cycle_cap_is_stricter`, `test_convergence_loop_stops_after_maximum_attempts_per_step`, et côté orchestrateur `test_tick_demotes_work_unit_on_convergence_exhaustion`. | Rien de plus requis sur la règle elle-même. |
-| 8 | Permission manquante rencontrée en cours d'exécution | Couvert | `test_adapter_permission_failure_pauses_work_unit` : un rôle sans la permission requise déclenché en cours de Run met la WU en pause proprement plutôt que de bloquer silencieusement tout le Run. | Rien de plus requis sur ce scénario précis. |
-| 9 | Tentative d'action au-delà de l'`execution_ceiling` d'une WU | **Couvert** | `test_record_execution_attempt_rejects_step_beyond_forbidden_ceiling`, `test_record_integration_merge_rejects_when_ceiling_forbidden`. Rejeté par le Core, pas seulement déconseillé. | Rien de plus requis. |
-| 10 | Escalade automatique puis tentative de désescalade sans validation humaine (doit être refusée) | **Couvert** | `test_tighten_execution_ceiling_escalates_successfully`, `test_tighten_execution_ceiling_rejects_loosening` — et il n'existe structurellement aucune commande de désescalade dans le code. | Rien de plus requis : l'absence de chemin de code est la preuve. |
-| 11 | Décision humaine qui bloque uniquement une partie du graphe, le reste continue | **Couvert** | `test_unmatched_decision_blocks_only_dependent_subgraph_and_morning_answer_resumes` : le tick saute effectivement la WU bloquée, avance les WU indépendantes, puis reprend la WU bloquée une fois la décision humaine apportée. | Rien de plus requis. |
-| 12 | Déclenchement d'une `global_stop_condition` + alerte immédiate, non différée au rapport matinal | **Couvert** | `test_close_run_stopped_with_recognized_condition_emits_immediate_alert` et `test_revoked_grant_stops_run_before_adapter_launch` côté orchestrateur : événement `BLOCKER` écrit immédiatement, avant tout lancement d'agent. | Seule la notification humaine réelle (email/Slack/etc.) reste hors périmètre — non spécifiée par le document comme un mécanisme du Core. |
-| 13 | Plusieurs WU indépendantes traitées en parallèle | Couvert, avec une réserve de fiabilité de test connue | `test_concurrent_ticks_respect_the_parallel_worker_cap` : plusieurs workers appellent le tick concurremment et le plafond `maximum_parallel_workers` est respecté sans corruption d'état. Ce test s'est révélé occasionnellement sensible au séquencement réel de la machine (a échoué une fois isolément lors de cette revue, puis repassé au deuxième essai) — cohérent avec le constat du document que le vrai parallélisme introduit du bruit de timing qu'un test unitaire ne maîtrise pas totalement. | Si l'instabilité se reproduit en CI, resserrer les points de synchronisation du test plutôt que d'assouplir le plafond qu'il vérifie. |
-| 14 | Reprise propre le lendemain matin sur les WU en attente | Couvert | `test_restart_resumes_from_persisted_checkpoint` + `build_morning_report` (`src/governed_ai/core/domain/run/morning_report.py`) : la reprise depuis le Checkpoint et le contenu du rapport matinal (WU terminées, en pause avec décision exacte attendue, résolutions automatiques tracées, escalades, anomalies) sont tous deux vérifiés. | Aucun test ne simule un vrai écart de plusieurs heures d'horloge murale entre l'arrêt et la reprise — seul l'état persistant est vérifié, pas le délai réel. |
+| 1 | Crash / redémarrage | partielle (tick) | reprise checkpoint ; recovery orphans | Kill process hôte `orchestrate.py` |
+| 2 | Timeout agent | partielle | watchdog ; timeouts policy ; WIP post-boundary | Timeout long réel + WIP CLI |
+| 3 | Perte de heartbeat | partielle (temps simulé) | réattribution lease | Attente réelle `stalled_after_minutes` |
+| 4 | Fencing | oui (Core) | tests fencing | — |
+| 5 | Conflit Git | oui | merge abort réel | — |
+| 6 | Flaky vs systémique | partielle | taxonomie timeout non systémique | Witness 2 WU |
+| 7 | Remédiations | oui | convergence | — |
+| 8 | Permission manquante | oui | pause WU | — |
+| 9 | execution_ceiling | oui | handlers | — |
+| 10 | Désescalade refusée | oui | tighten only | — |
+| 11 | Décision humaine partielle | oui | subgraph | — |
+| 12 | global_stop + alerte | partielle | close_run ; `no_dispatchable_work` | Notification humaine réelle |
+| 13 | WU en parallèle | partielle | concurrent ticks | — |
+| 14 | Reprise lendemain | partielle (état) | checkpoint + morning report | Horloge murale réelle |
 
-## 3. Lecture synthétique
+## 3. Lecture synthétique (obligatoire)
 
-- **Couverture fonctionnelle automatisée** : les 14 scénarios possèdent désormais au moins une preuve ciblée de leur règle ou mécanisme. Cela ne constitue pas la « preuve L4 » exigée par le §15, qui requiert un run réel et non simulé.
-- Le changement depuis la version précédente de ce document : la construction de l'orchestrateur réel (`src/governed_ai/core/orchestrator/`, `adapters/cursor/runtime/agent_cli.py`) a fait passer #1, #2, #5, #6, #8, #11, #13 de « non couvert » ou « partiel » à couvert, en donnant à des scénarios auparavant purement déclaratifs une preuve avec de vrais sous-processus, de vrais conflits Git, et un vrai watchdog.
-- Ce qui reste à prouver avant toute annonce de fiabilité L4 : un arrêt/redémarrage du processus hôte, une durée d'horloge murale de plusieurs heures (#1, #3, #14), l'utilisation réelle du CLI Cursor avec crédits, et la livraison effective d'une alerte humaine immédiate (#12). Tant que ce protocole n'est pas exécuté et archivé comme preuve, le mode nuit doit être décrit comme implémenté et testé, mais pas encore éprouvé L4.
+- **L4 non validé** — essai réel en échec ; statut `essai_L4_reel_echoue`.
+- Les 14 scénarios ont des preuves *automatisées de règle* ; **ce n’est pas**
+  la preuve L4 du §15.
+- Les exports anonymisés (`tests/fixtures/learning/`) documentent les
+  relations du run raté pour la non-régression feedback ; ils **ne
+  constituent pas** une preuve d’autonomie réussie.
+- Formulations interdites tant que §0.4 n’est pas satisfait :
+  « résilience L4 validée », « mode nuit éprouvé », « end-to-end L4 OK ».
+- Formulation autorisée : **implémenté et testé unitairement ; essai L4 réel
+  échoué ; en attente d’un nouveau witness multi-heures**.

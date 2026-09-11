@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
 import yaml
 from adapters.cursor.runtime.execute import collect_runtime_result, execute_runtime
 from adapters.cursor.runtime.results import validate_runtime_result
@@ -157,6 +158,67 @@ def test_preflight_report_structure_from_runtime_module() -> None:
 
     unattended_report = collect_preflight_report(REPO_ROOT, unattended=True)
     assert "real_agent_launch" in unattended_report
+
+
+def test_unattended_preflight_typed_attestation_run_everything(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from adapters.cursor.runtime.checks import collect_preflight_report
+
+    monkeypatch.delenv("GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT", raising=False)
+    monkeypatch.setenv(
+        "GOVERNED_AI_PREFLIGHT_ATTESTATION",
+        json.dumps(
+            {
+                "approval_mode": "run_everything",
+                "source": "human",
+                "attested_at": "2026-09-11T12:00:00Z",
+                "cursor_version": "1.2.3",
+            }
+        ),
+    )
+    report = collect_preflight_report(REPO_ROOT, unattended=True)
+    assert report["global_allowlist"]["status"] == "not_applicable"
+    assert "Run Everything" in report["global_allowlist"]["detail"]
+    assert report["execution_surface"]["status"] == "pass"
+    assert report["preflight_attestation"]["approval_mode"] == "run_everything"
+    assert report["preflight_attestation"]["source"] == "human"
+
+
+def test_unattended_preflight_typed_attestation_allowlist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from adapters.cursor.runtime.checks import collect_preflight_report
+
+    monkeypatch.delenv("GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT", raising=False)
+    monkeypatch.setenv(
+        "GOVERNED_AI_PREFLIGHT_ATTESTATION",
+        json.dumps(
+            {
+                "approval_mode": "allowlist",
+                "source": "human",
+                "attested_at": "2026-09-11T12:00:00Z",
+            }
+        ),
+    )
+    report = collect_preflight_report(REPO_ROOT, unattended=True)
+    assert report["global_allowlist"]["status"] == "pass"
+    assert report["execution_surface"]["status"] == "pass"
+
+
+def test_unattended_preflight_legacy_acknowledge_without_typed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from adapters.cursor.runtime.checks import collect_preflight_report
+
+    monkeypatch.delenv("GOVERNED_AI_PREFLIGHT_ATTESTATION", raising=False)
+    monkeypatch.setenv("GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT", "1")
+    report = collect_preflight_report(REPO_ROOT, unattended=True)
+    assert report["global_allowlist"]["status"] == "manual"
+    assert report["execution_surface"]["status"] == "manual"
+    assert "no longer accepted" in report["global_allowlist"]["detail"]
+    assert "GOVERNED_AI_PREFLIGHT_ATTESTATION" in report["global_allowlist"]["detail"]
+    assert "preflight_attestation" not in report
 
 
 def test_core_diagnostics_separate_from_cursor(tmp_path: Path) -> None:

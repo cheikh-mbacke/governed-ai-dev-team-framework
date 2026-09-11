@@ -76,6 +76,43 @@ def test_build_prompt_tolerates_missing_work_unit_file(tmp_path: Path) -> None:
     assert "WU-AGENT-TEST" in prompt
 
 
+def test_build_prompt_loads_context_package_by_canonical_path(tmp_path: Path) -> None:
+    packages = tmp_path / ".ai-team" / "context-packages"
+    packages.mkdir(parents=True)
+    (packages / "CTX-WU-AGENT-TEST.yaml").write_text(
+        "id: CTX-WU-AGENT-TEST\nwork_unit: WU-AGENT-TEST\nrole: backend-developer\n"
+        "items: []\n",
+        encoding="utf-8",
+    )
+    request = _sample_request()
+    request["context_package_ref"] = ".ai-team/context-packages/CTX-WU-AGENT-TEST.yaml"
+    prompt = agent_cli.build_prompt(tmp_path, request)
+    assert "CTX-WU-AGENT-TEST" in prompt
+
+
+def test_build_prompt_resolves_bare_context_id(tmp_path: Path) -> None:
+    packages = tmp_path / ".ai-team" / "context-packages"
+    packages.mkdir(parents=True)
+    (packages / "CTX-BARE.yaml").write_text(
+        "id: CTX-BARE\nwork_unit: WU-AGENT-TEST\nrole: backend-developer\nitems: []\n",
+        encoding="utf-8",
+    )
+    request = _sample_request()
+    request["context_package_ref"] = "CTX-BARE"
+    prompt = agent_cli.build_prompt(tmp_path, request)
+    assert "CTX-BARE" in prompt
+
+
+def test_build_prompt_ignores_context_path_escape(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.yaml"
+    outside.write_text("id: LEAK\nsecret: yes\n", encoding="utf-8")
+    request = _sample_request()
+    request["context_package_ref"] = str(outside)
+    prompt = agent_cli.build_prompt(tmp_path, request)
+    assert "LEAK" not in prompt
+    assert "secret" not in prompt
+
+
 def test_invoke_agent_cli_returns_blocked_when_binary_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -139,9 +176,65 @@ def test_invoke_agent_cli_parses_error_json(tmp_path: Path, monkeypatch: pytest.
     assert outcome.summary == "something broke"
 
 
-def test_invoke_agent_cli_handles_non_json_output(
+def test_invoke_agent_cli_parses_prose_wrapped_handoff(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.setattr(agent_cli, "resolve_agent_binary", lambda: "agent")
+    inner = {
+        "summary": "OK from prose wrap",
+        "checks": [
+            {"name": "AC-1", "status": "passed", "evidence_ref": "EV-1"},
+        ],
+        "artifacts": [],
+        "usage": {},
+    }
+    result_text = "Working on it...\n" + json.dumps(inner)
+
+    def _fake_run(command, **kwargs):
+        envelope = {
+            "type": "result",
+            "subtype": "success",
+            "is_error": False,
+            "duration_ms": 10,
+            "result": result_text,
+            "session_id": "s1",
+            "request_id": "r1",
+            "usage": {"inputTokens": 1, "outputTokens": 1},
+        }
+        return subprocess.CompletedProcess(
+            command, returncode=0, stdout=json.dumps(envelope), stderr=""
+        )
+
+    monkeypatch.setattr(subprocess, "run", _fake_run)
+    outcome = agent_cli.invoke_agent_cli(tmp_path, _sample_request())
+    assert outcome.status == "succeeded"
+    assert outcome.summary == "OK from prose wrap"
+    assert outcome.checks[0]["name"] == "AC-1"
+
+
+def test_invoke_agent_cli_fails_when_handoff_missing_inside_success_envelope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(agent_cli, "resolve_agent_binary", lambda: "agent")
+
+    def _fake_run(command, **kwargs):
+        envelope = {
+            "type": "result",
+            "subtype": "success",
+            "is_error": False,
+            "result": "I finished but forgot the JSON handoff.",
+            "usage": {"inputTokens": 1, "outputTokens": 1},
+        }
+        return subprocess.CompletedProcess(
+            command, returncode=0, stdout=json.dumps(envelope), stderr=""
+        )
+
+    monkeypatch.setattr(subprocess, "run", _fake_run)
+    outcome = agent_cli.invoke_agent_cli(tmp_path, _sample_request())
+    assert outcome.status == "failed"
+    assert outcome.checks == []
+    assert any("governed JSON handoff" in item for item in outcome.limitations)
+
     """Real behavior observed live: an invalid --model prints plain text and exits 1."""
     monkeypatch.setattr(agent_cli, "resolve_agent_binary", lambda: "agent")
 
@@ -210,21 +303,20 @@ def test_running_agent_is_terminated_when_grant_is_revoked(
 
     class FakeProcess:
         returncode = 143
+        pid = 4242
 
-        def __init__(self) -> None:
-            self.terminated = False
-
-        def terminate(self) -> None:
-            self.terminated = True
-
-        def kill(self) -> None:  # pragma: no cover
-            raise AssertionError("graceful termination should be sufficient")
+        def poll(self):
+            return None
 
         def communicate(self, timeout=None):
             return "", ""
 
     process = FakeProcess()
+    terminated: list[object] = []
     monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(
+        agent_cli, "_terminate_process_tree", lambda proc: terminated.append(proc)
+    )
     completed, reason = agent_cli._run_agent_process(
         ["agent"],
         project_root=tmp_path,
@@ -235,7 +327,7 @@ def test_running_agent_is_terminated_when_grant_is_revoked(
     )
     assert completed is None
     assert reason == "authorization grant was revoked"
-    assert process.terminated is True
+    assert terminated == [process]
 
 
 def test_unattended_shell_hook_enforces_human_allowlist() -> None:

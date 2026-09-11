@@ -2,6 +2,10 @@ id: CTX-WU-XXX
 work_unit: WU-XXX
 role: backend-developer
 assembled_at: null
+source_sha256: null
+required_contracts: []
+completeness_status: incomplete
+missing_inputs: []
 items: []
 # item fields:
 # - level: L0_constitution | L1_project | L2_relevant_zone | L3_work_unit

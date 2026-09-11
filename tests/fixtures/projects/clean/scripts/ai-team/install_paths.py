@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import importlib
 import sys
+import types
 from pathlib import Path
 
 
@@ -19,6 +21,38 @@ def requirements_file(root: Path) -> Path:
 
 def requirements_install_hint(root: Path) -> str:
     return f"pip install -r {requirements_file(root).relative_to(root).as_posix()}"
+
+
+def _ensure_adapters_cursor_alias(repo: Path) -> None:
+    """Map ``adapters.cursor`` onto the installed runtime copy when needed.
+
+    Fresh installs place the Cursor adapter under
+    ``.ai-team/runtime/governed_ai/adapters/cursor/`` and do not ship a
+    top-level ``adapters/`` package. SPI modules still import
+    ``adapters.cursor.*``; aliasing keeps those imports working without
+    requiring the framework-source layout.
+    """
+    if (repo / "adapters" / "cursor").is_dir():
+        return
+    if "adapters.cursor" in sys.modules:
+        return
+    try:
+        importlib.import_module("adapters.cursor")
+        return
+    except ModuleNotFoundError:
+        pass
+    try:
+        ga_cursor = importlib.import_module("governed_ai.adapters.cursor")
+    except ModuleNotFoundError:
+        return
+
+    adapters_mod = sys.modules.get("adapters")
+    if adapters_mod is None:
+        adapters_mod = types.ModuleType("adapters")
+        adapters_mod.__path__ = []  # type: ignore[attr-defined]
+        sys.modules["adapters"] = adapters_mod
+    sys.modules["adapters.cursor"] = ga_cursor
+    setattr(adapters_mod, "cursor", ga_cursor)
 
 
 def bootstrap_runtime(root: Path | None = None) -> Path:
@@ -40,14 +74,13 @@ def bootstrap_runtime(root: Path | None = None) -> Path:
     elif runtime_pkg.is_dir() and str(runtime_parent) not in sys.path:
         sys.path.insert(0, str(runtime_parent))
 
+    _ensure_adapters_cursor_alias(repo)
     return repo
 
 
 def import_adapters_cursor(dotted: str):
     """Import ``adapters.cursor.<dotted>`` with installed-layout fallback."""
-    from importlib import import_module
-
     try:
-        return import_module(f"adapters.cursor.{dotted}")
+        return importlib.import_module(f"adapters.cursor.{dotted}")
     except ModuleNotFoundError:
-        return import_module(f"governed_ai.adapters.cursor.{dotted}")
+        return importlib.import_module(f"governed_ai.adapters.cursor.{dotted}")

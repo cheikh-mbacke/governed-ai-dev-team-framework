@@ -48,7 +48,85 @@ def changed_files(workspace_root: Path, base_sha: str, result_sha: str) -> list[
     return [line.strip().replace("\\", "/") for line in completed.stdout.splitlines() if line.strip()]
 
 
-def ensure_work_unit_worktree(project_root: Path, run_id: str, work_unit_id: str) -> Path:
+def list_uncommitted_files(workspace_root: Path) -> list[str]:
+    """Return paths from ``git status --porcelain=v1 -z`` (uncommitted work only).
+
+    Rename/copy entries contribute **both** the source and destination paths so a
+    move from a protected path into an allowed path cannot evade the boundary
+    check by keeping only the destination.
+    """
+    status = _run(workspace_root, ["status", "--porcelain=v1", "-z"]).stdout
+    files: list[str] = []
+    entries = status.split("\0")
+    index = 0
+    while index < len(entries):
+        entry = entries[index]
+        index += 1
+        if not entry:
+            continue
+        if len(entry) < 3:
+            continue
+        meta = entry[:2]
+        # Porcelain v1: "XY <path>" (space after status letters).
+        path_field = entry[3:] if entry[2:3] == " " else entry[2:]
+        paths = [path_field]
+        if "R" in meta or "C" in meta:
+            # -z emits an extra NUL-terminated destination path after the source.
+            if index < len(entries) and entries[index]:
+                paths.append(entries[index])
+                index += 1
+        for raw in paths:
+            path = raw.replace("\\", "/").strip()
+            if path.startswith('"') and path.endswith('"'):
+                path = path[1:-1]
+            if path and path not in files:
+                files.append(path)
+    return files
+
+
+def create_unverified_wip_commit(
+    workspace_root: Path,
+    *,
+    work_unit_id: str,
+    paths: list[str] | None = None,
+    message_suffix: str = "timeout WIP checkpoint",
+) -> str | None:
+    """Stage pre-validated dirty paths into an explicit unverified WIP commit.
+
+    Callers must boundary-check ``paths`` before invoking this helper. Returns
+    the new HEAD SHA when a commit was created, else None.
+    """
+    to_add = list(paths) if paths is not None else list_uncommitted_files(workspace_root)
+    if not to_add:
+        return None
+    _run(workspace_root, ["add", "--", *to_add])
+    staged = _run(workspace_root, ["diff", "--cached", "--name-only"]).stdout.strip()
+    if not staged:
+        return None
+    message = f"wip({work_unit_id}): {message_suffix} [unverified]"
+    _run(
+        workspace_root,
+        [
+            "-c",
+            "user.email=governed-ai@local",
+            "-c",
+            "user.name=Governed AI",
+            "commit",
+            "--no-gpg-sign",
+            "-m",
+            message,
+        ],
+    )
+    return head_sha(workspace_root)
+
+
+def ensure_work_unit_worktree(
+    project_root: Path,
+    run_id: str,
+    work_unit_id: str,
+    *,
+    start_sha: str | None = None,
+) -> Path:
     run_key = _safe(run_id)
     wu_key = _safe(work_unit_id)
     path = project_root / ".ai-team" / "worktrees" / run_key / wu_key
@@ -73,8 +151,13 @@ def ensure_work_unit_worktree(project_root: Path, run_id: str, work_unit_id: str
     ).returncode == 0
     args = ["worktree", "add"]
     if not exists:
-        args.extend(["-b", branch])
-    args.extend([str(path), branch if exists else "HEAD"])
+        start_point = start_sha or "HEAD"
+        if start_sha:
+            # Ensure the SHA is known locally before branching from it.
+            _run(project_root, ["cat-file", "-e", f"{start_sha}^{{commit}}"])
+        args.extend(["-b", branch, str(path), start_point])
+    else:
+        args.extend([str(path), branch])
     _run(project_root, args)
     return path
 

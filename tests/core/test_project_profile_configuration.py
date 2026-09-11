@@ -183,3 +183,28 @@ def test_configure_cli_changes_autonomy(profile_workspace: Workspace) -> None:
     assert receipt["status"] == "accepted"
     profile = yaml.safe_load(profile_workspace.profile_path.read_text(encoding="utf-8"))
     assert profile["autonomy"]["preset"] == "unattended_extended"
+
+
+def test_profile_update_strips_legacy_level_when_preset_set(
+    profile_workspace: Workspace,
+) -> None:
+    profile = yaml.safe_load(profile_workspace.profile_path.read_text(encoding="utf-8"))
+    profile["autonomy"] = {"preset": "supervised_copilots", "level": 1}
+    profile_workspace.profile_path.write_text(
+        yaml.safe_dump(profile, sort_keys=False), encoding="utf-8"
+    )
+
+    receipt, exit_code = CommandGateway(profile_workspace).execute_command(
+        _envelope(
+            idempotency_key="idem-profile-strip-level",
+            payload={
+                "changes": {"autonomy": {"preset": "unattended_conservative"}},
+                "reason": "Migrate off legacy level",
+            },
+        )
+    )
+    assert exit_code == 0
+    assert receipt["status"] == "accepted"
+    updated = yaml.safe_load(profile_workspace.profile_path.read_text(encoding="utf-8"))
+    assert updated["autonomy"]["preset"] == "unattended_conservative"
+    assert "level" not in updated["autonomy"]

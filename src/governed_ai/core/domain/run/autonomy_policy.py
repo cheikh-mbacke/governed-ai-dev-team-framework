@@ -30,15 +30,43 @@ _WINDOWS = {
     "custom": 12,
 }
 
+DEFAULT_TIMEOUTS_SECONDS_BY_STEP: dict[str, int] = {
+    "sandbox_implementation": 5400,
+    "remediation": 3600,
+    "verification": 1800,
+    "review": 1200,
+    "security_review": 1200,
+    "audit": 1200,
+    "integration_review": 1800,
+}
+DEFAULT_UNKNOWN_STEP_TIMEOUT_SECONDS = 600
+HARD_MAX_TIMEOUT_SECONDS = 7200
+
 
 def resolve_project_preset(autonomy: dict[str, Any]) -> str:
-    """Resolve the named preset once; legacy ``level`` is compatibility input only."""
+    """Resolve the named preset once; legacy ``level`` is compatibility input only.
+
+    When both ``preset`` and ``level`` are present they must agree
+    (``LEGACY_LEVEL_PRESET[level] == preset``); divergence is refused so a
+    named preset cannot silently mask a conflicting legacy level.
+    """
     preset = autonomy.get("preset")
+    level = autonomy.get("level")
     if preset is not None:
         if preset not in NAMED_AUTONOMY_PRESETS:
             raise ValueError(f"unsupported autonomy preset: {preset}")
+        if level is not None:
+            if level not in LEGACY_LEVEL_PRESET:
+                raise ValueError(
+                    f"legacy autonomy.level must be in 1..3 when set with preset, got {level!r}"
+                )
+            mapped = LEGACY_LEVEL_PRESET[int(level)]
+            if mapped != preset:
+                raise ValueError(
+                    f"autonomy.preset {preset!r} diverges from legacy autonomy.level "
+                    f"{level} (maps to {mapped!r}); remove level or align them"
+                )
         return str(preset)
-    level = autonomy.get("level")
     if level not in LEGACY_LEVEL_PRESET:
         raise ValueError("autonomy.preset or a legacy autonomy.level in 1..3 is required")
     return LEGACY_LEVEL_PRESET[int(level)]
@@ -113,6 +141,8 @@ def resolve_effective_policy(
             "maximum_attempts_per_step": maximum_attempts_per_step,
             "maximum_remediation_cycles": maximum_remediation_cycles,
             "worker_lease_fencing": "required",
+            "timeouts_seconds_by_step": dict(DEFAULT_TIMEOUTS_SECONDS_BY_STEP),
+            "default_timeout_seconds": DEFAULT_UNKNOWN_STEP_TIMEOUT_SECONDS,
         },
         "preflight": {"forbid_manual_confirmation_states": True},
         "budgets": {
@@ -137,6 +167,7 @@ def resolve_effective_policy(
             "protected_environment_target",
             "repeated_systemic_failure",
             "worker_isolation_unguaranteed",
+            "no_dispatchable_work",
         ],
         "global_stop_behavior": "immediate_alert_plus_stop",
         "human_feedback": {
@@ -188,6 +219,23 @@ def _validate_invariants(policy: dict[str, Any]) -> None:
         raise ValueError("worker lease fencing is required")
     if execution.get("maximum_parallel_critical_wu") != 1:
         raise ValueError("critical Work Unit parallelism must remain one")
+    timeouts = execution.get("timeouts_seconds_by_step") or {}
+    if not isinstance(timeouts, dict):
+        raise ValueError("execution.timeouts_seconds_by_step must be an object")
+    for step_name, seconds in timeouts.items():
+        if not isinstance(step_name, str) or not step_name:
+            raise ValueError("timeout step names must be non-empty strings")
+        if not isinstance(seconds, (int, float)) or float(seconds) <= 0:
+            raise ValueError(f"timeout for {step_name!r} must be a positive number")
+        if float(seconds) > HARD_MAX_TIMEOUT_SECONDS:
+            raise ValueError(
+                f"timeout for {step_name!r} exceeds hard max {HARD_MAX_TIMEOUT_SECONDS}s"
+            )
+    default_timeout = execution.get("default_timeout_seconds")
+    if default_timeout is not None and (
+        not isinstance(default_timeout, (int, float)) or float(default_timeout) <= 0
+    ):
+        raise ValueError("execution.default_timeout_seconds must be a positive number")
     ceiling_violation = validate_execution_ceiling(
         policy.get("execution_ceiling_default") or {}
     )
@@ -214,3 +262,22 @@ def _validate_invariants(policy: dict[str, Any]) -> None:
 
 def effective_policy_hash(policy: dict[str, Any]) -> str:
     return f"sha256:{hashlib.sha256(canonical_json_bytes(policy)).hexdigest()}"
+
+
+def resolve_step_timeout_seconds(
+    policy: dict[str, Any] | None,
+    step: str,
+    *,
+    grant_remaining_seconds: float | None = None,
+) -> float:
+    """Resolve the effective adapter timeout for one dispatch step."""
+    execution = (policy or {}).get("execution") or {}
+    by_step = execution.get("timeouts_seconds_by_step") or {}
+    raw = by_step.get(
+        step, execution.get("default_timeout_seconds", DEFAULT_UNKNOWN_STEP_TIMEOUT_SECONDS)
+    )
+    timeout = float(raw)
+    timeout = max(1.0, min(timeout, float(HARD_MAX_TIMEOUT_SECONDS)))
+    if grant_remaining_seconds is not None:
+        timeout = max(1.0, min(timeout, float(grant_remaining_seconds)))
+    return timeout

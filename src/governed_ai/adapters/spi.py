@@ -139,6 +139,7 @@ class ExecutionRequest(TypedDict, total=False):
     allowed_shell_commands: list[str]
     allowed_paths: list[str]
     accessible_secrets: list[str]
+    timeout_seconds: float
 
 
 class RuntimeCheck(TypedDict, total=False):
