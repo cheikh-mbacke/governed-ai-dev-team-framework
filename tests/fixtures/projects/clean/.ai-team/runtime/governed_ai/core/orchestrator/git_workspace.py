@@ -48,7 +48,13 @@ def changed_files(workspace_root: Path, base_sha: str, result_sha: str) -> list[
     return [line.strip().replace("\\", "/") for line in completed.stdout.splitlines() if line.strip()]
 
 
-def ensure_work_unit_worktree(project_root: Path, run_id: str, work_unit_id: str) -> Path:
+def ensure_work_unit_worktree(
+    project_root: Path,
+    run_id: str,
+    work_unit_id: str,
+    *,
+    start_sha: str | None = None,
+) -> Path:
     run_key = _safe(run_id)
     wu_key = _safe(work_unit_id)
     path = project_root / ".ai-team" / "worktrees" / run_key / wu_key
@@ -73,10 +79,46 @@ def ensure_work_unit_worktree(project_root: Path, run_id: str, work_unit_id: str
     ).returncode == 0
     args = ["worktree", "add"]
     if not exists:
-        args.extend(["-b", branch])
-    args.extend([str(path), branch if exists else "HEAD"])
+        start_point = start_sha or "HEAD"
+        if start_sha:
+            # Ensure the SHA is known locally before branching from it.
+            _run(project_root, ["cat-file", "-e", f"{start_sha}^{{commit}}"])
+        args.extend(["-b", branch, str(path), start_point])
+    else:
+        args.extend([str(path), branch])
     _run(project_root, args)
     return path
+
+
+def create_unverified_wip_commit(
+    workspace_root: Path,
+    *,
+    work_unit_id: str,
+    message_suffix: str = "timeout WIP checkpoint",
+) -> str | None:
+    """Stage allowed dirty changes into an explicit unverified WIP commit.
+
+    Returns the new HEAD SHA when a commit was created, else None.
+    """
+    status = _run(workspace_root, ["status", "--porcelain"]).stdout.strip()
+    if not status:
+        return None
+    _run(workspace_root, ["add", "-A"])
+    message = f"wip({work_unit_id}): {message_suffix} [unverified]"
+    _run(
+        workspace_root,
+        [
+            "-c",
+            "user.email=governed-ai@local",
+            "-c",
+            "user.name=Governed AI",
+            "commit",
+            "--no-gpg-sign",
+            "-m",
+            message,
+        ],
+    )
+    return head_sha(workspace_root)
 
 
 def ensure_integration_worktree(project_root: Path, run_id: str, branch: str) -> Path:

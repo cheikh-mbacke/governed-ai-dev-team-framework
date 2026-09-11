@@ -37,6 +37,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import signal
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -245,6 +246,31 @@ def _sanitized_process_env(accessible_secrets: list[str]) -> dict[str, str]:
     }
 
 
+def _terminate_process_tree(process: subprocess.Popen[str]) -> None:
+    """Stop the agent process and any children spawned in its group."""
+    if process.poll() is not None:
+        return
+    try:
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
+        else:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, OSError):
+                process.kill()
+    except Exception:  # noqa: BLE001 - best-effort teardown
+        try:
+            process.kill()
+        except OSError:
+            pass
+
+
 def _run_agent_process(
     command: list[str],
     *,
@@ -263,28 +289,32 @@ def _run_agent_process(
     process_env["GOVERNED_AI_ALLOWED_PATHS"] = json.dumps(allowed_paths)
     process_env["CURSOR_PROJECT_DIR"] = str(project_root.resolve())
     process_env.update(telemetry_context or {})
-    process = subprocess.Popen(
-        command,
-        cwd=str(project_root),
-        env=process_env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
+    popen_kwargs: dict[str, Any] = {
+        "cwd": str(project_root),
+        "env": process_env,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "text": True,
+    }
+    if os.name == "nt":
+        popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        popen_kwargs["start_new_session"] = True
+    process = subprocess.Popen(command, **popen_kwargs)
     deadline = time.monotonic() + timeout_seconds
     while True:
         reason = _kill_switch_reason(kill_switch_path)
         if reason is not None:
-            process.terminate()
+            _terminate_process_tree(process)
             try:
                 process.communicate(timeout=5)
             except subprocess.TimeoutExpired:
-                process.kill()
+                _terminate_process_tree(process)
                 process.communicate()
             return None, reason
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            process.kill()
+            _terminate_process_tree(process)
             process.communicate()
             raise subprocess.TimeoutExpired(cmd=command, timeout=timeout_seconds)
         try:

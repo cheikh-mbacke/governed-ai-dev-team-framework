@@ -236,6 +236,7 @@
     ".ai-team/runtime/governed_ai/core/domain/run/convergence.py",
     ".ai-team/runtime/governed_ai/core/domain/run/decision_menu.py",
     ".ai-team/runtime/governed_ai/core/domain/run/execution_ceiling.py",
+    ".ai-team/runtime/governed_ai/core/domain/run/failure_taxonomy.py",
     ".ai-team/runtime/governed_ai/core/domain/run/fencing.py",
     ".ai-team/runtime/governed_ai/core/domain/run/mission_artifact.py",
     ".ai-team/runtime/governed_ai/core/domain/run/morning_report.py",

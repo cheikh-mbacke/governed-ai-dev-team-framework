@@ -877,12 +877,13 @@ def test_tick_demotes_work_unit_on_convergence_exhaustion(workspace: Workspace) 
     )
     assert wu_document["status"] == "blocked"
 
-    # blocked does not map to a dispatchable step either — the loop does not
-    # auto-resume it (out of scope for this pass, an operator decides).
+    # blocked does not map to a dispatchable step — Lot 4 stops the Run when
+    # every Work Unit is stuck (no_dispatchable_work), rather than idling forever.
     third = run_scheduling_tick(
         gateway, workspace, run_id="RUN-TICK-004", adapter=FakeAdapter([]), worker_id="w1"
     )
-    assert third.action == "idle"
+    assert third.action == "run_stopped"
+    assert third.details["stop_condition"] == "no_dispatchable_work"
 
 
 def test_tick_is_idle_when_nothing_is_eligible(workspace: Workspace) -> None:
@@ -1504,3 +1505,143 @@ def test_risk_escalation_from_adapter_pauses_when_critical_wip_conflict(
     )
     assert wu["risk"]["class"] == "critical"
     assert wu["status"] == "waiting_decision"
+
+
+def test_dispatch_request_includes_timeout_seconds(workspace: Workspace) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-L4-TIMEOUT", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-L4-TIMEOUT"},
+            payload={
+                "id": "LEASE-L4-TIMEOUT",
+                "run_id": "RUN-L4-TIMEOUT",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="l4-timeout-lease",
+        )
+    )
+    adapter = FakeAdapter([{"status": "timed_out", "summary": "slow"}])
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-L4-TIMEOUT", adapter=adapter, worker_id="w1"
+    )
+    assert result.action == "recorded_attempt"
+    assert "timeout_seconds" in adapter.requests[0]
+    assert float(adapter.requests[0]["timeout_seconds"]) >= 1.0
+
+
+def test_matching_implementation_timeouts_across_work_units_are_not_systemic(
+    workspace: Workspace,
+) -> None:
+    _seed_grant(workspace, "GRANT-L4-SYS", work_unit_ids=["WU-A", "WU-B"])
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(
+        _open_run(
+            "RUN-L4-SYS",
+            work_unit_ids=["WU-A", "WU-B"],
+            grant_id="GRANT-L4-SYS",
+            maximum_parallel_workers=2,
+        )
+    )
+    for work_unit_id in ("WU-A", "WU-B"):
+        _seed_work_unit(workspace, work_unit_id, status="in_progress")
+    for work_unit_id, lease_id in (("WU-A", "LEASE-L4-SYS-A"), ("WU-B", "LEASE-L4-SYS-B")):
+        receipt, exit_code = gateway.execute_command(
+            _envelope(
+                "AcquireWorkerLease",
+                target={"kind": "worker_lease", "id": lease_id},
+                payload={
+                    "id": lease_id,
+                    "run_id": "RUN-L4-SYS",
+                    "work_unit_id": work_unit_id,
+                    "worker_id": f"worker-{work_unit_id}",
+                },
+                key=f"l4-sys-{work_unit_id}",
+            )
+        )
+        assert exit_code == 0, receipt.get("errors")
+
+    timed_out = {"status": "timed_out", "summary": "same timeout every time"}
+    for work_unit_id in ("WU-A", "WU-B"):
+        result = run_scheduling_tick(
+            gateway,
+            workspace,
+            run_id="RUN-L4-SYS",
+            adapter=FakeAdapter([timed_out]),
+            worker_id=f"worker-{work_unit_id}",
+        )
+        assert result.action == "recorded_attempt"
+        assert result.work_unit_id == work_unit_id
+
+    run = yaml.safe_load(
+        (workspace.ai_team / "runs" / "RUN-L4-SYS.yaml").read_text(encoding="utf-8")
+    )
+    assert run["status"] == "active"
+    attempts = [
+        yaml.safe_load(path.read_text(encoding="utf-8"))
+        for path in (workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")
+        if yaml.safe_load(path.read_text(encoding="utf-8")).get("status") == "timed_out"
+    ]
+    assert {item["work_unit_id"] for item in attempts} == {"WU-A", "WU-B"}
+    assert all(item.get("failure_code") == "agent_timeout" for item in attempts)
+
+
+def test_orphan_started_attempt_is_recovered_on_restart(workspace: Workspace) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-L4-ORPHAN", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-L4-ORPHAN"},
+            payload={
+                "id": "LEASE-L4-ORPHAN",
+                "run_id": "RUN-L4-ORPHAN",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="l4-orphan-lease",
+        )
+    )
+    attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
+    attempts_dir.mkdir(parents=True, exist_ok=True)
+    attempt = {
+        "id": "ATTEMPT-L4-ORPHAN",
+        "revision": 1,
+        "run_id": "RUN-L4-ORPHAN",
+        "execution_id": "EXE-L4-ORPHAN",
+        "work_unit_id": "WU-A",
+        "worker_lease_id": "LEASE-L4-ORPHAN",
+        "epoch": 1,
+        "step": "sandbox_implementation",
+        "status": "started",
+        "started_at": "2026-08-30T00:00:00+00:00",
+        "ended_at": None,
+        "summary": None,
+        "checks": [],
+        "artifacts": [],
+        "workspace": {},
+        "contract": {},
+        "requested_commands": [],
+        "usage": {},
+        "provider": {},
+    }
+    (attempts_dir / "ATTEMPT-L4-ORPHAN.yaml").write_text(
+        yaml.safe_dump(attempt), encoding="utf-8"
+    )
+    _expire_lease_heartbeat(workspace, "LEASE-L4-ORPHAN")
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-L4-ORPHAN", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    recovered = yaml.safe_load(
+        (attempts_dir / "ATTEMPT-L4-ORPHAN.yaml").read_text(encoding="utf-8")
+    )
+    assert recovered["status"] == "timed_out"
+    assert recovered["failure_code"] == "orphan_started"
+    assert recovered["failure_scope"] == "run"
+    assert result.action in {"reassigned_lease", "recorded_attempt", "idle", "started_work_unit"}
+

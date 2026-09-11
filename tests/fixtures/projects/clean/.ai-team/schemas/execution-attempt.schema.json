@@ -113,6 +113,18 @@
         "model": {"type": "string"}
       },
       "additionalProperties": false
+    },
+    "failure_code": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "failure_scope": {
+      "type": ["string", "null"],
+      "enum": ["work_unit", "adapter", "host", "run", null]
+    },
+    "retryability": {
+      "type": ["string", "null"],
+      "enum": ["retryable", "retryable_after_change", "non_retryable", null]
     }
   },
   "additionalProperties": true

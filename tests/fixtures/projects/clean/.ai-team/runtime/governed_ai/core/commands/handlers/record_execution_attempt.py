@@ -209,6 +209,9 @@ def handle_record_execution_attempt(
         "requested_commands": payload.get("requested_commands", []),
         "usage": payload.get("usage", {}),
         "provider": payload.get("provider", {}),
+        "failure_code": payload.get("failure_code"),
+        "failure_scope": payload.get("failure_scope"),
+        "retryability": payload.get("retryability"),
     }
     validate_against_schema(
         workspace_root.ai_team,

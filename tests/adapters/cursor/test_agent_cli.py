@@ -266,21 +266,20 @@ def test_running_agent_is_terminated_when_grant_is_revoked(
 
     class FakeProcess:
         returncode = 143
+        pid = 4242
 
-        def __init__(self) -> None:
-            self.terminated = False
-
-        def terminate(self) -> None:
-            self.terminated = True
-
-        def kill(self) -> None:  # pragma: no cover
-            raise AssertionError("graceful termination should be sufficient")
+        def poll(self):
+            return None
 
         def communicate(self, timeout=None):
             return "", ""
 
     process = FakeProcess()
+    terminated: list[object] = []
     monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(
+        agent_cli, "_terminate_process_tree", lambda proc: terminated.append(proc)
+    )
     completed, reason = agent_cli._run_agent_process(
         ["agent"],
         project_root=tmp_path,
@@ -291,7 +290,7 @@ def test_running_agent_is_terminated_when_grant_is_revoked(
     )
     assert completed is None
     assert reason == "authorization grant was revoked"
-    assert process.terminated is True
+    assert terminated == [process]
 
 
 def test_unattended_shell_hook_enforces_human_allowlist() -> None:

@@ -21,5 +21,6 @@ GLOBAL_STOP_CONDITIONS = frozenset(
         "protected_environment_target",
         "repeated_systemic_failure",
         "worker_isolation_unguaranteed",
+        "no_dispatchable_work",
     }
 )

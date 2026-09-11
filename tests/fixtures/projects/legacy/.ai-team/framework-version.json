@@ -359,6 +359,7 @@
     "src/governed_ai/core/domain/run/convergence.py",
     "src/governed_ai/core/domain/run/decision_menu.py",
     "src/governed_ai/core/domain/run/execution_ceiling.py",
+    "src/governed_ai/core/domain/run/failure_taxonomy.py",
     "src/governed_ai/core/domain/run/fencing.py",
     "src/governed_ai/core/domain/run/mission_artifact.py",
     "src/governed_ai/core/domain/run/morning_report.py",

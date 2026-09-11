@@ -26,7 +26,11 @@ def execute_runtime(project_root: Path, request: ExecutionRequest) -> RuntimeRes
     """
     _validate_request(request)
     if is_real_agent_launch_enabled():
-        outcome = invoke_agent_cli(project_root, request)
+        timeout_raw = request.get("timeout_seconds")
+        timeout_kwargs = {}
+        if timeout_raw is not None:
+            timeout_kwargs["timeout_seconds"] = float(timeout_raw)
+        outcome = invoke_agent_cli(project_root, request, **timeout_kwargs)
         result = build_runtime_result(
             request,
             status=outcome.status,

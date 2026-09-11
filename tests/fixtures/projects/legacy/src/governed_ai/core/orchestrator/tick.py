@@ -26,12 +26,20 @@ import yaml
 from governed_ai.adapters.spi import AdapterSPI, ExecutionRequest
 from governed_ai.compat.datetime import UTC, datetime, timedelta
 from governed_ai.core.commands.gateway import CommandGateway
-from governed_ai.core.domain.run.autonomy_policy import effective_policy_hash
+from governed_ai.core.domain.run.autonomy_policy import (
+    effective_policy_hash,
+    resolve_step_timeout_seconds,
+)
+from governed_ai.core.domain.run.failure_taxonomy import (
+    classify_attempt_failure,
+    systemic_failure_signature,
+)
 from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
 from governed_ai.core.orchestrator.boundary import boundary_error_for_changed_files
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
     changed_files,
+    create_unverified_wip_commit,
     ensure_integration_worktree,
     ensure_work_unit_worktree,
     head_sha,
@@ -474,15 +482,15 @@ def _global_stop_condition(
     if maximum_tokens is not None and int(grant.get("tokens_used", 0)) >= int(maximum_tokens):
         return "budget_exhausted"
     attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
-    failures: dict[tuple[str, str], set[str]] = {}
+    failures: dict[tuple[str, ...], set[str]] = {}
     if attempts_dir.is_dir():
         for path in attempts_dir.glob("*.yaml"):
             attempt = _read_yaml(path) or {}
             if attempt.get("run_id") != run_document.get("id"):
                 continue
-            if attempt.get("status") not in {"failed", "timed_out", "blocked"}:
+            signature = systemic_failure_signature(attempt)
+            if signature is None:
                 continue
-            signature = (str(attempt.get("step")), str(attempt.get("summary")))
             failures.setdefault(signature, set()).add(str(attempt.get("work_unit_id")))
     if any(len(work_units) >= 2 for work_units in failures.values()):
         return "repeated_systemic_failure"
@@ -575,6 +583,187 @@ def _implementation_boundary_error(
     return None
 
 
+def _checkpoint_start_sha(workspace: Workspace, work_unit_id: str) -> str | None:
+    path = workspace.ai_team / "runs" / "checkpoints" / f"{work_unit_id}.yaml"
+    document = _read_yaml(path)
+    if not document:
+        return None
+    sha = document.get("last_commit")
+    if isinstance(sha, str) and len(sha) == 40:
+        return sha.lower()
+    return None
+
+
+def _grant_remaining_seconds(
+    workspace: Workspace, run_document: dict[str, Any], *, now: datetime
+) -> float | None:
+    grant_id = run_document.get("run_authorization_grant_id")
+    if not grant_id:
+        return None
+    grant_path = workspace.ai_team / "run-authorization-grants" / f"{grant_id}.json"
+    if not grant_path.is_file():
+        return None
+    try:
+        grant = json.loads(_read_text(grant_path))
+    except (OSError, json.JSONDecodeError):
+        return None
+    remaining: list[float] = []
+    expires_at = grant.get("expires_at")
+    if expires_at:
+        try:
+            expiry = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=UTC)
+            remaining.append(max(1.0, (expiry - now).total_seconds()))
+        except ValueError:
+            pass
+    duration = grant.get("maximum_duration_hours")
+    if duration is not None and run_document.get("created_at"):
+        opened = datetime.fromisoformat(str(run_document["created_at"]).replace("Z", "+00:00"))
+        if opened.tzinfo is None:
+            opened = opened.replace(tzinfo=UTC)
+        remaining.append(max(1.0, float(duration) * 3600 - (now - opened).total_seconds()))
+    if not remaining:
+        return None
+    return min(remaining)
+
+
+def _recover_orphan_started_attempts(
+    gateway: CommandGateway,
+    workspace: Workspace,
+    *,
+    run_id: str,
+    run_document: dict[str, Any],
+    now: datetime,
+) -> list[str]:
+    """Finalize started attempts whose lease is gone or stale."""
+    attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
+    if not attempts_dir.is_dir():
+        return []
+    recovered: list[str] = []
+    leases_by_work_unit = run_document.get("leases_by_work_unit") or {}
+    for path in sorted(attempts_dir.glob("*.yaml")):
+        attempt = _read_yaml(path) or {}
+        if attempt.get("run_id") != run_id or attempt.get("status") != "started":
+            continue
+        work_unit_id = str(attempt.get("work_unit_id") or "")
+        lease_id = str(attempt.get("worker_lease_id") or "")
+        lease_path = workspace.ai_team / "runs" / "leases" / f"{lease_id}.yaml"
+        lease = _read_yaml(lease_path) if lease_path.is_file() else None
+        current = leases_by_work_unit.get(work_unit_id) or {}
+        lease_current = (
+            lease is not None
+            and lease.get("status") == "active"
+            and str(current.get("lease_id")) == lease_id
+            and _lease_is_fresh(lease, now=now)
+        )
+        if lease_current:
+            continue
+        taxonomy = classify_attempt_failure(
+            status="timed_out",
+            step=str(attempt.get("step") or ""),
+            summary="orphan started attempt recovered on restart",
+        ) or {}
+        receipt, exit_code = gateway.execute_command(
+            _envelope(
+                "RecordExecutionAttempt",
+                target={
+                    "kind": "execution_attempt",
+                    "id": attempt["id"],
+                    "expected_revision": attempt.get("revision", 1),
+                },
+                payload={
+                    "run_id": run_id,
+                    "execution_id": attempt.get("execution_id"),
+                    "work_unit_id": work_unit_id,
+                    "worker_lease_id": lease_id or "LEASE-ORPHAN",
+                    "epoch": attempt.get("epoch") or current.get("epoch") or 1,
+                    "step": attempt.get("step") or "sandbox_implementation",
+                    "status": "timed_out",
+                    "summary": "orphan started attempt recovered on restart",
+                    "checks": [],
+                    "artifacts": [],
+                    "workspace": attempt.get("workspace") or {},
+                    "contract": attempt.get("contract") or {},
+                    "requested_commands": [],
+                    "usage": {},
+                    "provider": {},
+                    **taxonomy,
+                },
+                actor_role_id="control-plane",
+            )
+        )
+        if exit_code == 0:
+            recovered.append(str(attempt["id"]))
+        else:
+            _ = receipt
+    return recovered
+
+
+def _run_has_dispatchable_work(
+    workspace: Workspace,
+    run_document: dict[str, Any],
+    work_unit_documents: dict[str, dict[str, Any] | None],
+    *,
+    now: datetime,
+) -> bool:
+    """True when a future tick could still acquire or dispatch work."""
+    for work_unit_id, wu_document in work_unit_documents.items():
+        if wu_document is None:
+            continue
+        status = wu_document.get("status")
+        if status == "ready":
+            return True
+        if status in STATUS_TO_STEP or status in {
+            "human_test",
+            "paused_for_risk_escalation",
+        }:
+            return True
+        if status == "remediation_required":
+            return True
+    leases_dir = workspace.ai_team / "runs" / "leases"
+    if leases_dir.is_dir():
+        for lease_path in leases_dir.glob("*.yaml"):
+            lease = _read_yaml(lease_path) or {}
+            if (
+                lease.get("run_id") == run_document.get("id")
+                and lease.get("status") == "active"
+                and _lease_is_fresh(lease, now=now)
+            ):
+                return True
+    return False
+
+
+def _should_stop_for_no_dispatchable_work(
+    work_unit_documents: dict[str, dict[str, Any] | None],
+) -> bool:
+    """Close only when the Run is stuck (e.g. all blocked), not when finished/waiting."""
+    statuses = [
+        str((document or {}).get("status") or "")
+        for document in work_unit_documents.values()
+        if document is not None
+    ]
+    if not statuses:
+        return True
+    if any(
+        status
+        in {
+            "ready",
+            "in_progress",
+            "verification",
+            "review",
+            "audit",
+            "remediation_required",
+            "human_test",
+            "paused_for_risk_escalation",
+            "done",
+        }
+        for status in statuses
+    ):
+        return False
+    return True
+
+
 def run_scheduling_tick(
     gateway: CommandGateway,
     workspace: Workspace,
@@ -627,6 +816,17 @@ def run_scheduling_tick(
         work_unit_id: _read_yaml(workspace.ai_team / "work-units" / f"{work_unit_id}.yaml")
         for work_unit_id in work_unit_ids
     }
+
+    recovered_orphans = _recover_orphan_started_attempts(
+        gateway,
+        workspace,
+        run_id=run_id,
+        run_document=run_document,
+        now=now,
+    )
+    if recovered_orphans:
+        # Re-load run after authoritative attempt updates (budgets / events).
+        run_document = _read_yaml(run_path) or run_document
 
     # Priority 1: reassign any stale lease before anything else.
     for work_unit_id, lease_ref in leases_by_work_unit.items():
@@ -867,7 +1067,10 @@ def run_scheduling_tick(
         if isolated_worktree:
             try:
                 execution_root = ensure_work_unit_worktree(
-                    workspace.root, run_id, work_unit_id
+                    workspace.root,
+                    run_id,
+                    work_unit_id,
+                    start_sha=_checkpoint_start_sha(workspace, work_unit_id),
                 )
             except GitWorkspaceError as exc:
                 failed_receipt, failed_exit = gateway.execute_command(
@@ -949,6 +1152,13 @@ def run_scheduling_tick(
         request["allowed_shell_commands"] = allowed_shell_commands
         request["allowed_paths"] = allowed_paths
         request["accessible_secrets"] = accessible_secrets
+        request["timeout_seconds"] = resolve_step_timeout_seconds(
+            run_document.get("effective_autonomy_policy"),
+            step,
+            grant_remaining_seconds=_grant_remaining_seconds(
+                workspace, run_document, now=now
+            ),
+        )
         if base_sha is not None:
             request["base_sha"] = base_sha
         try:
@@ -963,6 +1173,33 @@ def run_scheduling_tick(
                 "usage": {},
             }
         status = result.get("status", "failed")
+        if status == "timed_out" and isolated_worktree and execution_root != workspace.root:
+            try:
+                wip_sha = create_unverified_wip_commit(
+                    execution_root, work_unit_id=work_unit_id
+                )
+                head = head_sha(execution_root)
+                salvage_sha = wip_sha or (head if base_sha and head != base_sha else None)
+                if salvage_sha and base_sha:
+                    files = changed_files(execution_root, base_sha, salvage_sha)
+                    boundary = boundary_error_for_changed_files(
+                        files,
+                        work_unit_id=work_unit_id,
+                        wu_document=wu_document,
+                        allowed_paths=allowed_paths,
+                    )
+                    if boundary is None:
+                        result = dict(result)
+                        workspace_meta = dict(result.get("workspace") or {})
+                        workspace_meta["base_sha"] = base_sha
+                        workspace_meta["result_sha"] = salvage_sha
+                        result["workspace"] = workspace_meta
+                        result["summary"] = (
+                            f"{result.get('summary') or ''} "
+                            f"Unverified WIP checkpoint saved at {salvage_sha}."
+                        ).strip()
+            except GitWorkspaceError:
+                pass
         if status == "succeeded":
             evidence_error = _evidence_error(
                 result,
@@ -1045,6 +1282,12 @@ def run_scheduling_tick(
                     },
                 ]
 
+        attempt_taxonomy = classify_attempt_failure(
+            status=status,
+            step=step,
+            summary=str(result.get("summary") or ""),
+            limitations=list(result.get("limitations") or []),
+        ) or {}
         attempt_receipt, attempt_exit = gateway.execute_command(
             _envelope(
                 "RecordExecutionAttempt",
@@ -1070,6 +1313,7 @@ def run_scheduling_tick(
                     "usage": result.get("usage", {}),
                     "duration_ms": result.get("duration_ms"),
                     "provider": result.get("provider", {}),
+                    **attempt_taxonomy,
                 },
                 actor_role_id=attempt_actor_role,
             )
@@ -1292,6 +1536,14 @@ def run_scheduling_tick(
                     "executed_commands": [str(item) for item in result.get("requested_commands", [])],
                     "artifacts": [str(item.get("path")) for item in result.get("artifacts", [])],
                     "next_step": step,
+                    "verification_status": (
+                        "unverified"
+                        if status == "timed_out"
+                        and (result.get("workspace") or {}).get("result_sha")
+                        else "verified"
+                        if status == "succeeded"
+                        else None
+                    ),
                 },
             )
         )
@@ -1671,6 +1923,39 @@ def run_scheduling_tick(
             action="run_completed" if close_exit == 0 else "run_completion_failed",
             work_unit_id=None,
             details={"errors": close_receipt.get("errors"), **retrospective_details},
+        )
+
+    if (
+        not _run_has_dispatchable_work(
+            workspace, run_document, work_unit_documents, now=now
+        )
+        and _should_stop_for_no_dispatchable_work(work_unit_documents)
+    ):
+        stop_receipt, stop_exit = gateway.execute_command(
+            _envelope(
+                "CloseRun",
+                target={
+                    "kind": "run",
+                    "id": run_id,
+                    "expected_revision": run_document["revision"],
+                },
+                payload={
+                    "status": "stopped",
+                    "reason": "no dispatchable work remains and no active worker progress",
+                    "stop_condition": "no_dispatchable_work",
+                },
+            )
+        )
+        return _terminal_run_result(
+            gateway,
+            close_exit=stop_exit,
+            action_ok="run_stopped",
+            action_fail="run_stop_failed",
+            work_unit_id=None,
+            details={
+                "stop_condition": "no_dispatchable_work",
+                "errors": stop_receipt.get("errors"),
+            },
         )
 
     return TickResult(action="idle", work_unit_id=None)

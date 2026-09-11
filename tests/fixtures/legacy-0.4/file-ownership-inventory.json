@@ -349,6 +349,7 @@
     "src/governed_ai/core/domain/run/decision_menu.py": "core",
     "src/governed_ai/core/domain/run/execution_ceiling.py": "core",
     "src/governed_ai/core/domain/run/fencing.py": "core",
+    "src/governed_ai/core/domain/run/failure_taxonomy.py": "core",
     "src/governed_ai/core/domain/run/mission_artifact.py": "core",
     "src/governed_ai/core/domain/run/morning_report.py": "core",
     "src/governed_ai/core/domain/run/parallelism.py": "core",
