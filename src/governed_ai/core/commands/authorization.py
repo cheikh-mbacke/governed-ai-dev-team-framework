@@ -53,6 +53,8 @@ SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
             # bookkeeping, fencing-checked by the handler, not a judgment call.
             "RecordWorkerHeartbeat",
             "ReleaseWorkerLease",
+            # Project configuration changes are human-authorized and audited.
+            "UpdateProjectProfile",
         }
     ),
     "backend-developer": frozenset({"RegisterEvidence"}),

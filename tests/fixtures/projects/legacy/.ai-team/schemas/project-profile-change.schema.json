@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProjectProfileChange",
+  "type": "object",
+  "required": [
+    "id",
+    "project_id",
+    "previous_revision",
+    "new_revision",
+    "changes",
+    "reason",
+    "changed_by",
+    "changed_at",
+    "effective_scope",
+    "resolved_autonomy_preset"
+  ],
+  "properties": {
+    "id": {"type": "string", "pattern": "^PROFILE-CHANGE-"},
+    "project_id": {"type": "string", "minLength": 1},
+    "previous_revision": {"type": "integer", "minimum": 1},
+    "new_revision": {"type": "integer", "minimum": 2},
+    "changes": {"type": "object", "minProperties": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "changed_by": {"type": "string", "minLength": 1},
+    "changed_at": {"type": "string", "format": "date-time"},
+    "effective_scope": {"const": "future_runs"},
+    "resolved_autonomy_preset": {
+      "enum": [
+        "supervised_copilots",
+        "unattended_conservative",
+        "unattended_extended",
+        "unattended_maximal",
+        "custom"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

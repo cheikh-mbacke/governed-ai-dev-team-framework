@@ -13,6 +13,15 @@
     "setup_status"
   ],
   "properties": {
+    "config_revision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optimistic concurrency revision for governed profile updates. Missing legacy values are treated as revision 1."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "project": {
       "type": "object",
       "required": [
@@ -23,8 +32,9 @@
     },
     "autonomy": {
       "type": "object",
-      "required": [
-        "level"
+      "anyOf": [
+        {"required": ["preset"]},
+        {"required": ["level"]}
       ],
       "properties": {
         "preset": {

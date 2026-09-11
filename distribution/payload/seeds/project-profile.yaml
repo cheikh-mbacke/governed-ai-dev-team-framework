@@ -4,6 +4,7 @@ project:
   repository_kind: framework_template
   primary_language: python
   package_manager: pip
+config_revision: 1
 communication:
   language: français
 notifications:
@@ -32,7 +33,6 @@ notifications:
       run_completed: digest
 autonomy:
   preset: supervised_copilots
-  level: 3
 paths:
   product_docs: docs/product
   source_roots:

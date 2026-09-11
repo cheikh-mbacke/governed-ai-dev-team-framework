@@ -61,6 +61,9 @@ from governed_ai.core.commands.handlers.transition_observation import (
     handle_transition_observation,
 )
 from governed_ai.core.commands.handlers.transition_work_unit import handle_transition_work_unit
+from governed_ai.core.commands.handlers.update_project_profile import (
+    handle_update_project_profile,
+)
 from governed_ai.core.commands.handlers.write_checkpoint import handle_write_checkpoint
 
 HANDLERS = {
@@ -96,4 +99,5 @@ HANDLERS = {
     "ReleaseWorkerLease": handle_release_worker_lease,
     "RegisterMissionArtifact": handle_register_mission_artifact,
     "RecordMissionArtifactChallenge": handle_record_mission_artifact_challenge,
+    "UpdateProjectProfile": handle_update_project_profile,
 }

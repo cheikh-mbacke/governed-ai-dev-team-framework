@@ -68,6 +68,7 @@ Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le d�
 
 - [ ] Work Units travaillées sur branches isolées `wu/<id>`.
 - [ ] Mutations d'état via Command Gateway (`gov.py`) ou wrappers approuvés.
+- [ ] Changements de profil via `configure.py` (historisés et applicables aux Runs suivants), jamais par édition silencieuse du YAML.
 - [ ] Observations enregistrées avec `feedback.py record` quand friction réutilisable.
 - [ ] Feedback remonté via `feedback.py submit` (ou clôture de Run) — usage du framework = acceptation.
 - [ ] Gates G2–G4 enregistrées avec `--authorization-id` quand requis.

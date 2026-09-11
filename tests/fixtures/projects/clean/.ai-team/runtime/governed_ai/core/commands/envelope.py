@@ -30,6 +30,7 @@ COMMANDS_REQUIRING_HUMAN_AUTH = frozenset(
         # human act, gated the same way as a gate decision.
         "IssueRunAuthorizationGrant",
         "RevokeRunAuthorizationGrant",
+        "UpdateProjectProfile",
     }
 )
 
@@ -136,6 +137,8 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_register_mission_artifact(raw)
     elif raw["type"] == "RecordMissionArtifactChallenge":
         _validate_record_mission_artifact_challenge(raw)
+    elif raw["type"] == "UpdateProjectProfile":
+        _validate_update_project_profile(raw)
     if raw["type"] in COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
         raise GatewayError(
             ErrorCode.HUMAN_AUTH_REQUIRED,
@@ -144,6 +147,43 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         )
 
     return raw
+
+
+def _validate_update_project_profile(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "project_profile":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "UpdateProjectProfile target.kind must be project_profile",
+            "/target/kind",
+        )
+    if not isinstance(target.get("expected_revision"), int):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision must be an integer",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
+    changes = payload.get("changes")
+    if not isinstance(changes, dict) or not changes:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.changes must be a non-empty object",
+            "/payload/changes",
+        )
+    if not payload.get("reason"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA, "payload.reason is required", "/payload/reason"
+        )
+    authorization = raw.get("human_authorization") or {}
+    if "human_authorization" in raw and not authorization.get("granted_by"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "human_authorization.granted_by is required",
+            "/human_authorization/granted_by",
+        )
 
 
 def _validate_create_work_unit(raw: dict[str, Any]) -> None:

@@ -92,6 +92,15 @@ class CommandGateway:
             import yaml
 
             return {"name": name, "data": yaml.safe_load(path.read_text(encoding="utf-8"))}
+        if name == "project-profile":
+            path = self._ai_team / "project-profile.yaml"
+            if not path.is_file():
+                raise GatewayError(ErrorCode.NOT_FOUND, "project profile not found", "/query")
+            import yaml
+
+            profile = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            profile.setdefault("config_revision", 1)
+            return {"name": name, "data": profile}
         if name == "work-unit-done":
             query_args = args or {}
             work_unit_id = query_args.get("work_unit_id")
