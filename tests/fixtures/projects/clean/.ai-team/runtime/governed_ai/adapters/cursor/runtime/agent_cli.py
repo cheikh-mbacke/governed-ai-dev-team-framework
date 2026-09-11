@@ -106,9 +106,16 @@ def build_prompt(project_root: Path, request: dict[str, Any]) -> str:
     context = ""
     context_ref = request.get("context_package_ref")
     if context_ref:
-        context_path = project_root / str(context_ref)
-        if context_path.is_file():
-            context = context_path.read_text(encoding="utf-8")[:20000]
+        candidates = [project_root / str(context_ref)]
+        ref_text = str(context_ref).strip().replace("\\", "/")
+        if ref_text and not ref_text.endswith(".yaml") and "/" not in ref_text:
+            candidates.append(
+                project_root / ".ai-team" / "context-packages" / f"{ref_text}.yaml"
+            )
+        for context_path in candidates:
+            if context_path.is_file():
+                context = context_path.read_text(encoding="utf-8")[:20000]
+                break
     return (
         f"{wu_summary}\n"
         f"Role: {role_id}. Procedure: {procedure_id}.\n"

@@ -103,3 +103,52 @@ def test_build_aggregate_from_summary_only_export(tmp_path: Path) -> None:
     result = write_aggregate(inbox=inbox, output=tmp_path / "out.json")
     assert result.export_count == 1
     assert result.index_path.is_file()
+
+
+def test_build_aggregate_dedups_cumulative_observation_snapshots(tmp_path: Path) -> None:
+    inbox = tmp_path / "inbox"
+    inbox.mkdir()
+    first = _minimal_export(export_id="EXP-DUP-1")
+    first["observations"][0]["revision"] = 1
+    first["observations"][0]["occurrence_count"] = 1
+    first["observations"][0]["symptom"] = "old"
+    second = _minimal_export(export_id="EXP-DUP-2")
+    second["generated_at"] = "2026-09-04T10:00:00+00:00"
+    second["observations"][0]["revision"] = 3
+    second["observations"][0]["occurrence_count"] = 4
+    second["observations"][0]["symptom"] = "latest"
+    second["observations"][0]["last_recorded_at"] = "2026-09-04T09:00:00+00:00"
+    (inbox / "EXP-DUP-1.json").write_text(json.dumps(first), encoding="utf-8")
+    (inbox / "EXP-DUP-2.json").write_text(json.dumps(second), encoding="utf-8")
+
+    index = build_aggregate(inbox)
+    assert index["export_count"] == 2
+    assert index["observation_count"] == 1
+    assert index["unique_observation_count"] == 1
+    assert index["by_category"]["tooling"] == 1
+    assert index["by_recurrence_key"]["auto:sandbox_implementation:failed"] == 1
+    assert index["actionable_for_framework"][0]["symptom"] == "latest"
+    assert index["actionable_for_framework"][0]["occurrence_count"] == 4
+    assert index["actionable_for_framework"][0]["revision"] == 3
+
+
+def test_build_aggregate_summary_only_keeps_latest_per_project(tmp_path: Path) -> None:
+    inbox = tmp_path / "inbox"
+    inbox.mkdir()
+    older = _minimal_export(export_id="EXP-SUM-1")
+    older["observations"] = []
+    older["detail_level"] = "aggregate"
+    older["summary"]["total"] = 5
+    older["summary"]["by_category"] = {"tooling": 5}
+    newer = _minimal_export(export_id="EXP-SUM-2")
+    newer["observations"] = []
+    newer["detail_level"] = "aggregate"
+    newer["generated_at"] = "2026-09-05T10:00:00+00:00"
+    newer["summary"]["total"] = 2
+    newer["summary"]["by_category"] = {"tooling": 2}
+    (inbox / "EXP-SUM-1.json").write_text(json.dumps(older), encoding="utf-8")
+    (inbox / "EXP-SUM-2.json").write_text(json.dumps(newer), encoding="utf-8")
+
+    index = build_aggregate(inbox)
+    assert index["observation_count"] == 2
+    assert index["by_category"]["tooling"] == 2

@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-11T10:39:38+00:00",
+  "generated_at": "2026-09-11T11:38:40+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -249,7 +249,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "b01ab013f1ecd01e8c57a16d76f831c2451db0e21688d454d7c94bd063d9bdc2"
+          "sha256": "8ef7718127c098713a9a719b8be1ae7ad324ce8b9946825cabee41b1fca39a62"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -325,7 +325,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/agent_cli.py",
-          "sha256": "130e56a89a21efbd25ddc17cf1b7b3c4cb1cac6c218844453a3dc64cd6426fdc"
+          "sha256": "2ff0d6081eecb0eb35bd002463a71593552a88067f2a3874748d81a19c20bf4f"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/checks.py",
@@ -1057,7 +1057,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-          "sha256": "990afc73eb41558771651adf359322d9ce9c57d9cb504b88a8023e13e655e2b8"
+          "sha256": "9997346a13e5ed251e2a46f18aedf28aed3056e15eccbfb194ba9d02f1237e16"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -1129,7 +1129,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/feedback/commands/handlers.py",
-          "sha256": "e91eb8ee69c4b32b58b08e2662741e2048d676ed1af80e587ddbe77d84adbb6d"
+          "sha256": "c34b19386639ec8334cb9349fca5b5b2979341697402b12e43b2b4a872d59233"
         },
         {
           "path": ".ai-team/runtime/governed_ai/feedback/common.py",
@@ -1169,7 +1169,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/learning/aggregate.py",
-          "sha256": "7970180dfe67748fba30ac7d06c5450dc4fbcf049ee2a9cb6564d3a075b75774"
+          "sha256": "f299751eca88ccc36d4a23ad9fac5b14a66b036219c1f79ee9ea0f74b7310e68"
         },
         {
           "path": ".ai-team/runtime/governed_ai/notifications/__init__.py",
@@ -1221,7 +1221,7 @@
         },
         {
           "path": ".ai-team/schemas/feedback-export.schema.json",
-          "sha256": "b6e1b85d69fa9548cb7e18bb685d54404ca4962ffd34f298dfb8d1dccbcb0bff"
+          "sha256": "68c4ccdf52f2e542aea5675540342d408e4291d778c00b924d465549bfb46c7d"
         },
         {
           "path": ".ai-team/schemas/finding.schema.json",
@@ -1936,7 +1936,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "710646eb3b98318b9e1bd0257e65f9ab5f668ce1b41179826d7fed9725e0c8c8"
+          "sha256": "86e17ae501e14c60ca3fed39904094166a8cc36247d491992f8b76a1956b697f"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1988,7 +1988,7 @@
         },
         {
           "path": ".ai-team/schemas/feedback-export.schema.json",
-          "sha256": "b6e1b85d69fa9548cb7e18bb685d54404ca4962ffd34f298dfb8d1dccbcb0bff"
+          "sha256": "68c4ccdf52f2e542aea5675540342d408e4291d778c00b924d465549bfb46c7d"
         },
         {
           "path": ".ai-team/schemas/finding.schema.json",
@@ -2416,7 +2416,7 @@
         },
         {
           "path": "adapters/cursor/runtime/agent_cli.py",
-          "sha256": "130e56a89a21efbd25ddc17cf1b7b3c4cb1cac6c218844453a3dc64cd6426fdc"
+          "sha256": "2ff0d6081eecb0eb35bd002463a71593552a88067f2a3874748d81a19c20bf4f"
         },
         {
           "path": "adapters/cursor/runtime/checks.py",
@@ -3272,7 +3272,7 @@
         },
         {
           "path": "src/governed_ai/core/orchestrator/tick.py",
-          "sha256": "990afc73eb41558771651adf359322d9ce9c57d9cb504b88a8023e13e655e2b8"
+          "sha256": "9997346a13e5ed251e2a46f18aedf28aed3056e15eccbfb194ba9d02f1237e16"
         },
         {
           "path": "src/governed_ai/core/persistence/__init__.py",
@@ -3344,7 +3344,7 @@
         },
         {
           "path": "src/governed_ai/feedback/commands/handlers.py",
-          "sha256": "e91eb8ee69c4b32b58b08e2662741e2048d676ed1af80e587ddbe77d84adbb6d"
+          "sha256": "c34b19386639ec8334cb9349fca5b5b2979341697402b12e43b2b4a872d59233"
         },
         {
           "path": "src/governed_ai/feedback/common.py",
@@ -3384,7 +3384,7 @@
         },
         {
           "path": "src/governed_ai/learning/aggregate.py",
-          "sha256": "7970180dfe67748fba30ac7d06c5450dc4fbcf049ee2a9cb6564d3a075b75774"
+          "sha256": "f299751eca88ccc36d4a23ad9fac5b14a66b036219c1f79ee9ea0f74b7310e68"
         },
         {
           "path": "src/governed_ai/notifications/__init__.py",

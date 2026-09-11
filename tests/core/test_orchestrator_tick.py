@@ -89,13 +89,49 @@ def workspace(tmp_path: Path) -> Workspace:
     return ws
 
 
+def _seed_context_package(
+    workspace: Workspace,
+    work_unit_id: str,
+    *,
+    context_id: str | None = None,
+) -> str:
+    ctx_id = context_id or f"CTX-{work_unit_id}"
+    packages = workspace.ai_team / "context-packages"
+    packages.mkdir(parents=True, exist_ok=True)
+    document = {
+        "id": ctx_id,
+        "work_unit": work_unit_id,
+        "role": "backend-developer",
+        "items": [
+            {
+                "level": "L3_work_unit",
+                "source": f".ai-team/work-units/{work_unit_id}.yaml",
+                "provenance": "authoritative",
+                "reason": "seeded for tick tests",
+            }
+        ],
+        "open_context_requests": [],
+    }
+    (packages / f"{ctx_id}.yaml").write_text(yaml.safe_dump(document), encoding="utf-8")
+    return ctx_id
+
+
 def _seed_work_unit(
     workspace: Workspace,
     work_unit_id: str,
     *,
     status: str,
     scope_include: list[str] | None = None,
+    context_package_ref: str | None | bool = True,
 ) -> None:
+    ctx_ref: str | None
+    if context_package_ref is True:
+        ctx_ref = _seed_context_package(workspace, work_unit_id)
+    elif context_package_ref is False or context_package_ref is None:
+        ctx_ref = None
+    else:
+        ctx_ref = str(context_package_ref)
+        _seed_context_package(workspace, work_unit_id, context_id=ctx_ref)
     document = {
         "id": work_unit_id,
         "title": "Test work unit",
@@ -112,6 +148,7 @@ def _seed_work_unit(
         "updated_at": "2026-08-30T00:00:00+00:00",
         "events": [],
         "evidence": [],
+        "context_package_ref": ctx_ref,
         "outcomes": {
             "review_status": "pending",
             "audit_status": "not_required",
@@ -1644,4 +1681,52 @@ def test_orphan_started_attempt_is_recovered_on_restart(workspace: Workspace) ->
     assert recovered["failure_code"] == "orphan_started"
     assert recovered["failure_scope"] == "run"
     assert result.action in {"reassigned_lease", "recorded_attempt", "idle", "started_work_unit"}
+
+
+def test_tick_propagates_context_package_ref_on_execution_request(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-OK", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready")
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-OK", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    executed = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-OK", adapter=adapter, worker_id="w1"
+    )
+    assert executed.action in {"advanced_work_unit", "recorded_attempt"}
+    assert adapter.requests
+    assert adapter.requests[0]["context_package_ref"] == (
+        ".ai-team/context-packages/CTX-WU-A.yaml"
+    )
+
+
+def test_tick_blocks_implementation_when_context_package_missing(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-MISS", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready", context_package_ref=False)
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-MISS", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    blocked = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-MISS", adapter=adapter, worker_id="w1"
+    )
+    assert blocked.action in {"recorded_attempt", "advanced_work_unit", "paused_work_unit"}
+    assert adapter.requests == []
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "blocked"
+    assert "context_package" in str(attempt.get("summary") or "")
 

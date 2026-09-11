@@ -76,6 +76,33 @@ def test_build_prompt_tolerates_missing_work_unit_file(tmp_path: Path) -> None:
     assert "WU-AGENT-TEST" in prompt
 
 
+def test_build_prompt_loads_context_package_by_canonical_path(tmp_path: Path) -> None:
+    packages = tmp_path / ".ai-team" / "context-packages"
+    packages.mkdir(parents=True)
+    (packages / "CTX-WU-AGENT-TEST.yaml").write_text(
+        "id: CTX-WU-AGENT-TEST\nwork_unit: WU-AGENT-TEST\nrole: backend-developer\n"
+        "items: []\n",
+        encoding="utf-8",
+    )
+    request = _sample_request()
+    request["context_package_ref"] = ".ai-team/context-packages/CTX-WU-AGENT-TEST.yaml"
+    prompt = agent_cli.build_prompt(tmp_path, request)
+    assert "CTX-WU-AGENT-TEST" in prompt
+
+
+def test_build_prompt_resolves_bare_context_id(tmp_path: Path) -> None:
+    packages = tmp_path / ".ai-team" / "context-packages"
+    packages.mkdir(parents=True)
+    (packages / "CTX-BARE.yaml").write_text(
+        "id: CTX-BARE\nwork_unit: WU-AGENT-TEST\nrole: backend-developer\nitems: []\n",
+        encoding="utf-8",
+    )
+    request = _sample_request()
+    request["context_package_ref"] = "CTX-BARE"
+    prompt = agent_cli.build_prompt(tmp_path, request)
+    assert "CTX-BARE" in prompt
+
+
 def test_invoke_agent_cli_returns_blocked_when_binary_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

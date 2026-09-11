@@ -735,7 +735,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-        "installed_sha256": "sha256:990afc73eb41558771651adf359322d9ce9c57d9cb504b88a8023e13e655e2b8"
+        "installed_sha256": "sha256:9997346a13e5ed251e2a46f18aedf28aed3056e15eccbfb194ba9d02f1237e16"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -807,7 +807,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/feedback/commands/handlers.py",
-        "installed_sha256": "sha256:e91eb8ee69c4b32b58b08e2662741e2048d676ed1af80e587ddbe77d84adbb6d"
+        "installed_sha256": "sha256:c34b19386639ec8334cb9349fca5b5b2979341697402b12e43b2b4a872d59233"
       },
       {
         "path": ".ai-team/runtime/governed_ai/feedback/common.py",
@@ -847,7 +847,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/learning/aggregate.py",
-        "installed_sha256": "sha256:7970180dfe67748fba30ac7d06c5450dc4fbcf049ee2a9cb6564d3a075b75774"
+        "installed_sha256": "sha256:f299751eca88ccc36d4a23ad9fac5b14a66b036219c1f79ee9ea0f74b7310e68"
       },
       {
         "path": ".ai-team/runtime/governed_ai/notifications/__init__.py",
@@ -899,7 +899,7 @@
       },
       {
         "path": ".ai-team/schemas/feedback-export.schema.json",
-        "installed_sha256": "sha256:b6e1b85d69fa9548cb7e18bb685d54404ca4962ffd34f298dfb8d1dccbcb0bff"
+        "installed_sha256": "sha256:68c4ccdf52f2e542aea5675540342d408e4291d778c00b924d465549bfb46c7d"
       },
       {
         "path": ".ai-team/schemas/finding.schema.json",
@@ -1206,7 +1206,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/agent_cli.py",
-          "installed_sha256": "sha256:130e56a89a21efbd25ddc17cf1b7b3c4cb1cac6c218844453a3dc64cd6426fdc"
+          "installed_sha256": "sha256:2ff0d6081eecb0eb35bd002463a71593552a88067f2a3874748d81a19c20bf4f"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/checks.py",

@@ -19,6 +19,7 @@ import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -116,6 +117,63 @@ def _resolve_execution_contract(
         "procedure_id": procedure["procedure_id"],
         "procedure_revision": procedure["revision"],
     }
+
+
+_MAX_AUTO_SYMPTOM = 2000
+
+
+def _procedure_required_inputs(workspace: Workspace, procedure_id: str) -> list[str]:
+    from governed_ai.contracts.compatibility import resolve_active_bundle_dir
+
+    bundle_dir = resolve_active_bundle_dir(workspace.ai_team / "contracts")
+    procedure = json.loads(
+        (bundle_dir / "procedures" / f"{procedure_id}.json").read_text(encoding="utf-8")
+    )
+    return [str(item) for item in (procedure.get("required_inputs") or [])]
+
+
+def _canonical_context_package_path(workspace: Workspace, ref: str) -> Path:
+    text = str(ref).strip().replace("\\", "/")
+    if not text:
+        raise ValueError("empty context_package_ref")
+    if text.endswith(".yaml") or "/" in text:
+        path = Path(text)
+        return path if path.is_absolute() else (workspace.root / path)
+    return workspace.ai_team / "context-packages" / f"{text}.yaml"
+
+
+def _resolve_context_package_ref(
+    workspace: Workspace, wu_document: dict[str, Any], *, procedure_id: str
+) -> tuple[str | None, str | None]:
+    """Return (request-relative path, error). Error set when context is required but unusable."""
+    required = _procedure_required_inputs(workspace, procedure_id)
+    needs_context = "context_package" in required
+    raw_ref = wu_document.get("context_package_ref")
+    if raw_ref in (None, ""):
+        if needs_context:
+            return None, "context_package required but work unit has no context_package_ref"
+        return None, None
+    path = _canonical_context_package_path(workspace, str(raw_ref))
+    if not path.is_file():
+        if needs_context:
+            try:
+                display = path.relative_to(workspace.root).as_posix()
+            except ValueError:
+                display = str(path)
+            return None, f"context_package missing or unreadable: {display}"
+        return None, None
+    try:
+        document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError) as exc:
+        if needs_context:
+            return None, f"context_package invalid: {exc}"
+        return None, None
+    if needs_context and (not isinstance(document, dict) or not document.get("id")):
+        return None, "context_package invalid: missing id"
+    try:
+        return path.relative_to(workspace.root).as_posix(), None
+    except ValueError:
+        return str(path), None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1161,17 +1219,33 @@ def run_scheduling_tick(
         )
         if base_sha is not None:
             request["base_sha"] = base_sha
-        try:
-            result = adapter.execute(request)
-        except Exception as exc:  # noqa: BLE001 - adapter boundary must fail closed
+        context_ref, context_error = _resolve_context_package_ref(
+            workspace, wu_document, procedure_id=procedure_id
+        )
+        if context_error:
             result = {
                 "status": "blocked",
-                "summary": f"adapter execution failed: {type(exc).__name__}: {exc}",
+                "summary": context_error,
                 "checks": [],
                 "artifacts": [],
                 "requested_commands": [],
                 "usage": {},
+                "limitations": ["context_package_incomplete"],
             }
+        else:
+            if context_ref:
+                request["context_package_ref"] = context_ref
+            try:
+                result = adapter.execute(request)
+            except Exception as exc:  # noqa: BLE001 - adapter boundary must fail closed
+                result = {
+                    "status": "blocked",
+                    "summary": f"adapter execution failed: {type(exc).__name__}: {exc}",
+                    "checks": [],
+                    "artifacts": [],
+                    "requested_commands": [],
+                    "usage": {},
+                }
         status = result.get("status", "failed")
         if status == "timed_out" and isolated_worktree and execution_root != workspace.root:
             try:
@@ -1360,12 +1434,16 @@ def run_scheduling_tick(
             # blocks the tick — an installed client project may disable
             # feedback recording, and that must not affect scheduling.
             auto_fields = classify_auto_observation(step=step, status=status)
+            raw_symptom = (
+                result.get("summary")
+                or f"execution attempt for step {step!r} ended with status {status!r}"
+            )
+            symptom = str(raw_symptom)
+            if len(symptom) > _MAX_AUTO_SYMPTOM:
+                symptom = symptom[: _MAX_AUTO_SYMPTOM - 1] + "…"
             auto_payload = {
                 "category": auto_fields["category"],
-                "symptom": (
-                    result.get("summary")
-                    or f"execution attempt for step {step!r} ended with status {status!r}"
-                ),
+                "symptom": symptom,
                 "severity": (
                     "high"
                     if str(run_document.get("autonomy_preset", "")).startswith(
