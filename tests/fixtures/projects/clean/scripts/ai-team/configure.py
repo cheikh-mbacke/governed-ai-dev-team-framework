@@ -106,7 +106,13 @@ def build_parser() -> argparse.ArgumentParser:
     apply_cmd.add_argument("--authorized-by", required=True, help="Human authorizing the change")
     apply_cmd.set_defaults(func=_cmd_apply)
 
-    autonomy = sub.add_parser("autonomy", help="Change the preset for future Runs")
+    autonomy = sub.add_parser(
+        "autonomy",
+        help=(
+            "Change the named preset for future Runs "
+            "(writes autonomy.preset only; legacy level is stripped by the handler)"
+        ),
+    )
     autonomy.add_argument("preset", choices=sorted(NAMED_AUTONOMY_PRESETS))
     autonomy.add_argument("--reason", required=True, help="Why this autonomy preset changes")
     autonomy.add_argument("--authorized-by", required=True, help="Human authorizing the change")

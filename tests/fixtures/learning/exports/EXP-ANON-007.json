@@ -1,0 +1,519 @@
+{
+  "format_version": "1.2",
+  "export_id": "EXP-ANON-007",
+  "generated_at": "2026-09-10T21:25:13.999231+00:00",
+  "detail_level": "full",
+  "project_ref": "PRJ-e17173909848",
+  "project_id": "anon-fixture",
+  "framework_version": "0.7.0",
+  "constitution_version": "1.4.0",
+  "snapshot_sequence": 7,
+  "summary": {
+    "total": 12,
+    "open": 9,
+    "by_category": {
+      "orchestration": 3,
+      "permissions": 1,
+      "tooling": 8
+    },
+    "by_origin": {
+      "framework": 10,
+      "human_process": 2
+    },
+    "by_severity": {
+      "critical": 1,
+      "high": 9,
+      "medium": 2
+    }
+  },
+  "observations": [
+    {
+      "constitution_version": "1.4.0",
+      "revision": 1,
+      "classification": {
+        "origin": "framework",
+        "confidence": "high"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T05:56:24.992472+00:00",
+      "severity": "medium",
+      "category": "orchestration",
+      "last_recorded_at": "2026-09-10T05:56:24.992472+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": false,
+        "human_intervention": true,
+        "affected_work_units": []
+      },
+      "work_unit": null,
+      "recurrence_key": "REC-246fe034aa42",
+      "id": "OBS-ad54c3a37039",
+      "phase": "execution",
+      "status": "candidate_change",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 1,
+      "classification": {
+        "origin": "human_process",
+        "confidence": "high"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T06:22:27.711732+00:00",
+      "severity": "high",
+      "category": "orchestration",
+      "last_recorded_at": "2026-09-10T06:22:27.711732+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": false,
+        "human_intervention": true,
+        "affected_work_units": [
+          "WU-6fe0e4521f7a",
+          "WU-2cbd31c47ec7"
+        ]
+      },
+      "work_unit": null,
+      "recurrence_key": "REC-12e00bcfbb13",
+      "id": "OBS-ec3bd6965123",
+      "phase": "execution",
+      "status": "open",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 1,
+      "classification": {
+        "origin": "framework",
+        "confidence": "high"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T06:29:49.453678+00:00",
+      "severity": "medium",
+      "category": "tooling",
+      "last_recorded_at": "2026-09-10T06:29:49.453678+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": false,
+        "human_intervention": false,
+        "affected_work_units": []
+      },
+      "work_unit": null,
+      "recurrence_key": "REC-b420f9884542",
+      "id": "OBS-5b9539ed8dc4",
+      "phase": "execution",
+      "status": "candidate_change",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 1,
+      "classification": {
+        "origin": "human_process",
+        "confidence": "probable"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T06:34:24.972856+00:00",
+      "severity": "high",
+      "category": "tooling",
+      "last_recorded_at": "2026-09-10T06:34:24.972856+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": false,
+        "human_intervention": true,
+        "affected_work_units": [
+          "WU-6fe0e4521f7a"
+        ]
+      },
+      "work_unit": "WU-6fe0e4521f7a",
+      "recurrence_key": "auto:sandbox_implementation:blocked",
+      "id": "OBS-1c225c3e25f7",
+      "phase": "sandbox_implementation",
+      "status": "open",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 1,
+      "classification": {
+        "origin": "framework",
+        "confidence": "high"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T06:36:03.997412+00:00",
+      "severity": "high",
+      "category": "tooling",
+      "last_recorded_at": "2026-09-10T06:36:03.997412+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": false,
+        "human_intervention": true,
+        "affected_work_units": [
+          "WU-6fe0e4521f7a"
+        ]
+      },
+      "work_unit": "WU-6fe0e4521f7a",
+      "recurrence_key": "REC-8a806621bf2b",
+      "id": "OBS-d378ad0687a4",
+      "phase": "execution",
+      "status": "candidate_change",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 2,
+      "classification": {
+        "origin": "framework",
+        "confidence": "confirmed"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T06:40:21.432753+00:00",
+      "severity": "high",
+      "category": "permissions",
+      "last_recorded_at": "2026-09-10T06:40:21.432753+00:00",
+      "impact": {
+        "blocked_minutes": 15,
+        "rework_required": false,
+        "human_intervention": true,
+        "affected_work_units": [
+          "WU-6fe0e4521f7a",
+          "WU-2cbd31c47ec7"
+        ]
+      },
+      "work_unit": null,
+      "recurrence_key": "REC-5b7d1100ea83",
+      "id": "OBS-de4827125707",
+      "phase": "execution",
+      "status": "resolved",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 1,
+      "classification": {
+        "origin": "framework",
+        "confidence": "probable"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T06:47:04.113084+00:00",
+      "severity": "high",
+      "category": "tooling",
+      "last_recorded_at": "2026-09-10T06:47:04.113084+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": true,
+        "human_intervention": false,
+        "affected_work_units": [
+          "WU-6fe0e4521f7a"
+        ]
+      },
+      "work_unit": "WU-6fe0e4521f7a",
+      "recurrence_key": "auto:sandbox_implementation:timed_out",
+      "id": "OBS-3b8a10bf05ca",
+      "phase": "sandbox_implementation",
+      "status": "open",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 1,
+      "classification": {
+        "origin": "framework",
+        "confidence": "probable"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T06:49:05.456547+00:00",
+      "severity": "high",
+      "category": "tooling",
+      "last_recorded_at": "2026-09-10T06:49:05.456547+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": true,
+        "human_intervention": false,
+        "affected_work_units": [
+          "WU-2cbd31c47ec7"
+        ]
+      },
+      "work_unit": "WU-2cbd31c47ec7",
+      "recurrence_key": "auto:sandbox_implementation:timed_out",
+      "id": "OBS-ac96733355c0",
+      "phase": "sandbox_implementation",
+      "status": "open",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 2,
+      "classification": {
+        "origin": "framework",
+        "confidence": "confirmed"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T19:51:00.853948+00:00",
+      "severity": "critical",
+      "category": "tooling",
+      "last_recorded_at": "2026-09-10T19:51:00.853948+00:00",
+      "impact": {
+        "blocked_minutes": 720,
+        "rework_required": true,
+        "human_intervention": true,
+        "affected_work_units": [
+          "WU-6fe0e4521f7a",
+          "WU-2cbd31c47ec7"
+        ]
+      },
+      "work_unit": "WU-6fe0e4521f7a",
+      "recurrence_key": "REC-25e25bbc50f4",
+      "id": "OBS-f510fdc985ce",
+      "phase": "sandbox_implementation",
+      "status": "resolved",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 3,
+      "classification": {
+        "origin": "framework",
+        "confidence": "low"
+      },
+      "occurrence_count": 3,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T20:09:35.697127+00:00",
+      "severity": "high",
+      "category": "tooling",
+      "last_recorded_at": "2026-09-10T20:17:41.410041+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": true,
+        "human_intervention": false,
+        "affected_work_units": [
+          "WU-6fe0e4521f7a"
+        ]
+      },
+      "work_unit": "WU-6fe0e4521f7a",
+      "recurrence_key": "auto:sandbox_implementation:failed",
+      "id": "OBS-18a2e0cecc76",
+      "phase": "sandbox_implementation",
+      "status": "open",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 3,
+      "classification": {
+        "origin": "framework",
+        "confidence": "low"
+      },
+      "occurrence_count": 3,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T20:22:09.759031+00:00",
+      "severity": "high",
+      "category": "tooling",
+      "last_recorded_at": "2026-09-10T20:28:54.536866+00:00",
+      "impact": {
+        "blocked_minutes": 0,
+        "rework_required": true,
+        "human_intervention": false,
+        "affected_work_units": [
+          "WU-2cbd31c47ec7"
+        ]
+      },
+      "work_unit": "WU-2cbd31c47ec7",
+      "recurrence_key": "auto:sandbox_implementation:failed",
+      "id": "OBS-7eec8e31f32d",
+      "phase": "sandbox_implementation",
+      "status": "open",
+      "symptom": "[redacted]"
+    },
+    {
+      "constitution_version": "1.4.0",
+      "revision": 1,
+      "classification": {
+        "origin": "framework",
+        "confidence": "confirmed"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-10T21:25:06.694107+00:00",
+      "severity": "high",
+      "category": "orchestration",
+      "last_recorded_at": "2026-09-10T21:25:06.694107+00:00",
+      "impact": {
+        "blocked_minutes": 480,
+        "rework_required": true,
+        "human_intervention": true,
+        "affected_work_units": [
+          "WU-2cbd31c47ec7"
+        ]
+      },
+      "work_unit": "WU-6fe0e4521f7a",
+      "recurrence_key": "REC-616c7d1279b4",
+      "id": "OBS-b3e9bcdf02fa",
+      "phase": "sandbox_implementation",
+      "status": "resolved",
+      "symptom": "[redacted]"
+    }
+  ],
+  "retrospectives": [],
+  "executions": [
+    {
+      "run_id": "RUN-ee62d3413750",
+      "duration_ms": 461,
+      "ended_at": "2026-09-10T06:34:24.926735+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-e05ccee3617b",
+      "work_unit_id": "WU-6fe0e4521f7a",
+      "id": "ATTEMPT-dd88f1d1cc55",
+      "started_at": "2026-09-10T06:34:24.465668+00:00",
+      "status": "blocked",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-ee62d3413750",
+      "duration_ms": null,
+      "ended_at": null,
+      "revision": 1,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-ab36305e752f",
+      "work_unit_id": "WU-6fe0e4521f7a",
+      "id": "ATTEMPT-0f07fa534618",
+      "started_at": "2026-09-10T06:47:34.549529+00:00",
+      "status": "started",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-6f50a2c214cc",
+      "duration_ms": 409333,
+      "ended_at": "2026-09-10T20:09:35.641259+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-35729332ac08",
+      "work_unit_id": "WU-6fe0e4521f7a",
+      "id": "ATTEMPT-5a09e540a303",
+      "started_at": "2026-09-10T20:02:40.621766+00:00",
+      "status": "failed",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-ee62d3413750",
+      "duration_ms": 600073,
+      "ended_at": "2026-09-10T06:47:04.040811+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-ed35b65b6220",
+      "work_unit_id": "WU-6fe0e4521f7a",
+      "id": "ATTEMPT-bbe479d51d6d",
+      "started_at": "2026-09-10T06:37:03.768375+00:00",
+      "status": "timed_out",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-9ad91cf58750",
+      "duration_ms": null,
+      "ended_at": null,
+      "revision": 1,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-aa417b9b1e30",
+      "work_unit_id": "WU-6fe0e4521f7a",
+      "id": "ATTEMPT-d314daa0dbf8",
+      "started_at": "2026-09-10T21:21:20.104631+00:00",
+      "status": "started",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-6f50a2c214cc",
+      "duration_ms": 182481,
+      "ended_at": "2026-09-10T20:17:41.360346+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-2a2b35ba3140",
+      "work_unit_id": "WU-6fe0e4521f7a",
+      "id": "ATTEMPT-ee48a228e319",
+      "started_at": "2026-09-10T20:14:33.873500+00:00",
+      "status": "failed",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-6f50a2c214cc",
+      "duration_ms": 171889,
+      "ended_at": "2026-09-10T20:13:33.500735+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-0e1763ef535c",
+      "work_unit_id": "WU-6fe0e4521f7a",
+      "id": "ATTEMPT-40024ebd4aa3",
+      "started_at": "2026-09-10T20:10:36.008110+00:00",
+      "status": "failed",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-ee62d3413750",
+      "duration_ms": 600021,
+      "ended_at": "2026-09-10T06:49:05.365151+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-cba064e0eb4b",
+      "work_unit_id": "WU-2cbd31c47ec7",
+      "id": "ATTEMPT-22495f3273ee",
+      "started_at": "2026-09-10T06:39:05.013656+00:00",
+      "status": "timed_out",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-6f50a2c214cc",
+      "duration_ms": 259635,
+      "ended_at": "2026-09-10T20:22:09.697218+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-6ba662ac78ea",
+      "work_unit_id": "WU-2cbd31c47ec7",
+      "id": "ATTEMPT-4464eb4e885f",
+      "started_at": "2026-09-10T20:17:44.721304+00:00",
+      "status": "failed",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-6f50a2c214cc",
+      "duration_ms": 161607,
+      "ended_at": "2026-09-10T20:25:57.554792+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-5d6b743f313e",
+      "work_unit_id": "WU-2cbd31c47ec7",
+      "id": "ATTEMPT-539423893a55",
+      "started_at": "2026-09-10T20:23:10.122598+00:00",
+      "status": "failed",
+      "summary": "[redacted]"
+    },
+    {
+      "run_id": "RUN-6f50a2c214cc",
+      "duration_ms": 111804,
+      "ended_at": "2026-09-10T20:28:54.495736+00:00",
+      "revision": 2,
+      "step": "sandbox_implementation",
+      "execution_id": "EXE-37323661645d",
+      "work_unit_id": "WU-2cbd31c47ec7",
+      "id": "ATTEMPT-b7cbf2be480c",
+      "started_at": "2026-09-10T20:26:57.920234+00:00",
+      "status": "failed",
+      "summary": "[redacted]"
+    }
+  ],
+  "transmission": {
+    "status": "skipped",
+    "submitted_at": null,
+    "destination": null,
+    "ack_id": null,
+    "error": null
+  }
+}

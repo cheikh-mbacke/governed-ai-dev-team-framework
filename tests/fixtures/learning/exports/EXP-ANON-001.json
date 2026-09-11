@@ -1,0 +1,61 @@
+{
+  "format_version": "1.2",
+  "export_id": "EXP-ANON-001",
+  "generated_at": "2026-09-06T15:57:10.906319+00:00",
+  "detail_level": "full",
+  "project_ref": "PRJ-eca50db4259d",
+  "project_id": "anon-fixture",
+  "framework_version": "0.7.0",
+  "constitution_version": "1.3.0",
+  "snapshot_sequence": 1,
+  "summary": {
+    "total": 1,
+    "open": 1,
+    "by_category": {
+      "context": 1
+    },
+    "by_origin": {
+      "framework": 1
+    },
+    "by_severity": {
+      "medium": 1
+    }
+  },
+  "observations": [
+    {
+      "constitution_version": "1.3.0",
+      "revision": 1,
+      "classification": {
+        "origin": "framework",
+        "confidence": "probable"
+      },
+      "occurrence_count": 1,
+      "framework_version": "0.7.0",
+      "recorded_at": "2026-09-06T15:57:07.476458+00:00",
+      "severity": "medium",
+      "category": "context",
+      "last_recorded_at": "2026-09-06T15:57:07.476458+00:00",
+      "impact": {
+        "blocked_minutes": 15,
+        "rework_required": true,
+        "human_intervention": true,
+        "affected_work_units": []
+      },
+      "work_unit": "WU-0c18a36c8fdb",
+      "recurrence_key": "REC-229dc03a8bd0",
+      "id": "OBS-b198c7a119ab",
+      "phase": "not_compiled",
+      "status": "open",
+      "symptom": "[redacted]"
+    }
+  ],
+  "retrospectives": [],
+  "executions": [],
+  "transmission": {
+    "status": "skipped",
+    "submitted_at": null,
+    "destination": null,
+    "ack_id": null,
+    "error": null
+  }
+}

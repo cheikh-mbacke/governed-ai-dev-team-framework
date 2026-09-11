@@ -48,9 +48,14 @@ def main() -> int:
         print("=" * 26)
         print(f"platform: {report['platform']}")
         for name, result in report.items():
-            if name == "platform":
+            if name == "platform" or not isinstance(result, dict):
+                continue
+            if "status" not in result or "detail" not in result:
                 continue
             print(f"{result['status'].upper():8} {name}: {result['detail']}")
+        attestation = report.get("preflight_attestation")
+        if isinstance(attestation, dict):
+            print(f"attest   preflight_attestation: {json.dumps(attestation, sort_keys=True)}")
     blocking = {"fail", "blocked"}
     if args.unattended:
         # Document 6 §9.6 — align CLI exit code with Core OpenRun refusal.

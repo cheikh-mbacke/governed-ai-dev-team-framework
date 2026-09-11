@@ -44,13 +44,29 @@ HARD_MAX_TIMEOUT_SECONDS = 7200
 
 
 def resolve_project_preset(autonomy: dict[str, Any]) -> str:
-    """Resolve the named preset once; legacy ``level`` is compatibility input only."""
+    """Resolve the named preset once; legacy ``level`` is compatibility input only.
+
+    When both ``preset`` and ``level`` are present they must agree
+    (``LEGACY_LEVEL_PRESET[level] == preset``); divergence is refused so a
+    named preset cannot silently mask a conflicting legacy level.
+    """
     preset = autonomy.get("preset")
+    level = autonomy.get("level")
     if preset is not None:
         if preset not in NAMED_AUTONOMY_PRESETS:
             raise ValueError(f"unsupported autonomy preset: {preset}")
+        if level is not None:
+            if level not in LEGACY_LEVEL_PRESET:
+                raise ValueError(
+                    f"legacy autonomy.level must be in 1..3 when set with preset, got {level!r}"
+                )
+            mapped = LEGACY_LEVEL_PRESET[int(level)]
+            if mapped != preset:
+                raise ValueError(
+                    f"autonomy.preset {preset!r} diverges from legacy autonomy.level "
+                    f"{level} (maps to {mapped!r}); remove level or align them"
+                )
         return str(preset)
-    level = autonomy.get("level")
     if level not in LEGACY_LEVEL_PRESET:
         raise ValueError("autonomy.preset or a legacy autonomy.level in 1..3 is required")
     return LEGACY_LEVEL_PRESET[int(level)]

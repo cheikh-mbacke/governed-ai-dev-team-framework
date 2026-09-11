@@ -37,6 +37,10 @@ from governed_ai.core.domain.run.failure_taxonomy import (
 )
 from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
 from governed_ai.core.orchestrator.boundary import boundary_error_for_changed_files
+from governed_ai.core.orchestrator.context_package import (
+    completeness_error,
+    evaluate_context_package_completeness,
+)
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
     changed_files,
@@ -170,6 +174,16 @@ def _resolve_context_package_ref(
         return None, None
     if needs_context and (not isinstance(document, dict) or not document.get("id")):
         return None, "context_package invalid: missing id"
+    if needs_context and isinstance(document, dict):
+        evaluation = evaluate_context_package_completeness(
+            workspace_root=workspace.root,
+            context_document=document,
+            context_path=path,
+            wu_document=wu_document,
+        )
+        error = completeness_error(evaluation)
+        if error:
+            return None, error
     try:
         return path.relative_to(workspace.root).as_posix(), None
     except ValueError:

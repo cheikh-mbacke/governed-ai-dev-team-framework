@@ -19,6 +19,16 @@ python scripts/ai-team/configure.py autonomy unattended_conservative \
   --authorized-by "Nom de l'autorité humaine"
 ```
 
+Pour un « mode nuit » / autonomie maximale non supervisée (uniquement si
+l'humain le demande explicitement), utiliser le preset nommé
+`unattended_maximal` via la même commande — jamais un `level` legacy :
+
+```bash
+python scripts/ai-team/configure.py autonomy unattended_maximal \
+  --reason "Mode nuit demandé explicitement" \
+  --authorized-by "Nom de l'autorité humaine"
+```
+
 Appliquer plusieurs réglages à partir d'un patch YAML :
 
 ```yaml

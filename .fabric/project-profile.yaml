@@ -10,11 +10,10 @@ communication:
 # this fabrication repo — they apply to installed client projects after install,
 # not to framework renovation workflow (git/PR/tests per AGENTS.md).
 autonomy:
-  # Named preset is authoritative (Document 6 §4). Legacy level is kept only
-  # for schema compatibility; resolve_project_preset never lets new code read
-  # level directly when preset is present.
+  # Named preset is authoritative (Document 6 §4). Legacy `level` (1..3) is
+  # schema-compatible only; do not set both when they would diverge — remove
+  # level after migrating to a named preset.
   preset: supervised_copilots
-  level: 3
 paths:
   product_docs: docs/framework-design
   source_roots:

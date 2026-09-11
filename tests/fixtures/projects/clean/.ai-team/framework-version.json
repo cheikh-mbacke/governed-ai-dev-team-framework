@@ -254,6 +254,7 @@
     ".ai-team/runtime/governed_ai/core/fabrication_overlay.py",
     ".ai-team/runtime/governed_ai/core/orchestrator/__init__.py",
     ".ai-team/runtime/governed_ai/core/orchestrator/boundary.py",
+    ".ai-team/runtime/governed_ai/core/orchestrator/context_package.py",
     ".ai-team/runtime/governed_ai/core/orchestrator/git_workspace.py",
     ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
     ".ai-team/runtime/governed_ai/core/persistence/__init__.py",

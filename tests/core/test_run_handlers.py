@@ -1104,14 +1104,34 @@ def test_trigger_matches_top_level_fields_and_nested_conditions() -> None:
     )
 
 
-def test_resolve_project_preset_prefers_named_preset_over_legacy_level() -> None:
+def test_resolve_project_preset_refuses_divergent_named_preset_and_legacy_level() -> None:
     from governed_ai.core.domain.run.autonomy_policy import resolve_project_preset
 
-    assert resolve_project_preset({"preset": "supervised_copilots", "level": 3}) == (
-        "supervised_copilots"
-    )
+    with pytest.raises(ValueError, match="diverges"):
+        resolve_project_preset({"preset": "supervised_copilots", "level": 3})
     assert resolve_project_preset({"level": 3}) == "unattended_conservative"
     assert resolve_project_preset({"preset": "unattended_maximal"}) == "unattended_maximal"
+
+
+def test_resolve_project_preset_accepts_agreeing_preset_and_level() -> None:
+    from governed_ai.core.domain.run.autonomy_policy import resolve_project_preset
+
+    assert resolve_project_preset({"preset": "supervised_copilots", "level": 1}) == (
+        "supervised_copilots"
+    )
+    assert resolve_project_preset({"preset": "supervised_copilots", "level": 2}) == (
+        "supervised_copilots"
+    )
+    assert resolve_project_preset({"preset": "unattended_conservative", "level": 3}) == (
+        "unattended_conservative"
+    )
+
+
+def test_resolve_project_preset_rejects_divergent_preset_and_level() -> None:
+    from governed_ai.core.domain.run.autonomy_policy import resolve_project_preset
+
+    with pytest.raises(ValueError, match="diverges"):
+        resolve_project_preset({"preset": "unattended_maximal", "level": 1})
 
 
 def test_issue_grant_rejects_duplicate_decision_menu_entry_ids(run_workspace: Workspace) -> None:

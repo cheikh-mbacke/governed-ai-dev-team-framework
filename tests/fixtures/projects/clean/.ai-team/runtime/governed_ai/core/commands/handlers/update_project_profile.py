@@ -78,12 +78,27 @@ def handle_update_project_profile(
         )
 
     updated = _merge(profile, changes)
+    autonomy_patch = changes.get("autonomy")
+    # Named preset in the patch replaces legacy level (configure.py autonomy path).
+    if (
+        isinstance(autonomy_patch, dict)
+        and autonomy_patch.get("preset") is not None
+        and isinstance(updated.get("autonomy"), dict)
+    ):
+        updated["autonomy"].pop("level", None)
     try:
-        resolved_preset = resolve_project_preset(updated.get("autonomy") or {})
+        autonomy_block = updated.get("autonomy") or {}
+        if not isinstance(autonomy_block, dict):
+            raise ValueError("autonomy must be an object")
+        resolved_preset = resolve_project_preset(autonomy_block)
     except ValueError as exc:
         raise GatewayError(
             ErrorCode.INVARIANT_VIOLATION, str(exc), "/payload/changes/autonomy"
         ) from exc
+
+    # Durable migration: once a named preset is present, drop legacy level.
+    if isinstance(updated.get("autonomy"), dict) and updated["autonomy"].get("preset"):
+        updated["autonomy"].pop("level", None)
 
     now = datetime.now(UTC)
     updated["config_revision"] = current_revision + 1

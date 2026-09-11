@@ -80,3 +80,13 @@ correct, and which to leave for the human to fill in later. Only write the
 files after the human replies with what to keep. State plainly which values
 were inferred from a concrete signal (and which signal) versus left
 unfilled for lack of one.
+
+## Autonomy / mode nuit
+
+- Never invent an autonomy preset. Ask the human.
+- If the human explicitly asks for « mode nuit » / maximum unsupervised
+  autonomy, propose `autonomy.preset: unattended_maximal` (never invent
+  `level`).
+- Prefer applying via governed CLI:
+  `python scripts/ai-team/configure.py autonomy unattended_maximal --reason "..." --authorized-by "..."`.
+- Do not write both `preset` and legacy `level`; `preset` only.

@@ -102,6 +102,9 @@ def _seed_context_package(
         "id": ctx_id,
         "work_unit": work_unit_id,
         "role": "backend-developer",
+        "required_contracts": [],
+        "completeness_status": "complete",
+        "missing_inputs": [],
         "items": [
             {
                 "level": "L3_work_unit",
@@ -1729,4 +1732,37 @@ def test_tick_blocks_implementation_when_context_package_missing(
     )
     assert attempt["status"] == "blocked"
     assert "context_package" in str(attempt.get("summary") or "")
+
+
+def test_tick_blocks_when_required_shared_contract_missing_from_context(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-CONTRACT", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready")
+    packages = workspace.ai_team / "context-packages"
+    ctx_path = packages / "CTX-WU-A.yaml"
+    document = yaml.safe_load(ctx_path.read_text(encoding="utf-8"))
+    document["required_contracts"] = ["contracts/shared/api-v1.json"]
+    document["completeness_status"] = "incomplete"
+    document["missing_inputs"] = ["contracts/shared/api-v1.json"]
+    ctx_path.write_text(yaml.safe_dump(document), encoding="utf-8")
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-CONTRACT", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    blocked = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-CONTRACT", adapter=adapter, worker_id="w1"
+    )
+    assert blocked.action == "paused_work_unit"
+    assert adapter.requests == []
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "blocked"
+    assert "incomplete" in str(attempt.get("summary") or "")
 
