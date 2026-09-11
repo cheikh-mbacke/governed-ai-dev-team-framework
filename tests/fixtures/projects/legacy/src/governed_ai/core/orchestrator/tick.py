@@ -14,7 +14,6 @@ execution_ceiling, convergence bounds, or grant checks.
 
 from __future__ import annotations
 
-import fnmatch
 import json
 import subprocess
 import time
@@ -29,6 +28,7 @@ from governed_ai.compat.datetime import UTC, datetime, timedelta
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.domain.run.autonomy_policy import effective_policy_hash
 from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
+from governed_ai.core.orchestrator.boundary import boundary_error_for_changed_files
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
     changed_files,
@@ -506,17 +506,6 @@ def _execution_envelope_constraints(
     )
 
 
-def _path_is_allowed(path: str, patterns: list[str]) -> bool:
-    normalized = path.replace("\\", "/").lstrip("./")
-    for raw_pattern in patterns:
-        pattern = raw_pattern.replace("\\", "/").lstrip("./")
-        if pattern.endswith("/") and normalized.startswith(pattern):
-            return True
-        if fnmatch.fnmatchcase(normalized, pattern):
-            return True
-    return False
-
-
 def _implementation_boundary_error(
     *,
     execution_root,
@@ -528,10 +517,11 @@ def _implementation_boundary_error(
 ) -> tuple[str, str | None] | None:
     """Return (message, global_stop_condition) for a boundary violation, else None.
 
-    Document 6 §9.5 — a write outside the authorized workspace (scope or
-    execution envelope) is one of the fixed conditions that stops the whole
-    Run, not just this Work Unit; it is distinct from ordinary budget/tooling
-    failures below, which stay Work-Unit-scoped.
+    Document 6 §9.5 — a write outside the authorized workspace (product scope /
+    envelope, or protected governance paths) is one of the fixed conditions that
+    stops the whole Run, not just this Work Unit. Narrow Work-Unit governed
+    outputs such as ``.ai-team/evidence/<WU>/**`` are allowed separately and do
+    not relax product scope.
     """
     if base_sha is None:
         return "isolated implementation workspace has no base commit", None
@@ -546,13 +536,17 @@ def _implementation_boundary_error(
         files = changed_files(execution_root, base_sha, actual_sha)
     except GitWorkspaceError as exc:
         return f"cannot inspect worker diff: {exc}", None
-    scope_paths = [str(item) for item in (wu_document.get("scope") or {}).get("include") or []]
-    outside_scope = [path for path in files if scope_paths and not _path_is_allowed(path, scope_paths)]
-    outside_envelope = [path for path in files if allowed_paths and not _path_is_allowed(path, allowed_paths)]
-    if outside_scope:
-        return f"out-of-scope writes detected: {outside_scope}", "out_of_workspace_write"
-    if outside_envelope:
-        return f"out-of-envelope writes detected: {outside_envelope}", "out_of_workspace_write"
+
+    work_unit_id = str(wu_document.get("id") or "")
+    classification_error = boundary_error_for_changed_files(
+        files,
+        work_unit_id=work_unit_id,
+        wu_document=wu_document,
+        allowed_paths=allowed_paths,
+    )
+    if classification_error:
+        return classification_error
+
     policy_budgets = (run_document.get("effective_autonomy_policy") or {}).get("budgets") or {}
     maximum = int(policy_budgets.get("maximum_changed_files_per_work_unit", 30))
     if (wu_document.get("risk") or {}).get("class") == "critical":

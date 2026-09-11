@@ -601,6 +601,140 @@ def test_out_of_scope_write_stops_the_whole_run(workspace: Workspace) -> None:
     assert lease["status"] == "revoked"
 
 
+def test_wu_evidence_write_does_not_stop_run_when_product_stays_in_scope(
+    workspace: Workspace,
+) -> None:
+    root = workspace.root
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.email", "l4@example.test")
+    _git(root, "config", "user.name", "L4 Test")
+    (root / "src").mkdir()
+    (root / "src" / "app.py").write_text("print('base')\n", encoding="utf-8")
+    _git(root, "add", "src/app.py")
+    _git(root, "commit", "-m", "test: base")
+
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-BOUNDARY-EVIDENCE", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress", scope_include=["src/**"])
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-BOUNDARY-EV"},
+            payload={
+                "id": "LEASE-BOUNDARY-EV",
+                "run_id": "RUN-BOUNDARY-EVIDENCE",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="acquire-boundary-ev",
+        )
+    )
+
+    class EvidenceAndProductAdapter:
+        def describe(self):
+            return {"capabilities": {"isolated_worktree": True}}
+
+        def check_compatibility(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def compile(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def collect(self, execution_id: str):  # pragma: no cover
+            raise NotImplementedError
+
+        def execute(self, request: dict) -> dict:
+            worker_root = Path(request["execution_workspace"])
+            product = worker_root / "src" / "app.py"
+            product.write_text("print('updated')\n", encoding="utf-8")
+            evidence = worker_root / ".ai-team" / "evidence" / "WU-A" / "ac-1.md"
+            evidence.parent.mkdir(parents=True, exist_ok=True)
+            evidence.write_text("passed\n", encoding="utf-8")
+            _git(worker_root, "add", "src/app.py", ".ai-team/evidence/WU-A/ac-1.md")
+            _git(worker_root, "commit", "-m", "feat(WU-A): product + evidence")
+            result = _succeeded_result()
+            result["workspace"] = {"result_sha": head_sha(worker_root)}
+            return result
+
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-BOUNDARY-EVIDENCE",
+        adapter=EvidenceAndProductAdapter(),
+        worker_id="w1",
+    )
+    assert result.action == "advanced_work_unit"
+    assert result.details["to"] == "verification"
+
+
+def test_work_unit_yaml_write_stops_the_whole_run(workspace: Workspace) -> None:
+    root = workspace.root
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.email", "l4@example.test")
+    _git(root, "config", "user.name", "L4 Test")
+    (root / "src").mkdir()
+    (root / "src" / "app.py").write_text("print('base')\n", encoding="utf-8")
+    _git(root, "add", "src/app.py")
+    _git(root, "commit", "-m", "test: base")
+
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-BOUNDARY-WU", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress", scope_include=["src/**"])
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-BOUNDARY-WU"},
+            payload={
+                "id": "LEASE-BOUNDARY-WU",
+                "run_id": "RUN-BOUNDARY-WU",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="acquire-boundary-wu",
+        )
+    )
+
+    class MutateWorkUnitAdapter:
+        def describe(self):
+            return {"capabilities": {"isolated_worktree": True}}
+
+        def check_compatibility(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def compile(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
+        def collect(self, execution_id: str):  # pragma: no cover
+            raise NotImplementedError
+
+        def execute(self, request: dict) -> dict:
+            worker_root = Path(request["execution_workspace"])
+            wu_path = worker_root / ".ai-team" / "work-units" / "WU-A.yaml"
+            wu_path.parent.mkdir(parents=True, exist_ok=True)
+            wu_path.write_text("id: WU-A\nstatus: done\n", encoding="utf-8")
+            _git(worker_root, "add", ".ai-team/work-units/WU-A.yaml")
+            _git(worker_root, "commit", "-m", "feat(WU-A): mutate work unit")
+            result = _succeeded_result()
+            result["workspace"] = {"result_sha": head_sha(worker_root)}
+            return result
+
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-BOUNDARY-WU",
+        adapter=MutateWorkUnitAdapter(),
+        worker_id="w1",
+    )
+    assert result.action == "run_stopped"
+    assert result.details["stop_condition"] == "out_of_workspace_write"
+    attempt = yaml.safe_load(
+        next(
+            (workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")
+        ).read_text(encoding="utf-8")
+    )
+    assert "forbidden governance writes" in attempt["summary"]
+
+
 def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(
     workspace: Workspace,
 ) -> None:

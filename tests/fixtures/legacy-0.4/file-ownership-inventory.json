@@ -364,6 +364,7 @@
     "src/governed_ai/core/events/__init__.py": "core",
     "src/governed_ai/core/fabrication_overlay.py": "core",
     "src/governed_ai/core/orchestrator/__init__.py": "core",
+    "src/governed_ai/core/orchestrator/boundary.py": "core",
     "src/governed_ai/core/orchestrator/git_workspace.py": "core",
     "src/governed_ai/core/orchestrator/tick.py": "core",
     "src/governed_ai/core/persistence/__init__.py": "core",

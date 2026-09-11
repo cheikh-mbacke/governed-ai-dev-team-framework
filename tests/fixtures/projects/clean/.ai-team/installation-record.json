@@ -722,12 +722,16 @@
         "installed_sha256": "sha256:82b1a0464968b5993bfb494952997393787ab8dd6c5de16ad80ec52f9eda83bc"
       },
       {
+        "path": ".ai-team/runtime/governed_ai/core/orchestrator/boundary.py",
+        "installed_sha256": "sha256:c8376013e0993f8bde1e0e3467d2605e991a87e0b0fa3b88422ce61f6c669589"
+      },
+      {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/git_workspace.py",
         "installed_sha256": "sha256:3a0ba4e8222639965fadd8bc29fe0b8b54dab0c3eafea486098a4a8b7f89497c"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-        "installed_sha256": "sha256:cb3c3b476e9ca92b415410a3d7f6104aed404979cf52b1a007366abd1771bbd8"
+        "installed_sha256": "sha256:3b4cf1aa172ee3c1accf962f19dddec7b84d2423157b2e8dc2319fe03fa3daef"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -963,7 +967,7 @@
       },
       {
         "path": ".ai-team/schemas/work-unit.schema.json",
-        "installed_sha256": "sha256:f39d2ea1a4512888d6c7a1633adddaa0b9766b40a9539c58ad6ebab3dc6dc1d0"
+        "installed_sha256": "sha256:a8fa006d2a4a0005ba3bf4bd8d448cda3f0029f0d393c9990ce6736e3edd4c96"
       },
       {
         "path": ".ai-team/schemas/worker-lease.schema.json",

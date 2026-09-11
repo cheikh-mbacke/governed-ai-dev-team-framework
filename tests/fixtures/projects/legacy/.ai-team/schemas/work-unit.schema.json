@@ -50,12 +50,14 @@
       "properties": {
         "include": {
           "type": "array",
+          "description": "Path/glob patterns for product writes (e.g. src/**). Free-form prose labels are ignored by the execution boundary and should live in title/objective instead.",
           "items": {
             "type": "string"
           }
         },
         "exclude": {
           "type": "array",
+          "description": "Path/glob patterns that remain forbidden even when matched by include or allowed_paths. Free-form prose is ignored by the boundary.",
           "items": {
             "type": "string"
           }
