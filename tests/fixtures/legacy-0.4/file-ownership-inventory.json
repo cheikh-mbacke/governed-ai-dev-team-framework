@@ -402,6 +402,7 @@
     "src/governed_ai/notifications/service.py": "core",
     "src/governed_ai/notifications/smtp_transport.py": "core",
     "tests/fixtures/cursor-compile/golden-manifest.json": "core",
+    "tests/fixtures/learning/MANIFEST.json": "core",
     "tests/fixtures/learning/README.md": "core",
     "tests/fixtures/learning/exports/EXP-ANON-001.json": "core",
     "tests/fixtures/learning/exports/EXP-ANON-002.json": "core",

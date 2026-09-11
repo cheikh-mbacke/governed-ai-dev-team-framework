@@ -1,0 +1,27 @@
+{
+  "purpose": "Anonymized cumulative Feedback Exports for aggregate dedup regression",
+  "location": "tests/fixtures/learning/exports/",
+  "not_in": [
+    "tests/fixtures/projects/clean/",
+    "tests/fixtures/projects/legacy/"
+  ],
+  "preserved_relations": [
+    "stable hashed observation id across snapshots (duplicates)",
+    "revision / last_recorded_at / occurrence_count",
+    "snapshot_sequence (monotonic export order)",
+    "recurrence_key (auto:step:status preserved when present)",
+    "attempt id / step / status / failure_code when present"
+  ],
+  "removed": [
+    "project names and raw project_ref",
+    "provider payloads and model identifiers",
+    "local filesystem paths",
+    "transcripts / stdout / stderr",
+    "free-text symptom and candidate_improvement"
+  ],
+  "baseline": {
+    "export_count": 9,
+    "observation_rows": 86,
+    "unique_observation_ids": 14
+  }
+}

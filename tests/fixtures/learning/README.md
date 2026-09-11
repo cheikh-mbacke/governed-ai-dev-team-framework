@@ -1,16 +1,43 @@
 # Learning fixtures (anonymized Feedback Exports)
 
-Source: consented exports under the auditor's `Downloads/feedback` (9 files,
-2026-09-06 → 2026-09-11), regenerated via:
+**Dedicated tree** — these files live only under `tests/fixtures/learning/`.
+They must **never** be copied into `tests/fixtures/projects/clean/` or
+`tests/fixtures/projects/legacy/` (those are install witnesses, not feedback
+evidence).
+
+## Purpose
+
+Regression evidence for cumulative Feedback Export **deduplication**: the same
+observation identity appears across successive snapshots; the aggregator must
+keep one row per `(project_ref, observation id)` using the latest
+`revision` / `last_recorded_at`.
+
+## Regenerate
 
 ```bash
-python tools/anonymize_feedback_fixtures.py --source <path-to-raw-exports>
+python tools/anonymize_feedback_fixtures.py --source <path-to-raw-EXP-exports>
 ```
 
-Anonymization keeps observation/attempt **identities**, `revision`, timestamps,
-categories, and recurrence structure needed to regress aggregate deduplication.
-It redacts symptoms, free-text improvements, and hashes project / WU / attempt
-ids.
+Default output: `tests/fixtures/learning/exports/EXP-ANON-*.json` plus
+`tests/fixtures/learning/MANIFEST.json`.
 
-Do **not** put raw exports (with transcripts or client project names) in this
-tree. Do **not** modify `tests/fixtures/projects/clean|legacy` for this purpose.
+## Preserved (relations)
+
+| Field | Why |
+|---|---|
+| Hashed `id` / `observation` identity | Stable across snapshots → duplicate detection |
+| `revision`, `recorded_at`, `last_recorded_at`, `occurrence_count` | Latest-wins ordering |
+| `snapshot_sequence` | Monotonic export order |
+| `recurrence_key` (`auto:step:status` kept) | Recurrence buckets |
+| Attempt `id`/`step`/`status`/`failure_*` (hashed ids) | Attempt-side dedup / taxonomy |
+
+## Removed (sensitive / noise)
+
+- Raw `project_id` / `project_ref` (replaced by stable `PRJ-…` hash + `anon-fixture`)
+- Provider payloads, model names, API material
+- Local paths (`C:\…`, `/home/…`, worktree paths)
+- Transcripts, stdout/stderr, free-text `symptom` / improvements
+- Evidence refs that could leak absolute paths
+
+Baseline counts are recorded in `MANIFEST.json` and asserted by
+`tests/test_learning_anon_fixtures.py`.

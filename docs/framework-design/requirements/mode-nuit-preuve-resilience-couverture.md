@@ -1,101 +1,137 @@
 # Mode nuit — état des lieux de la preuve de résilience (§15)
 
-**Statut** : **essai L4 réel échoué / écarts observés** (exports feedback
-`sads-ecosystem-backend`, 10–11 septembre 2026). La couverture fonctionnelle
-automatisée des 14 scénarios §15 reste en place, mais **ne doit plus être lue
-comme une preuve L4**. Un witness run non supervisé de plusieurs heures, après
-correction des écarts ci-dessous, est requis avant toute reprise d'annonce L4.
+> **Verdict L4 : non validé.**  
+> Un **essai L4 réel a échoué** (exports feedback du 10–11 septembre 2026).  
+> La résilience « mode nuit » **ne doit pas** être présentée comme éprouvée L4.
+> Les tests unitaires / d’intégration ci-dessous prouvent des *règles et
+> mécanismes*, pas un run non supervisé de plusieurs heures.
+
+**Statut documentaire** : `essai_L4_reel_echoue` — écarts observés encore
+référencés ; correctifs code livrés sur la branche de rénovation, **sans**
+nouveau witness L4 archivé.
 
 Ce document répond à une question précise : sur les 14 scénarios de résilience
 listés au §15 de la spécification *« Document 6 — Autonomie avancée et exécution
-non supervisée (mode nuit) »* (fichier utilisateur
-`autonomie-avancee-mode-nuit-spec.md`, hors dépôt), lesquels sont aujourd'hui
-vérifiés par les tests, et avec quel degré de réalisme. Conformément au §15, un
-test de fonction ou un sous-processus court ne doit pas être présenté comme un
-run non supervisé réel de plusieurs heures.
+non supervisée (mode nuit) »* (fichier utilisateur hors dépôt), lesquels ont
+aujourd’hui une **preuve automatisée de règle**, et avec quel degré de réalisme.
+Conformément au §15, un test de fonction ou un sous-processus court **n’est
+pas** un run non supervisé réel de plusieurs heures.
 
 Ce numéro de document (« Document 6 ») appartient à la numérotation propre de
 cette spécification mode nuit, distincte de la numérotation
-`docs/framework-design/**/NN-*.md` déjà utilisée dans ce dépôt (où le Document 05
-est *Résolution des écarts du protocole* et le Document 06 est *Catalogue des
-contrats de rôle* — sans rapport avec le mode nuit). Aucun renommage n'a été
-fait pour éviter la confusion : ce fichier reste volontairement hors de cette
-numérotation.
+`docs/framework-design/**/NN-*.md` du dépôt.
 
-## 0. Écarts observés sur l'essai L4 réel (sept. 2026)
+## 0. Essai L4 réel — échec et écarts observés
 
-Sources : exports JSON sous `Downloads/feedback` (anonymisés en fixtures
-`tests/fixtures/learning/exports/`). Sur le dernier export du projet observé :
+### 0.1 Preuves anonymisées (non-régression, pas preuve L4)
 
-- 13 tentatives enregistrées, 0 terminale `succeeded` ;
-- timeouts d'implémentation à ~600 s puis relances ;
+Les exports bruts du run réel ne sont **pas** versionnés. Une forme anonymisée,
+qui conserve les relations utiles (`revision`, `snapshot_sequence`, doublons
+d’identités, `recurrence_key`) tout en retirant identifiants projet/provider,
+chemins locaux, transcripts et textes libres, est déposée ici :
+
+- `tests/fixtures/learning/exports/EXP-ANON-*.json`
+- `tests/fixtures/learning/MANIFEST.json`
+- régénération : `python tools/anonymize_feedback_fixtures.py --source <raw>`
+- test : `tests/test_learning_anon_fixtures.py`
+
+Ces fixtures **ne vivent pas** sous `tests/fixtures/projects/clean|legacy/`.
+Elles servent uniquement à régresser l’agrégation / dédup feedback, **pas** à
+attester qu’un mode nuit multi-heures a réussi.
+
+### 0.2 Écarts observés (symptômes du run réel)
+
+Sur le dernier snapshot du projet client observé (anonymisé) :
+
+- 13 tentatives enregistrées, **0** terminale `succeeded` ;
+- timeouts d’implémentation trop courts puis relances ;
 - deux timeouts parallèles traités comme panne systémique ;
 - handoffs agent en prose + JSON rejetés ;
-- preuves AC-* rejetées faute du check nommé `implementation` ;
+- preuves AC-* rejetées faute du check nommé exactement `implementation` ;
 - écritures `.ai-team/evidence/**` refusées comme hors scope ;
-- run `idle` avec attempts `started` orphelines.
+- run resté `idle` avec attempts `started` orphelines.
 
-Correctifs livrés sur `renov/installed-runtime-portability` (Lots 1–5 + suite) :
-portabilité runtime, handoff/evidence, boundary evidence, timeouts/WIP/taxonomie,
-`no_dispatchable_work`, dédup feedback, `context_package_ref` + complétude.
-**Ces correctifs ne reconstituent pas à eux seuls un witness L4** : il faut un
-nouveau run réel multi-heures archivé avant de retirer le statut d'échec.
+### 0.3 Correctifs code ≠ validation L4
 
-| Écart observé | Scénario §15 touché | Correctif code | Preuve L4 encore manquante |
+Des correctifs ont été livrés (portabilité, handoff/evidence, boundary,
+timeouts/WIP/taxonomie, recovery orphans / `no_dispatchable_work` /
+`awaiting_human`, dédup feedback, context package). **Ils ne remplacent pas**
+un witness L4 : tant qu’un nouvel essai réel multi-heures n’est pas exécuté et
+archivé, le statut reste **échec / non validé**.
+
+| Écart observé | Scénario §15 | Correctif code (si présent) | Toujours manquant pour L4 |
 |---|---|---|---|
-| Timeout 600 s trop court / pas de WIP | #2 | timeouts par étape + checkpoint unverified | run réel multi-heures avec timeout long |
-| Timeouts parallèles → stop systémique | #6 / #12 | `failure_scope` work_unit ; signature systémique | witness avec 2 WU timeout indépendantes |
-| Handoff prose + JSON | #2 (qualité résultat) | `extract_governed_handoff` | CLI Cursor réel post-fix |
-| Evidence gate nom `implementation` | (hors §15 strict) | AC-* + SHA + artefacts | idem |
-| Boundary evidence gouvernée | (hors §15 strict) | allowlist `.ai-team/evidence/<WU>/**` | idem |
-| Idle / orphans `started` | #1 / #14 | recovery + `no_dispatchable_work` | redémarrage process hôte réel |
+| Timeout trop court / pas de WIP sûr | #2 | timeouts par étape ; WIP après contrôle de périmètre | Run réel multi-heures + WIP observé |
+| Timeouts parallèles → stop systémique | #6 / #12 | taxonomie `failure_scope` | Witness 2 WU timeout sans stop run |
+| Handoff prose + JSON | (qualité résultat) | `extract_governed_handoff` | CLI Cursor réel post-fix |
+| Evidence gate nom `implementation` | — | AC-* + SHA + artefacts | Idem |
+| Boundary evidence gouvernée | — | allowlist evidence WU | Idem |
+| Idle / orphans / attente humaine | #1 / #14 | recovery + `no_dispatchable_work` + `awaiting_human` | Redémarrage process hôte réel |
 
-## 1. Ce qui a été construit (rappel factuel)
+### 0.4 Conditions d’un nouvel essai L4
+
+Avant de retirer le statut `essai_L4_reel_echoue`, **toutes** les conditions
+suivantes doivent être réunies et archivées :
+
+1. Run non supervisé réel de **plusieurs heures** (`orchestrate.py` + CLI
+   Cursor opt-in), pas seulement des appels unitaires à `run_scheduling_tick`.
+2. Au moins deux Work Units indépendantes avec timeouts / reprises WIP sans
+   arrêt systémique abusif.
+3. Handoffs agent réels (prose éventuelle) acceptés ou rejetés explicitement
+   avec preuve.
+4. Evidence et boundary : preuves sous `.ai-team/evidence/<WU>/` acceptées ;
+   chemins hors périmètre refusés **avant** tout commit durable.
+5. Arrêt propre : `no_dispatchable_work` ou `awaiting_human` selon l’état,
+   recovery des `started` orphelines au redémarrage process.
+6. Export feedback anonymisé déposé sous `tests/fixtures/learning/` (ou
+   successeur) + mise à jour de ce document avec le lien et le SHA du witness.
+
+Sans ce paquet de preuves, toute formulation du type « résilience L4 validée »
+est **interdite**.
+
+## 1. Ce qui a été construit (rappel factuel — hors L4)
 
 **Couche 1 — moteur de règles déterministes** (étapes 1 à 9 du §14) :
-`src/governed_ai/core/domain/run/`, handlers Run/Grant/Checkpoint, vérifiée par
-les tests `tests/core/test_run_handlers.py`. Ces tests reconstituent chaque
-scénario en écrivant directement l'état voulu plutôt que d'attendre réellement —
-ils prouvent que **la règle est correcte une fois la condition atteinte**, pas
-que **le système détecte la condition en production**.
+`src/governed_ai/core/domain/run/`, handlers Run/Grant/Checkpoint, tests
+`tests/core/test_run_handlers.py`. Preuve de *règle une fois la condition
+atteinte*, pas de détection en production sur plusieurs heures.
 
-**Couche 2 — orchestrateur exécutable** (étape 10 du §14) :
-`src/governed_ai/core/orchestrator/tick.py`, `git_workspace.py`,
-`adapters/cursor/runtime/agent_cli.py`. Le lancement natif reste opt-in via
-`GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1`. Les tests exercent des processus et
-Git, mais pas une mission réelle de plusieurs heures.
+**Couche 2 — orchestrateur exécutable** :
+`tick.py`, `git_workspace.py`, `agent_cli.py`. Lancement natif opt-in
+`GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1`. Aucun test unitaire ne fait tourner
+l’orchestrateur pendant des heures réelles.
 
-Le seul élément qui reste une simulation assumée, documentée en tête de
-`tick.py` : aucun test ne fait tourner l'orchestrateur pendant des heures
-réelles. `scripts/ai-team/orchestrate.py` est hors du périmètre unitaire.
+## 2. Tableau de couverture automatisée (≠ preuve L4)
 
-## 2. Tableau de couverture
+Légende : « règle couverte » = test ciblé de mécanisme. **Aucune ligne de ce
+tableau n’autorise à dire que le mode nuit est validé L4.**
 
-| # | Scénario (§15) | Couverture automatisée | Preuve existante | Ce qu'il manque pour une preuve L4 réelle |
+| # | Scénario (§15) | Règle couverte (auto) | Preuve existante | Manque pour L4 réel |
 |---|---|---|---|---|
-| 1 | Crash et redémarrage | Couvert (tick) | `test_restart_resumes_from_persisted_checkpoint` ; recovery attempts orphelines | Tuer le process hôte `orchestrate.py` au niveau OS |
-| 2 | Timeout agent | Couvert (watchdog + timeouts policy) | `test_agent_watchdog_kills_a_real_timed_out_process` ; timeouts par étape | Timeout long réel + WIP observé sur CLI Cursor |
-| 3 | Perte de heartbeat | Couvert (temps simulé) | `test_tick_reassigns_a_stale_lease` | Attente réelle de `stalled_after_minutes` |
-| 4 | Fencing worker réattribué | **Couvert** | tests fencing Core | — |
-| 5 | Conflit Git merge queue | **Couvert** | `test_real_merge_conflict_is_detected_and_aborted` | — |
-| 6 | Test flaky vs systémique | Couvert (renforcé) | flaky retry + taxonomie timeout non systémique | Witness 2 WU timeout sans stop run |
-| 7 | Remédiations infructueuses | **Couvert** | convergence / demote | — |
-| 8 | Permission manquante | Couvert | `test_adapter_permission_failure_pauses_work_unit` | — |
-| 9 | Au-delà execution_ceiling | **Couvert** | handlers ceiling | — |
-| 10 | Désescalade refusée | **Couvert** | tighten / pas de loosen | — |
-| 11 | Décision humaine partielle | **Couvert** | subgraph decision | — |
-| 12 | global_stop_condition + alerte | Couvert | close_run alert ; `no_dispatchable_work` | Notification humaine réelle |
-| 13 | WU en parallèle | Couvert (réserve timing) | concurrent ticks | — |
-| 14 | Reprise lendemain | Couvert (état) | checkpoint + morning report | Écart d'horloge murale réel |
+| 1 | Crash / redémarrage | partielle (tick) | reprise checkpoint ; recovery orphans | Kill process hôte `orchestrate.py` |
+| 2 | Timeout agent | partielle | watchdog ; timeouts policy ; WIP post-boundary | Timeout long réel + WIP CLI |
+| 3 | Perte de heartbeat | partielle (temps simulé) | réattribution lease | Attente réelle `stalled_after_minutes` |
+| 4 | Fencing | oui (Core) | tests fencing | — |
+| 5 | Conflit Git | oui | merge abort réel | — |
+| 6 | Flaky vs systémique | partielle | taxonomie timeout non systémique | Witness 2 WU |
+| 7 | Remédiations | oui | convergence | — |
+| 8 | Permission manquante | oui | pause WU | — |
+| 9 | execution_ceiling | oui | handlers | — |
+| 10 | Désescalade refusée | oui | tighten only | — |
+| 11 | Décision humaine partielle | oui | subgraph | — |
+| 12 | global_stop + alerte | partielle | close_run ; `no_dispatchable_work` | Notification humaine réelle |
+| 13 | WU en parallèle | partielle | concurrent ticks | — |
+| 14 | Reprise lendemain | partielle (état) | checkpoint + morning report | Horloge murale réelle |
 
-## 3. Lecture synthétique
+## 3. Lecture synthétique (obligatoire)
 
-- **Couverture fonctionnelle automatisée** : les 14 scénarios ont au moins une
-  preuve ciblée de règle ou mécanisme. **Ce n'est pas la preuve L4** du §15.
-- **Essai L4 réel (sept. 2026)** : échec / non-convergence par faux négatifs de
-  gouvernance — statut documentaire : *essai L4 réel échoué / écarts observés*
-  jusqu'à un nouveau witness multi-heures.
-- Les exports anonymisés sous `tests/fixtures/learning/exports/` servent de
-  non-régression (dédup agrégat) et non de preuve d'autonomie.
-- Tant qu'un protocole L4 archivé n'existe pas, le mode nuit doit être décrit
-  comme **implémenté, testé unitairement, et non encore éprouvé L4**.
+- **L4 non validé** — essai réel en échec ; statut `essai_L4_reel_echoue`.
+- Les 14 scénarios ont des preuves *automatisées de règle* ; **ce n’est pas**
+  la preuve L4 du §15.
+- Les exports anonymisés (`tests/fixtures/learning/`) documentent les
+  relations du run raté pour la non-régression feedback ; ils **ne
+  constituent pas** une preuve d’autonomie réussie.
+- Formulations interdites tant que §0.4 n’est pas satisfait :
+  « résilience L4 validée », « mode nuit éprouvé », « end-to-end L4 OK ».
+- Formulation autorisée : **implémenté et testé unitairement ; essai L4 réel
+  échoué ; en attente d’un nouveau witness multi-heures**.
