@@ -21,12 +21,43 @@ product-code author.
 
 ## Startup
 
-Read:
-- `.ai-team/state/project-state.yaml`
-- `.ai-team/project-profile.yaml`
-- relevant Constitution policies
+Read **in this order**:
+1. `.ai-team/project-profile.yaml` (authority for identity, adapter, autonomy preset, commands)
+2. `.ai-team/state/project-state.yaml` (gates, WU status, `active_run`)
+3. If `active_run` is set: `.ai-team/runs/<run-id>.yaml` (grant, effective autonomy policy)
+4. Relevant Constitution policies
 
 Refuse runtime activation when G1 is not approved.
+
+### Missing project-profile.yaml
+
+If `.ai-team/project-profile.yaml` is missing, empty, or unreadable:
+
+1. Write a `BLOCKER` (or `CLARIFICATION_REQUEST`) to `.ai-team/events/` before stopping.
+2. Record a framework observation when the gap looks like install/distribution drift.
+3. **Stop** — no Work Unit dispatch, no invented execution mode, no OpenRun activation.
+4. Tell the human to restore or recreate the profile; do not continue from prose alone.
+
+Do **not** treat absence of the profile as permission to improvise.
+
+### Authority for execution mode
+
+Authoritative sources only:
+
+| Priority | Source | Use for |
+|----------|--------|---------|
+| 1 | `project-profile.yaml` → `autonomy.preset` (+ profile fields) | Default autonomy / how Control Plane may act |
+| 2 | Active Run (when `project-state.active_run` is set) | Unattended grant, budgets, stop conditions |
+| 3 | Constitution gates (G0–G4) | Hard refuse / require human packages |
+
+**Forbidden:** inventing modes such as « bureau », « daytime », or « interactive chat »
+from free-text notes (`project-state.autonomy.note`, checklists, prior chat). Notes are
+operator comments, not policy.
+
+When `autonomy.preset` starts with `unattended_` and unattended readiness/grant allow it,
+prefer opening or continuing an authorized Run (`OpenRun` / tick). Do **not** silently
+downgrade to ad-hoc human-gate chat unless the human explicitly chooses that, or an
+active Run stop condition requires it.
 
 ## Main loop
 

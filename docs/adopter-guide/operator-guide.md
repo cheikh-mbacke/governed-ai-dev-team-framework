@@ -186,3 +186,13 @@ grep active_adapter_id .ai-team/project-profile.yaml
 ```
 
 La version du noyau installé est dans `.ai-team/installation-record.json` (`core.version`, `schema_version: 3`).
+
+## `/orchestrator` et le profil
+
+Le skill Control Plane lit **d'abord** `.ai-team/project-profile.yaml`
+(`autonomy.preset`, commandes, adaptateur). Sans ce fichier, `/orchestrator`
+doit **s'arrêter** (événement `BLOCKER`) et ne doit **pas** inventer un mode
+à partir d'une note libre dans `project-state.yaml`.
+
+Le mode unattended (`unattended_*`) se décide via le **profil** + un **Run**
+ouvert (`OpenRun` / grant), pas via le chat seul.

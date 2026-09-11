@@ -1,0 +1,26 @@
+id: DEC-ORCH-PROFILE-AUTHORITY-20260911
+title: Autorité du project-profile pour /orchestrator — interdiction d'inventer un mode
+status: accepted
+date: '2026-09-11'
+triggered_by:
+  project: sads-ecosystem-backend
+  symptom: |
+    Invocation /orchestrator sans project-profile.yaml présent dans le working tree.
+    L'agent a inventé un mode « reprise bureau » à partir d'une note libre dans
+    project-state.autonomy.note, au lieu de s'arrêter ou d'exiger le profil / OpenRun.
+problem: |
+  Le skill Orchestrator listait le profil dans Startup mais ne refusait pas
+  explicitement l'absence du fichier, ni l'usage de notes prose comme politique
+  d'exécution. Le preset unattended_maximal du pack nuit était prêt, mais le
+  Control Plane chat a downgradé silencieusement vers des gates humains ad hoc.
+correction_applied_here:
+  - 'adapters/cursor/templates/.cursor/skills/orchestrator/SKILL.md: Missing profile = BLOCKER + stop'
+  - 'SKILL.md: Authority table profile > active Run > gates; forbid inventing bureau/daytime from notes'
+  - 'SKILL.md: unattended_* prefers OpenRun/tick; no silent downgrade to chat gates'
+  - 'docs/adopter-guide/operator-guide.md: section /orchestrator et le profil'
+  - 'fixtures skills copies synced'
+recommended_upstream_clients: |
+  Réinstaller ou resynchroniser le skill orchestrator depuis le template;
+  restaurer project-profile.yaml s'il manque (fichier project-owned, jamais
+  écrasé par update — s'il manque c'est drift install ou non-commit).
+authority: human_directed_framework_fix
