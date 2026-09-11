@@ -1872,3 +1872,49 @@ def test_tick_blocks_when_context_package_fails_schema_or_role_mismatch(
     )
     assert attempt["status"] == "blocked"
     assert "schema" in str(attempt.get("summary") or "").lower()
+
+
+def test_tick_blocks_when_context_package_id_mismatches_ref(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-ID", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready")
+    packages = workspace.ai_team / "context-packages"
+    document = {
+        "id": "CTX-WRONG",
+        "work_unit": "WU-A",
+        "role": "backend-developer",
+        "required_contracts": [],
+        "completeness_status": "complete",
+        "missing_inputs": [],
+        "items": [
+            {
+                "level": "L3_work_unit",
+                "source": ".ai-team/work-units/WU-A.yaml",
+                "provenance": "authoritative",
+                "reason": "id mismatch fixture",
+            }
+        ],
+        "open_context_requests": [],
+    }
+    (packages / "CTX-WU-A.yaml").write_text(yaml.safe_dump(document), encoding="utf-8")
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-ID", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    blocked = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-ID", adapter=adapter, worker_id="w1"
+    )
+    assert blocked.action == "paused_work_unit"
+    assert adapter.requests == []
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "blocked"
+    assert "CTX-WRONG" in str(attempt.get("summary") or "")
+    assert "CTX-WU-A" in str(attempt.get("summary") or "")

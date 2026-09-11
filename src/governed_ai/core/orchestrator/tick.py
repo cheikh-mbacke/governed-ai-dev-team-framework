@@ -242,6 +242,16 @@ def _resolve_context_package_ref(
             return None, message
         return None, None
 
+    expected_id = path.stem
+    if str(document.get("id") or "") != expected_id:
+        message = (
+            f"context_package id {document.get('id')!r} does not match "
+            f"requested package id {expected_id!r}"
+        )
+        if needs_context:
+            return None, message
+        return None, None
+
     work_unit_id = str(wu_document.get("id") or "")
     if str(document.get("work_unit") or "") != work_unit_id:
         message = (
