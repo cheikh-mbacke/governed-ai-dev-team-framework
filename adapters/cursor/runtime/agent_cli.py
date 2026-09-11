@@ -47,6 +47,8 @@ import yaml
 
 from governed_ai.compat.datetime import UTC, datetime
 
+from .results import HANDOFF_DIAGNOSTIC_MAX, HANDOFF_SUMMARY_MAX, extract_governed_handoff
+
 DEFAULT_TIMEOUT_SECONDS = 600.0
 ENABLE_ENV_VAR = "GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH"
 
@@ -132,7 +134,7 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
         fallback = (text or stderr or "agent CLI produced no parseable output").strip()
         return AgentInvocationOutcome(
             status="failed",
-            summary=fallback[:2000],
+            summary=fallback[:HANDOFF_DIAGNOSTIC_MAX],
             limitations=["agent CLI did not return the expected JSON envelope"],
         )
 
@@ -140,13 +142,16 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
     result_text = str(payload.get("result") or "")
     status = "failed" if (is_error or returncode != 0) else "succeeded"
     structured: dict[str, Any] = {}
+    limitations: list[str] = []
     if status == "succeeded":
-        try:
-            parsed = json.loads(result_text)
-            if isinstance(parsed, dict):
-                structured = parsed
-        except json.JSONDecodeError:
-            pass
+        structured_handoff, extract_error = extract_governed_handoff(result_text)
+        if structured_handoff is not None:
+            structured = structured_handoff
+        else:
+            status = "failed"
+            limitations.append(
+                extract_error or "agent result was not the required governed JSON handoff"
+            )
     outer_usage = payload.get("usage") if isinstance(payload.get("usage"), dict) else {}
     input_tokens = int(outer_usage.get("inputTokens", 0) or 0)
     output_tokens = int(outer_usage.get("outputTokens", 0) or 0)
@@ -154,12 +159,13 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
     usage.setdefault("input_tokens", input_tokens)
     usage.setdefault("output_tokens", output_tokens)
     usage.setdefault("total_tokens", input_tokens + output_tokens)
-    limitations = []
-    if status == "succeeded" and not structured:
-        limitations.append("agent result was not the required governed JSON handoff")
+    if structured:
+        summary = str(structured.get("summary") or "")[:HANDOFF_SUMMARY_MAX]
+    else:
+        summary = (result_text or stderr or text)[:HANDOFF_DIAGNOSTIC_MAX]
     return AgentInvocationOutcome(
         status=status,
-        summary=str(structured.get("summary") or result_text)[:4000],
+        summary=summary,
         limitations=limitations,
         checks=list(structured.get("checks") or []),
         artifacts=list(structured.get("artifacts") or []),

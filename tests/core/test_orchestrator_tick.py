@@ -226,6 +226,27 @@ def _succeeded_result(
     }
 
 
+def _succeeded_result_with_checks(
+    check_names: list[str], *, changed_sha: bool = True, include_artifact: bool = True
+) -> dict:
+    return {
+        "status": "succeeded",
+        "summary": "ok",
+        "checks": [
+            {"name": name, "status": "passed", "evidence_ref": f"EV-{name}"}
+            for name in check_names
+        ],
+        "artifacts": (
+            [{"kind": "test", "path": "evidence.json", "sha256": "sha256:" + "a" * 64}]
+            if include_artifact
+            else []
+        ),
+        "workspace": {"result_sha": "b" * 40 if changed_sha else "a" * 40},
+        "requested_commands": [],
+        "usage": {},
+    }
+
+
 def test_tick_starts_a_ready_work_unit(workspace: Workspace) -> None:
     gateway = CommandGateway(workspace)
     gateway.execute_command(_open_run("RUN-TICK-001", work_unit_ids=["WU-A"]))
@@ -273,6 +294,114 @@ def test_tick_executes_bounded_remediation_then_returns_to_verification(
         )
     )
     assert attempt["step"] == "remediation"
+
+
+def test_implementation_evidence_gate_accepts_explicit_ac_checks_without_implementation_name(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-AC-OK", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    wu_path = workspace.ai_team / "work-units" / "WU-A.yaml"
+    wu = yaml.safe_load(wu_path.read_text(encoding="utf-8"))
+    wu["acceptance_criteria"] = [
+        {"AC-1": "parent module wired"},
+        {"AC-2": "health endpoint public"},
+        {"AC-3": "flyway migration"},
+        {"AC-4": "compose healthy"},
+        {"AC-5": "no foreign migrations"},
+    ]
+    wu_path.write_text(yaml.safe_dump(wu), encoding="utf-8")
+    adapter = FakeAdapter(
+        [
+            _succeeded_result_with_checks(
+                ["AC-1", "AC-2", "AC-3", "AC-4", "AC-5"], changed_sha=True
+            )
+        ]
+    )
+
+    acquired = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-OK", adapter=adapter, worker_id="w1"
+    )
+    assert acquired.action == "reacquired_work_unit"
+    advanced = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-OK", adapter=adapter, worker_id="w1"
+    )
+    assert advanced.action == "advanced_work_unit"
+    assert advanced.details["from"] == "in_progress"
+    assert advanced.details["to"] == "verification"
+
+
+def test_implementation_evidence_gate_rejects_partial_ac_when_wu_declares_ids(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-AC-PARTIAL", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    wu_path = workspace.ai_team / "work-units" / "WU-A.yaml"
+    wu = yaml.safe_load(wu_path.read_text(encoding="utf-8"))
+    wu["acceptance_criteria"] = [
+        {"AC-1": "one"},
+        {"AC-2": "two"},
+        {"AC-3": "three"},
+    ]
+    wu_path.write_text(yaml.safe_dump(wu), encoding="utf-8")
+    adapter = FakeAdapter(
+        [_succeeded_result_with_checks(["AC-1", "AC-2"], changed_sha=True)]
+    )
+
+    acquired = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-PARTIAL", adapter=adapter, worker_id="w1"
+    )
+    assert acquired.action == "reacquired_work_unit"
+    failed = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-PARTIAL", adapter=adapter, worker_id="w1"
+    )
+    assert failed.action == "recorded_attempt"
+    assert failed.details["status"] == "failed"
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "failed"
+    assert "AC-3" in attempt["summary"]
+
+
+def test_implementation_evidence_gate_rejects_check_without_evidence_ref(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-AC-NOEV", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    result = _succeeded_result_with_checks(["AC-1"], changed_sha=True)
+    result["checks"] = [{"name": "AC-1", "status": "passed"}]
+    adapter = FakeAdapter([result])
+
+    acquired = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-NOEV", adapter=adapter, worker_id="w1"
+    )
+    assert acquired.action == "reacquired_work_unit"
+    failed = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AC-NOEV", adapter=adapter, worker_id="w1"
+    )
+    assert failed.action == "recorded_attempt"
+    assert failed.details["status"] == "failed"
+
+
+def test_review_evidence_gate_still_requires_named_check() -> None:
+    from governed_ai.core.orchestrator.tick import _evidence_error
+
+    result = _succeeded_result_with_checks(["AC-1", "AC-2"], changed_sha=False)
+    error = _evidence_error(
+        result,
+        required_checks=("code_review",),
+        require_changed_sha=False,
+        base_sha="a" * 40,
+        work_unit={"acceptance_criteria": [{"AC-1": "x"}, {"AC-2": "y"}]},
+    )
+    assert error is not None
+    assert "code_review" in error
 
 
 def test_unattended_run_stops_when_adapter_cannot_isolate_workers(

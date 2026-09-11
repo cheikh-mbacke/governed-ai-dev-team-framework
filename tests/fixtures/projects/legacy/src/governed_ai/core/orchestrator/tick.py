@@ -282,8 +282,32 @@ def _dispatch_step(workspace: Workspace, run_id: str, work_unit_id: str, status:
     return "audit"
 
 
+def _explicit_acceptance_criterion_ids(work_unit: dict[str, Any] | None) -> tuple[str, ...]:
+    """Return AC-* identifiers declared on the Work Unit, when present."""
+    if not work_unit:
+        return ()
+    ids: list[str] = []
+    for item in work_unit.get("acceptance_criteria") or []:
+        if isinstance(item, dict) and len(item) == 1:
+            key = str(next(iter(item))).strip()
+            if key.startswith("AC-"):
+                ids.append(key)
+            continue
+        if isinstance(item, str):
+            token = item.strip().split()[0] if item.strip() else ""
+            token = token.split(":", 1)[0].strip()
+            if token.startswith("AC-"):
+                ids.append(token)
+    return tuple(ids)
+
+
 def _evidence_error(
-    result: dict[str, Any], *, required_checks: tuple[str, ...], require_changed_sha: bool, base_sha: str | None
+    result: dict[str, Any],
+    *,
+    required_checks: tuple[str, ...],
+    require_changed_sha: bool,
+    base_sha: str | None,
+    work_unit: dict[str, Any] | None = None,
 ) -> str | None:
     checks = result.get("checks") or []
     passed = {
@@ -291,15 +315,37 @@ def _evidence_error(
         for item in checks
         if item.get("status") == "passed" and item.get("evidence_ref")
     }
-    missing = sorted(set(required_checks) - passed)
-    if missing:
-        return f"missing passed checks with evidence: {missing}"
     if require_changed_sha:
+        # Implementation / remediation: transport check "implementation" is optional
+        # when explicit AC-* checks (with evidence_ref) cover the Work Unit.
+        ac_ids = _explicit_acceptance_criterion_ids(work_unit)
+        ac_passed = {
+            name for name in passed if isinstance(name, str) and name.startswith("AC-")
+        }
+        has_implementation = "implementation" in passed
+        if ac_ids:
+            missing_acs = sorted(set(ac_ids) - passed)
+            ac_ok = not missing_acs
+        else:
+            missing_acs = []
+            ac_ok = bool(ac_passed)
+        if not has_implementation and not ac_ok:
+            if ac_ids:
+                return (
+                    "missing passed checks with evidence: "
+                    f"{missing_acs} (or check name 'implementation')"
+                )
+            return "missing passed checks with evidence: ['implementation'] or AC-* with evidence_ref"
         result_sha = (result.get("workspace") or {}).get("result_sha")
         if not result_sha or result_sha == base_sha:
             return "implementation did not produce a new coherent commit SHA"
         if not result.get("artifacts"):
             return "implementation produced no hashed artifact"
+        return None
+
+    missing = sorted(set(required_checks) - passed)
+    if missing:
+        return f"missing passed checks with evidence: {missing}"
     return None
 
 
@@ -929,6 +975,7 @@ def run_scheduling_tick(
                 required_checks=required_checks,
                 require_changed_sha=step in {"sandbox_implementation", "remediation"},
                 base_sha=base_sha,
+                work_unit=wu_document,
             )
             if evidence_error:
                 status = "failed"

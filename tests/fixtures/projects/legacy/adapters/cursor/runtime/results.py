@@ -16,6 +16,10 @@ from ..compiler.staging import sha256_bytes
 RUNTIME_RESULTS_DIR = ".ai-team/runtime-results"
 EXECUTION_ID_RE = re.compile(r"^EXE-[A-Za-z0-9-]+$")
 SHA40_RE = re.compile(r"^[0-9a-f]{40}$")
+FENCED_JSON_RE = re.compile(r"```(?:json)?\s*\n(.*?)```", re.IGNORECASE | re.DOTALL)
+
+HANDOFF_SUMMARY_MAX = 4000
+HANDOFF_DIAGNOSTIC_MAX = 2000
 
 
 def runtime_results_dir(project_root: Path) -> Path:
@@ -30,6 +34,134 @@ def result_path(project_root: Path, execution_id: str) -> Path:
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def is_conforming_governed_handoff(candidate: Any) -> bool:
+    """Return True when ``candidate`` matches the governed handoff contract."""
+    if not isinstance(candidate, dict):
+        return False
+    if not isinstance(candidate.get("summary"), str):
+        return False
+    if not isinstance(candidate.get("checks"), list):
+        return False
+    if not isinstance(candidate.get("artifacts"), list):
+        return False
+    if "requested_commands" in candidate and not isinstance(
+        candidate.get("requested_commands"), list
+    ):
+        return False
+    if "usage" in candidate and not isinstance(candidate.get("usage"), dict):
+        return False
+    for check in candidate["checks"]:
+        if not isinstance(check, dict):
+            return False
+        if not isinstance(check.get("name"), str):
+            return False
+        if not isinstance(check.get("status"), str):
+            return False
+    for artifact in candidate["artifacts"]:
+        if not isinstance(artifact, dict):
+            return False
+    return True
+
+
+def _coerce_handoff(candidate: dict[str, Any]) -> dict[str, Any]:
+    handoff = {
+        "summary": str(candidate["summary"])[:HANDOFF_SUMMARY_MAX],
+        "checks": list(candidate.get("checks") or []),
+        "artifacts": list(candidate.get("artifacts") or []),
+        "requested_commands": list(candidate.get("requested_commands") or []),
+        "usage": dict(candidate.get("usage") or {}),
+    }
+    return handoff
+
+
+def _normalize_handoff(handoff: dict[str, Any]) -> str:
+    return json.dumps(_coerce_handoff(handoff), sort_keys=True, ensure_ascii=False, default=str)
+
+
+def _iter_json_values(text: str) -> list[Any]:
+    """Collect complete JSON values from text without regex-only nested parsing."""
+    values: list[Any] = []
+    decoder = json.JSONDecoder()
+    index = 0
+    length = len(text)
+    while index < length:
+        while index < length and text[index] not in "{[":
+            index += 1
+        if index >= length:
+            break
+        try:
+            value, end = decoder.raw_decode(text, index)
+        except json.JSONDecodeError:
+            index += 1
+            continue
+        values.append(value)
+        index = max(end, index + 1)
+    return values
+
+
+def _candidate_texts(result_text: str) -> list[str]:
+    texts = [result_text]
+    for match in FENCED_JSON_RE.finditer(result_text):
+        fenced = match.group(1).strip()
+        if fenced:
+            texts.append(fenced)
+    return texts
+
+
+def extract_governed_handoff(result_text: str) -> tuple[dict[str, Any] | None, str | None]:
+    """Extract a governed handoff from agent result text.
+
+    Strategy:
+    1. accept an exact JSON object when the whole text is that object;
+    2. otherwise scan for complete JSON values (including fenced ``json`` blocks);
+    3. keep only objects that conform to the handoff contract;
+    4. if several conforming candidates disagree, fail explicitly;
+    5. otherwise return the last conforming candidate.
+
+    Returns ``(handoff, diagnostic)`` where diagnostic is set on failure and is
+    size-bounded.
+    """
+    text = (result_text or "").strip()
+    if not text:
+        return None, "agent result was empty"
+
+    try:
+        exact = json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        exact = None
+    if is_conforming_governed_handoff(exact):
+        return _coerce_handoff(exact), None
+
+    conforming: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for fragment in _candidate_texts(text):
+        for value in _iter_json_values(fragment):
+            if not is_conforming_governed_handoff(value):
+                continue
+            coerced = _coerce_handoff(value)
+            normalized = _normalize_handoff(coerced)
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            conforming.append(coerced)
+
+    if not conforming:
+        diagnostic = text[:HANDOFF_DIAGNOSTIC_MAX]
+        return None, (
+            "agent result was not the required governed JSON handoff; "
+            f"diagnostic excerpt: {diagnostic}"
+        )[:HANDOFF_DIAGNOSTIC_MAX]
+
+    if len(conforming) > 1:
+        signatures = {_normalize_handoff(item) for item in conforming}
+        if len(signatures) > 1:
+            return None, (
+                f"ambiguous governed JSON handoff: {len(conforming)} contradictory candidates"
+            )
+
+    return conforming[-1], None
 
 
 def validate_runtime_result(result: dict[str, Any]) -> list[str]:
