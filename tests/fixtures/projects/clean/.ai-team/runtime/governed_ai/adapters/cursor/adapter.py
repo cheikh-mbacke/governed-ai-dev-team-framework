@@ -12,13 +12,13 @@ from adapters.cursor.compatibility import (
     primary_issue_code,
     requires_blocking,
 )
+from adapters.cursor.runtime.checks import platform_profile
 from adapters.cursor.runtime.execute import collect_runtime_result, execute_runtime
 from adapters.cursor.runtime.guard import (
     CapabilityNotEnforceableError,
     UnsupportedContractError,
     validate_requested_commands,
 )
-from adapters.cursor.runtime.checks import platform_profile
 
 from governed_ai.adapters.cursor.compile import compile_manifest
 from governed_ai.adapters.spi import (
@@ -34,7 +34,13 @@ from governed_ai.adapters.spi import (
     RuntimeResult,
 )
 
-_MANIFEST_PATH = Path(__file__).resolve().parents[4] / "adapters" / "cursor" / "manifest.json"
+_ADAPTER_DIR = Path(__file__).resolve().parent
+_COLOCATED_MANIFEST = _ADAPTER_DIR / "manifest.json"
+# Framework source: <repo>/src/governed_ai/adapters/cursor → parents[3] == <repo>
+_SOURCE_MANIFEST = _ADAPTER_DIR.parents[3] / "adapters" / "cursor" / "manifest.json"
+_MANIFEST_PATH = (
+    _COLOCATED_MANIFEST if _COLOCATED_MANIFEST.is_file() else _SOURCE_MANIFEST
+)
 
 
 class CursorAdapter(AdapterSPIBase):

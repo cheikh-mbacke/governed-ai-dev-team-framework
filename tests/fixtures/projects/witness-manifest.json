@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-11T05:11:56+00:00",
+  "generated_at": "2026-09-11T09:05:31+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -249,7 +249,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "8de2b7dcbeb65213f4c4b976e41dcf52f9ad437e85d3c25325e31b85049c1c1f"
+          "sha256": "c78d5a56bfa3f31e3898e540b57852b6a9f40776054c64572c9006e7f1ec007f"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -277,11 +277,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/adapter.py",
-          "sha256": "e74de8adecb3f20ee8a91c56794b2242b508ff38f9cb0b14ecd3a3ec27b1d3fa"
+          "sha256": "6a2e76c977d199d94c2c8da5362b4085dbcd5d4876c6e7aef3598ebba3ec6d15"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compatibility.py",
-          "sha256": "10589214eb61958080caf4fc77e988c9b3c1a9a526ddb70554840742a3e7708d"
+          "sha256": "95e5a843f65b5bcabfb81b09413aebf38290a8c924c395d9bb45a133436960c7"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compile.py",
@@ -1621,7 +1621,7 @@
         },
         {
           "path": "scripts/ai-team/install_paths.py",
-          "sha256": "74901fcaacaa0dd1d89e0b781b093139a29b8df8ec150e8b4a3e2c8443131bf0"
+          "sha256": "507bb18a342c1cd193d8666072048f12a00ef3f9ec160128fe725f34f421dfd4"
         },
         {
           "path": "scripts/ai-team/migrate.py",
@@ -1633,7 +1633,7 @@
         },
         {
           "path": "scripts/ai-team/orchestrate.py",
-          "sha256": "8da3c3ec62ac3a2f7fd9737d306826118f121f696de33e8e0b4b2a9f9be1881b"
+          "sha256": "357fa64249a7a3863ab622483846fe44d4312562280826bbafceba3bb0ec306c"
         },
         {
           "path": "scripts/ai-team/preflight.py",
@@ -1928,7 +1928,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "b8bb62f5dda85801ea8e1e692a58ba04fb13ae2398eee1347b0164c00da528ab"
+          "sha256": "dad966075b63ad003deae0162e7e9be53407321207f0b8b443cb8a39fce21939"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2368,7 +2368,7 @@
         },
         {
           "path": "adapters/cursor/compatibility.py",
-          "sha256": "10589214eb61958080caf4fc77e988c9b3c1a9a526ddb70554840742a3e7708d"
+          "sha256": "95e5a843f65b5bcabfb81b09413aebf38290a8c924c395d9bb45a133436960c7"
         },
         {
           "path": "adapters/cursor/compiler-notes.yaml",
@@ -2684,7 +2684,7 @@
         },
         {
           "path": "scripts/ai-team/install_paths.py",
-          "sha256": "74901fcaacaa0dd1d89e0b781b093139a29b8df8ec150e8b4a3e2c8443131bf0"
+          "sha256": "507bb18a342c1cd193d8666072048f12a00ef3f9ec160128fe725f34f421dfd4"
         },
         {
           "path": "scripts/ai-team/migrate.py",
@@ -2696,7 +2696,7 @@
         },
         {
           "path": "scripts/ai-team/orchestrate.py",
-          "sha256": "8da3c3ec62ac3a2f7fd9737d306826118f121f696de33e8e0b4b2a9f9be1881b"
+          "sha256": "357fa64249a7a3863ab622483846fe44d4312562280826bbafceba3bb0ec306c"
         },
         {
           "path": "scripts/ai-team/preflight.py",
@@ -2752,7 +2752,7 @@
         },
         {
           "path": "src/governed_ai/adapters/cursor/adapter.py",
-          "sha256": "e74de8adecb3f20ee8a91c56794b2242b508ff38f9cb0b14ecd3a3ec27b1d3fa"
+          "sha256": "6a2e76c977d199d94c2c8da5362b4085dbcd5d4876c6e7aef3598ebba3ec6d15"
         },
         {
           "path": "src/governed_ai/adapters/cursor/compile.py",

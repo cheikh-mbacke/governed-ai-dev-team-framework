@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from governed_ai.contracts.compatibility import CompatibilityReport
-from governed_ai.contracts.semver import version_in_range
 from governed_ai.adapters.spi import (
     AdapterDescriptor,
     ProcedureRevision,
     PublishedContractBundle,
     RoleDefinitionRevision,
 )
+from governed_ai.contracts.compatibility import CompatibilityReport
+from governed_ai.contracts.semver import version_in_range
 
 UNSUPPORTED_CONTRACT = "UNSUPPORTED_CONTRACT"
 CAPABILITY_NOT_ENFORCEABLE = "CAPABILITY_NOT_ENFORCEABLE"
@@ -20,6 +20,10 @@ CAPABILITY_NOT_ENFORCEABLE = "CAPABILITY_NOT_ENFORCEABLE"
 def _normalize_platform(platform: str) -> tuple[str, bool]:
     if platform in {"windows-native", "windows"}:
         return "windows", platform == "windows-native"
+    if platform == "wsl":
+        # WSL is a Linux userspace; keep windows-native distinct for isolation
+        # and readonly-sandbox capability negotiation.
+        return "linux", False
     return platform, False
 
 
