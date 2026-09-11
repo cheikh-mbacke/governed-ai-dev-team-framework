@@ -103,6 +103,16 @@ def test_build_prompt_resolves_bare_context_id(tmp_path: Path) -> None:
     assert "CTX-BARE" in prompt
 
 
+def test_build_prompt_ignores_context_path_escape(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.yaml"
+    outside.write_text("id: LEAK\nsecret: yes\n", encoding="utf-8")
+    request = _sample_request()
+    request["context_package_ref"] = str(outside)
+    prompt = agent_cli.build_prompt(tmp_path, request)
+    assert "LEAK" not in prompt
+    assert "secret" not in prompt
+
+
 def test_invoke_agent_cli_returns_blocked_when_binary_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

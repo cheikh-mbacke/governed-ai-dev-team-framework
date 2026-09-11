@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -106,13 +107,24 @@ def build_prompt(project_root: Path, request: dict[str, Any]) -> str:
     context = ""
     context_ref = request.get("context_package_ref")
     if context_ref:
-        candidates = [project_root / str(context_ref)]
+        packages_root = (project_root / ".ai-team" / "context-packages").resolve()
         ref_text = str(context_ref).strip().replace("\\", "/")
-        if ref_text and not ref_text.endswith(".yaml") and "/" not in ref_text:
-            candidates.append(
-                project_root / ".ai-team" / "context-packages" / f"{ref_text}.yaml"
-            )
+        candidates: list[Path] = []
+        if ref_text and ".." not in Path(ref_text).parts and not (
+            ref_text.startswith("/") or re.match(r"^[A-Za-z]:", ref_text)
+        ):
+            if ref_text.endswith(".yaml") and ref_text.startswith(
+                ".ai-team/context-packages/"
+            ):
+                candidates.append((project_root / ref_text).resolve())
+            elif "/" not in ref_text and not ref_text.startswith("."):
+                name = ref_text if ref_text.endswith(".yaml") else f"{ref_text}.yaml"
+                candidates.append((packages_root / name).resolve())
         for context_path in candidates:
+            try:
+                context_path.relative_to(packages_root)
+            except ValueError:
+                continue
             if context_path.is_file():
                 context = context_path.read_text(encoding="utf-8")[:20000]
                 break

@@ -844,12 +844,13 @@ def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(
     )
     assert wu_document["status"] == "human_test"
 
-    # human_test does not map to a dispatchable step: the loop stops, it never
-    # invents its own path to "done".
-    idle = run_scheduling_tick(
+    # human_test does not map to a dispatchable step: signal human wait instead
+    # of silent idle.
+    waiting = run_scheduling_tick(
         gateway, workspace, run_id="RUN-TICK-006", adapter=FakeAdapter([]), worker_id="w1"
     )
-    assert idle.action == "idle"
+    assert waiting.action == "awaiting_human"
+    assert "WU-A" in waiting.details["waiting_work_unit_ids"]
 
 
 def test_unattended_run_completion_generates_project_retrospective(
@@ -1765,4 +1766,81 @@ def test_tick_blocks_when_required_shared_contract_missing_from_context(
     )
     assert attempt["status"] == "blocked"
     assert "incomplete" in str(attempt.get("summary") or "")
+
+
+def test_orphan_started_attempt_recovers_when_lease_document_is_gone(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-ORPHAN-GONE", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
+    attempts_dir.mkdir(parents=True, exist_ok=True)
+    attempt = {
+        "id": "ATTEMPT-ORPHAN-GONE",
+        "revision": 1,
+        "run_id": "RUN-ORPHAN-GONE",
+        "execution_id": "EXE-ORPHAN-GONE",
+        "work_unit_id": "WU-A",
+        "worker_lease_id": "LEASE-GONE",
+        "epoch": 1,
+        "step": "sandbox_implementation",
+        "status": "started",
+        "started_at": "2026-08-30T00:00:00+00:00",
+        "ended_at": None,
+        "summary": None,
+        "checks": [],
+        "artifacts": [],
+        "workspace": {},
+        "contract": {},
+        "requested_commands": [],
+        "usage": {},
+        "provider": {},
+    }
+    (attempts_dir / "ATTEMPT-ORPHAN-GONE.yaml").write_text(
+        yaml.safe_dump(attempt), encoding="utf-8"
+    )
+    # No lease file and no leases_by_work_unit entry — the failure mode from audit.
+    run_path = workspace.ai_team / "runs" / "RUN-ORPHAN-GONE.yaml"
+    run_document = yaml.safe_load(run_path.read_text(encoding="utf-8"))
+    run_document["leases_by_work_unit"] = {}
+    run_path.write_text(yaml.safe_dump(run_document), encoding="utf-8")
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-ORPHAN-GONE", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    recovered = yaml.safe_load(
+        (attempts_dir / "ATTEMPT-ORPHAN-GONE.yaml").read_text(encoding="utf-8")
+    )
+    assert recovered["status"] == "timed_out"
+    assert recovered["failure_code"] == "orphan_started"
+    assert result.action != "idle" or recovered["status"] == "timed_out"
+
+
+def test_tick_signals_awaiting_human_for_blocked_plus_human_test_mix(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-HUMAN-MIX", work_unit_ids=["WU-A", "WU-B"]))
+    _seed_work_unit(workspace, "WU-A", status="blocked")
+    _seed_work_unit(workspace, "WU-B", status="human_test")
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-HUMAN-MIX", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    assert result.action == "awaiting_human"
+    assert "WU-B" in result.details["waiting_work_unit_ids"]
+    run_document = yaml.safe_load(
+        (workspace.ai_team / "runs" / "RUN-HUMAN-MIX.yaml").read_text(encoding="utf-8")
+    )
+    assert run_document["status"] == "active"
+
+
+def test_context_package_ref_rejects_path_escape(workspace: Workspace) -> None:
+    from governed_ai.core.orchestrator.tick import _canonical_context_package_path
+
+    with pytest.raises(ValueError, match="context-packages|\\.\\."):
+        _canonical_context_package_path(workspace, "../secrets/creds.yaml")
+    with pytest.raises(ValueError, match="relative|context-packages"):
+        _canonical_context_package_path(workspace, r"C:\Windows\system32\drivers\etc\hosts")
 

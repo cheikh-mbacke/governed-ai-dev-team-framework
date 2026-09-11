@@ -15,6 +15,7 @@ execution_ceiling, convergence bounds, or grant checks.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import time
 import uuid
@@ -48,6 +49,7 @@ from governed_ai.core.orchestrator.git_workspace import (
     ensure_integration_worktree,
     ensure_work_unit_worktree,
     head_sha,
+    list_uncommitted_files,
     merge_and_revalidate,
 )
 from governed_ai.core.workspace import Workspace
@@ -136,14 +138,43 @@ def _procedure_required_inputs(workspace: Workspace, procedure_id: str) -> list[
     return [str(item) for item in (procedure.get("required_inputs") or [])]
 
 
+_CONTEXT_PACKAGES_REL = ".ai-team/context-packages"
+
+
 def _canonical_context_package_path(workspace: Workspace, ref: str) -> Path:
+    """Resolve a context package ref strictly under ``.ai-team/context-packages/``."""
     text = str(ref).strip().replace("\\", "/")
     if not text:
         raise ValueError("empty context_package_ref")
-    if text.endswith(".yaml") or "/" in text:
-        path = Path(text)
-        return path if path.is_absolute() else (workspace.root / path)
-    return workspace.ai_team / "context-packages" / f"{text}.yaml"
+    if text.startswith("/") or re.match(r"^[A-Za-z]:", text):
+        raise ValueError("context_package_ref must be a relative id under context-packages")
+    parts = Path(text).parts
+    if ".." in parts:
+        raise ValueError("context_package_ref must not contain '..'")
+
+    packages_root = (workspace.ai_team / "context-packages").resolve()
+    if text.endswith(".yaml"):
+        if text.startswith(f"{_CONTEXT_PACKAGES_REL}/"):
+            candidate = (workspace.root / text).resolve()
+        elif "/" in text or text.startswith("."):
+            raise ValueError(
+                "context_package_ref path must be "
+                f"{_CONTEXT_PACKAGES_REL}/<id>.yaml or a bare package id"
+            )
+        else:
+            candidate = (packages_root / text).resolve()
+    else:
+        if "/" in text or text.startswith("."):
+            raise ValueError("context_package_ref id must not contain path separators")
+        candidate = (packages_root / f"{text}.yaml").resolve()
+
+    try:
+        candidate.relative_to(packages_root)
+    except ValueError as exc:
+        raise ValueError(
+            "context_package_ref escapes .ai-team/context-packages/"
+        ) from exc
+    return candidate
 
 
 def _resolve_context_package_ref(
@@ -157,7 +188,12 @@ def _resolve_context_package_ref(
         if needs_context:
             return None, "context_package required but work unit has no context_package_ref"
         return None, None
-    path = _canonical_context_package_path(workspace, str(raw_ref))
+    try:
+        path = _canonical_context_package_path(workspace, str(raw_ref))
+    except ValueError as exc:
+        if needs_context:
+            return None, str(exc)
+        return None, None
     if not path.is_file():
         if needs_context:
             try:
@@ -184,10 +220,7 @@ def _resolve_context_package_ref(
         error = completeness_error(evaluation)
         if error:
             return None, error
-    try:
-        return path.relative_to(workspace.root).as_posix(), None
-    except ValueError:
-        return str(path), None
+    return path.relative_to(workspace.root).as_posix(), None
 
 
 @dataclass(frozen=True, slots=True)
@@ -723,19 +756,39 @@ def _recover_orphan_started_attempts(
         lease_path = workspace.ai_team / "runs" / "leases" / f"{lease_id}.yaml"
         lease = _read_yaml(lease_path) if lease_path.is_file() else None
         current = leases_by_work_unit.get(work_unit_id) or {}
-        lease_current = (
+        lease_authoritative = (
             lease is not None
             and lease.get("status") == "active"
-            and str(current.get("lease_id")) == lease_id
-            and _lease_is_fresh(lease, now=now)
+            and str(current.get("lease_id") or "") == lease_id
+            and int(current.get("epoch") or 0) == int(attempt.get("epoch") or 0)
         )
-        if lease_current:
+        if lease_authoritative and _lease_is_fresh(lease, now=now):
             continue
         taxonomy = classify_attempt_failure(
             status="timed_out",
             step=str(attempt.get("step") or ""),
             summary="orphan started attempt recovered on restart",
         ) or {}
+        payload = {
+            "run_id": run_id,
+            "execution_id": attempt.get("execution_id"),
+            "work_unit_id": work_unit_id,
+            "worker_lease_id": lease_id,
+            "epoch": attempt.get("epoch") or 1,
+            "step": attempt.get("step") or "sandbox_implementation",
+            "status": "timed_out",
+            "summary": "orphan started attempt recovered on restart",
+            "checks": [],
+            "artifacts": [],
+            "workspace": attempt.get("workspace") or {},
+            "contract": attempt.get("contract") or {},
+            "requested_commands": [],
+            "usage": {},
+            "provider": {},
+            **taxonomy,
+        }
+        if not lease_authoritative:
+            payload["orphan_recovery"] = True
         receipt, exit_code = gateway.execute_command(
             _envelope(
                 "RecordExecutionAttempt",
@@ -744,24 +797,7 @@ def _recover_orphan_started_attempts(
                     "id": attempt["id"],
                     "expected_revision": attempt.get("revision", 1),
                 },
-                payload={
-                    "run_id": run_id,
-                    "execution_id": attempt.get("execution_id"),
-                    "work_unit_id": work_unit_id,
-                    "worker_lease_id": lease_id or "LEASE-ORPHAN",
-                    "epoch": attempt.get("epoch") or current.get("epoch") or 1,
-                    "step": attempt.get("step") or "sandbox_implementation",
-                    "status": "timed_out",
-                    "summary": "orphan started attempt recovered on restart",
-                    "checks": [],
-                    "artifacts": [],
-                    "workspace": attempt.get("workspace") or {},
-                    "contract": attempt.get("contract") or {},
-                    "requested_commands": [],
-                    "usage": {},
-                    "provider": {},
-                    **taxonomy,
-                },
+                payload=payload,
                 actor_role_id="control-plane",
             )
         )
@@ -772,6 +808,26 @@ def _recover_orphan_started_attempts(
     return recovered
 
 
+_MACHINE_DISPATCHABLE_STATUSES = frozenset(
+    {
+        "ready",
+        "in_progress",
+        "verification",
+        "review",
+        "security_review",
+        "audit",
+        "remediation_required",
+        "integration_review",
+    }
+)
+_HUMAN_WAIT_STATUSES = frozenset(
+    {
+        "human_test",
+        "paused_for_risk_escalation",
+    }
+)
+
+
 def _run_has_dispatchable_work(
     workspace: Workspace,
     run_document: dict[str, Any],
@@ -779,19 +835,12 @@ def _run_has_dispatchable_work(
     *,
     now: datetime,
 ) -> bool:
-    """True when a future tick could still acquire or dispatch work."""
-    for work_unit_id, wu_document in work_unit_documents.items():
+    """True when a future tick could still acquire or dispatch machine work."""
+    for _work_unit_id, wu_document in work_unit_documents.items():
         if wu_document is None:
             continue
         status = wu_document.get("status")
-        if status == "ready":
-            return True
-        if status in STATUS_TO_STEP or status in {
-            "human_test",
-            "paused_for_risk_escalation",
-        }:
-            return True
-        if status == "remediation_required":
+        if status in _MACHINE_DISPATCHABLE_STATUSES or status in STATUS_TO_STEP:
             return True
     leases_dir = workspace.ai_team / "runs" / "leases"
     if leases_dir.is_dir():
@@ -806,10 +855,20 @@ def _run_has_dispatchable_work(
     return False
 
 
+def _run_awaits_human(
+    work_unit_documents: dict[str, dict[str, Any] | None],
+) -> bool:
+    return any(
+        (document or {}).get("status") in _HUMAN_WAIT_STATUSES
+        for document in work_unit_documents.values()
+        if document is not None
+    )
+
+
 def _should_stop_for_no_dispatchable_work(
     work_unit_documents: dict[str, dict[str, Any] | None],
 ) -> bool:
-    """Close only when the Run is stuck (e.g. all blocked), not when finished/waiting."""
+    """Close when remaining work is stuck and nothing awaits a human gate."""
     statuses = [
         str((document or {}).get("status") or "")
         for document in work_unit_documents.values()
@@ -817,22 +876,13 @@ def _should_stop_for_no_dispatchable_work(
     ]
     if not statuses:
         return True
-    if any(
-        status
-        in {
-            "ready",
-            "in_progress",
-            "verification",
-            "review",
-            "audit",
-            "remediation_required",
-            "human_test",
-            "paused_for_risk_escalation",
-            "done",
-        }
-        for status in statuses
-    ):
+    if any(status in _MACHINE_DISPATCHABLE_STATUSES or status in STATUS_TO_STEP for status in statuses):
         return False
+    if any(status in _HUMAN_WAIT_STATUSES for status in statuses):
+        return False
+    if all(status == "done" for status in statuses):
+        return False
+    # Stuck statuses (blocked, …), optionally mixed with done.
     return True
 
 
@@ -1263,12 +1313,31 @@ def run_scheduling_tick(
         status = result.get("status", "failed")
         if status == "timed_out" and isolated_worktree and execution_root != workspace.root:
             try:
-                wip_sha = create_unverified_wip_commit(
-                    execution_root, work_unit_id=work_unit_id
-                )
+                dirty = list_uncommitted_files(execution_root)
+                boundary = None
+                if dirty:
+                    boundary = boundary_error_for_changed_files(
+                        dirty,
+                        work_unit_id=work_unit_id,
+                        wu_document=wu_document,
+                        allowed_paths=allowed_paths,
+                    )
+                wip_sha = None
+                if dirty and boundary is None:
+                    wip_sha = create_unverified_wip_commit(
+                        execution_root,
+                        work_unit_id=work_unit_id,
+                        paths=dirty,
+                    )
+                elif dirty and boundary is not None:
+                    result = dict(result)
+                    result["summary"] = (
+                        f"{result.get('summary') or ''} "
+                        f"WIP checkpoint skipped: {boundary}"
+                    ).strip()
                 head = head_sha(execution_root)
                 salvage_sha = wip_sha or (head if base_sha and head != base_sha else None)
-                if salvage_sha and base_sha:
+                if salvage_sha and base_sha and boundary is None:
                     files = changed_files(execution_root, base_sha, salvage_sha)
                     boundary = boundary_error_for_changed_files(
                         files,
@@ -2015,6 +2084,26 @@ def run_scheduling_tick(
             action="run_completed" if close_exit == 0 else "run_completion_failed",
             work_unit_id=None,
             details={"errors": close_receipt.get("errors"), **retrospective_details},
+        )
+
+    if (
+        not _run_has_dispatchable_work(
+            workspace, run_document, work_unit_documents, now=now
+        )
+        and _run_awaits_human(work_unit_documents)
+    ):
+        waiting = [
+            work_unit_id
+            for work_unit_id, document in work_unit_documents.items()
+            if document is not None and document.get("status") in _HUMAN_WAIT_STATUSES
+        ]
+        return TickResult(
+            action="awaiting_human",
+            work_unit_id=None,
+            details={
+                "waiting_work_unit_ids": waiting,
+                "reason": "remaining work units require human action; tick cannot progress them",
+            },
         )
 
     if (

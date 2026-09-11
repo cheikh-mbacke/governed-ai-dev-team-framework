@@ -7,8 +7,11 @@ import pytest
 
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
+    create_unverified_wip_commit,
     ensure_integration_worktree,
     ensure_work_unit_worktree,
+    head_sha,
+    list_uncommitted_files,
     merge_and_revalidate,
 )
 
@@ -86,3 +89,22 @@ def test_real_merge_conflict_is_detected_and_aborted(tmp_path: Path) -> None:
         timeout=10,
     )
     assert merge_head.returncode != 0
+
+
+def test_list_uncommitted_files_and_wip_commit_only_stages_given_paths(tmp_path: Path) -> None:
+    root = _repository(tmp_path)
+    (root / "allowed.txt").write_text("ok\n", encoding="utf-8")
+    (root / "forbidden.txt").write_text("nope\n", encoding="utf-8")
+    dirty = list_uncommitted_files(root)
+    assert "allowed.txt" in dirty
+    assert "forbidden.txt" in dirty
+
+    before = head_sha(root)
+    sha = create_unverified_wip_commit(
+        root, work_unit_id="WU-A", paths=["allowed.txt"]
+    )
+    assert sha is not None
+    assert sha != before
+    remaining = list_uncommitted_files(root)
+    assert "forbidden.txt" in remaining
+    assert "allowed.txt" not in remaining

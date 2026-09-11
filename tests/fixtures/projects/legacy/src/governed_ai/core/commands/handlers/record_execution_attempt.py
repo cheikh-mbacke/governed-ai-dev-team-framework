@@ -71,25 +71,70 @@ def handle_record_execution_attempt(
             "/payload/work_unit_id",
         )
 
-    if not fencing.is_epoch_current(run_document, work_unit_id, epoch):
-        raise GatewayError(
-            ErrorCode.CONFLICT,
-            f"stale worker lease epoch for work unit {work_unit_id!r}",
-            "/payload/epoch",
-        )
-
-    current_lease = fencing.current_lease(run_document, work_unit_id)
-    if current_lease is None or current_lease.get("lease_id") != payload["worker_lease_id"]:
-        raise GatewayError(
-            ErrorCode.CONFLICT,
-            f"worker lease id is not current for work unit {work_unit_id!r}",
-            "/payload/worker_lease_id",
-        )
-
     attempt_path = workspace_root.ai_team / "runs" / "execution-attempts" / f"{attempt_id}.yaml"
     existing_document = None
     if attempt_path.is_file():
         existing_document = yaml.safe_load(attempt_path.read_text(encoding="utf-8"))
+
+    orphan_recovery = bool(payload.get("orphan_recovery"))
+    actor_role = (envelope.get("actor") or {}).get("role_id")
+    if orphan_recovery:
+        if actor_role != "control-plane":
+            raise GatewayError(
+                ErrorCode.UNAUTHORIZED,
+                "orphan_recovery is restricted to control-plane",
+                "/payload/orphan_recovery",
+            )
+        if existing_document is None or existing_document.get("status") != "started":
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                "orphan_recovery requires an existing started attempt",
+                "/target/id",
+            )
+        if payload.get("status") not in {"timed_out", "cancelled"}:
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                "orphan_recovery may only finalize as timed_out or cancelled",
+                "/payload/status",
+            )
+        for field in ("run_id", "execution_id", "work_unit_id", "worker_lease_id", "epoch", "step"):
+            if existing_document.get(field) != payload.get(field):
+                raise GatewayError(
+                    ErrorCode.CONFLICT,
+                    f"orphan_recovery changed immutable field {field!r}",
+                    f"/payload/{field}",
+                )
+        current_lease = fencing.current_lease(run_document, work_unit_id)
+        lease_still_current = (
+            current_lease is not None
+            and current_lease.get("lease_id") == existing_document.get("worker_lease_id")
+            and fencing.is_epoch_current(
+                run_document, work_unit_id, int(existing_document.get("epoch") or 0)
+            )
+        )
+        if lease_still_current:
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                "orphan_recovery refused: worker lease is still current",
+                "/payload/orphan_recovery",
+            )
+    else:
+        if not fencing.is_epoch_current(run_document, work_unit_id, epoch):
+            raise GatewayError(
+                ErrorCode.CONFLICT,
+                f"stale worker lease epoch for work unit {work_unit_id!r}",
+                "/payload/epoch",
+            )
+
+        current_lease = fencing.current_lease(run_document, work_unit_id)
+        if current_lease is None or current_lease.get("lease_id") != payload["worker_lease_id"]:
+            raise GatewayError(
+                ErrorCode.CONFLICT,
+                f"worker lease id is not current for work unit {work_unit_id!r}",
+                "/payload/worker_lease_id",
+            )
+
+    if existing_document is not None and not orphan_recovery:
         expected_revision = envelope["target"].get("expected_revision")
         if existing_document.get("status") != "started" or payload["status"] == "started":
             raise GatewayError(
@@ -117,6 +162,14 @@ def handle_record_execution_attempt(
                     f"execution attempt completion changed immutable field {field!r}",
                     f"/payload/{field}",
                 )
+    elif existing_document is not None and orphan_recovery:
+        expected_revision = envelope["target"].get("expected_revision")
+        if expected_revision != existing_document.get("revision"):
+            raise GatewayError(
+                ErrorCode.CONFLICT,
+                f"execution attempt {attempt_id!r} revision conflict",
+                "/target/expected_revision",
+            )
 
     # Document 6 §7.1/§15 — an attempt beyond a Work Unit's execution_ceiling is
     # rejected by the Core, not merely discouraged.  The sole conditional path

@@ -48,6 +48,63 @@ def changed_files(workspace_root: Path, base_sha: str, result_sha: str) -> list[
     return [line.strip().replace("\\", "/") for line in completed.stdout.splitlines() if line.strip()]
 
 
+def list_uncommitted_files(workspace_root: Path) -> list[str]:
+    """Return paths from ``git status --porcelain`` (uncommitted work only)."""
+    status = _run(workspace_root, ["status", "--porcelain"]).stdout
+    files: list[str] = []
+    for line in status.splitlines():
+        if len(line) < 4:
+            continue
+        meta = line[:2]
+        path_part = line[3:].strip()
+        if " -> " in path_part:
+            path_part = path_part.split(" -> ", 1)[-1]
+        # Quoted paths from git when special chars are present.
+        if path_part.startswith('"') and path_part.endswith('"'):
+            path_part = path_part[1:-1]
+        path = path_part.replace("\\", "/")
+        if path and path not in files:
+            files.append(path)
+        _ = meta
+    return files
+
+
+def create_unverified_wip_commit(
+    workspace_root: Path,
+    *,
+    work_unit_id: str,
+    paths: list[str] | None = None,
+    message_suffix: str = "timeout WIP checkpoint",
+) -> str | None:
+    """Stage pre-validated dirty paths into an explicit unverified WIP commit.
+
+    Callers must boundary-check ``paths`` before invoking this helper. Returns
+    the new HEAD SHA when a commit was created, else None.
+    """
+    to_add = list(paths) if paths is not None else list_uncommitted_files(workspace_root)
+    if not to_add:
+        return None
+    _run(workspace_root, ["add", "--", *to_add])
+    staged = _run(workspace_root, ["diff", "--cached", "--name-only"]).stdout.strip()
+    if not staged:
+        return None
+    message = f"wip({work_unit_id}): {message_suffix} [unverified]"
+    _run(
+        workspace_root,
+        [
+            "-c",
+            "user.email=governed-ai@local",
+            "-c",
+            "user.name=Governed AI",
+            "commit",
+            "--no-gpg-sign",
+            "-m",
+            message,
+        ],
+    )
+    return head_sha(workspace_root)
+
+
 def ensure_work_unit_worktree(
     project_root: Path,
     run_id: str,
@@ -88,37 +145,6 @@ def ensure_work_unit_worktree(
         args.extend([str(path), branch])
     _run(project_root, args)
     return path
-
-
-def create_unverified_wip_commit(
-    workspace_root: Path,
-    *,
-    work_unit_id: str,
-    message_suffix: str = "timeout WIP checkpoint",
-) -> str | None:
-    """Stage allowed dirty changes into an explicit unverified WIP commit.
-
-    Returns the new HEAD SHA when a commit was created, else None.
-    """
-    status = _run(workspace_root, ["status", "--porcelain"]).stdout.strip()
-    if not status:
-        return None
-    _run(workspace_root, ["add", "-A"])
-    message = f"wip({work_unit_id}): {message_suffix} [unverified]"
-    _run(
-        workspace_root,
-        [
-            "-c",
-            "user.email=governed-ai@local",
-            "-c",
-            "user.name=Governed AI",
-            "commit",
-            "--no-gpg-sign",
-            "-m",
-            message,
-        ],
-    )
-    return head_sha(workspace_root)
 
 
 def ensure_integration_worktree(project_root: Path, run_id: str, branch: str) -> Path:
