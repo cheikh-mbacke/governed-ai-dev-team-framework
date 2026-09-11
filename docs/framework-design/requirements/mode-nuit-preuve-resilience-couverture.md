@@ -1,7 +1,8 @@
 # Mode nuit — état des lieux de la preuve de résilience (§15)
 
-> **Verdict L4 : non validé.**  
-> Un **essai L4 réel a échoué** (exports feedback du 10–11 septembre 2026).  
+> **Verdict L4 : non validé.**
+>
+> Un **essai L4 réel a échoué** (exports feedback du 10–11 septembre 2026).
 > La résilience « mode nuit » **ne doit pas** être présentée comme éprouvée L4.
 > Les tests unitaires / d’intégration ci-dessous prouvent des *règles et
 > mécanismes*, pas un run non supervisé de plusieurs heures.

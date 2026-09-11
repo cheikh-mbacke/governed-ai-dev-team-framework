@@ -1844,3 +1844,31 @@ def test_context_package_ref_rejects_path_escape(workspace: Workspace) -> None:
     with pytest.raises(ValueError, match="relative|context-packages"):
         _canonical_context_package_path(workspace, r"C:\Windows\system32\drivers\etc\hosts")
 
+
+def test_tick_blocks_when_context_package_fails_schema_or_role_mismatch(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-CTX-SCHEMA", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="ready")
+    packages = workspace.ai_team / "context-packages"
+    # Schema-invalid: only id — missing work_unit, role, items.
+    (packages / "CTX-WU-A.yaml").write_text("id: CTX-WU-A\n", encoding="utf-8")
+    adapter = FakeAdapter([_succeeded_result()])
+
+    started = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-SCHEMA", adapter=adapter, worker_id="w1"
+    )
+    assert started.action == "started_work_unit"
+    blocked = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-CTX-SCHEMA", adapter=adapter, worker_id="w1"
+    )
+    assert blocked.action == "paused_work_unit"
+    assert adapter.requests == []
+    attempt = yaml.safe_load(
+        next((workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert attempt["status"] == "blocked"
+    assert "schema" in str(attempt.get("summary") or "").lower()

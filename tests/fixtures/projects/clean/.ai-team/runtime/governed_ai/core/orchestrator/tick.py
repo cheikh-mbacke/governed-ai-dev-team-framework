@@ -178,9 +178,17 @@ def _canonical_context_package_path(workspace: Workspace, ref: str) -> Path:
 
 
 def _resolve_context_package_ref(
-    workspace: Workspace, wu_document: dict[str, Any], *, procedure_id: str
+    workspace: Workspace,
+    wu_document: dict[str, Any],
+    *,
+    procedure_id: str,
+    role_id: str,
 ) -> tuple[str | None, str | None]:
     """Return (request-relative path, error). Error set when context is required but unusable."""
+    from jsonschema import Draft202012Validator, FormatChecker
+
+    from governed_ai.core.persistence.io import load_json
+
     required = _procedure_required_inputs(workspace, procedure_id)
     needs_context = "context_package" in required
     raw_ref = wu_document.get("context_package_ref")
@@ -208,9 +216,51 @@ def _resolve_context_package_ref(
         if needs_context:
             return None, f"context_package invalid: {exc}"
         return None, None
-    if needs_context and (not isinstance(document, dict) or not document.get("id")):
-        return None, "context_package invalid: missing id"
-    if needs_context and isinstance(document, dict):
+    if not isinstance(document, dict):
+        if needs_context:
+            return None, "context_package invalid: document must be a mapping"
+        return None, None
+
+    schema_path = workspace.ai_team / "schemas" / "context-package.schema.json"
+    try:
+        schema = load_json(schema_path)
+        errors = sorted(
+            Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(
+                document
+            ),
+            key=lambda error: list(error.path),
+        )
+    except (OSError, ValueError, TypeError) as exc:
+        if needs_context:
+            return None, f"context_package schema unavailable: {exc}"
+        return None, None
+    if errors:
+        first = errors[0]
+        pointer = "/" + "/".join(str(part) for part in first.path) if first.path else "/"
+        message = f"context_package schema invalid at {pointer}: {first.message}"
+        if needs_context:
+            return None, message
+        return None, None
+
+    work_unit_id = str(wu_document.get("id") or "")
+    if str(document.get("work_unit") or "") != work_unit_id:
+        message = (
+            f"context_package work_unit {document.get('work_unit')!r} "
+            f"does not match work unit {work_unit_id!r}"
+        )
+        if needs_context:
+            return None, message
+        return None, None
+    if str(document.get("role") or "") != str(role_id):
+        message = (
+            f"context_package role {document.get('role')!r} "
+            f"does not match dispatched role {role_id!r}"
+        )
+        if needs_context:
+            return None, message
+        return None, None
+
+    if needs_context:
         evaluation = evaluate_context_package_completeness(
             workspace_root=workspace.root,
             context_document=document,
@@ -1284,7 +1334,7 @@ def run_scheduling_tick(
         if base_sha is not None:
             request["base_sha"] = base_sha
         context_ref, context_error = _resolve_context_package_ref(
-            workspace, wu_document, procedure_id=procedure_id
+            workspace, wu_document, procedure_id=procedure_id, role_id=role_id
         )
         if context_error:
             result = {

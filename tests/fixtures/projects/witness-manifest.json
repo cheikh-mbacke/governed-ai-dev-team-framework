@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-11T12:48:11+00:00",
+  "generated_at": "2026-09-11T13:22:34+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -249,7 +249,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "5a18b6e47e2a7dece298392858b1e33534aa0b15c9be2f99576f2cca5d4873c2"
+          "sha256": "b3ef34ab59ed573437a58f295b6ae8fa9c04ad961ffaccdff47b8a14c7dd4440"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -329,7 +329,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/checks.py",
-          "sha256": "6b575abcb4bde81b5fd88590a64a0f493656f24825905cbc837097e836657330"
+          "sha256": "b3cadf97d0518526fbfd4efa479553dc11eef27a068f5233b771dac3522be000"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/execute.py",
@@ -1057,11 +1057,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/git_workspace.py",
-          "sha256": "a3cbf9ec48b06dc7f25e890346c770493000e0e660de95e80940ed4581091c79"
+          "sha256": "b154ea9978d04dd83812940dcb473cd6a3973cc2f0ce24bcb76dca4ffe5e4ab2"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-          "sha256": "3a7ba227716ba30b968c97d11338db63c34ace36f23b27922b3082ed1375a0bd"
+          "sha256": "bde2de298530e26fdcd344ccd6688683b383e5aad7f127f363e2bb10f8113499"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -1940,7 +1940,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "247bd97dfd6c54e16c5ece955b52959352f10907f1c0d44d5ee833224839a432"
+          "sha256": "76a01e1dc3a15c94862f37b942f8de190090075a7d32875e00d99e59296fcd33"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2424,7 +2424,7 @@
         },
         {
           "path": "adapters/cursor/runtime/checks.py",
-          "sha256": "6b575abcb4bde81b5fd88590a64a0f493656f24825905cbc837097e836657330"
+          "sha256": "b3cadf97d0518526fbfd4efa479553dc11eef27a068f5233b771dac3522be000"
         },
         {
           "path": "adapters/cursor/runtime/execute.py",
@@ -3276,11 +3276,11 @@
         },
         {
           "path": "src/governed_ai/core/orchestrator/git_workspace.py",
-          "sha256": "a3cbf9ec48b06dc7f25e890346c770493000e0e660de95e80940ed4581091c79"
+          "sha256": "b154ea9978d04dd83812940dcb473cd6a3973cc2f0ce24bcb76dca4ffe5e4ab2"
         },
         {
           "path": "src/governed_ai/core/orchestrator/tick.py",
-          "sha256": "3a7ba227716ba30b968c97d11338db63c34ace36f23b27922b3082ed1375a0bd"
+          "sha256": "bde2de298530e26fdcd344ccd6688683b383e5aad7f127f363e2bb10f8113499"
         },
         {
           "path": "src/governed_ai/core/persistence/__init__.py",

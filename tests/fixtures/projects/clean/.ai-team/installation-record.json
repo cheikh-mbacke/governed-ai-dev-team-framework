@@ -735,11 +735,11 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/git_workspace.py",
-        "installed_sha256": "sha256:a3cbf9ec48b06dc7f25e890346c770493000e0e660de95e80940ed4581091c79"
+        "installed_sha256": "sha256:b154ea9978d04dd83812940dcb473cd6a3973cc2f0ce24bcb76dca4ffe5e4ab2"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-        "installed_sha256": "sha256:3a7ba227716ba30b968c97d11338db63c34ace36f23b27922b3082ed1375a0bd"
+        "installed_sha256": "sha256:bde2de298530e26fdcd344ccd6688683b383e5aad7f127f363e2bb10f8113499"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -1214,7 +1214,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/checks.py",
-          "installed_sha256": "sha256:6b575abcb4bde81b5fd88590a64a0f493656f24825905cbc837097e836657330"
+          "installed_sha256": "sha256:b3cadf97d0518526fbfd4efa479553dc11eef27a068f5233b771dac3522be000"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/execute.py",

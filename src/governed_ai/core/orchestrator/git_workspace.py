@@ -49,23 +49,38 @@ def changed_files(workspace_root: Path, base_sha: str, result_sha: str) -> list[
 
 
 def list_uncommitted_files(workspace_root: Path) -> list[str]:
-    """Return paths from ``git status --porcelain`` (uncommitted work only)."""
-    status = _run(workspace_root, ["status", "--porcelain"]).stdout
+    """Return paths from ``git status --porcelain=v1 -z`` (uncommitted work only).
+
+    Rename/copy entries contribute **both** the source and destination paths so a
+    move from a protected path into an allowed path cannot evade the boundary
+    check by keeping only the destination.
+    """
+    status = _run(workspace_root, ["status", "--porcelain=v1", "-z"]).stdout
     files: list[str] = []
-    for line in status.splitlines():
-        if len(line) < 4:
+    entries = status.split("\0")
+    index = 0
+    while index < len(entries):
+        entry = entries[index]
+        index += 1
+        if not entry:
             continue
-        meta = line[:2]
-        path_part = line[3:].strip()
-        if " -> " in path_part:
-            path_part = path_part.split(" -> ", 1)[-1]
-        # Quoted paths from git when special chars are present.
-        if path_part.startswith('"') and path_part.endswith('"'):
-            path_part = path_part[1:-1]
-        path = path_part.replace("\\", "/")
-        if path and path not in files:
-            files.append(path)
-        _ = meta
+        if len(entry) < 3:
+            continue
+        meta = entry[:2]
+        # Porcelain v1: "XY <path>" (space after status letters).
+        path_field = entry[3:] if entry[2:3] == " " else entry[2:]
+        paths = [path_field]
+        if "R" in meta or "C" in meta:
+            # -z emits an extra NUL-terminated destination path after the source.
+            if index < len(entries) and entries[index]:
+                paths.append(entries[index])
+                index += 1
+        for raw in paths:
+            path = raw.replace("\\", "/").strip()
+            if path.startswith('"') and path.endswith('"'):
+                path = path[1:-1]
+            if path and path not in files:
+                files.append(path)
     return files
 
 

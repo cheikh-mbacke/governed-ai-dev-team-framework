@@ -214,9 +214,9 @@ def test_unattended_preflight_legacy_acknowledge_without_typed(
     monkeypatch.delenv("GOVERNED_AI_PREFLIGHT_ATTESTATION", raising=False)
     monkeypatch.setenv("GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT", "1")
     report = collect_preflight_report(REPO_ROOT, unattended=True)
-    assert report["global_allowlist"]["status"] == "pass"
-    assert report["execution_surface"]["status"] == "pass"
-    assert "deprecated" in report["global_allowlist"]["detail"]
+    assert report["global_allowlist"]["status"] == "manual"
+    assert report["execution_surface"]["status"] == "manual"
+    assert "no longer accepted" in report["global_allowlist"]["detail"]
     assert "GOVERNED_AI_PREFLIGHT_ATTESTATION" in report["global_allowlist"]["detail"]
     assert "preflight_attestation" not in report
 

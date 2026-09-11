@@ -108,3 +108,17 @@ def test_list_uncommitted_files_and_wip_commit_only_stages_given_paths(tmp_path:
     remaining = list_uncommitted_files(root)
     assert "forbidden.txt" in remaining
     assert "allowed.txt" not in remaining
+
+
+def test_list_uncommitted_files_includes_rename_source_and_destination(
+    tmp_path: Path,
+) -> None:
+    root = _repository(tmp_path)
+    protected = root / "protected.txt"
+    protected.write_text("secret\n", encoding="utf-8")
+    _git(root, "add", "protected.txt")
+    _git(root, "commit", "-m", "test: protected")
+    _git(root, "mv", "protected.txt", "allowed.txt")
+    dirty = list_uncommitted_files(root)
+    assert "protected.txt" in dirty
+    assert "allowed.txt" in dirty

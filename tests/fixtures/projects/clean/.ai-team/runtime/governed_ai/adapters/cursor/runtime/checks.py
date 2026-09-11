@@ -194,10 +194,9 @@ def _parse_preflight_attestation() -> tuple[dict[str, Any] | None, str | None]:
 def _apply_unattended_manual_attestation(report: dict[str, Any]) -> None:
     """Resolve Cursor-UI-only manual checks for unattended preflight.
 
-    Prefer typed ``GOVERNED_AI_PREFLIGHT_ATTESTATION`` when present and valid.
-    Legacy ``GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1`` remains a deprecated
-    blanket pass only when no typed attestation is available (or for
-    ``approval_mode=unknown`` on ``global_allowlist``).
+    Only typed ``GOVERNED_AI_PREFLIGHT_ATTESTATION`` with
+    ``approval_mode`` in ``allowlist|run_everything`` authorizes. Legacy
+    ``GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1`` is rejected (blocking).
     """
     attestation, parse_error = _parse_preflight_attestation()
     legacy = os.environ.get("GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT") == "1"
@@ -208,7 +207,7 @@ def _apply_unattended_manual_attestation(report: dict[str, Any]) -> None:
     base_surface = report["execution_surface"]["detail"]
     migrate_hint = (
         "set GOVERNED_AI_PREFLIGHT_ATTESTATION to a JSON object with "
-        "approval_mode (allowlist|run_everything|unknown), source, and attested_at"
+        "approval_mode (allowlist|run_everything), source, and attested_at"
     )
 
     if attestation is not None:
@@ -231,26 +230,14 @@ def _apply_unattended_manual_attestation(report: dict[str, Any]) -> None:
                 ),
             }
         else:
-            # approval_mode=unknown — still blocks unless deprecated legacy env.
-            if legacy:
-                report["global_allowlist"] = {
-                    "status": "pass",
-                    "detail": (
-                        f"{base_allowlist} (deprecated: approval_mode=unknown with "
-                        "GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1; migrate to "
-                        "GOVERNED_AI_PREFLIGHT_ATTESTATION with allowlist or "
-                        "run_everything)"
-                    ),
-                }
-            else:
-                report["global_allowlist"] = {
-                    "status": "manual",
-                    "detail": (
-                        f"{base_allowlist} — approval_mode=unknown does not satisfy "
-                        "unattended global_allowlist; attest allowlist or "
-                        "run_everything via GOVERNED_AI_PREFLIGHT_ATTESTATION"
-                    ),
-                }
+            report["global_allowlist"] = {
+                "status": "manual",
+                "detail": (
+                    f"{base_allowlist} — approval_mode=unknown does not satisfy "
+                    "unattended global_allowlist; attest allowlist or "
+                    "run_everything via GOVERNED_AI_PREFLIGHT_ATTESTATION"
+                ),
+            }
 
         if mode in {"allowlist", "run_everything"}:
             report["execution_surface"] = {
@@ -270,26 +257,25 @@ def _apply_unattended_manual_attestation(report: dict[str, Any]) -> None:
             }
         return
 
-    # No valid typed attestation.
+    # No valid typed attestation — legacy blanket env is no longer authorizing.
     detail_suffix = (
         f" — {parse_error}; {migrate_hint}"
         if parse_error
         else f" — {migrate_hint}, or OpenRun will refuse this check"
     )
     if legacy:
-        deprecated = (
-            " (deprecated human-attested via "
-            "GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1; migrate to "
-            "GOVERNED_AI_PREFLIGHT_ATTESTATION — approval_mode unknown is also "
-            "deprecated)"
+        rejected = (
+            " — GOVERNED_AI_ACKNOWLEDGE_MANUAL_PREFLIGHT=1 is no longer accepted; "
+            "set GOVERNED_AI_PREFLIGHT_ATTESTATION with approval_mode "
+            "allowlist|run_everything"
         )
         report["global_allowlist"] = {
-            "status": "pass",
-            "detail": f"{base_allowlist}{deprecated}",
+            "status": "manual",
+            "detail": f"{base_allowlist}{rejected}",
         }
         report["execution_surface"] = {
-            "status": "pass",
-            "detail": f"{base_surface}{deprecated}",
+            "status": "manual",
+            "detail": f"{base_surface}{rejected}",
         }
         return
 
