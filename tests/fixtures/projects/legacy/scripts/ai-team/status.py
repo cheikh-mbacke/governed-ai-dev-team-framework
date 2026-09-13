@@ -24,6 +24,7 @@ LANG = project_language(ROOT)
 bootstrap_runtime(ROOT)
 
 from governed_ai.core.commands.errors import GatewayError, exit_code_for
+from governed_ai.core.orchestrator.progress import evaluate_run_progress
 from governed_ai.core.workspace import Workspace
 from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
 from governed_ai.notifications.config import load_smtp_settings, public_smtp_status
@@ -103,6 +104,13 @@ for run in active_or_recent_runs:
         f"  {run.get('id')} status={run.get('status')} "
         f"preset={run.get('autonomy_preset')} stop={run.get('stop_condition')}"
     )
+    if run.get("status") == "active":
+        progress = evaluate_run_progress(AI, run)
+        print(
+            f"    progress={progress['state']} "
+            f"last_progress={progress['last_progress_at']} "
+            f"idle_minutes={progress['minutes_without_progress']}"
+        )
     report_path = AI / "runs" / "morning-reports" / f"{run.get('id')}.json"
     if report_path.is_file():
         try:

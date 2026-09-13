@@ -14,6 +14,7 @@ from typing import Any
 
 import yaml
 
+from governed_ai.core.domain.run.autonomy_policy import is_unattended_preset
 from governed_ai.core.workspace import Workspace
 from governed_ai.notifications.config import SmtpSettings, load_smtp_settings, public_smtp_status
 from governed_ai.notifications.smtp_transport import send_email
@@ -78,7 +79,7 @@ def _delivery(settings: SmtpSettings, event_type: str) -> str:
     value = settings.event_delivery.get(event_type, "off")
     if value != "profile":
         return value
-    if settings.autonomy_preset.startswith("unattended_"):
+    if is_unattended_preset(settings.autonomy_preset):
         return "digest"
     return "immediate"
 

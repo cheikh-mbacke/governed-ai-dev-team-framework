@@ -139,6 +139,39 @@ python scripts/ai-team/status.py       # résumé gates / WU
 python scripts/ai-team/notify.py status # état public SMTP / outbox, sans secret
 ```
 
+## Mode nuit : lancement et surveillance
+
+Un Run non supervisé ne doit être lancé qu'après un préflight entièrement
+machine-readable et passant. Pour Cursor, attestez explicitement le mode
+d'approbation (`allowlist` ou `run_everything`) et activez le lancement natif :
+
+```bash
+python scripts/ai-team/preflight.py
+GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1 \
+  python scripts/ai-team/orchestrate.py --run-id RUN-... --workers 2
+```
+
+`orchestrate.py` démarre automatiquement un watchdog indépendant pour les Runs
+`unattended_*`. Le watchdog distingue un processus vivant d'un progrès utile,
+ferme explicitement un Run en cas de crash ou de stagnation, puis tente une
+récupération bornée avec le grant existant. Les stops durs (kill switch,
+expiration/violation d'autorisation, secret interdit, environnement protégé,
+corruption d'état) restent `needs_human` et ne sont jamais contournés.
+
+Commandes opérateur :
+
+```bash
+python scripts/ai-team/status.py
+python scripts/ai-team/night_watchdog.py --run-id RUN-... --launch
+python scripts/ai-team/night_recovery.py --run-id RUN-... --launch
+```
+
+Utilisez `--no-watchdog` seulement pour un diagnostic supervisé. La présence
+d'un PID, d'un heartbeat ou d'une lease ne signifie pas à elle seule que le Run
+progresse : `status.py` affiche séparément `working`, `progressing` ou
+`stalled_no_progress`. Ces mécanismes sont testés comme règles ; ils ne
+constituent pas encore une validation L4 multi-heures.
+
 ## Feedback et observations
 
 ```bash

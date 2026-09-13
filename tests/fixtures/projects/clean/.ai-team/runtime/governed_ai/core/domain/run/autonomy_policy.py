@@ -43,6 +43,11 @@ DEFAULT_UNKNOWN_STEP_TIMEOUT_SECONDS = 600
 HARD_MAX_TIMEOUT_SECONDS = 7200
 
 
+def is_unattended_preset(value: object) -> bool:
+    """Return whether ``value`` selects any governed unattended policy."""
+    return str(value or "") in UNATTENDED_PRESETS
+
+
 def resolve_project_preset(autonomy: dict[str, Any]) -> str:
     """Resolve the named preset once; legacy ``level`` is compatibility input only.
 
@@ -168,6 +173,8 @@ def resolve_effective_policy(
             "repeated_systemic_failure",
             "worker_isolation_unguaranteed",
             "no_dispatchable_work",
+            "orchestrator_process_failure",
+            "stalled_no_progress",
         ],
         "global_stop_behavior": "immediate_alert_plus_stop",
         "human_feedback": {

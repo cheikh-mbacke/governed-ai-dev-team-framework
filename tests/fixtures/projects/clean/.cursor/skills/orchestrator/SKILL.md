@@ -36,7 +36,10 @@ Refuse runtime activation when G1 is not approved.
    or absent human response is never a reason to stop an unattended Run.
 2. Determine READY Work Units whose dependencies are satisfied.
 3. Respect WIP and high-risk concurrency limits.
-4. For each selected Work Unit, derive staffing from risk, touched areas, permissions and policy.
+4. For each selected Work Unit, derive staffing from its explicit
+   `staffing_proposal`, compiled Context Package role and `zone.area` (in that
+   order). Never default a frontend Work Unit to `backend-developer` merely
+   because implementation uses the shared `implement-work-unit` procedure.
 5. Build or refresh its Context Package using `/build-context`.
 6. Delegate implementation to the appropriate developer subagent. Use isolated worktrees/environments for concurrent writers when available.
 7. Require a coherent Work Unit commit and exact SHA in the developer handoff;
@@ -63,6 +66,9 @@ Refuse runtime activation when G1 is not approved.
 19. Dispatch configured e-mail notifications after each tick and a grouped
     digest at Run completion. SMTP failure is recorded for retry and never
     changes scheduling, gates, Work Unit state or the Run result.
+20. For unattended Runs, keep the independent `night_watchdog.py` active.
+    Report useful progress separately from PID/heartbeat liveness and treat
+    `stalled_no_progress` as a terminal Run condition, never as healthy idle.
 
 ## Escalation
 
@@ -87,3 +93,8 @@ Investigate authoritative sources before asking the human. If no existing decisi
   Record both when a blocker is also evidence of a framework-level friction.
 - E-mail is a projection only. Never place SMTP credentials in context,
   events, prompts or logs, and never treat successful delivery as authorization.
+- Every transport-level check required by the evidence gate must be included
+  verbatim in the agent request/prompt. Do not rely on an undocumented alias.
+- Product agents never write `.ai-team/work-units/**`, `.ai-team/state/**` or
+  `.ai-team/runs/**`; those transitions belong to the Control Plane even if a
+  stale execution-envelope artifact lists such a path.

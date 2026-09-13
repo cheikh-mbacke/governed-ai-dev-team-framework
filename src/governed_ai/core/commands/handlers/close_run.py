@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
 import yaml
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.domain.run.morning_report import build_morning_report
 from governed_ai.core.domain.run.state_machine import is_transition_allowed
@@ -97,7 +97,14 @@ def handle_close_run(
             return []
         items: list[dict[str, Any]] = []
         for path in sorted(directory.glob("*.yaml")):
-            item = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            try:
+                item = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            except (OSError, yaml.YAMLError):
+                # A damaged diagnostic/event file must not prevent the Run
+                # itself from reaching a terminal state and notifying humans.
+                continue
+            if not isinstance(item, dict):
+                continue
             if item.get("run_id") == run_id or relative == "events":
                 items.append(item)
         return items

@@ -136,9 +136,11 @@ class ExecutionRequest(TypedDict, total=False):
     execution_workspace: str
     work_unit_snapshot: dict[str, object]
     kill_switch_path: str
+    run_state_path: str
     allowed_shell_commands: list[str]
     allowed_paths: list[str]
     accessible_secrets: list[str]
+    required_checks: list[str]
     timeout_seconds: float
 
 

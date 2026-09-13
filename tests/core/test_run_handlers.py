@@ -766,6 +766,33 @@ def test_close_run_stopped_with_recognized_condition_emits_immediate_alert(
     assert event["details"]["stop_condition"] == "fencing_conflict"
 
 
+def test_close_run_survives_a_malformed_unrelated_event(
+    run_workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(run_workspace)
+    gateway.execute_command(_open_run("RUN-BAD-EVENT", status="active"))
+    events_dir = run_workspace.ai_team / "events"
+    events_dir.mkdir(parents=True, exist_ok=True)
+    (events_dir / "BROKEN.yaml").write_text("details: [unterminated", encoding="utf-8")
+
+    receipt, exit_code = gateway.execute_command(
+        _close_run(
+            "RUN-BAD-EVENT",
+            expected_revision=1,
+            status="failed",
+            stop_condition="orchestrator_process_failure",
+        )
+    )
+    assert exit_code == 0, receipt
+    document = yaml.safe_load(
+        (run_workspace.ai_team / "runs" / "RUN-BAD-EVENT.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert document["status"] == "failed"
+    assert document["stop_condition"] == "orchestrator_process_failure"
+
+
 def test_convergence_loop_stops_after_maximum_attempts_per_step(run_workspace: Workspace) -> None:
     """Document 6 §9.3 — the (default) 3rd attempt at a step is the last one allowed."""
     gateway = CommandGateway(run_workspace)

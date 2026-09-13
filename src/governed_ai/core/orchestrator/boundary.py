@@ -11,21 +11,10 @@ from __future__ import annotations
 import fnmatch
 from typing import Any
 
-PROTECTED_PATH_PREFIXES = (
-    ".ai-team/constitution/",
-    ".ai-team/schemas/",
-    ".ai-team/contracts/",
-    ".ai-team/run-authorization-grants/",
-    ".ai-team/runs/",
-    ".ai-team/state/",
+from governed_ai.core.domain.run.path_policy import (
+    CONTROL_PLANE_ONLY_PATH_PREFIXES,
+    normalize_repo_path,
 )
-
-
-def normalize_repo_path(path: str) -> str:
-    normalized = path.replace("\\", "/")
-    while normalized.startswith("./"):
-        normalized = normalized[2:]
-    return normalized.lstrip("/")
 
 
 def path_is_allowed(path: str, patterns: list[str] | tuple[str, ...]) -> bool:
@@ -75,9 +64,7 @@ def governed_output_patterns(work_unit_id: str) -> list[str]:
 
 def is_forbidden_governance_mutation(path: str) -> bool:
     normalized = normalize_repo_path(path)
-    if normalized.startswith(".ai-team/work-units/"):
-        return True
-    return any(normalized.startswith(prefix) for prefix in PROTECTED_PATH_PREFIXES)
+    return any(normalized.startswith(prefix) for prefix in CONTROL_PLANE_ONLY_PATH_PREFIXES)
 
 
 def is_governed_output(path: str, *, work_unit_id: str) -> bool:

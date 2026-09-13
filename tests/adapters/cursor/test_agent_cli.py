@@ -71,6 +71,27 @@ def test_build_prompt_includes_work_unit_fields(tmp_path: Path) -> None:
     assert "orchestrator" in prompt
 
 
+def test_build_prompt_names_required_checks_and_reserves_control_plane_paths(
+    tmp_path: Path,
+) -> None:
+    _write_work_unit(tmp_path)
+    request = _sample_request()
+    request["required_checks"] = ["tests"]
+    request["allowed_paths"] = [
+        "src/**",
+        ".ai-team/work-units/**",
+        ".ai-team/state/**",
+    ]
+    prompt = agent_cli.build_prompt(tmp_path, request)
+    assert "Required governed check name" in prompt
+    assert "['tests']" in prompt
+    assert "src/**" in prompt
+    assert ".ai-team/work-units/**" not in prompt.split("Allowed paths:", 1)[1].split(
+        "Context package:", 1
+    )[0]
+    assert "Control Plane" in prompt
+
+
 def test_build_prompt_tolerates_missing_work_unit_file(tmp_path: Path) -> None:
     prompt = agent_cli.build_prompt(tmp_path, _sample_request())
     assert "WU-AGENT-TEST" in prompt
@@ -327,6 +348,47 @@ def test_running_agent_is_terminated_when_grant_is_revoked(
     )
     assert completed is None
     assert reason == "authorization grant was revoked"
+    assert terminated == [process]
+
+
+def test_running_agent_is_terminated_when_owning_run_stops(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    grant_path = tmp_path / "grant.json"
+    grant_path.write_text(
+        '{"revoked_at":null,"expires_at":"2099-01-01T00:00:00+00:00"}',
+        encoding="utf-8",
+    )
+    run_path = tmp_path / "run.yaml"
+    run_path.write_text("status: stopped\n", encoding="utf-8")
+
+    class FakeProcess:
+        returncode = 143
+        pid = 4243
+
+        def poll(self):
+            return None
+
+        def communicate(self, timeout=None):
+            return "", ""
+
+    process = FakeProcess()
+    terminated: list[object] = []
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(
+        agent_cli, "_terminate_process_tree", lambda proc: terminated.append(proc)
+    )
+    completed, reason = agent_cli._run_agent_process(
+        ["agent"],
+        project_root=tmp_path,
+        timeout_seconds=10,
+        kill_switch_path=grant_path,
+        run_state_path=run_path,
+        allowed_shell_commands=[],
+        allowed_paths=["src/"],
+    )
+    assert completed is None
+    assert reason == "owning Run is stopped"
     assert terminated == [process]
 
 

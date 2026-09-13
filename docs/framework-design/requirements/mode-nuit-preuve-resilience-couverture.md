@@ -51,6 +51,11 @@ Sur le dernier snapshot du projet client observé (anonymisé) :
 - preuves AC-* rejetées faute du check nommé exactement `implementation` ;
 - écritures `.ai-team/evidence/**` refusées comme hors scope ;
 - run resté `idle` avec attempts `started` orphelines.
+- processus orchestrateur vivant mais sans progrès utile pendant plusieurs heures ;
+- checks QA/audit valides rejetés à cause d'un vocabulaire de transport caché ;
+- rôle d'implémentation backend imposé à des Work Units frontend ;
+- grant annonçant des chemins de gouvernance ensuite refusés par le boundary ;
+- crash orchestrateur non terminal et absence de recovery externe autonome.
 
 ### 0.3 Correctifs code ≠ validation L4
 
@@ -68,6 +73,11 @@ archivé, le statut reste **échec / non validé**.
 | Evidence gate nom `implementation` | — | AC-* + SHA + artefacts | Idem |
 | Boundary evidence gouvernée | — | allowlist evidence WU | Idem |
 | Idle / orphans / attente humaine | #1 / #14 | recovery + `no_dispatchable_work` + `awaiting_human` | Redémarrage process hôte réel |
+| Liveness sans progrès | #1 / #3 / #12 | `stalled_no_progress` ignore les heartbeats seuls | Witness multi-heures post-fix |
+| Crash du process | #1 / #12 | fermeture `orchestrator_process_failure` + watchdog externe | Kill process hôte réel |
+| Rôle frontend ignoré | staffing | rôle dérivé staffing/contexte/zone | Dispatch Cursor réel post-fix |
+| Double vocabulaire de checks | qualité résultat | aliases bornés + `required_checks` explicites dans le prompt | Handoffs réels post-fix |
+| Grant/boundary contradictoires | #8 / #9 | chemins Control Plane filtrés à l'émission et au dispatch | Grant réel post-fix |
 
 ### 0.4 Conditions d’un nouvel essai L4
 
@@ -86,6 +96,9 @@ suivantes doivent être réunies et archivées :
    recovery des `started` orphelines au redémarrage process.
 6. Export feedback anonymisé déposé sous `tests/fixtures/learning/` (ou
    successeur) + mise à jour de ce document avec le lien et le SHA du witness.
+7. Watchdog indépendant observé : détection du process mort ou de
+   `stalled_no_progress`, récupération plafonnée, puis résultat explicite
+   `recovered`, `needs_human` ou `abandoned`.
 
 Sans ce paquet de preuves, toute formulation du type « résilience L4 validée »
 est **interdite**.
@@ -109,9 +122,9 @@ tableau n’autorise à dire que le mode nuit est validé L4.**
 
 | # | Scénario (§15) | Règle couverte (auto) | Preuve existante | Manque pour L4 réel |
 |---|---|---|---|---|
-| 1 | Crash / redémarrage | partielle (tick) | reprise checkpoint ; recovery orphans | Kill process hôte `orchestrate.py` |
+| 1 | Crash / redémarrage | partielle (process + tick) | reprise checkpoint ; recovery orphans ; watchdog/recovery plafonné | Kill process hôte `orchestrate.py` |
 | 2 | Timeout agent | partielle | watchdog ; timeouts policy ; WIP post-boundary | Timeout long réel + WIP CLI |
-| 3 | Perte de heartbeat | partielle (temps simulé) | réattribution lease | Attente réelle `stalled_after_minutes` |
+| 3 | Perte de heartbeat / faux healthy | partielle (temps simulé) | réattribution lease ; liveness distincte du progrès | Attente réelle `stalled_after_minutes` |
 | 4 | Fencing | oui (Core) | tests fencing | — |
 | 5 | Conflit Git | oui | merge abort réel | — |
 | 6 | Flaky vs systémique | partielle | taxonomie timeout non systémique | Witness 2 WU |

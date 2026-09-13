@@ -25,8 +25,12 @@ Work Unit.
 from __future__ import annotations
 
 import argparse
+import json
+import os
+import subprocess
 import sys
 import threading
+import uuid
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -34,17 +38,151 @@ from install_paths import bootstrap_runtime, import_adapters_cursor
 
 bootstrap_runtime(_REPO_ROOT)
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import (
     GatewayError,
     exit_code_for,
 )
 from governed_ai.core.commands.gateway import CommandGateway
+from governed_ai.core.domain.run.autonomy_policy import is_unattended_preset
+from governed_ai.core.orchestrator.progress import evaluate_run_progress
 from governed_ai.core.orchestrator.tick import run_scheduling_tick
 from governed_ai.core.workspace import Workspace
 from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
 from governed_ai.notifications.service import dispatch_notifications
 
 _print_lock = threading.Lock()
+
+
+def _process_record_path(workspace: Workspace, run_id: str) -> Path:
+    return workspace.ai_team / "runs" / "processes" / f"{run_id}.json"
+
+
+def _write_process_record(
+    workspace: Workspace,
+    run_id: str,
+    *,
+    status: str,
+    worker_ids: list[str],
+    last_action: str | None = None,
+) -> None:
+    path = _process_record_path(workspace, run_id)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return
+    run_path = workspace.ai_team / "runs" / f"{run_id}.yaml"
+    progress = None
+    try:
+        import yaml
+
+        run_document = yaml.safe_load(run_path.read_text(encoding="utf-8")) or {}
+        progress = evaluate_run_progress(workspace.ai_team, run_document)
+    except (OSError, yaml.YAMLError):
+        progress = {"state": "unknown"}
+    document = {
+        "run_id": run_id,
+        "pid": os.getpid(),
+        "status": status,
+        "heartbeat_at": datetime.now(UTC).isoformat(),
+        "worker_ids": worker_ids,
+        "last_action": last_action,
+        "progress": progress,
+    }
+    temporary = path.with_suffix(".tmp")
+    try:
+        temporary.write_text(json.dumps(document, indent=2), encoding="utf-8")
+        temporary.replace(path)
+    except OSError:
+        # Operational telemetry must never become a new scheduler failure.
+        pass
+
+
+def _close_run_after_process_failure(
+    gateway: CommandGateway,
+    workspace: Workspace,
+    run_id: str,
+    errors: list[str],
+) -> bool:
+    import yaml
+
+    run_path = workspace.ai_team / "runs" / f"{run_id}.yaml"
+    try:
+        run_document = yaml.safe_load(run_path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return False
+    if run_document.get("status") != "active":
+        return True
+    token = uuid.uuid4().hex
+    receipt, exit_code = gateway.execute_command(
+        {
+            "protocol_version": "1.0",
+            "command_id": f"CMD-orchestrator-failure-{token}",
+            "idempotency_key": f"idem-orchestrator-failure-{token}",
+            "correlation_id": run_id,
+            "type": "CloseRun",
+            "issued_at": datetime.now(UTC).isoformat(),
+            "actor": {
+                "kind": "role",
+                "execution_id": f"EXE-orchestrator-failure-{token[:8]}",
+                "role_id": "control-plane",
+                "bundle_version": "1.0.0",
+                "adapter_id": "cursor",
+            },
+            "target": {
+                "kind": "run",
+                "id": run_id,
+                "expected_revision": run_document["revision"],
+            },
+            "payload": {
+                "status": "failed",
+                "reason": "; ".join(errors)[:2000],
+                "stop_condition": "orchestrator_process_failure",
+            },
+        }
+    )
+    if exit_code != 0:
+        print(f"Unable to close failed Run: {receipt.get('errors')}", file=sys.stderr)
+        return False
+    dispatch_notifications(workspace, include_digest=True)
+    return True
+
+
+def _start_watchdog(
+    workspace: Workspace,
+    run_id: str,
+    *,
+    workers: int,
+    interval_seconds: float,
+) -> None:
+    command = [
+        sys.executable,
+        str(workspace.root / "scripts" / "ai-team" / "night_watchdog.py"),
+        "--run-id",
+        run_id,
+        "--interval-seconds",
+        str(max(5.0, interval_seconds)),
+        "--workers",
+        str(workers),
+        "--launch",
+    ]
+    environment = dict(os.environ)
+    environment["GOVERNED_AI_WATCHDOG_CHILD"] = "1"
+    kwargs: dict = {
+        "cwd": str(workspace.root),
+        "env": environment,
+        "stdin": subprocess.DEVNULL,
+        "stdout": subprocess.DEVNULL,
+        "stderr": subprocess.DEVNULL,
+    }
+    if os.name == "nt":
+        kwargs["creationflags"] = (
+            getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
+    else:
+        kwargs["start_new_session"] = True
+    subprocess.Popen(command, **kwargs)
 
 
 def _worker_loop(
@@ -54,6 +192,7 @@ def _worker_loop(
     adapter,
     run_id: str,
     worker_id: str,
+    all_worker_ids: list[str],
     interval_seconds: float,
     max_ticks: int | None,
     stop_event: threading.Event,
@@ -69,6 +208,13 @@ def _worker_loop(
                 print(
                     f"[{worker_id} tick {tick_count}] {result.action} "
                     f"work_unit={result.work_unit_id} {result.details}"
+                )
+                _write_process_record(
+                    workspace,
+                    run_id,
+                    status="running",
+                    worker_ids=all_worker_ids,
+                    last_action=result.action,
                 )
             terminal = result.action in {"run_completed", "run_stopped", "run_not_active"}
             notification_result = dispatch_notifications(
@@ -113,6 +259,17 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Stop each worker after this many ticks (default: run forever)",
     )
+    parser.add_argument(
+        "--no-watchdog",
+        action="store_true",
+        help="Do not start the independent recovery watchdog",
+    )
+    parser.add_argument(
+        "--watchdog-interval-seconds",
+        type=float,
+        default=60.0,
+        help="Independent watchdog polling interval",
+    )
     args = parser.parse_args(argv)
 
     workspace = Workspace.discover(Path.cwd())
@@ -136,7 +293,7 @@ def main(argv: list[str] | None = None) -> int:
 
     run_document = yaml.safe_load(run_path.read_text(encoding="utf-8")) or {}
     if (
-        str(run_document.get("autonomy_preset", "")).startswith("unattended_")
+        is_unattended_preset(run_document.get("autonomy_preset"))
         and not agent_cli.is_real_agent_launch_enabled()
     ):
         print(
@@ -164,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
                 "adapter": adapter,
                 "run_id": args.run_id,
                 "worker_id": worker_id,
+                "all_worker_ids": worker_ids,
                 "interval_seconds": args.interval_seconds,
                 "max_ticks": args.max_ticks,
                 "stop_event": stop_event,
@@ -174,17 +332,47 @@ def main(argv: list[str] | None = None) -> int:
         for worker_id in worker_ids
     ]
 
+    _write_process_record(
+        workspace,
+        args.run_id,
+        status="starting",
+        worker_ids=worker_ids,
+    )
+    if (
+        not args.no_watchdog
+        and args.max_ticks is None
+        and is_unattended_preset(run_document.get("autonomy_preset"))
+        and os.environ.get("GOVERNED_AI_WATCHDOG_CHILD") != "1"
+    ):
+        _start_watchdog(
+            workspace,
+            args.run_id,
+            workers=args.workers,
+            interval_seconds=args.watchdog_interval_seconds,
+        )
+
     for thread in threads:
         thread.start()
+    interrupted = False
     try:
         for thread in threads:
             while thread.is_alive():
                 thread.join(timeout=0.5)
     except KeyboardInterrupt:
+        interrupted = True
         stop_event.set()
         for thread in threads:
             thread.join()
 
+    if worker_errors:
+        _close_run_after_process_failure(gateway, workspace, args.run_id, worker_errors)
+    _write_process_record(
+        workspace,
+        args.run_id,
+        status="interrupted" if interrupted else "failed" if worker_errors else "exited",
+        worker_ids=worker_ids,
+        last_action="orchestrator_process_failure" if worker_errors else None,
+    )
     return 1 if worker_errors else 0
 
 

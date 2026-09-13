@@ -11,6 +11,7 @@ from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
 from governed_ai.core.domain.run import fencing
+from governed_ai.core.domain.run.autonomy_policy import is_unattended_preset
 from governed_ai.core.domain.run.convergence import (
     DEFAULT_MAXIMUM_ATTEMPTS_PER_STEP,
     DEFAULT_MAXIMUM_REMEDIATION_CYCLES,
@@ -55,7 +56,7 @@ def handle_record_execution_attempt(
     run_document = yaml.safe_load(run_path.read_text(encoding="utf-8"))
 
     if (
-        run_document.get("autonomy_preset", "supervised_copilots").startswith("unattended_")
+        is_unattended_preset(run_document.get("autonomy_preset"))
         and run_document.get("status") != "active"
     ):
         raise GatewayError(

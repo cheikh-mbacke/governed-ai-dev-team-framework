@@ -2,7 +2,7 @@
   "schema_version": 1,
   "bundle_version": "1.0.0",
   "created_at": "2026-08-28T22:52:00Z",
-  "content_hash": "sha256:3fd5b8a91473cf26db121a1c3861af240159adbc6941692b9cfb441243b49130",
+  "content_hash": "sha256:ca3edbad74dce4bcc40ebdba9bfff5c27edb8c2cc38041733e41c88c56508d2d",
   "roles": [
     "roles/architect.json",
     "roles/auditor.json",

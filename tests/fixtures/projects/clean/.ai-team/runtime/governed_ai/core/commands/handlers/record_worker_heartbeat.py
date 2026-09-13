@@ -16,6 +16,7 @@ import yaml
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.domain.run import fencing
+from governed_ai.core.domain.run.autonomy_policy import is_unattended_preset
 from governed_ai.core.persistence.transaction import Transaction
 
 
@@ -35,7 +36,7 @@ def handle_record_worker_heartbeat(
         raise GatewayError(ErrorCode.NOT_FOUND, f"run {run_id!r} not found", "/payload/run_id")
     run_document = yaml.safe_load(run_path.read_text(encoding="utf-8"))
     if (
-        run_document.get("autonomy_preset", "supervised_copilots").startswith("unattended_")
+        is_unattended_preset(run_document.get("autonomy_preset"))
         and run_document.get("status") != "active"
     ):
         raise GatewayError(ErrorCode.INVARIANT_VIOLATION, f"run {run_id!r} is not active")

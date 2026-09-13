@@ -10,6 +10,7 @@ import yaml
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
 from governed_ai.core.domain.run import fencing
+from governed_ai.core.domain.run.autonomy_policy import is_unattended_preset
 from governed_ai.core.domain.run.parallelism import (
     DEFAULT_MAXIMUM_PARALLEL_WORKERS,
     active_worker_count,
@@ -50,7 +51,7 @@ def handle_acquire_worker_lease(
             "/payload/work_unit_id",
         )
     if (
-        run_document.get("autonomy_preset", "supervised_copilots").startswith("unattended_")
+        is_unattended_preset(run_document.get("autonomy_preset"))
         and run_document.get("status") != "active"
     ):
         raise GatewayError(

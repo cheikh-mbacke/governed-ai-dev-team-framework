@@ -48,6 +48,7 @@ from typing import Any
 import yaml
 
 from governed_ai.compat.datetime import UTC, datetime
+from governed_ai.core.domain.run.path_policy import sanitize_allowed_paths
 
 from .results import HANDOFF_DIAGNOSTIC_MAX, HANDOFF_SUMMARY_MAX, extract_governed_handoff
 
@@ -128,19 +129,25 @@ def build_prompt(project_root: Path, request: dict[str, Any]) -> str:
             if context_path.is_file():
                 context = context_path.read_text(encoding="utf-8")[:20000]
                 break
+    allowed_paths = sanitize_allowed_paths(request.get("allowed_paths") or [])
+    required_checks = [str(item) for item in request.get("required_checks") or []]
     return (
         f"{wu_summary}\n"
         f"Role: {role_id}. Procedure: {procedure_id}.\n"
         f"Resolved scope: {request.get('resolved_scope', [])}.\n"
         f"Allowed shell commands: {request.get('allowed_shell_commands', [])}.\n"
-        f"Allowed paths: {request.get('allowed_paths', [])}.\n"
+        f"Allowed paths: {allowed_paths}.\n"
+        f"Required governed check names: {required_checks}.\n"
         f"Context package:\n{context}\n"
         "Execute only this governed step. Stay strictly "
         "within the declared scope. Never modify constitution, governance, "
-        "or .ai-team/schemas files. Do not target staging or production. "
+        "or .ai-team/schemas files. Never modify .ai-team/work-units, "
+        ".ai-team/state, .ai-team/runs, or authorization grants; only the "
+        "Control Plane may update workflow status. Do not target staging or production. "
         "For implementation, leave a coherent Git commit. Return ONLY a JSON object "
         "with keys summary, checks, artifacts, requested_commands and usage. "
         "Each successful check must contain name, status='passed', and evidence_ref. "
+        "Use every required governed check name exactly; AC-* checks may be added. "
         "Each artifact must contain kind, path and sha256 prefixed by 'sha256:'. "
         "Do not claim success when required evidence is unavailable."
     )
@@ -237,6 +244,17 @@ def _kill_switch_reason(path: Path) -> str | None:
     return None
 
 
+def _run_state_stop_reason(path: Path) -> str | None:
+    """Stop a native agent when its owning Run is no longer active."""
+    try:
+        run = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return "owning Run became unreadable"
+    if run.get("status") != "active":
+        return f"owning Run is {run.get('status') or 'not active'}"
+    return None
+
+
 def _sanitized_process_env(accessible_secrets: list[str]) -> dict[str, str]:
     """Expose only host essentials plus secret names explicitly approved by the grant."""
     essentials = {
@@ -300,12 +318,15 @@ def _run_agent_process(
     allowed_paths: list[str],
     accessible_secrets: list[str] | None = None,
     telemetry_context: dict[str, str] | None = None,
+    run_state_path: Path | None = None,
 ) -> tuple[subprocess.CompletedProcess[str] | None, str | None]:
     """Run the CLI with a bounded watchdog that observes grant revocation."""
     process_env = _sanitized_process_env(accessible_secrets or [])
     process_env["GOVERNED_AI_UNATTENDED_RUN"] = "1"
     process_env["GOVERNED_AI_ALLOWED_SHELL_COMMANDS"] = json.dumps(allowed_shell_commands)
-    process_env["GOVERNED_AI_ALLOWED_PATHS"] = json.dumps(allowed_paths)
+    process_env["GOVERNED_AI_ALLOWED_PATHS"] = json.dumps(
+        sanitize_allowed_paths(allowed_paths)
+    )
     process_env["CURSOR_PROJECT_DIR"] = str(project_root.resolve())
     process_env.update(telemetry_context or {})
     popen_kwargs: dict[str, Any] = {
@@ -323,6 +344,8 @@ def _run_agent_process(
     deadline = time.monotonic() + timeout_seconds
     while True:
         reason = _kill_switch_reason(kill_switch_path)
+        if reason is None and run_state_path is not None:
+            reason = _run_state_stop_reason(run_state_path)
         if reason is not None:
             _terminate_process_tree(process)
             try:
@@ -409,6 +432,11 @@ def invoke_agent_cli(
                     str(item) for item in request.get("accessible_secrets") or []
                 ],
                 telemetry_context=telemetry_context,
+                run_state_path=(
+                    Path(str(request["run_state_path"]))
+                    if request.get("run_state_path")
+                    else None
+                ),
             )
             if cancellation_reason is not None:
                 return _with_timing(AgentInvocationOutcome(

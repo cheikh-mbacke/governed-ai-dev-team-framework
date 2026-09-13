@@ -91,6 +91,19 @@ def test_real_merge_conflict_is_detected_and_aborted(tmp_path: Path) -> None:
     assert merge_head.returncode != 0
 
 
+def test_new_run_resumes_latest_work_unit_branch(tmp_path: Path) -> None:
+    root = _repository(tmp_path)
+    first = ensure_work_unit_worktree(root, "RUN-FIRST", "WU-A")
+    (first / "partial.txt").write_text("safe WIP\n", encoding="utf-8")
+    _git(first, "add", "partial.txt")
+    _git(first, "commit", "-m", "wip(WU-A): partial")
+    partial_sha = head_sha(first)
+
+    resumed = ensure_work_unit_worktree(root, "RUN-RECOVERY", "WU-A")
+    assert head_sha(resumed) == partial_sha
+    assert (resumed / "partial.txt").read_text(encoding="utf-8") == "safe WIP\n"
+
+
 def test_list_uncommitted_files_and_wip_commit_only_stages_given_paths(tmp_path: Path) -> None:
     root = _repository(tmp_path)
     (root / "allowed.txt").write_text("ok\n", encoding="utf-8")

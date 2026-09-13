@@ -58,6 +58,7 @@ SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
         }
     ),
     "backend-developer": frozenset({"RegisterEvidence"}),
+    "frontend-developer": frozenset({"RegisterEvidence"}),
     "qa-test": frozenset({"RegisterEvidence"}),
     # The auditor remains an eligible independent reviewer, but the dedicated
     # Document 6 roles are first-class actors rather than decorative bundle

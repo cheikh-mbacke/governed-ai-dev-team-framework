@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
-from governed_ai.core.commands.errors import ErrorCode, GatewayError
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.contracts.bundle_hash import canonical_json_bytes
+from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.human_authorization import consume_human_authorization
 from governed_ai.core.commands.run_authorization import REQUIRED_UNATTENDED_COMMANDS
 from governed_ai.core.commands.validation import validate_against_schema
@@ -23,6 +23,7 @@ from governed_ai.core.domain.run.mission_artifact import (
     compute_mission_contract_hash,
     is_approved,
 )
+from governed_ai.core.domain.run.path_policy import sanitize_allowed_paths
 from governed_ai.core.persistence.transaction import Transaction
 
 
@@ -235,7 +236,9 @@ def handle_issue_run_authorization_grant(
             else []
         ),
         "allowed_paths": (
-            list((execution_artifact.get("content") or {}).get("allowed_paths") or [])
+            sanitize_allowed_paths(
+                (execution_artifact.get("content") or {}).get("allowed_paths") or []
+            )
             if execution_artifact is not None
             else []
         ),

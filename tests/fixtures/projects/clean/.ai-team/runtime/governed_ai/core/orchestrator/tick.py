@@ -30,13 +30,20 @@ from governed_ai.compat.datetime import UTC, datetime, timedelta
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.domain.run.autonomy_policy import (
     effective_policy_hash,
+    is_unattended_preset,
     resolve_step_timeout_seconds,
+)
+from governed_ai.core.domain.run.convergence import (
+    DEFAULT_MAXIMUM_ATTEMPTS_PER_STEP,
+    DEFAULT_MAXIMUM_REMEDIATION_CYCLES,
+    convergence_exhaustion_reason,
 )
 from governed_ai.core.domain.run.failure_taxonomy import (
     classify_attempt_failure,
     systemic_failure_signature,
 )
 from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
+from governed_ai.core.domain.run.path_policy import sanitize_allowed_paths
 from governed_ai.core.orchestrator.boundary import boundary_error_for_changed_files
 from governed_ai.core.orchestrator.context_package import (
     completeness_error,
@@ -52,6 +59,7 @@ from governed_ai.core.orchestrator.git_workspace import (
     list_uncommitted_files,
     merge_and_revalidate,
 )
+from governed_ai.core.orchestrator.progress import evaluate_run_progress
 from governed_ai.core.workspace import Workspace
 from governed_ai.feedback.domain.auto_observation import classify_auto_observation
 
@@ -100,6 +108,8 @@ DISPATCH_CONTRACTS = {
         ("integration_review",),
     ),
 }
+
+IMPLEMENTATION_ROLES = frozenset({"backend-developer", "frontend-developer"})
 
 
 def _resolve_execution_contract(
@@ -283,6 +293,67 @@ def _resolve_context_package_ref(
     return path.relative_to(workspace.root).as_posix(), None
 
 
+def _role_candidates(value: Any) -> list[str]:
+    """Extract explicit implementation roles from flexible staffing payloads."""
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [candidate for item in value for candidate in _role_candidates(item)]
+    if isinstance(value, dict):
+        preferred_keys = (
+            "role",
+            "role_id",
+            "primary_role",
+            "implementer",
+            "assigned_role",
+        )
+        preferred = [
+            candidate
+            for key in preferred_keys
+            if key in value
+            for candidate in _role_candidates(value[key])
+        ]
+        remaining = [
+            candidate
+            for key, item in value.items()
+            if key not in preferred_keys
+            for candidate in _role_candidates(item)
+        ]
+        return preferred + remaining
+    return []
+
+
+def _context_package_role(workspace: Workspace, work_unit: dict[str, Any]) -> str | None:
+    ref = work_unit.get("context_package_ref")
+    if not ref:
+        return None
+    try:
+        document = _read_yaml(_canonical_context_package_path(workspace, str(ref))) or {}
+    except (OSError, ValueError, yaml.YAMLError):
+        return None
+    role = str(document.get("role") or "").strip()
+    return role if role in IMPLEMENTATION_ROLES else None
+
+
+def _resolve_implementation_role(
+    workspace: Workspace, work_unit: dict[str, Any]
+) -> str:
+    """Resolve implementer from staffing, compiled context, then touched area."""
+    for source in (work_unit.get("staffing_proposal"), work_unit.get("staffing")):
+        for candidate in _role_candidates(source):
+            if candidate in IMPLEMENTATION_ROLES:
+                return candidate
+
+    context_role = _context_package_role(workspace, work_unit)
+    if context_role is not None:
+        return context_role
+
+    area = str((work_unit.get("zone") or {}).get("area") or "").lower()
+    if area in {"frontend", "mobile"}:
+        return "frontend-developer"
+    return "backend-developer"
+
+
 @dataclass(frozen=True, slots=True)
 class TickResult:
     action: str
@@ -455,6 +526,34 @@ def _dispatch_step(workspace: Workspace, run_id: str, work_unit_id: str, status:
     return "audit"
 
 
+def _pre_dispatch_exhaustion_reason(
+    workspace: Workspace,
+    run_document: dict[str, Any],
+    *,
+    work_unit_id: str,
+    step: str,
+) -> str | None:
+    attempts = [
+        item
+        for item in _attempts_for_work_unit(workspace, str(run_document["id"]), work_unit_id)
+        if item.get("step") == step
+    ]
+    return convergence_exhaustion_reason(
+        attempts,
+        step=step,
+        maximum_attempts_per_step=int(
+            run_document.get(
+                "maximum_attempts_per_step", DEFAULT_MAXIMUM_ATTEMPTS_PER_STEP
+            )
+        ),
+        maximum_remediation_cycles=int(
+            run_document.get(
+                "maximum_remediation_cycles", DEFAULT_MAXIMUM_REMEDIATION_CYCLES
+            )
+        ),
+    )
+
+
 def _explicit_acceptance_criterion_ids(work_unit: dict[str, Any] | None) -> tuple[str, ...]:
     """Return AC-* identifiers declared on the Work Unit, when present."""
     if not work_unit:
@@ -474,6 +573,53 @@ def _explicit_acceptance_criterion_ids(work_unit: dict[str, Any] | None) -> tupl
     return tuple(ids)
 
 
+def _expanded_ac_ranges(check_names: set[str]) -> set[str]:
+    expanded: set[str] = set()
+    for name in check_names:
+        match = re.match(r"^(AC-.+-)(\d+)\.\.(\d+)(?:\D|$)", name)
+        if not match:
+            continue
+        prefix, start_text, end_text = match.groups()
+        start, end = int(start_text), int(end_text)
+        if end < start or end - start > 100:
+            continue
+        width = max(len(start_text), len(end_text))
+        expanded.update(f"{prefix}{index:0{width}d}" for index in range(start, end + 1))
+    return expanded
+
+
+def _covered_acceptance_criteria(ac_ids: tuple[str, ...], passed: set[str]) -> set[str]:
+    expanded = _expanded_ac_ranges(passed)
+    covered: set[str] = set()
+    for ac_id in ac_ids:
+        if ac_id in expanded or any(
+            name == ac_id
+            or (name.startswith(ac_id) and name[len(ac_id) : len(ac_id) + 1] in " :_-./")
+            for name in passed
+        ):
+            covered.add(ac_id)
+    return covered
+
+
+def _check_matches_required(name: str, required: str) -> bool:
+    normalized = re.sub(r"[^a-z0-9]+", " ", name.lower()).strip()
+    wanted = re.sub(r"[^a-z0-9]+", " ", required.lower()).strip()
+    if normalized == wanted:
+        return True
+    words = set(normalized.split())
+    if required == "tests":
+        return "test" in words or "tests" in words or "qa" in words
+    if required == "audit":
+        return normalized.startswith("audit ")
+    if required == "code_review":
+        return "review" in words and ("code" in words or normalized.startswith("review "))
+    if required == "security_review":
+        return {"security", "review"}.issubset(words)
+    if required == "integration_review":
+        return {"integration", "review"}.issubset(words)
+    return False
+
+
 def _evidence_error(
     result: dict[str, Any],
     *,
@@ -484,20 +630,18 @@ def _evidence_error(
 ) -> str | None:
     checks = result.get("checks") or []
     passed = {
-        item.get("name")
+        str(item.get("name"))
         for item in checks
-        if item.get("status") == "passed" and item.get("evidence_ref")
+        if item.get("name") and item.get("status") == "passed" and item.get("evidence_ref")
     }
     if require_changed_sha:
         # Implementation / remediation: transport check "implementation" is optional
         # when explicit AC-* checks (with evidence_ref) cover the Work Unit.
         ac_ids = _explicit_acceptance_criterion_ids(work_unit)
-        ac_passed = {
-            name for name in passed if isinstance(name, str) and name.startswith("AC-")
-        }
+        ac_passed = {name for name in passed if name.startswith("AC-")}
         has_implementation = "implementation" in passed
         if ac_ids:
-            missing_acs = sorted(set(ac_ids) - passed)
+            missing_acs = sorted(set(ac_ids) - _covered_acceptance_criteria(ac_ids, passed))
             ac_ok = not missing_acs
         else:
             missing_acs = []
@@ -516,7 +660,15 @@ def _evidence_error(
             return "implementation produced no hashed artifact"
         return None
 
-    missing = sorted(set(required_checks) - passed)
+    missing = sorted(
+        required
+        for required in required_checks
+        if not any(_check_matches_required(name, required) for name in passed)
+    )
+    if missing == ["tests"]:
+        ac_ids = _explicit_acceptance_criterion_ids(work_unit)
+        if ac_ids and set(ac_ids) == _covered_acceptance_criteria(ac_ids, passed):
+            missing = []
     if missing:
         return f"missing passed checks with evidence: {missing}"
     return None
@@ -646,6 +798,9 @@ def _global_stop_condition(
     maximum_tokens = grant.get("maximum_tokens")
     if maximum_tokens is not None and int(grant.get("tokens_used", 0)) >= int(maximum_tokens):
         return "budget_exhausted"
+    progress = evaluate_run_progress(workspace.ai_team, run_document, now=now)
+    if progress["state"] == "stalled_no_progress":
+        return "stalled_no_progress"
     attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
     failures: dict[tuple[str, ...], set[str]] = {}
     if attempts_dir.is_dir():
@@ -674,7 +829,7 @@ def _execution_envelope_constraints(
     grant = json.loads(_read_text(grant_path))
     return (
         [str(item) for item in grant.get("allowed_shell_commands") or []],
-        [str(item) for item in grant.get("allowed_paths") or []],
+        sanitize_allowed_paths(grant.get("allowed_paths") or []),
         [str(item) for item in grant.get("accessible_secrets") or []],
     )
 
@@ -1150,6 +1305,68 @@ def run_scheduling_tick(
             continue
 
         role_id, procedure_id, required_checks = DISPATCH_CONTRACTS[step]
+        if step in {"sandbox_implementation", "remediation"}:
+            role_id = _resolve_implementation_role(workspace, wu_document)
+
+        # A previous terminal attempt may already have consumed the final
+        # convergence slot.  Demote before trying to create another `started`
+        # attempt; otherwise the Core rejects it and a live scheduler can spin
+        # forever on `execution_not_authorized` while holding the lease.
+        pre_dispatch_exhaustion = _pre_dispatch_exhaustion_reason(
+            workspace,
+            run_document,
+            work_unit_id=work_unit_id,
+            step=step,
+        )
+        if pre_dispatch_exhaustion is not None:
+            next_status = NEXT_STATUS_ON_EXHAUSTION.get(str(current_status))
+            if next_status is None:
+                return TickResult(
+                    action="convergence_exhausted",
+                    work_unit_id=work_unit_id,
+                    details={"step": step, "reason": pre_dispatch_exhaustion},
+                )
+            transition_receipt, transition_exit = gateway.execute_command(
+                _envelope(
+                    "TransitionWorkUnit",
+                    target={
+                        "kind": "work_unit",
+                        "id": work_unit_id,
+                        "expected_revision": wu_document["revision"],
+                    },
+                    payload={
+                        "run_id": run_id,
+                        "to_status": next_status,
+                        "reason": (
+                            "orchestrator: convergence already exhausted before dispatch "
+                            f"({pre_dispatch_exhaustion})"
+                        ),
+                    },
+                )
+            )
+            if transition_exit != 0:
+                return TickResult(
+                    action="transition_failed",
+                    work_unit_id=work_unit_id,
+                    details={"errors": transition_receipt.get("errors")},
+                )
+            release_receipt, release_exit = _release_lease(
+                gateway,
+                run_id=run_id,
+                work_unit_id=work_unit_id,
+                lease_ref=lease_ref,
+                reason=f"convergence already exhausted: {pre_dispatch_exhaustion}",
+            )
+            return TickResult(
+                action="demoted_work_unit" if release_exit == 0 else "lease_release_failed",
+                work_unit_id=work_unit_id,
+                details={
+                    "from": current_status,
+                    "to": next_status,
+                    "reason": pre_dispatch_exhaustion,
+                    "errors": release_receipt.get("errors"),
+                },
+            )
         execution_id = f"EXE-{uuid.uuid4().hex[:8]}"
         attempt_id = f"ATTEMPT-{work_unit_id}-{uuid.uuid4().hex[:8]}"
         attempt_actor_role = (
@@ -1188,7 +1405,7 @@ def run_scheduling_tick(
             descriptor and descriptor.get("capabilities", {}).get("isolated_worktree")
         )
         if (
-            str(run_document.get("autonomy_preset", "")).startswith("unattended_")
+            is_unattended_preset(run_document.get("autonomy_preset"))
             and not isolated_worktree
         ):
             failed_receipt, failed_exit = gateway.execute_command(
@@ -1248,11 +1465,17 @@ def run_scheduling_tick(
             )
         if isolated_worktree:
             try:
+                recovery_start_shas = (
+                    run_document.get("recovery_start_shas_by_work_unit") or {}
+                )
                 execution_root = ensure_work_unit_worktree(
                     workspace.root,
                     run_id,
                     work_unit_id,
-                    start_sha=_checkpoint_start_sha(workspace, work_unit_id),
+                    start_sha=(
+                        recovery_start_shas.get(work_unit_id)
+                        or _checkpoint_start_sha(workspace, work_unit_id)
+                    ),
                 )
             except GitWorkspaceError as exc:
                 failed_receipt, failed_exit = gateway.execute_command(
@@ -1322,11 +1545,13 @@ def run_scheduling_tick(
             "resolved_scope": (wu_document.get("scope") or {}).get("include", []),
             "execution_workspace": str(execution_root),
             "work_unit_snapshot": wu_document,
+            "required_checks": list(required_checks),
             "kill_switch_path": str(
                 workspace.ai_team
                 / "run-authorization-grants"
                 / f"{run_document['run_authorization_grant_id']}.json"
             ),
+            "run_state_path": str(workspace.ai_team / "runs" / f"{run_id}.yaml"),
         }
         allowed_shell_commands, allowed_paths, accessible_secrets = _execution_envelope_constraints(
             workspace, run_document
@@ -1370,6 +1595,14 @@ def run_scheduling_tick(
                     "requested_commands": [],
                     "usage": {},
                 }
+        if isolated_worktree and base_sha is not None:
+            # Persist the scheduler-observed base, never an agent-supplied value.
+            # Recovery after a boundary violation can then fence off the bad
+            # commit while retaining all prior validated/WIP product work.
+            result = dict(result)
+            workspace_meta = dict(result.get("workspace") or {})
+            workspace_meta["base_sha"] = base_sha
+            result["workspace"] = workspace_meta
         status = result.get("status", "failed")
         if status == "timed_out" and isolated_worktree and execution_root != workspace.root:
             try:
@@ -1589,9 +1822,7 @@ def run_scheduling_tick(
                 "symptom": symptom,
                 "severity": (
                     "high"
-                    if str(run_document.get("autonomy_preset", "")).startswith(
-                        "unattended_"
-                    )
+                    if is_unattended_preset(run_document.get("autonomy_preset"))
                     else "medium"
                 ),
                 "classification": auto_fields["classification"],
@@ -2057,7 +2288,7 @@ def run_scheduling_tick(
     # technical session. Human acceptance/G3 remains untouched: maximal mode
     # produces a candidate *ready for* G3 and never approves or releases it.
     if (
-        str(run_document.get("autonomy_preset", "")).startswith("unattended_")
+        is_unattended_preset(run_document.get("autonomy_preset"))
         and _all_work_units_ready_for_morning_review(work_unit_ids, work_unit_documents)
     ):
         if run_document.get("autonomy_preset") == "unattended_maximal":

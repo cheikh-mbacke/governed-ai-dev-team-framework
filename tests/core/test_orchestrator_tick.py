@@ -94,6 +94,7 @@ def _seed_context_package(
     work_unit_id: str,
     *,
     context_id: str | None = None,
+    role: str = "backend-developer",
 ) -> str:
     ctx_id = context_id or f"CTX-{work_unit_id}"
     packages = workspace.ai_team / "context-packages"
@@ -101,7 +102,7 @@ def _seed_context_package(
     document = {
         "id": ctx_id,
         "work_unit": work_unit_id,
-        "role": "backend-developer",
+        "role": role,
         "required_contracts": [],
         "completeness_status": "complete",
         "missing_inputs": [],
@@ -126,20 +127,31 @@ def _seed_work_unit(
     status: str,
     scope_include: list[str] | None = None,
     context_package_ref: str | None | bool = True,
+    implementation_role: str = "backend-developer",
+    area: str = "unknown",
+    staffing_proposal: object | None = None,
 ) -> None:
     ctx_ref: str | None
     if context_package_ref is True:
-        ctx_ref = _seed_context_package(workspace, work_unit_id)
+        ctx_ref = _seed_context_package(
+            workspace, work_unit_id, role=implementation_role
+        )
     elif context_package_ref is False or context_package_ref is None:
         ctx_ref = None
     else:
         ctx_ref = str(context_package_ref)
-        _seed_context_package(workspace, work_unit_id, context_id=ctx_ref)
+        _seed_context_package(
+            workspace,
+            work_unit_id,
+            context_id=ctx_ref,
+            role=implementation_role,
+        )
     document = {
         "id": work_unit_id,
         "title": "Test work unit",
         "objective": {"result": "test"},
         "scope": {"include": scope_include or [], "exclude": []},
+        "zone": {"area": area, "capabilities": [], "components": []},
         "expected_behavior": "test behavior",
         "acceptance_criteria": ["ok"],
         "dependencies": [],
@@ -161,6 +173,8 @@ def _seed_work_unit(
             "human_acceptance": None,
         },
     }
+    if staffing_proposal is not None:
+        document["staffing_proposal"] = staffing_proposal
     path = workspace.ai_team / "work-units" / f"{work_unit_id}.yaml"
     path.write_text(yaml.safe_dump(document), encoding="utf-8")
 
@@ -442,6 +456,88 @@ def test_review_evidence_gate_still_requires_named_check() -> None:
     )
     assert error is not None
     assert "code_review" in error
+
+
+def test_evidence_gate_accepts_transport_aliases_and_descriptive_ac_names() -> None:
+    from governed_ai.core.orchestrator.tick import _evidence_error
+
+    verification = _succeeded_result_with_checks(
+        ["AC-WU-01 first scenario", "AC-WU-02 second scenario", "mvn-test-failsafe"],
+        changed_sha=False,
+    )
+    assert (
+        _evidence_error(
+            verification,
+            required_checks=("tests",),
+            require_changed_sha=False,
+            base_sha="a" * 40,
+            work_unit={
+                "acceptance_criteria": [
+                    {"AC-WU-01": "first"},
+                    {"AC-WU-02": "second"},
+                ]
+            },
+        )
+        is None
+    )
+
+    audit = _succeeded_result_with_checks(["audit_release"], changed_sha=False)
+    assert (
+        _evidence_error(
+            audit,
+            required_checks=("audit",),
+            require_changed_sha=False,
+            base_sha="a" * 40,
+        )
+        is None
+    )
+
+
+def test_implementation_evidence_gate_expands_compact_ac_range() -> None:
+    from governed_ai.core.orchestrator.tick import _evidence_error
+
+    result = _succeeded_result_with_checks(
+        ["AC-INV-04-01..05-PublicInvestmentProjectIT"], changed_sha=True
+    )
+    error = _evidence_error(
+        result,
+        required_checks=("implementation",),
+        require_changed_sha=True,
+        base_sha="a" * 40,
+        work_unit={
+            "acceptance_criteria": [
+                {f"AC-INV-04-{index:02d}": "criterion"} for index in range(1, 6)
+            ]
+        },
+    )
+    assert error is None
+
+
+def test_tick_dispatches_frontend_implementation_from_staffing_and_context(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-FRONTEND", work_unit_ids=["WU-A"]))
+    _seed_work_unit(
+        workspace,
+        "WU-A",
+        status="in_progress",
+        implementation_role="frontend-developer",
+        area="frontend",
+        staffing_proposal={"primary_role": "frontend-developer"},
+    )
+    adapter = FakeAdapter([_succeeded_result()])
+
+    acquired = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-FRONTEND", adapter=adapter, worker_id="w1"
+    )
+    assert acquired.action == "reacquired_work_unit"
+    advanced = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-FRONTEND", adapter=adapter, worker_id="w1"
+    )
+    assert advanced.action == "advanced_work_unit"
+    assert adapter.requests[0]["contract"]["role_id"] == "frontend-developer"
+    assert adapter.requests[0]["required_checks"] == ["implementation"]
 
 
 def test_unattended_run_stops_when_adapter_cannot_isolate_workers(
@@ -927,6 +1023,50 @@ def test_tick_demotes_work_unit_on_convergence_exhaustion(workspace: Workspace) 
     assert third.details["stop_condition"] == "no_dispatchable_work"
 
 
+def test_tick_demotes_before_start_when_convergence_was_already_exhausted(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-PRE-EXHAUSTED", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    acquired = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-PRE-EXHAUSTED",
+        adapter=FakeAdapter([]),
+        worker_id="w1",
+    )
+    assert acquired.action == "reacquired_work_unit"
+    attempts_dir = workspace.ai_team / "runs" / "execution-attempts"
+    attempts_dir.mkdir(parents=True, exist_ok=True)
+    for index in range(2):
+        (attempts_dir / f"ATTEMPT-OLD-{index}.yaml").write_text(
+            yaml.safe_dump(
+                {
+                    "id": f"ATTEMPT-OLD-{index}",
+                    "run_id": "RUN-PRE-EXHAUSTED",
+                    "work_unit_id": "WU-A",
+                    "step": "sandbox_implementation",
+                    "status": "failed",
+                    "summary": "same failure",
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    adapter = FakeAdapter([])
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-PRE-EXHAUSTED",
+        adapter=adapter,
+        worker_id="w1",
+    )
+    assert result.action == "demoted_work_unit"
+    assert result.details["reason"] == "identical_failure_repeated"
+    assert adapter.requests == []
+
+
 def test_tick_is_idle_when_nothing_is_eligible(workspace: Workspace) -> None:
     gateway = CommandGateway(workspace)
     gateway.execute_command(_open_run("RUN-TICK-005", work_unit_ids=["WU-A"]))
@@ -938,6 +1078,33 @@ def test_tick_is_idle_when_nothing_is_eligible(workspace: Workspace) -> None:
 
     assert result.action == "idle"
     assert result.work_unit_id is None
+
+
+def test_tick_stops_active_run_that_is_alive_without_useful_progress(
+    workspace: Workspace,
+) -> None:
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-STALLED", work_unit_ids=["WU-A"]))
+    _seed_work_unit(workspace, "WU-A", status="in_progress")
+    old = (datetime.now(UTC) - timedelta(minutes=30)).isoformat()
+    run_path = workspace.ai_team / "runs" / "RUN-STALLED.yaml"
+    run = yaml.safe_load(run_path.read_text(encoding="utf-8"))
+    run["created_at"] = old
+    run_path.write_text(yaml.safe_dump(run), encoding="utf-8")
+    wu_path = workspace.ai_team / "work-units" / "WU-A.yaml"
+    work_unit = yaml.safe_load(wu_path.read_text(encoding="utf-8"))
+    work_unit["updated_at"] = old
+    wu_path.write_text(yaml.safe_dump(work_unit), encoding="utf-8")
+
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-STALLED",
+        adapter=FakeAdapter([]),
+        worker_id="w1",
+    )
+    assert result.action == "run_stopped"
+    assert result.details["stop_condition"] == "stalled_no_progress"
 
 
 def test_tick_does_not_dispatch_on_another_workers_lease(workspace: Workspace) -> None:

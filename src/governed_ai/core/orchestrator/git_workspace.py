@@ -120,6 +120,26 @@ def create_unverified_wip_commit(
     return head_sha(workspace_root)
 
 
+def _latest_resume_sha(project_root: Path, work_unit_id: str) -> str | None:
+    """Find the newest local branch that carries prior work for this Work Unit."""
+    wu_key = _safe(work_unit_id)
+    completed = _run(
+        project_root,
+        [
+            "for-each-ref",
+            "--sort=-committerdate",
+            "--format=%(objectname)",
+            f"refs/heads/ai-run/*/{wu_key}",
+            f"refs/heads/wu/{wu_key}-*",
+        ],
+    )
+    for line in completed.stdout.splitlines():
+        candidate = line.strip().lower()
+        if len(candidate) == 40:
+            return candidate
+    return None
+
+
 def ensure_work_unit_worktree(
     project_root: Path,
     run_id: str,
@@ -151,7 +171,7 @@ def ensure_work_unit_worktree(
     ).returncode == 0
     args = ["worktree", "add"]
     if not exists:
-        start_point = start_sha or "HEAD"
+        start_point = start_sha or _latest_resume_sha(project_root, work_unit_id) or "HEAD"
         if start_sha:
             # Ensure the SHA is known locally before branching from it.
             _run(project_root, ["cat-file", "-e", f"{start_sha}^{{commit}}"])
