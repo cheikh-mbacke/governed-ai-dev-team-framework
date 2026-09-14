@@ -9,6 +9,7 @@ import yaml
 
 from governed_ai.core.domain.work_unit.done import missing_done_prerequisites
 from governed_ai.core.domain.work_unit.paths import find_work_unit_path
+from governed_ai.core.workspace import Workspace
 
 
 def work_units_to_verify(
@@ -29,10 +30,15 @@ def verify_g4_preconditions(
     ai_team: Path,
     project_state: dict[str, Any],
     work_unit_ids: list[str],
+    *,
+    workspace: Workspace | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     verified: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
     work_units_dir = ai_team / "work-units"
+    ws = workspace
+    if ws is None and ai_team.name == ".ai-team":
+        ws = Workspace.from_root(ai_team.parent)
 
     for work_unit_id in work_unit_ids:
         path, ambiguity = find_work_unit_path(work_units_dir, work_unit_id)
@@ -48,7 +54,7 @@ def verify_g4_preconditions(
             )
             continue
         document = yaml.safe_load(path.read_text(encoding="utf-8"))
-        missing = missing_done_prerequisites(document)
+        missing = missing_done_prerequisites(document, workspace=ws)
         if missing:
             failures.append({"work_unit_id": work_unit_id, "missing": missing})
         else:

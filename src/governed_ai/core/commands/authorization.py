@@ -11,6 +11,8 @@ from governed_ai.contracts.compatibility import resolve_active_bundle_dir
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.run_authorization import authorize_run_grant
 
+STRICT_DESIGN_HUMAN_COMMANDS = frozenset({"SetDesignArtifactAuthority"})
+
 # Commands granted beyond bundle writes (findings, release prep, evidence from implementers).
 SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
     "control-plane": frozenset(
@@ -150,6 +152,20 @@ def authorize_command(envelope: dict[str, Any], workspace_ai_team: Path) -> None
     # Document 6 §8 — mechanical Core check, shared choke point, cannot be
     # bypassed by any handler.
     authorize_run_grant(envelope, workspace_ai_team)
+
+    requires_design_human = command_type in STRICT_DESIGN_HUMAN_COMMANDS or (
+        command_type == "RegisterDesignArtifact"
+        and str((envelope.get("payload") or {}).get("authority_level") or "advisory")
+        == "authoritative"
+    )
+    if requires_design_human:
+        from governed_ai.core.commands.human_authorization import (
+            validate_preissued_human_authorization,
+        )
+
+        validate_preissued_human_authorization(
+            envelope, workspace_ai_team=workspace_ai_team
+        )
 
     if envelope.get("human_authorization"):
         auth = envelope["human_authorization"]

@@ -8,7 +8,6 @@ from typing import Any
 from governed_ai.core.design_authority.hashing import sha256_canonical
 from governed_ai.core.design_authority.models import SCHEMA_VERSION
 from governed_ai.core.design_authority.paths import (
-    conformance_path,
     ensure_design_layout,
     reconciliation_path,
 )
@@ -43,6 +42,9 @@ def reconcile_design_revision(
     Invalidates only conformance evidence tied to the previous artifact.
     Does not rewrite previous contracts; marks affected Work Units for
     reconciliation without blanket invalidation.
+
+    When ``persist=False``, no documents are written to disk; planned mutations
+    are returned under ``planned_documents`` for the CommandGateway transaction.
     """
     ensure_design_layout(workspace)
     previous = load_artifact(workspace, previous_artifact_id)
@@ -50,6 +52,7 @@ def reconcile_design_revision(
 
     affected_work_units: list[str] = []
     invalidated_reports: list[str] = []
+    planned_documents: list[dict[str, Any]] = []
 
     wu_dir = workspace.ai_team / "work-units"
     if wu_dir.is_dir():
@@ -61,9 +64,9 @@ def reconcile_design_revision(
             contract_id = binding.get("design_contract_id")
             related = False
             if contract_id:
-                contract_path = workspace.ai_team / "design" / "contracts" / f"{contract_id}.yaml"
-                if contract_path.is_file():
-                    contract = load_yaml(contract_path)
+                cpath = workspace.ai_team / "design" / "contracts" / f"{contract_id}.yaml"
+                if cpath.is_file():
+                    contract = load_yaml(cpath)
                     refs = contract.get("references") if isinstance(contract, dict) else []
                     for ref in refs or []:
                         if ref.get("design_artifact_id") == previous_artifact_id:
@@ -87,7 +90,10 @@ def reconcile_design_revision(
                 report["obsolete_reason"] = "design_reference_revised"
                 report["obsolete_at"] = _now_iso()
                 report["superseded_by_artifact"] = new_artifact_id
-                dump_yaml(path, report)
+                if persist:
+                    dump_yaml(path, report)
+                else:
+                    planned_documents.append({"path": path, "document": report})
                 invalidated_reports.append(str(report.get("report_id") or path.stem))
 
     # Preserve history: never rewrite the previous artifact; mark superseded.
@@ -95,12 +101,13 @@ def reconcile_design_revision(
         previous["status"] = "superseded"
         previous["superseded_by"] = new_artifact_id
         previous["superseded_at"] = _now_iso()
-        dump_yaml(
-            workspace.ai_team / "design" / "artifacts" / f"{previous_artifact_id}.yaml",
-            previous,
-        )
+        prev_path = workspace.ai_team / "design" / "artifacts" / f"{previous_artifact_id}.yaml"
+        if persist:
+            dump_yaml(prev_path, previous)
+        else:
+            planned_documents.append({"path": prev_path, "document": previous})
 
-    impact = {
+    impact: dict[str, Any] = {
         "reconciliation_id": reconciliation_id,
         "schema_version": SCHEMA_VERSION,
         "previous_artifact_id": previous_artifact_id,
@@ -122,4 +129,12 @@ def reconcile_design_revision(
     )
     if persist:
         dump_yaml(reconciliation_path(workspace, reconciliation_id), impact)
+    else:
+        planned_documents.append(
+            {
+                "path": reconciliation_path(workspace, reconciliation_id),
+                "document": impact,
+            }
+        )
+        impact["planned_documents"] = planned_documents
     return impact

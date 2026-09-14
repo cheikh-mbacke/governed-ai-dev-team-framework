@@ -141,6 +141,10 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_record_mission_artifact_challenge(raw)
     elif raw["type"] == "UpdateProjectProfile":
         _validate_update_project_profile(raw)
+    elif raw["type"] == "RegisterDesignArtifact":
+        _validate_register_design_artifact(raw)
+    elif raw["type"] == "SetDesignArtifactAuthority":
+        _validate_set_design_artifact_authority(raw)
     if raw["type"] in COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
         raise GatewayError(
             ErrorCode.HUMAN_AUTH_REQUIRED,
@@ -184,6 +188,84 @@ def _validate_update_project_profile(raw: dict[str, Any]) -> None:
         raise GatewayError(
             ErrorCode.INVALID_SCHEMA,
             "human_authorization.granted_by is required",
+            "/human_authorization/granted_by",
+        )
+
+
+def _validate_register_design_artifact(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "design_artifact":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "RegisterDesignArtifact target.kind must be design_artifact",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("design_artifact_id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.design_artifact_id is required",
+            "/payload/design_artifact_id",
+        )
+    if payload["design_artifact_id"] != target["id"]:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.design_artifact_id must match target.id",
+            "/payload/design_artifact_id",
+        )
+    authority = str(payload.get("authority_level") or "advisory")
+    if authority == "authoritative":
+        if "human_authorization" not in raw:
+            raise GatewayError(
+                ErrorCode.HUMAN_AUTH_REQUIRED,
+                "human_authorization required for authoritative RegisterDesignArtifact",
+                "/human_authorization",
+            )
+        auth = raw.get("human_authorization") or {}
+        granted_by = str(auth.get("granted_by") or "").strip()
+        if not granted_by.startswith("human:"):
+            raise GatewayError(
+                ErrorCode.HUMAN_AUTH_REQUIRED,
+                "human_authorization.granted_by must start with human:",
+                "/human_authorization/granted_by",
+            )
+        if not auth.get("authorization_id"):
+            raise GatewayError(
+                ErrorCode.INVALID_SCHEMA,
+                "human_authorization.authorization_id required for authoritative artifacts",
+                "/human_authorization/authorization_id",
+            )
+
+
+def _validate_set_design_artifact_authority(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "design_artifact":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "SetDesignArtifactAuthority target.kind must be design_artifact",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
+    if not payload.get("design_artifact_id") or not payload.get("authority_level"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.design_artifact_id and payload.authority_level are required",
+            "/payload",
+        )
+    if "human_authorization" not in raw:
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            "human_authorization required to change design authority",
+            "/human_authorization",
+        )
+    auth = raw.get("human_authorization") or {}
+    granted_by = str(auth.get("granted_by") or "").strip()
+    if not granted_by.startswith("human:"):
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            "human_authorization.granted_by must start with human:",
             "/human_authorization/granted_by",
         )
 

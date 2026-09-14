@@ -13,6 +13,7 @@
     "blocks_progress",
     "divergences",
     "captures",
+    "checks",
     "report_hash"
   ],
   "properties": {
@@ -22,21 +23,49 @@
     },
     "schema_version": { "type": "integer", "minimum": 1 },
     "design_contract_id": { "type": "string" },
+    "design_contract_hash": { "type": ["string", "null"] },
     "work_unit_id": { "type": "string" },
-    "commit_sha": { "type": "string", "minLength": 7 },
+    "commit_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{7,40}$"
+    },
     "verifier_role": { "type": "string" },
     "implementer_role": { "type": ["string", "null"] },
     "status": {
       "type": "string",
-      "enum": ["passed", "failed", "obsolete"]
+      "enum": ["passed", "failed", "unverifiable", "obsolete"]
     },
     "blocks_progress": { "type": "boolean" },
     "divergences": { "type": "array" },
     "captures": { "type": "array" },
     "checks": { "type": "array" },
+    "conformance_level": { "type": "string" },
+    "tolerances": { "type": "object" },
     "report_hash": { "type": "string" },
     "lease_id": { "type": ["string", "null"] },
-    "epoch": { "type": ["integer", "null"] }
+    "epoch": { "type": ["integer", "null"] },
+    "created_at": { "type": "string" }
   },
-  "additionalProperties": true
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "passed" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "captures": {
+            "type": "array",
+            "minItems": 1
+          },
+          "checks": {
+            "type": "array",
+            "minItems": 1
+          },
+          "blocks_progress": { "const": false }
+        }
+      }
+    }
+  ]
 }

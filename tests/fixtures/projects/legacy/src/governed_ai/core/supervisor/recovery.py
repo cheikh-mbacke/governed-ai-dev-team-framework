@@ -28,7 +28,7 @@ def _actor() -> dict[str, str]:
         "execution_id": f"EXE-night-recovery-{uuid.uuid4().hex[:8]}",
         "role_id": "control-plane",
         "bundle_version": "1.0.0",
-        "adapter_id": "cursor",
+        "adapter_id": "core-supervisor",
     }
 
 

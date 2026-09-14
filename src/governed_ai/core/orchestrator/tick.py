@@ -354,6 +354,23 @@ def _resolve_implementation_role(
     return "backend-developer"
 
 
+def _adapter_identity(adapter: Any) -> dict[str, str]:
+    """Read adapter identity from SPI self-description, failing closed."""
+    describe = getattr(adapter, "describe", None)
+    if not callable(describe):
+        return {"id": "external", "version": "unknown"}
+    try:
+        descriptor = describe()
+    except Exception:  # noqa: BLE001 - descriptor probing must not invent identity
+        return {"id": "external", "version": "unknown"}
+    if not isinstance(descriptor, dict):
+        return {"id": "external", "version": "unknown"}
+    return {
+        "id": str(descriptor.get("adapter_id") or "external"),
+        "version": str(descriptor.get("adapter_version") or "unknown"),
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class TickResult:
     action: str
@@ -376,7 +393,7 @@ def _actor(role_id: str = "control-plane") -> dict[str, Any]:
         "execution_id": f"EXE-orchestrator-{uuid.uuid4().hex[:8]}",
         "role_id": role_id,
         "bundle_version": "1.0.0",
-        "adapter_id": "cursor",
+        "adapter_id": "core-orchestrator",
     }
 
 
@@ -1555,7 +1572,7 @@ def run_scheduling_tick(
             "protocol_version": "1.0",
             "execution_id": execution_id,
             "correlation_id": run_id,
-            "adapter": {"id": "cursor", "version": "1.0.0"},
+            "adapter": _adapter_identity(adapter),
             "contract": _resolve_execution_contract(
                 workspace, role_id=role_id, procedure_id=procedure_id
             ),

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-from governed_ai.compat.datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import yaml
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.domain.gates.naming import generate_gate_decision_id
 from governed_ai.core.persistence.atomic import set_write_failure_hook

@@ -24,3 +24,10 @@ def _skip_assessment_gate_for_install_tests(monkeypatch: pytest.MonkeyPatch) -> 
     Individual tests that assert the gate must clear this variable.
     """
     monkeypatch.setenv(ASSESSMENT_SKIP_ENV, "1")
+    # Git for Windows may enable the built-in fsmonitor globally.  Hundreds of
+    # short-lived fixture repositories would then each leave a detached daemon
+    # behind, eventually exhausting memory and turning otherwise valid Git
+    # assertions into infrastructure failures.
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.fsmonitor")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", "false")

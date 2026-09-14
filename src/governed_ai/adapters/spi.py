@@ -15,8 +15,24 @@ from governed_ai.contracts.compatibility import CompatibilityReport
 RuntimeStatus = Literal["succeeded", "failed", "blocked", "cancelled", "timed_out"]
 
 
-class AdapterCapabilities(TypedDict):
-    """Capability flags declared by an adapter (Document 12 §3.1)."""
+class VisualAdapterCapabilities(TypedDict, total=False):
+    """Optional visual / multimodal capability flags (Design Authority)."""
+
+    visual_input: bool
+    visual_formats: list[str]
+    pdf: bool
+    svg: bool
+    figma_url: bool
+    screenshot: bool
+    browser_automation: bool
+    viewport_control: bool
+    dom_inspection: bool
+    visual_comparison: bool
+    visual: dict[str, object]
+
+
+class _AdapterCapabilitiesRequired(TypedDict):
+    """Required SPI capability flags (Document 12 §3.1)."""
 
     per_role_readonly: bool
     per_role_product_scope: str
@@ -24,6 +40,15 @@ class AdapterCapabilities(TypedDict):
     hooks: bool
     mcp: bool
     isolated_worktree: bool
+
+
+class AdapterCapabilities(_AdapterCapabilitiesRequired, VisualAdapterCapabilities):
+    """Capability flags declared by an adapter (Document 12 §3.1).
+
+    Visual fields are optional and fail-closed when omitted (never inferred True).
+    """
+
+    pass
 
 
 class AdapterDescriptor(TypedDict):
@@ -130,6 +155,8 @@ class ExecutionRequest(TypedDict, total=False):
     work_unit_id: str
     base_sha: str
     context_package_ref: str
+    context_package: dict[str, object]
+    visual_attachments: list[dict[str, object]]
     resolved_scope: list[str]
     approvals: list[object]
     requested_at: str
@@ -295,4 +322,5 @@ __all__ = [
     "RuntimeResultContract",
     "RuntimeStatus",
     "RuntimeWorkspace",
+    "VisualAdapterCapabilities",
 ]

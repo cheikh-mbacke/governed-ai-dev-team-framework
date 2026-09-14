@@ -10,6 +10,16 @@
     "mediated_core_commands": true,
     "hooks": true,
     "mcp": true,
-    "isolated_worktree": true
+    "isolated_worktree": true,
+    "visual_input": true,
+    "visual_formats": ["png", "jpg", "jpeg", "webp", "svg"],
+    "pdf": true,
+    "svg": true,
+    "figma_url": false,
+    "screenshot": true,
+    "browser_automation": false,
+    "viewport_control": false,
+    "dom_inspection": false,
+    "visual_comparison": false
   }
 }

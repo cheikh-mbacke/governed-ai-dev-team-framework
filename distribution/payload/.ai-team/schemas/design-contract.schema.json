@@ -14,6 +14,41 @@
     "status",
     "contract_hash"
   ],
+  "$defs": {
+    "informationOrigin": {
+      "type": "string",
+      "enum": [
+        "explicitly_provided",
+        "human_decision",
+        "extracted_from_artifact",
+        "inherited_design_system",
+        "compiler_default",
+        "inference_proposed",
+        "inference_validated"
+      ]
+    },
+    "provenanceBucket": {
+      "type": "object",
+      "required": ["value", "origin", "source_refs", "authority_level"],
+      "properties": {
+        "value": true,
+        "origin": { "$ref": "#/$defs/informationOrigin" },
+        "source_refs": { "type": "array" },
+        "authority_level": {
+          "type": "string",
+          "enum": ["authoritative", "advisory", "inspiration_only", "deprecated"]
+        },
+        "validated_by": { "type": ["string", "null"] },
+        "validated_at": { "type": ["string", "null"] },
+        "authorization_id": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
   "properties": {
     "design_contract_id": {
       "type": "string",
@@ -29,20 +64,44 @@
     "compiled_by": { "type": "string" },
     "design_reference_set_id": { "type": ["string", "null"] },
     "references": { "type": "array" },
+    "screens": { "$ref": "#/$defs/provenanceBucket" },
+    "routes": { "$ref": "#/$defs/provenanceBucket" },
+    "components": { "$ref": "#/$defs/provenanceBucket" },
+    "structure": { "$ref": "#/$defs/provenanceBucket" },
+    "mandatory_text": { "$ref": "#/$defs/provenanceBucket" },
+    "mandatory_elements": { "$ref": "#/$defs/provenanceBucket" },
+    "forbidden_elements": { "$ref": "#/$defs/provenanceBucket" },
+    "navigation": { "$ref": "#/$defs/provenanceBucket" },
+    "behaviors": { "$ref": "#/$defs/provenanceBucket" },
+    "states": { "$ref": "#/$defs/provenanceBucket" },
+    "viewports": { "$ref": "#/$defs/provenanceBucket" },
+    "breakpoints": { "$ref": "#/$defs/provenanceBucket" },
+    "tokens": { "$ref": "#/$defs/provenanceBucket" },
+    "typography": { "$ref": "#/$defs/provenanceBucket" },
+    "colors": { "$ref": "#/$defs/provenanceBucket" },
+    "spacing": { "$ref": "#/$defs/provenanceBucket" },
+    "radii": { "$ref": "#/$defs/provenanceBucket" },
+    "shadows": { "$ref": "#/$defs/provenanceBucket" },
+    "icons": { "$ref": "#/$defs/provenanceBucket" },
+    "assets": { "$ref": "#/$defs/provenanceBucket" },
+    "responsive_rules": { "$ref": "#/$defs/provenanceBucket" },
+    "accessibility": { "$ref": "#/$defs/provenanceBucket" },
+    "motion": { "$ref": "#/$defs/provenanceBucket" },
     "conformance_level": {
       "type": "string",
       "enum": ["exact", "tolerant_visual", "structural", "behavioral", "advisory"]
     },
-    "tolerances": { "type": "object" },
-    "free_zones": {},
+    "tolerances": { "$ref": "#/$defs/provenanceBucket" },
+    "free_zones": { "$ref": "#/$defs/provenanceBucket" },
     "inferences": { "type": "array" },
     "human_decisions_required": { "type": "array" },
     "design_system_precedence": {
       "type": "string",
       "enum": ["design_system_wins", "mockup_wins", "escalate_on_conflict"]
     },
+    "reference_validation_issues": { "type": "array" },
     "status": { "type": "string" },
-    "contract_hash": { "type": "string" }
+    "contract_hash": { "$ref": "#/$defs/sha256" }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

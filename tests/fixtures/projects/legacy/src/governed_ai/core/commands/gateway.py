@@ -125,7 +125,11 @@ class CommandGateway:
             import yaml
 
             document = yaml.safe_load(path.read_text(encoding="utf-8"))
-            missing = missing_done_prerequisites(document)
+            from governed_ai.core.workspace import Workspace
+
+            missing = missing_done_prerequisites(
+                document, workspace=Workspace.from_root(self._ai_team.parent)
+            )
             return {
                 "name": name,
                 "work_unit_id": work_unit_id,
