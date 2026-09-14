@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-14T22:04:31+00:00",
+  "generated_at": "2026-09-14T23:08:28+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -285,7 +285,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "d8dbfe84ac2ecb820e7e5c50b491a4246418701e52ca4fa68032708023e55abc"
+          "sha256": "a7b5cd0214c5d3c21f3cefce5124420a0dfddab7063ef68a49d5929b0f09d7ed"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -645,7 +645,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/manifest.json",
-          "sha256": "f532c42737e1aa69c9a268c4d4399400ee77ecef71e3f628e61af373e30d4342"
+          "sha256": "06ab0b52972fb9cb6cbf0ebbc8e148121deadb18cd75fb24dbc2a78e24da7961"
         },
         {
           "path": ".ai-team/runtime/governed_ai/contracts/bundles/v1/procedures/adapt-approved-design.json",
@@ -2380,7 +2380,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "e9f788c85a38e5bd1574c0fbbed5d26411852ee72a28a7597bdbe3b69e35937d"
+          "sha256": "b09f48ef90602b97db9ea1eabeaf733512e6bfda024237fc9dbc51f530c7a418"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -3348,7 +3348,7 @@
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/manifest.json",
-          "sha256": "f532c42737e1aa69c9a268c4d4399400ee77ecef71e3f628e61af373e30d4342"
+          "sha256": "06ab0b52972fb9cb6cbf0ebbc8e148121deadb18cd75fb24dbc2a78e24da7961"
         },
         {
           "path": "src/governed_ai/contracts/bundles/v1/procedures/adapt-approved-design.json",
