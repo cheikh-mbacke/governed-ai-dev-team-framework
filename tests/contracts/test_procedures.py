@@ -22,13 +22,18 @@ PROCEDURES_DIR = BUNDLE_V1 / "procedures"
 MANIFEST_PATH = BUNDLE_V1 / "manifest.json"
 
 EXPECTED_PROCEDURE_IDS = (
+    "adapt-approved-design",
     "audit-release",
     "build-context",
     "compile-project",
     "challenge-requirements",
+    "create-frontend-design",
+    "design-change-reconciliation",
+    "design-system-integration",
     "design-verification",
     "frontend-design",
     "impact-analysis",
+    "implement-approved-design",
     "integrate-work-units",
     "implement-work-unit",
     "orchestrator",
@@ -39,8 +44,14 @@ EXPECTED_PROCEDURE_IDS = (
     "retrospective",
     "security-review",
     "verify-work-unit",
+    "visual-conformance-review",
     "webapp-testing",
 )
+
+# Default revision is 1.0.0; design-authority alias bump is intentional.
+EXPECTED_PROCEDURE_REVISIONS = {
+    "frontend-design": "1.1.0",
+}
 
 STEP_FORBIDDEN_TOKENS = (
     "Cursor IDE",
@@ -77,7 +88,8 @@ def test_all_procedure_files_exist_and_validate_schema(
             f"{procedure_id}: {[f'{i.path}: {i.message}' for i in issues]}"
         )
         assert doc["procedure_id"] == procedure_id
-        assert doc["revision"] == "1.0.0"
+        expected_revision = EXPECTED_PROCEDURE_REVISIONS.get(procedure_id, "1.0.0")
+        assert doc["revision"] == expected_revision
         assert len(doc["steps"]) >= 3, f"{procedure_id}: steps look like a stub"
 
 

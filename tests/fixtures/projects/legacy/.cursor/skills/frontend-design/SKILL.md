@@ -1,10 +1,18 @@
 ---
 name: frontend-design
-description: Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.
+description: Compatibility alias for create-frontend-design. Distinctive visual design only in create/explore modes; never primary under conform or adapt.
 license: Complete terms in LICENSE.txt
 ---
 
 # Frontend Design
+
+Compatibility alias for `create-frontend-design`. Resolve `design_mode` from
+the Work Unit `design_binding` first. If `create` or `explore`, follow
+create-frontend-design. If `conform` or `adapt`, refuse and switch to
+implement-approved-design or adapt-approved-design. Never replace an
+authoritative mockup with a self-invented aesthetic direction — alias only,
+creative defaults must not override Design Authority, and authoritative
+references win over agent creativity.
 
 Approach this as the design lead at a small studio known for giving every client a visual identity that could not be mistaken for anyone else's. This client has already rejected proposals that felt templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take one real aesthetic risk you can justify.
 

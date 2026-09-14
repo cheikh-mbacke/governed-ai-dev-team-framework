@@ -1,0 +1,38 @@
+# Governed AI Team — Supervisor Daemon (systemd)
+
+# Install (example — do NOT run during framework fabrication):
+#   sudo cp governed-ai-supervisor.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now governed-ai-supervisor.service
+#
+# Uninstall:
+#   sudo systemctl disable --now governed-ai-supervisor.service
+#   sudo rm /etc/systemd/system/governed-ai-supervisor.service
+#   sudo systemctl daemon-reload
+#
+# Secrets must come from EnvironmentFile or the process environment —
+# never from ExecStart arguments.
+
+[Unit]
+Description=Governed AI Team Supervisor Daemon
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/project
+# Prefer a dedicated non-root user in production.
+User=governed-ai
+Group=governed-ai
+Environment=PYTHONUNBUFFERED=1
+# Optional: EnvironmentFile=-/etc/governed-ai/supervisor.env
+ExecStart=/usr/bin/python3 scripts/ai-team/daemon.py run --foreground --interval-seconds 5
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

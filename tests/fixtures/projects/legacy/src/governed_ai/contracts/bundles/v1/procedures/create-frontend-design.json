@@ -1,0 +1,20 @@
+{
+  "procedure_id": "create-frontend-design",
+  "revision": "1.0.0",
+  "intent": "Create a new visual direction only when no authoritative Design Contract exists (create or explore modes).",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["design_brief", "subject_context", "existing_ui_constraints"],
+  "steps": [
+    "Confirm design_mode is create or explore and no authoritative mockup covers the Work Unit",
+    "Ground the design in the approved brief without inventing users or goals",
+    "Derive distinctive choices and a compact token system",
+    "Search the design system inventory before creating components",
+    "Build to the plan within explicit free zones",
+    "Document rationale and mark inferences that need human validation"
+  ],
+  "required_outputs": ["design_plan", "implementation_artifacts", "design_rationale"],
+  "invariants": [
+    "Must not be used as the primary procedure under conform or adapt",
+    "If an authoritative design appears, stop and request a human decision"
+  ]
+}

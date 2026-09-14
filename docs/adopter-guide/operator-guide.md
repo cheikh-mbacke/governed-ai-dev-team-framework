@@ -139,7 +139,37 @@ python scripts/ai-team/status.py       # résumé gates / WU
 python scripts/ai-team/notify.py status # état public SMTP / outbox, sans secret
 ```
 
-## Mode nuit : lancement et surveillance
+## Mode nuit : Supervisor Daemon (recommandé)
+
+Le **Supervisor Daemon** est le propriétaire opérationnel de l'ordonnancement
+non supervisé. Il persiste un registre de Runs, réconcilie périodiquement
+l'état désiré et l'état réel, gère un pool borné de workers, et reconstruit
+sa situation après crash depuis le disque (`.ai-team/supervisor/`). Les
+mutations autoritatives passent toujours par le Command Gateway.
+
+```bash
+python scripts/ai-team/preflight.py
+python scripts/ai-team/daemon.py register-run --run-id RUN-... --workers 2
+GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1 \
+  python scripts/ai-team/daemon.py start --interval-seconds 5
+python scripts/ai-team/daemon.py status --json
+python scripts/ai-team/daemon.py doctor --json
+python scripts/ai-team/daemon.py stop
+```
+
+Mode foreground (tests / développement) :
+
+```bash
+python scripts/ai-team/daemon.py run --foreground --interval-seconds 5 --max-cycles 1
+python scripts/ai-team/daemon.py reconcile-once
+```
+
+Templates d'intégration système (ne pas installer depuis le dépôt fabrication) :
+
+- Linux systemd : `.ai-team/templates/supervisor/governed-ai-supervisor.service`
+- Windows Task Scheduler / NSSM : `.ai-team/templates/supervisor/windows-service.md`
+
+## Mode nuit : chemin historique (toujours supporté)
 
 Un Run non supervisé ne doit être lancé qu'après un préflight entièrement
 machine-readable et passant. Pour Cursor, attestez explicitement le mode
@@ -152,13 +182,14 @@ GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1 \
 ```
 
 `orchestrate.py` démarre automatiquement un watchdog indépendant pour les Runs
-`unattended_*`. Le watchdog distingue un processus vivant d'un progrès utile,
-ferme explicitement un Run en cas de crash ou de stagnation, puis tente une
-récupération bornée avec le grant existant. Les stops durs (kill switch,
-expiration/violation d'autorisation, secret interdit, environnement protégé,
-corruption d'état) restent `needs_human` et ne sont jamais contournés.
+`unattended_*` (y compris `custom`). Le watchdog distingue un processus vivant
+d'un progrès utile, ferme explicitement un Run en cas de crash ou de
+stagnation, puis tente une récupération bornée avec le grant existant. Les
+stops durs (kill switch, expiration/violation d'autorisation, secret
+interdit, environnement protégé, corruption d'état) restent `needs_human` et
+ne sont jamais contournés.
 
-Commandes opérateur :
+Commandes opérateur (compatibilité) :
 
 ```bash
 python scripts/ai-team/status.py
@@ -171,6 +202,25 @@ d'un PID, d'un heartbeat ou d'une lease ne signifie pas à elle seule que le Run
 progresse : `status.py` affiche séparément `working`, `progressing` ou
 `stalled_no_progress`. Ces mécanismes sont testés comme règles ; ils ne
 constituent pas encore une validation L4 multi-heures.
+
+## Agent Execution Gateway
+
+La frontière contractuelle Core ↔ adapters est
+`governed_ai.core.execution_gateway.AgentExecutionGateway`.
+
+- Le Core ne consomme plus les conventions propres à un IDE/provider directement.
+- Les checks sont normalisés via un registre canonique (aliases bornés).
+- Les preuves agent sont recalculées (`framework_observed` /
+  `framework_verified`) ; un `agent_reported` seul ne satisfait pas un check
+  bloquant vérifiable.
+- Les commits agent ne sont promus / repris qu'après validation du diff, du
+  scope et des vérifications indépendantes (workspace transactionnel /
+  éphémère).
+- Les anciens RuntimeResult / handoffs JSON passent par
+  `LegacyExecutionResultAdapter` uniquement.
+- Le Supervisor Daemon accepte les résultats via
+  `SupervisorDaemon.accept_execution` (bridge gateway), sans casser leases,
+  epochs, file durable ni journal.
 
 ## Feedback et observations
 
@@ -204,6 +254,25 @@ Le tunnel produit est `https://feedback.agenteam.fr`.
 Revue d'une rétrospective : `python scripts/ai-team/feedback.py review --id RET-…`.
 
 Les wrappers traduisent les arguments legacy vers le Command Gateway (message `DEPRECATED` sur stderr).
+
+## Design Authority (maquettes → contrats)
+
+Lorsqu’une maquette doit **contraindre** l’implémentation (et non seulement
+informer) :
+
+```bash
+python scripts/ai-team/design.py register --id DA-… --path designs/….png \
+  --authority authoritative --by "…" --human "…"
+python scripts/ai-team/design.py create-reference-set --id DRS-… --title "…" \
+  --member "DA-…=route:/…=viewport:desktop" --by "…"
+python scripts/ai-team/design.py compile-contract --id DC-… --mode conform \
+  --reference-set DRS-… --by "…"
+python scripts/ai-team/design.py bind-work-unit --work-unit WU-… --contract DC-…
+python scripts/ai-team/design.py verify --report-id VCR-… --contract DC-… \
+  --work-unit WU-… --sha <commit40> --observations observations.json
+```
+
+Guide complet : [design-authority.md](design-authority.md).
 
 ## Fichiers project-owned (jamais écrasés)
 

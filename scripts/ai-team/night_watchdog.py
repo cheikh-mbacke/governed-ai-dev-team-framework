@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Independent liveness/progress watchdog for unattended orchestration."""
+"""Independent liveness/progress watchdog for unattended orchestration.
+
+Compatibility CLI. Prefer the Supervisor Daemon (``daemon.py``) as the
+operational owner; this watchdog remains available as an external detector
+when the daemon itself is absent.
+"""
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 import time
@@ -18,18 +22,9 @@ from install_paths import bootstrap_runtime
 
 bootstrap_runtime(_ROOT)
 
-from governed_ai.core.orchestrator.progress import evaluate_run_progress
+from governed_ai.core.supervisor.instance_lock import default_pid_is_alive
+from governed_ai.core.supervisor.reconcile import observe_run
 from governed_ai.core.workspace import Workspace
-
-
-def _pid_is_running(pid: int | None) -> bool:
-    if not pid or pid <= 0:
-        return False
-    try:
-        os.kill(pid, 0)
-    except OSError:
-        return False
-    return True
 
 
 def _read_json(path: Path) -> dict:
@@ -38,14 +33,6 @@ def _read_json(path: Path) -> dict:
     except (OSError, json.JSONDecodeError):
         return {}
     return document if isinstance(document, dict) else {}
-
-
-def _read_run(workspace: Workspace, run_id: str) -> dict:
-    path = workspace.ai_team / "runs" / f"{run_id}.yaml"
-    document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    if not isinstance(document, dict):
-        raise ValueError(f"Run document is not a mapping: {path}")
-    return document
 
 
 def _invoke_recovery(
@@ -94,14 +81,16 @@ def _invoke_recovery(
 
 
 def inspect(workspace: Workspace, run_id: str) -> dict:
-    run = _read_run(workspace, run_id)
-    progress = evaluate_run_progress(workspace.ai_team, run)
+    observation = observe_run(workspace, run_id)
     process_path = workspace.ai_team / "runs" / "processes" / f"{run_id}.json"
     process = _read_json(process_path)
-    process_alive = _pid_is_running(int(process.get("pid") or 0))
-    if run.get("status") != "active":
+    process_alive = bool(observation.get("process_alive")) or default_pid_is_alive(
+        int(process.get("pid") or 0)
+    )
+    progress = observation.get("progress") or {}
+    if observation.get("run_status") != "active":
         action = "terminal"
-    elif progress["state"] == "stalled_no_progress":
+    elif progress.get("state") == "stalled_no_progress":
         action = "recover"
     elif not process_alive:
         action = "recover"
@@ -109,8 +98,8 @@ def inspect(workspace: Workspace, run_id: str) -> dict:
         action = "healthy"
     return {
         "run_id": run_id,
-        "run_status": run.get("status"),
-        "stop_condition": run.get("stop_condition"),
+        "run_status": observation.get("run_status"),
+        "stop_condition": observation.get("stop_condition"),
         "process_alive": process_alive,
         "progress": progress,
         "action": action,

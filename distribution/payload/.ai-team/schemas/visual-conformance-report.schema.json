@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisualConformanceReport",
+  "type": "object",
+  "required": [
+    "report_id",
+    "schema_version",
+    "design_contract_id",
+    "work_unit_id",
+    "commit_sha",
+    "verifier_role",
+    "status",
+    "blocks_progress",
+    "divergences",
+    "captures",
+    "report_hash"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^VCR-[A-Za-z0-9._-]+$"
+    },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "design_contract_id": { "type": "string" },
+    "work_unit_id": { "type": "string" },
+    "commit_sha": { "type": "string", "minLength": 7 },
+    "verifier_role": { "type": "string" },
+    "implementer_role": { "type": ["string", "null"] },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed", "obsolete"]
+    },
+    "blocks_progress": { "type": "boolean" },
+    "divergences": { "type": "array" },
+    "captures": { "type": "array" },
+    "checks": { "type": "array" },
+    "report_hash": { "type": "string" },
+    "lease_id": { "type": ["string", "null"] },
+    "epoch": { "type": ["integer", "null"] }
+  },
+  "additionalProperties": true
+}

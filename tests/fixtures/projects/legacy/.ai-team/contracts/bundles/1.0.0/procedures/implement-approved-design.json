@@ -1,0 +1,21 @@
+{
+  "procedure_id": "implement-approved-design",
+  "revision": "1.0.0",
+  "intent": "Reproduce an authoritative Design Contract without inventing a competing visual direction.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["design_contract", "design_references", "existing_ui_constraints"],
+  "steps": [
+    "Load the Design Contract and verify every authoritative reference is accessible",
+    "Map mandatory structure, text, components, states and viewports from the contract",
+    "Search the design system inventory before creating any new component",
+    "Implement only within permitted free_zones; escalate gaps as clarification or decision requests",
+    "Do not silently improve palette, layout hierarchy or copy against the mockup",
+    "Produce implementation artifacts and attach visual evidence bindings (route, state, viewport, reference, commit)"
+  ],
+  "required_outputs": ["implementation_artifacts", "design_conformance_notes", "visual_evidence_plan"],
+  "invariants": [
+    "Authoritative mockups win over agent aesthetic defaults",
+    "frontend-design creative procedure must not be the primary procedure in conform mode",
+    "Inferences remain non-authoritative until human validation"
+  ]
+}

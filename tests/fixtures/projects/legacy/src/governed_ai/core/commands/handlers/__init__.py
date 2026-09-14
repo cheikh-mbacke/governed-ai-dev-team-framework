@@ -64,6 +64,15 @@ from governed_ai.core.commands.handlers.transition_work_unit import handle_trans
 from governed_ai.core.commands.handlers.update_project_profile import (
     handle_update_project_profile,
 )
+from governed_ai.core.commands.handlers.design_authority import (
+    handle_bind_design_to_work_unit,
+    handle_compile_design_contract,
+    handle_create_design_reference_set,
+    handle_reconcile_design_revision,
+    handle_record_visual_conformance,
+    handle_register_design_artifact,
+    handle_set_design_artifact_authority,
+)
 from governed_ai.core.commands.handlers.write_checkpoint import handle_write_checkpoint
 
 HANDLERS = {
@@ -100,4 +109,11 @@ HANDLERS = {
     "RegisterMissionArtifact": handle_register_mission_artifact,
     "RecordMissionArtifactChallenge": handle_record_mission_artifact_challenge,
     "UpdateProjectProfile": handle_update_project_profile,
+    "RegisterDesignArtifact": handle_register_design_artifact,
+    "SetDesignArtifactAuthority": handle_set_design_artifact_authority,
+    "CreateDesignReferenceSet": handle_create_design_reference_set,
+    "CompileDesignContract": handle_compile_design_contract,
+    "BindDesignToWorkUnit": handle_bind_design_to_work_unit,
+    "RecordVisualConformance": handle_record_visual_conformance,
+    "ReconcileDesignRevision": handle_reconcile_design_revision,
 }

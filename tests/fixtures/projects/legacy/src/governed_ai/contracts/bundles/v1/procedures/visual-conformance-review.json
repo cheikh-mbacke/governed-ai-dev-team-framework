@@ -1,0 +1,20 @@
+{
+  "procedure_id": "visual-conformance-review",
+  "revision": "1.0.0",
+  "intent": "Independently verify an implementation against its Design Contract and produce Core-owned conformance evidence.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["design_contract", "implementation_commit", "required_viewports_and_states"],
+  "steps": [
+    "Confirm verifier role is independent from the implementer",
+    "Capture each required route/state/viewport on the exact commit SHA",
+    "Compare structure, text, components, tokens, accessibility and behavior to the contract",
+    "Classify divergences; advisory references never auto-block",
+    "Refuse agent-claimed passes when Core recomputation finds blocking defects"
+  ],
+  "required_outputs": ["visual_conformance_report", "captures", "divergence_report"],
+  "invariants": [
+    "Implementer cannot be the sole verifier",
+    "Blocking authoritative divergences prevent acceptance progression",
+    "Tolerances come only from the Design Contract"
+  ]
+}

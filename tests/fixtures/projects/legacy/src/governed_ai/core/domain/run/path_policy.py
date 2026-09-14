@@ -11,6 +11,7 @@ PROTECTED_PATH_PREFIXES = (
     ".ai-team/run-authorization-grants/",
     ".ai-team/runs/",
     ".ai-team/state/",
+    ".ai-team/supervisor/",
 )
 
 CONTROL_PLANE_ONLY_PATH_PREFIXES = (

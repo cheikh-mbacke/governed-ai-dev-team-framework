@@ -49,8 +49,13 @@
     },
     {
       "kind": "agent",
+      "path": ".cursor/agents/design-system-steward.md",
+      "sha256": "sha256:c890dc23dfaca0c3726d1378af89bb643bcfea0af191026afcc70b5d37e60785"
+    },
+    {
+      "kind": "agent",
       "path": ".cursor/agents/frontend-developer.md",
-      "sha256": "sha256:4f394cf292c711a6bae71623977d8dc11b3fdfb74a20cb4abedde35c84ca7f84"
+      "sha256": "sha256:7e0b387f899a6fed820c7a5c0b5f2219e72501dacaf999681af4d0f973ee0291"
     },
     {
       "kind": "agent",
@@ -66,6 +71,11 @@
       "kind": "agent",
       "path": ".cursor/agents/product-analyst.md",
       "sha256": "sha256:8ce4cd6aedef69178b253931450d7be6a6305e95ee74b76dc1193f2453afc5b3"
+    },
+    {
+      "kind": "agent",
+      "path": ".cursor/agents/product-designer.md",
+      "sha256": "sha256:9d18c4bc808afc61aa94a8c2f2f5a3d0c65aee07e27914b5d78835305600eae8"
     },
     {
       "kind": "agent",
@@ -96,6 +106,11 @@
       "kind": "agent",
       "path": ".cursor/agents/test-strategist.md",
       "sha256": "sha256:41f426842b3736019acf74f7c3836dfa818c4233d4c2ad34d3a4cb1e07118d6a"
+    },
+    {
+      "kind": "agent",
+      "path": ".cursor/agents/visual-qa.md",
+      "sha256": "sha256:7bcb875b91dea234b11ee6a490797d9118a2ea77862ada74e61c66cc41b59773"
     },
     {
       "kind": "cli_config",
@@ -169,6 +184,11 @@
     },
     {
       "kind": "skill",
+      "path": ".cursor/skills/adapt-approved-design/SKILL.md",
+      "sha256": "sha256:81bec0f9a90c0f33e3af2d8a347bc00062d36112d2cc237ac7f5d7da5bede8b8"
+    },
+    {
+      "kind": "skill",
       "path": ".cursor/skills/audit-release/SKILL.md",
       "sha256": "sha256:00f42f3c1b166f40618f59d9562523aea3982b61c9ea19bba7684ae6e7537e53"
     },
@@ -194,6 +214,21 @@
     },
     {
       "kind": "skill",
+      "path": ".cursor/skills/create-frontend-design/SKILL.md",
+      "sha256": "sha256:49a696ae5bf0eb8583955a58057a6d93b62bf83df87d0c0f5d1f84e32d0d98d7"
+    },
+    {
+      "kind": "skill",
+      "path": ".cursor/skills/design-change-reconciliation/SKILL.md",
+      "sha256": "sha256:ff09b3a3192529b71fb6892f0d5d2802477ed505e044251f8bf6bd4e99d690ea"
+    },
+    {
+      "kind": "skill",
+      "path": ".cursor/skills/design-system-integration/SKILL.md",
+      "sha256": "sha256:a481e7ec882ac39f05601115e90a2874bdfecd207b7dbd8a00d96ad8b091d028"
+    },
+    {
+      "kind": "skill",
       "path": ".cursor/skills/design-verification/SKILL.md",
       "sha256": "sha256:e266ae2f06892ee125c4ae0792353bb02b72f1ae2c753180689334e8a68e9e00"
     },
@@ -210,12 +245,17 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/frontend-design/SKILL.md",
-      "sha256": "sha256:464641c1450357485b50652e8f5bd783f30c585da6688677c6ad531122760bd1"
+      "sha256": "sha256:d853732f5649646205e125b4993251d43c36740442d108e281cf8a2f529ffe4e"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/impact-analysis/SKILL.md",
       "sha256": "sha256:4e616431853c9e63138d9405097dd6aacea3607352897c0863953766b4a835b9"
+    },
+    {
+      "kind": "skill",
+      "path": ".cursor/skills/implement-approved-design/SKILL.md",
+      "sha256": "sha256:81413e6d86538a1c6da16502004771072c7296029a9e9ad70640c36f982f7976"
     },
     {
       "kind": "skill",
@@ -251,6 +291,11 @@
       "kind": "skill",
       "path": ".cursor/skills/verify-work-unit/SKILL.md",
       "sha256": "sha256:4af0a0c7c1b32c17016004a2b21dfd76bfc1ae6be6e14fc181c4dba699304d3c"
+    },
+    {
+      "kind": "skill",
+      "path": ".cursor/skills/visual-conformance-review/SKILL.md",
+      "sha256": "sha256:ce7b01abe0128280c131d44d40cd383fec034f77a63825e4ca2d729a5be41e23"
     },
     {
       "kind": "adapter_file",

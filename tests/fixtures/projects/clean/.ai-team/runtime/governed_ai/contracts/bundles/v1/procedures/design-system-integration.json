@@ -1,0 +1,19 @@
+{
+  "procedure_id": "design-system-integration",
+  "revision": "1.0.0",
+  "intent": "Map mockups and UI work onto existing design-system components, tokens and patterns before creating new ones.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["design_system_inventory", "design_contract_or_brief"],
+  "steps": [
+    "Load the design system inventory",
+    "Search for existing components and tokens matching the need",
+    "Prefer existing variants over new one-offs",
+    "Raise structured conflicts when mockup and design system disagree",
+    "Apply the contract precedence rule or request a human decision"
+  ],
+  "required_outputs": ["component_mapping", "token_mapping", "conflict_report"],
+  "invariants": [
+    "No new component without a prior inventory search",
+    "Silent mockup-vs-system resolution is forbidden"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DesignContract",
+  "type": "object",
+  "required": [
+    "design_contract_id",
+    "schema_version",
+    "revision",
+    "design_mode",
+    "compiled_at",
+    "compiled_by",
+    "references",
+    "conformance_level",
+    "status",
+    "contract_hash"
+  ],
+  "properties": {
+    "design_contract_id": {
+      "type": "string",
+      "pattern": "^DC-[A-Za-z0-9._-]+$"
+    },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "design_mode": {
+      "type": "string",
+      "enum": ["conform", "adapt", "create", "maintain", "explore"]
+    },
+    "compiled_at": { "type": "string" },
+    "compiled_by": { "type": "string" },
+    "design_reference_set_id": { "type": ["string", "null"] },
+    "references": { "type": "array" },
+    "conformance_level": {
+      "type": "string",
+      "enum": ["exact", "tolerant_visual", "structural", "behavioral", "advisory"]
+    },
+    "tolerances": { "type": "object" },
+    "free_zones": {},
+    "inferences": { "type": "array" },
+    "human_decisions_required": { "type": "array" },
+    "design_system_precedence": {
+      "type": "string",
+      "enum": ["design_system_wins", "mockup_wins", "escalate_on_conflict"]
+    },
+    "status": { "type": "string" },
+    "contract_hash": { "type": "string" }
+  },
+  "additionalProperties": true
+}

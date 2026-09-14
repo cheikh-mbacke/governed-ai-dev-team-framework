@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DesignArtifact",
+  "type": "object",
+  "required": [
+    "design_artifact_id",
+    "schema_version",
+    "revision",
+    "source_type",
+    "content_hash",
+    "created_at",
+    "registered_at",
+    "registered_by",
+    "authority_level",
+    "status"
+  ],
+  "properties": {
+    "design_artifact_id": {
+      "type": "string",
+      "pattern": "^DA-[A-Za-z0-9._-]+$"
+    },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "png", "jpg", "jpeg", "webp", "svg", "pdf", "html_static",
+        "figma_link", "screenshot", "wireframe", "tokens_json",
+        "markdown_spec", "other"
+      ]
+    },
+    "source_uri": { "type": ["string", "null"] },
+    "source_path": { "type": ["string", "null"] },
+    "content_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "registered_at": { "type": "string", "minLength": 1 },
+    "registered_by": { "type": "string", "minLength": 1 },
+    "authority_level": {
+      "type": "string",
+      "enum": ["authoritative", "advisory", "inspiration_only", "deprecated"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "superseded", "withdrawn", "draft"]
+    },
+    "supersedes": { "type": ["string", "null"] },
+    "screens": { "type": "array", "items": { "type": "string" } },
+    "components": { "type": "array", "items": { "type": "string" } },
+    "viewports": { "type": "array" },
+    "states": { "type": "array", "items": { "type": "string" } },
+    "provenance": { "type": "object" },
+    "usage_rights": { "type": "object" },
+    "notes": { "type": "object" },
+    "frozen_remote": { "type": "object" },
+    "human_authorization": { "type": "object" },
+    "registry_hash": { "type": "string" },
+    "size_bytes": { "type": "integer" },
+    "mime_type": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

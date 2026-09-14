@@ -84,6 +84,37 @@ def workspace(tmp_path: Path) -> Workspace:
     (ai_team / "state").mkdir(parents=True)
     (ai_team / "state" / "project-state.yaml").write_text("phase: execution\n", encoding="utf-8")
     (ai_team / "work-units").mkdir(parents=True)
+    # Orchestrator ticks exercise the Agent Execution Gateway's git-backed
+    # transactional path — seed a minimal repository like an installed client.
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "tick-test@example.com"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Tick Test"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "core.autocrlf", "false"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    (tmp_path / "README.md").write_text("tick fixture\n", encoding="utf-8")
+    (tmp_path / "src").mkdir(exist_ok=True)
+    (tmp_path / "src" / "app.py").write_text("print('tick')\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "tick fixture init"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
     ws = Workspace.from_root(tmp_path)
     _seed_grant(ws, DEFAULT_GRANT_ID, work_unit_ids=["WU-A", "WU-B"])
     return ws
@@ -256,7 +287,73 @@ class FakeAdapter:
 
     def execute(self, request: dict) -> dict:
         self.requests.append(request)
-        return self._results.pop(0)
+        result = dict(self._results.pop(0))
+        root = Path(str(request.get("execution_workspace") or "."))
+        # Materialize declared artifacts so the Agent Execution Gateway can
+        # recalculate hashes; clear false claimed SHAs (Core computes promotion).
+        import hashlib
+        import subprocess
+
+        try:
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        except (OSError, subprocess.CalledProcessError):
+            head = str(request.get("base_sha") or "")
+        workspace_meta = dict(result.get("workspace") or {})
+        claimed = workspace_meta.get("result_sha") or workspace_meta.get("claimed_result_sha")
+        if claimed and claimed != head:
+            # Tests historically used a sentinel SHA to mean "changed"; the
+            # gateway forbids lying about HEAD. Drop the claim and leave dirty
+            # product work for the Core commit path when needed.
+            workspace_meta.pop("result_sha", None)
+            workspace_meta["claimed_result_sha"] = None
+            workspace_meta["base_sha"] = request.get("base_sha") or head
+            # Ensure at least one in-scope product write exists for implementation.
+            product = root / "src" / "app.py"
+            product.parent.mkdir(parents=True, exist_ok=True)
+            if not product.is_file():
+                product.write_text("print('adapter')\n", encoding="utf-8")
+            else:
+                product.write_text(product.read_text(encoding="utf-8") + "# touch\n", encoding="utf-8")
+        result["workspace"] = workspace_meta
+        artifacts = []
+        for item in result.get("artifacts") or []:
+            if not isinstance(item, dict):
+                continue
+            path = str(item.get("path") or "")
+            if not path:
+                continue
+            absolute = root / path
+            absolute.parent.mkdir(parents=True, exist_ok=True)
+            if not absolute.is_file():
+                absolute.write_text("evidence\n", encoding="utf-8")
+            digest = "sha256:" + hashlib.sha256(absolute.read_bytes()).hexdigest()
+            artifacts.append({**item, "sha256": digest, "agent_reported_sha256": digest})
+        result["artifacts"] = artifacts
+        # Propagate gateway identity fields when the fixture omitted them.
+        for field in (
+            "execution_id",
+            "run_id",
+            "work_unit_id",
+            "lease_id",
+            "epoch",
+            "role_id",
+            "procedure_id",
+            "context_package_hash",
+            "schema_version",
+        ):
+            if field not in result and field in request:
+                result[field] = request[field]
+        result.setdefault("limitations", [])
+        result.setdefault("provider_metadata", {})
+        result.setdefault("requested_commands", [])
+        result.setdefault("usage", {})
+        return result
 
     def collect(self, execution_id: str):  # pragma: no cover
         raise NotImplementedError
@@ -744,7 +841,7 @@ def test_wu_evidence_write_does_not_stop_run_when_product_stays_in_scope(
     _git(root, "init", "-b", "main")
     _git(root, "config", "user.email", "l4@example.test")
     _git(root, "config", "user.name", "L4 Test")
-    (root / "src").mkdir()
+    (root / "src").mkdir(exist_ok=True)
     (root / "src" / "app.py").write_text("print('base')\n", encoding="utf-8")
     _git(root, "add", "src/app.py")
     _git(root, "commit", "-m", "test: base")
@@ -789,6 +886,12 @@ def test_wu_evidence_write_does_not_stop_run_when_product_stays_in_scope(
             _git(worker_root, "add", "src/app.py", ".ai-team/evidence/WU-A/ac-1.md")
             _git(worker_root, "commit", "-m", "feat(WU-A): product + evidence")
             result = _succeeded_result()
+            result["artifacts"] = [
+                {
+                    "kind": "test",
+                    "path": ".ai-team/evidence/WU-A/ac-1.md",
+                }
+            ]
             result["workspace"] = {"result_sha": head_sha(worker_root)}
             return result
 
@@ -808,7 +911,7 @@ def test_work_unit_yaml_write_stops_the_whole_run(workspace: Workspace) -> None:
     _git(root, "init", "-b", "main")
     _git(root, "config", "user.email", "l4@example.test")
     _git(root, "config", "user.name", "L4 Test")
-    (root / "src").mkdir()
+    (root / "src").mkdir(exist_ok=True)
     (root / "src" / "app.py").write_text("print('base')\n", encoding="utf-8")
     _git(root, "add", "src/app.py")
     _git(root, "commit", "-m", "test: base")
@@ -868,7 +971,7 @@ def test_work_unit_yaml_write_stops_the_whole_run(workspace: Workspace) -> None:
             (workspace.ai_team / "runs" / "execution-attempts").glob("*.yaml")
         ).read_text(encoding="utf-8")
     )
-    assert "forbidden governance writes" in attempt["summary"]
+    assert "Control Plane path mutation forbidden" in attempt["summary"]
 
 
 def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(

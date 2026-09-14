@@ -1,9 +1,7 @@
 policy: ui_ux_strategy
-version: "1.1.0"
+version: "1.2.0"
 
 applies_to:
-  # Work Units where zone.area is one of these. A Work Unit outside these
-  # areas is not required to satisfy this policy.
   work_unit_zones: [frontend, fullstack, mobile]
 
 principle: >
@@ -11,19 +9,50 @@ principle: >
   real user, on a real device, in a degraded state (empty, slow, wrong),
   can still understand where they are and what to do - and when someone
   who cannot see a screen or use a mouse can still complete the task.
+  When a human provides an authoritative mockup, that reference is a product
+  contract: agents must reproduce it, not silently replace it with their own
+  aesthetic direction.
+
+11_design_authority:
+  principle: >
+    Design Authority turns mockups, captures, wireframes and tokens into
+    versioned, hashed, verifiable Design Contracts bound to Work Units.
+  design_modes:
+    conform: reproduce an authoritative Design Contract; no creative override
+    adapt: adapt only inside explicitly declared free zones and tolerances
+    create: invent a direction only when no authoritative design covers the WU
+    maintain: stay consistent with the existing design system and UI
+    explore: propose alternatives without treating one as the final decision
+  authority_levels:
+    authoritative: binding; only an authorized human may assign this level
+    advisory: guidance that must not auto-block acceptance
+    inspiration_only: non-binding inspiration
+    deprecated: must not be used for new work
+  rules:
+    - an_authoritative_reference_wins_over_agent_creativity_by_default
+    - agents_must_not_silently_improve_an_authoritative_mockup
+    - missing_decisions_produce_clarification_or_human_decision_requests
+    - creativity_applies_only_to_explicit_free_zones
+    - frontend-design_creative_procedure_is_only_for_create_or_explore
+    - implement-approved-design_is_the_primary_procedure_for_conform
+    - visual_qa_must_be_independent_from_the_implementer
+    - advisory_references_never_auto_block
+    - blocking_authoritative_divergences_block_progress
+    - design_system_inventory_must_be_searched_before_creating_components
+    - mockup_vs_design_system_conflicts_escalate_unless_precedence_decides
+  visual_conformance:
+    levels: [exact, tolerant_visual, structural, behavioral, advisory]
+    default_level: tolerant_visual
+    tolerances_must_come_from_design_contract: true
+    captures_must_bind: [route, state, viewport, reference_id, commit_sha]
 
 1_discovery:
-  # Section 1: Comprendre le besoin. This is human input, not something an
-  # agent should invent. If any of these are silent in the authoritative
-  # sources for a UI-facing feature, raise a CLARIFICATION_REQUEST rather
-  # than guessing - the Product Analyst / Project Compiler should surface
-  # this gap during compilation, not the Developer mid-implementation.
   required_before_implementation:
     - target_users
     - primary_goal
     - context_of_use
     - priority_actions
-    - target_devices  # mobile / desktop / tablet, or explicitly "all"
+    - target_devices
 
 2_information_architecture:
   requirements:
@@ -52,7 +81,6 @@ principle: >
     - contrast_and_size_prioritize_legibility_over_decoration
 
 5_usability_principles:
-  # Section 5. Applied by code-reviewer for any in-scope Work Unit.
   checklist:
     - the_primary_action_is_visually_unambiguous
     - wording_is_simple_and_precise
@@ -64,11 +92,6 @@ principle: >
     - only_necessary_information_is_requested
 
 6_required_states:
-  # Section 6 - the single most concretely checkable item in this policy.
-  # A UI Work Unit's acceptance criteria and QA verification must cover
-  # these unless a state is explicitly out of scope (e.g. "no offline
-  # mode in v1") - silence is not an acceptable reason for a state to be
-  # unhandled.
   states:
     - initial_state
     - loading
@@ -82,15 +105,8 @@ principle: >
   qa_instruction: >
     For each state above that applies to this Work Unit, verify it was
     actually exercised (observed, not asserted) before marking QA passed.
-    A Work Unit whose acceptance criteria only describe the happy path is
-    not adequately specified - raise a CLARIFICATION_REQUEST for the
-    missing states rather than inventing what "should" happen.
   writing_note: >
-    For empty/error/access-denied states specifically, the copy is part
-    of the interface, not an afterthought - see
-    frontend-design procedure skill § "More on writing in design"
-    (an empty state is an invitation to act; an error explains what
-    happened and how to fix it, without apologizing or being vague).
+    For empty/error/access-denied states, copy is part of the interface.
 
 7_accessibility:
   requirements:
@@ -102,14 +118,8 @@ principle: >
     - click_or_tap_targets_are_large_enough
     - respects_prefers_reduced_motion
   verification: >
-    required_verification.accessibility_check (see work-unit.schema.json)
-    should be true for any Work Unit in applies_to.work_unit_zones unless
-    the risk/staffing policy explicitly waives it for that Work Unit's
-    risk class. Prefer a real tool run over a manual checklist as
-    evidence when one is available — webapp-testing procedure skill
-    (screenshots, DOM inspection) is the concrete evidence source this
-    framework wires in for sections 6 and 7; see frontend-developer.md,
-    qa-test.md and code-reviewer.md.
+    required_verification.accessibility_check should be true for UI Work Units
+    unless explicitly waived. Prefer webapp-testing evidence.
 
 8_responsive_and_devices:
   requirements:
@@ -120,10 +130,7 @@ principle: >
     - touch_interactions_are_considered_where_target_devices_include_touch
     - both_portrait_and_landscape_are_considered_when_relevant
   scope_note: >
-    "Desktop only" or "mobile only" is an acceptable, explicit product
-    decision (see 1_discovery.target_devices) - this section requires that
-    decision to be made and written down, not that every product must
-    support every device.
+    Explicit "desktop only" or "mobile only" decisions win over defaults.
 
 9_performance_and_trust:
   requirements:
@@ -152,44 +159,33 @@ principle: >
     - no_user_perceptible_effect
   timing: >
     Emit after independent QA has observed the applicable required states on
-    an exact commit, while remediation is still local. Do not wait for release
-    preparation or G4.
+    an exact commit, while remediation is still local.
   package: >
     Prepare a short human-executable package containing the URL or command,
-    exact commit, preconditions, data, three to seven high-value scenarios,
-    expected observations, known limitations and evidence references.
+    exact commit, preconditions, data, scenarios and evidence references.
   asynchronous_feedback: >
     Feedback may arrive after execution has continued. Record it against the
-    observed commit, then reconcile it against current project state before
-    the next affected dispatch. Continue unrelated Work Units.
+    observed commit, then reconcile before the next affected dispatch.
 
 definition_of_done_addition:
-  # Referenced from definition-of-done.yaml for Work Units in
-  # applies_to.work_unit_zones: a UI Work Unit is not DONE if any state in
-  # 6_required_states that applies to it was left unverified, or if
-  # 7_accessibility.verification is unresolved for its risk class.
+  # UI Work Units also require Design Authority checks in conform mode:
+  # authoritative refs not ignored; required screens/states/viewports verified
+  # on the delivered commit; no blocking divergence; a11y verified.
 
 precedence_over_frontend_design_skill:
-  # frontend-design adapter skill package (vendored from Anthropic) is
-  # general-purpose creative-brief guidance, not written for this
-  # framework's governance model. Two of its defaults conflict with this
-  # policy if followed literally; this Constitution wins both times:
   - conflict: >
       frontend-design says to invent the subject/audience/goal yourself
       if a brief doesn't specify one ("pin it yourself").
     resolution: >
       Never invent target users, primary goal, or context of use (see
-      1_discovery). If authoritative sources are silent, raise a
-      CLARIFICATION_REQUEST, per frontend-developer.md. frontend-design's
-      guidance applies to aesthetic execution once these facts are
-      already established by an approved Work Unit — not to establishing
-      them.
+      1_discovery). Raise a CLARIFICATION_REQUEST instead.
   - conflict: >
       frontend-design treats "responsive down to mobile" as an
       unconditional quality floor.
     resolution: >
-      Target devices are whatever 1_discovery.target_devices says. If the
-      human has explicitly scoped a Work Unit to desktop only (see
-      8_responsive_and_devices.scope_note), that explicit decision wins;
-      frontend-design's default applies only when devices haven't been
-      explicitly scoped otherwise.
+      Target devices are whatever 1_discovery.target_devices says.
+  - conflict: >
+      frontend-design encourages distinctive creative direction by default.
+    resolution: >
+      Under design_mode conform or adapt, Design Authority wins. Creative
+      defaults apply only in create/explore, or inside explicit free_zones.

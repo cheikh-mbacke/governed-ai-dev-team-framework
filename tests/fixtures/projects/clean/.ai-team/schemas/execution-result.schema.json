@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionResult",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "execution_id",
+    "run_id",
+    "work_unit_id",
+    "lease_id",
+    "epoch",
+    "role_id",
+    "procedure_id",
+    "status",
+    "summary",
+    "checks",
+    "artifacts",
+    "workspace"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "execution_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "work_unit_id": { "type": "string" },
+    "lease_id": { "type": "string" },
+    "epoch": { "type": "integer" },
+    "role_id": { "type": "string" },
+    "procedure_id": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["succeeded", "failed", "blocked", "cancelled", "timed_out", "rejected"]
+    },
+    "summary": { "type": "string", "maxLength": 8000 },
+    "checks": { "type": "array", "maxItems": 128 },
+    "artifacts": { "type": "array", "maxItems": 64 },
+    "requested_commands": { "type": "array" },
+    "limitations": { "type": "array", "maxItems": 64 },
+    "workspace": { "type": "object" },
+    "usage": { "type": "object" },
+    "provider_metadata": { "type": "object" },
+    "context_package_hash": { "type": "string" },
+    "errors": { "type": "array" }
+  },
+  "additionalProperties": true
+}

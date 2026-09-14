@@ -9,6 +9,7 @@ def test_sanitize_allowed_paths_removes_control_plane_owned_grants() -> None:
             ".ai-team/work-units/**",
             ".ai-team/state/**",
             ".ai-team/runs/**",
+            ".ai-team/supervisor/**",
             ".ai-team/**",
             "**",
             "src/**",

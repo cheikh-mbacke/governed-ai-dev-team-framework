@@ -38,4 +38,8 @@ Thumbs.db
 
 # Local workspace copy and temp install dirs
 workspace/
+
+# Ephemeral local validation captures (not product artifacts)
+.validation-out.txt
+.validation-supervisor.txt
 tmp*/

@@ -1,7 +1,7 @@
 {
   "role_id": "frontend-developer",
-  "revision": "1.0.0",
-  "mandate": "Implement UI, state, interactions and client integration with visual evidence.",
+  "revision": "1.1.0",
+  "mandate": "Implement UI against the Design Contract; do not change product visual direction without an explicit decision.",
   "writes": {
     "product": {
       "level": "scoped",
@@ -22,7 +22,11 @@
   },
   "procedure_refs": [
     {"procedure_id": "implement-work-unit", "revision": "1.0.0"},
-    {"procedure_id": "frontend-design", "revision": "1.0.0"},
+    {"procedure_id": "implement-approved-design", "revision": "1.0.0"},
+    {"procedure_id": "adapt-approved-design", "revision": "1.0.0"},
+    {"procedure_id": "create-frontend-design", "revision": "1.0.0"},
+    {"procedure_id": "design-system-integration", "revision": "1.0.0"},
+    {"procedure_id": "frontend-design", "revision": "1.1.0"},
     {"procedure_id": "webapp-testing", "revision": "1.0.0"}
   ],
   "model_preference": "inherit",

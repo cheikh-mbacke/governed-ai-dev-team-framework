@@ -1,0 +1,32 @@
+{
+  "role_id": "design-system-steward",
+  "revision": "1.0.0",
+  "mandate": "Protect shared components, tokens and conventions; approve design-system deviations.",
+  "writes": {
+    "product": {
+      "level": "none",
+      "paths": []
+    },
+    "authoritative_governance_commands": [
+      "RegisterDesignArtifact",
+      "CompileDesignContract"
+    ],
+    "non_authoritative_signal_commands": ["RecordObservation", "RegisterFinding"]
+  },
+  "capabilities": {
+    "repository_read": true,
+    "shell": "deny",
+    "network": "deny_by_default",
+    "external_tools": []
+  },
+  "approval_policy": {
+    "mode": "constitution",
+    "cannot_relax": true
+  },
+  "procedure_refs": [
+    {"procedure_id": "design-system-integration", "revision": "1.0.0"},
+    {"procedure_id": "visual-conformance-review", "revision": "1.0.0"}
+  ],
+  "model_preference": "inherit",
+  "isolation": "not_required"
+}

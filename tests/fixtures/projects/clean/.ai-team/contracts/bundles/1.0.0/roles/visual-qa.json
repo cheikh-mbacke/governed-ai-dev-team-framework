@@ -1,0 +1,32 @@
+{
+  "role_id": "visual-qa",
+  "revision": "1.0.0",
+  "mandate": "Independently verify visual conformance against Design Contracts without modifying the evaluated implementation.",
+  "writes": {
+    "product": {
+      "level": "none",
+      "paths": []
+    },
+    "authoritative_governance_commands": [
+      "RegisterEvidence",
+      "RecordVisualConformance"
+    ],
+    "non_authoritative_signal_commands": ["RecordObservation"]
+  },
+  "capabilities": {
+    "repository_read": true,
+    "shell": "scoped",
+    "network": "deny_by_default",
+    "external_tools": []
+  },
+  "approval_policy": {
+    "mode": "constitution",
+    "cannot_relax": true
+  },
+  "procedure_refs": [
+    {"procedure_id": "visual-conformance-review", "revision": "1.0.0"},
+    {"procedure_id": "webapp-testing", "revision": "1.0.0"}
+  ],
+  "model_preference": "inherit",
+  "isolation": "required_for_concurrent_product_write"
+}

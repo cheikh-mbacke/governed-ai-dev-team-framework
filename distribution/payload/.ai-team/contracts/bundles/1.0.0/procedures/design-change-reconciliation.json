@@ -1,0 +1,19 @@
+{
+  "procedure_id": "design-change-reconciliation",
+  "revision": "1.0.0",
+  "intent": "Reconcile a new authoritative mockup revision after development has started without silent contract rewrite.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["previous_artifact", "new_artifact", "affected_work_units"],
+  "steps": [
+    "Compare previous and new artifact hashes and targets",
+    "Identify only Work Units and evidence actually related to the previous artifact",
+    "Mark related conformance reports obsolete",
+    "Preserve history; do not rewrite the previous Design Contract in place",
+    "Produce an impact report and rebinding plan"
+  ],
+  "required_outputs": ["impact_report", "rebinding_plan", "obsolete_evidence_list"],
+  "invariants": [
+    "Unaffected Work Units stay valid",
+    "Previous contract history is preserved"
+  ]
+}

@@ -55,11 +55,35 @@ SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
             "ReleaseWorkerLease",
             # Project configuration changes are human-authorized and audited.
             "UpdateProjectProfile",
+            # Design Authority mutations (registry, contracts, conformance).
+            "RegisterDesignArtifact",
+            "SetDesignArtifactAuthority",
+            "CreateDesignReferenceSet",
+            "CompileDesignContract",
+            "BindDesignToWorkUnit",
+            "RecordVisualConformance",
+            "ReconcileDesignRevision",
         }
     ),
     "backend-developer": frozenset({"RegisterEvidence"}),
     "frontend-developer": frozenset({"RegisterEvidence"}),
     "qa-test": frozenset({"RegisterEvidence"}),
+    "visual-qa": frozenset({"RegisterEvidence", "RecordVisualConformance"}),
+    "product-designer": frozenset(
+        {
+            "RegisterDesignArtifact",
+            "CreateDesignReferenceSet",
+            "CompileDesignContract",
+            "BindDesignToWorkUnit",
+        }
+    ),
+    "design-system-steward": frozenset(
+        {
+            "RegisterDesignArtifact",
+            "CompileDesignContract",
+            "RecordVisualConformance",
+        }
+    ),
     # The auditor remains an eligible independent reviewer, but the dedicated
     # Document 6 roles are first-class actors rather than decorative bundle
     # entries.

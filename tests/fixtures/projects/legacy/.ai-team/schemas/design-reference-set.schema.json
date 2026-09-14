@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DesignReferenceSet",
+  "type": "object",
+  "required": [
+    "design_reference_set_id",
+    "schema_version",
+    "revision",
+    "title",
+    "created_at",
+    "created_by",
+    "members",
+    "status"
+  ],
+  "properties": {
+    "design_reference_set_id": {
+      "type": "string",
+      "pattern": "^DRS-[A-Za-z0-9._-]+$"
+    },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string" },
+    "created_by": { "type": "string" },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["design_artifact_id"],
+        "properties": {
+          "design_artifact_id": { "type": "string" },
+          "target": {
+            "type": "object",
+            "properties": {
+              "route": { "type": "string" },
+              "page": { "type": "string" },
+              "component": { "type": "string" },
+              "journey": { "type": "string" },
+              "state": { "type": "string" },
+              "viewport": { "type": "string" },
+              "theme": { "type": "string" },
+              "platform": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validation_issues": { "type": "array" },
+    "status": { "type": "string" },
+    "set_hash": { "type": "string" }
+  },
+  "additionalProperties": true
+}

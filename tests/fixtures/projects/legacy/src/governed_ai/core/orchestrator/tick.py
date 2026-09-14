@@ -602,22 +602,14 @@ def _covered_acceptance_criteria(ac_ids: tuple[str, ...], passed: set[str]) -> s
 
 
 def _check_matches_required(name: str, required: str) -> bool:
-    normalized = re.sub(r"[^a-z0-9]+", " ", name.lower()).strip()
-    wanted = re.sub(r"[^a-z0-9]+", " ", required.lower()).strip()
-    if normalized == wanted:
-        return True
-    words = set(normalized.split())
-    if required == "tests":
-        return "test" in words or "tests" in words or "qa" in words
-    if required == "audit":
-        return normalized.startswith("audit ")
-    if required == "code_review":
-        return "review" in words and ("code" in words or normalized.startswith("review "))
-    if required == "security_review":
-        return {"security", "review"}.issubset(words)
-    if required == "integration_review":
-        return {"integration", "review"}.issubset(words)
-    return False
+    """Normalize agent check names via the canonical registry (no fuzzy substrings)."""
+    from governed_ai.core.execution_gateway.check_registry import normalize_check_name
+
+    canonical = normalize_check_name(name)
+    if canonical is None:
+        return False
+    wanted = normalize_check_name(required) or required
+    return canonical == wanted
 
 
 def _evidence_error(
@@ -819,17 +811,26 @@ def _global_stop_condition(
 
 def _execution_envelope_constraints(
     workspace: Workspace, run_document: dict[str, Any]
-) -> tuple[list[str], list[str], list[str]]:
+) -> tuple[list[str], list[str] | None, list[str]]:
+    """Return (shell_commands, allowed_paths|None, secrets).
+
+    ``allowed_paths is None`` means the grant does not constrain paths (axis absent).
+    An explicit empty list means the grant forbids all product writes.
+    """
     grant_id = run_document.get("run_authorization_grant_id")
     if not grant_id:
-        return [], [], []
+        return [], None, []
     grant_path = workspace.ai_team / "run-authorization-grants" / f"{grant_id}.json"
     if not grant_path.is_file():
-        return [], [], []
+        return [], None, []
     grant = json.loads(_read_text(grant_path))
+    if "allowed_paths" in grant:
+        allowed_paths: list[str] | None = sanitize_allowed_paths(grant.get("allowed_paths") or [])
+    else:
+        allowed_paths = None
     return (
         [str(item) for item in grant.get("allowed_shell_commands") or []],
-        sanitize_allowed_paths(grant.get("allowed_paths") or []),
+        allowed_paths,
         [str(item) for item in grant.get("accessible_secrets") or []],
     )
 
@@ -1307,6 +1308,21 @@ def run_scheduling_tick(
         role_id, procedure_id, required_checks = DISPATCH_CONTRACTS[step]
         if step in {"sandbox_implementation", "remediation"}:
             role_id = _resolve_implementation_role(workspace, wu_document)
+            if role_id == "frontend-developer":
+                from governed_ai.core.design_authority.procedure_select import (
+                    ProcedureSelectionError,
+                    select_frontend_procedure,
+                )
+
+                binding = wu_document.get("design_binding") or {}
+                design_mode = binding.get("design_mode")
+                try:
+                    procedure_id = select_frontend_procedure(
+                        design_mode=str(design_mode) if design_mode else None,
+                        requested_procedure=None,
+                    )
+                except ProcedureSelectionError:
+                    procedure_id = "implement-approved-design"
 
         # A previous terminal attempt may already have consumed the final
         # convergence slot.  Demote before trying to create another `started`
@@ -1532,7 +1548,10 @@ def run_scheduling_tick(
                     },
                 )
         base_sha = head_sha(execution_root) if execution_root != workspace.root else _git_head(workspace)
-        request: ExecutionRequest = {
+        allowed_shell_commands, allowed_paths, accessible_secrets = _execution_envelope_constraints(
+            workspace, run_document
+        )
+        spi_request: ExecutionRequest = {
             "protocol_version": "1.0",
             "execution_id": execution_id,
             "correlation_id": run_id,
@@ -1552,25 +1571,27 @@ def run_scheduling_tick(
                 / f"{run_document['run_authorization_grant_id']}.json"
             ),
             "run_state_path": str(workspace.ai_team / "runs" / f"{run_id}.yaml"),
-        }
-        allowed_shell_commands, allowed_paths, accessible_secrets = _execution_envelope_constraints(
-            workspace, run_document
-        )
-        request["allowed_shell_commands"] = allowed_shell_commands
-        request["allowed_paths"] = allowed_paths
-        request["accessible_secrets"] = accessible_secrets
-        request["timeout_seconds"] = resolve_step_timeout_seconds(
-            run_document.get("effective_autonomy_policy"),
-            step,
-            grant_remaining_seconds=_grant_remaining_seconds(
-                workspace, run_document, now=now
+            "allowed_shell_commands": allowed_shell_commands,
+            "allowed_paths": allowed_paths,
+            "accessible_secrets": accessible_secrets,
+            "timeout_seconds": resolve_step_timeout_seconds(
+                run_document.get("effective_autonomy_policy"),
+                step,
+                grant_remaining_seconds=_grant_remaining_seconds(
+                    workspace, run_document, now=now
+                ),
             ),
-        )
+        }
         if base_sha is not None:
-            request["base_sha"] = base_sha
+            spi_request["base_sha"] = base_sha
+        # Keep ``request`` alias for downstream RecordExecutionAttempt payloads.
+        request = spi_request
         context_ref, context_error = _resolve_context_package_ref(
             workspace, wu_document, procedure_id=procedure_id, role_id=role_id
         )
+        gateway_accepted = False
+        boundary_stop_condition: str | None = None
+        boundary_error: str | None = None
         if context_error:
             result = {
                 "status": "blocked",
@@ -1581,20 +1602,127 @@ def run_scheduling_tick(
                 "usage": {},
                 "limitations": ["context_package_incomplete"],
             }
+        elif base_sha is None:
+            result = {
+                "status": "blocked",
+                "summary": "execution workspace has no base commit for governed gateway",
+                "checks": [],
+                "artifacts": [],
+                "requested_commands": [],
+                "usage": {},
+                "limitations": ["missing_base_sha"],
+            }
         else:
             if context_ref:
-                request["context_package_ref"] = context_ref
+                spi_request["context_package_ref"] = context_ref
+            gateway_work_unit = dict(wu_document)
+            if context_ref:
+                gateway_work_unit["context_package_ref"] = context_ref
+            gateway_required_checks = list(required_checks)
+            if step in {"sandbox_implementation", "remediation"}:
+                explicit_ac_ids = _explicit_acceptance_criterion_ids(wu_document)
+                if explicit_ac_ids:
+                    gateway_required_checks = list(explicit_ac_ids)
+            from governed_ai.core.supervisor.execution_bridge import run_governed_execution
+
+            profile_document = _read_yaml(workspace.ai_team / "project-profile.yaml") or {}
+            ceilings_by_work_unit = run_document.get("execution_ceilings_by_work_unit") or {}
+            ceiling_document = (
+                ceilings_by_work_unit.get(work_unit_id)
+                if isinstance(ceilings_by_work_unit, dict)
+                else None
+            )
+            if not isinstance(ceiling_document, dict):
+                ceiling_document = run_document.get("execution_ceiling")
+            ceiling = (
+                sanitize_allowed_paths(list(ceiling_document.get("allowed_paths") or []))
+                if isinstance(ceiling_document, dict) and "allowed_paths" in ceiling_document
+                else None
+            )
             try:
-                result = adapter.execute(request)
-            except Exception as exc:  # noqa: BLE001 - adapter boundary must fail closed
+                outcome = run_governed_execution(
+                    workspace,
+                    adapter=adapter,
+                    work_unit=gateway_work_unit,
+                    run_id=run_id,
+                    execution_id=execution_id,
+                    lease_id=str(lease_ref["lease_id"]),
+                    epoch=int(lease_ref["epoch"]),
+                    role_id=role_id,
+                    procedure_id=procedure_id,
+                    base_sha=base_sha,
+                    grant_allowed_paths=list(allowed_paths or []),
+                    grant_axis_present=allowed_paths is not None,
+                    allowed_shell_commands=allowed_shell_commands,
+                    required_checks=gateway_required_checks,
+                    accessible_secrets=accessible_secrets,
+                    profile=profile_document if isinstance(profile_document, dict) else None,
+                    spi_request=dict(spi_request),
+                    execution_workspace=execution_root,
+                    use_ephemeral_workspace=False,
+                    run_independent_verification=True,
+                    instance_id=f"tick-{worker_id}",
+                    worker_id=worker_id,
+                    execution_ceiling_paths=ceiling,
+                    fence_authoritative_lease=True,
+                )
+            except Exception as exc:  # noqa: BLE001 - adapter/gateway boundary must fail closed
                 result = {
                     "status": "blocked",
-                    "summary": f"adapter execution failed: {type(exc).__name__}: {exc}",
+                    "summary": f"execution gateway failed: {type(exc).__name__}: {exc}",
                     "checks": [],
                     "artifacts": [],
                     "requested_commands": [],
                     "usage": {},
+                    "limitations": ["execution_gateway_error"],
                 }
+            else:
+                if outcome.ok and outcome.result is not None:
+                    result = dict(outcome.result)
+                    gateway_accepted = True
+                else:
+                    error = outcome.error
+                    code = error.code if error else "execution_gateway_rejected"
+                    if code == "agent_status_not_succeeded" and outcome.result is not None:
+                        # Preserve the strictly canonical non-success result for
+                        # failure accounting and decision proposals. It remains
+                        # rejected and can never authorize promotion/checkpoint
+                        # verification or workflow advancement.
+                        result = dict(outcome.result)
+                        result["limitations"] = [
+                            *list(result.get("limitations") or []),
+                            code,
+                        ]
+                        continue_after_gateway_rejection = True
+                    else:
+                        continue_after_gateway_rejection = False
+                    # Gateway rejection is a failed attempt, not a human-blocked pause,
+                    # unless the error is an explicit pre-launch context/capability block.
+                    if not continue_after_gateway_rejection:
+                        mapped = "blocked" if code in {
+                            "unsupported_role",
+                            "unsupported_procedure",
+                            "missing_adapter_capability",
+                            "empty_effective_scope",
+                            "contradictory_path_policy",
+                        } else "failed"
+                        result = {
+                            "status": mapped,
+                            "summary": (
+                                f"execution gateway rejected: "
+                                f"{code}: "
+                                f"{error.message if error else 'no details'}"
+                            ),
+                            "checks": [],
+                            "artifacts": [],
+                            "requested_commands": [],
+                            "usage": {},
+                            "limitations": [code],
+                            "workspace": {"base_sha": base_sha},
+                        }
+                    if code in {"scope_violation", "forbidden_control_plane_path"}:
+                        boundary_stop_condition = "out_of_workspace_write"
+                        boundary_error = error.message if error else code
         if isolated_worktree and base_sha is not None:
             # Persist the scheduler-observed base, never an agent-supplied value.
             # Recovery after a boundary violation can then fence off the bad
@@ -1651,22 +1779,26 @@ def run_scheduling_tick(
             except GitWorkspaceError:
                 pass
         if status == "succeeded":
-            evidence_error = _evidence_error(
-                result,
-                required_checks=required_checks,
-                require_changed_sha=step in {"sandbox_implementation", "remediation"},
-                base_sha=base_sha,
-                work_unit=wu_document,
-            )
-            if evidence_error:
-                status = "failed"
-                result = dict(result)
-                result["summary"] = f"{result.get('summary') or ''} Evidence gate: {evidence_error}".strip()
-        boundary_stop_condition: str | None = None
+            # When the Agent Execution Gateway already accepted the result, do not
+            # re-consume or re-interpret the raw adapter payload — only the
+            # canonical GatewayOutcome may authorize success / promotion.
+            if not gateway_accepted:
+                evidence_error = _evidence_error(
+                    result,
+                    required_checks=required_checks,
+                    require_changed_sha=step in {"sandbox_implementation", "remediation"},
+                    base_sha=base_sha,
+                    work_unit=wu_document,
+                )
+                if evidence_error:
+                    status = "failed"
+                    result = dict(result)
+                    result["summary"] = f"{result.get('summary') or ''} Evidence gate: {evidence_error}".strip()
         if (
             status == "succeeded"
             and step in {"sandbox_implementation", "remediation"}
             and isolated_worktree
+            and not gateway_accepted
         ):
             boundary_violation = _implementation_boundary_error(
                 execution_root=execution_root,
@@ -1674,7 +1806,7 @@ def run_scheduling_tick(
                 result=result,
                 wu_document=wu_document,
                 run_document=run_document,
-                allowed_paths=allowed_paths,
+                allowed_paths=allowed_paths or [],
             )
             if boundary_violation:
                 boundary_error, boundary_stop_condition = boundary_violation
@@ -1864,7 +1996,10 @@ def run_scheduling_tick(
                     },
                     payload={
                         "status": "stopped",
-                        "reason": f"run-reliability-controller: {boundary_error}",
+                        "reason": (
+                            f"run-reliability-controller: "
+                            f"{boundary_error or boundary_stop_condition}"
+                        ),
                         "stop_condition": boundary_stop_condition,
                     },
                 )
@@ -1983,7 +2118,11 @@ def run_scheduling_tick(
                     "run_id": run_id,
                     "worker_lease_id": lease_ref["lease_id"],
                     "epoch": lease_ref["epoch"],
-                    "last_commit": (result.get("workspace") or {}).get("result_sha"),
+                    "last_commit": (
+                        (result.get("workspace") or {}).get("promoted_sha")
+                        if gateway_accepted
+                        else (result.get("workspace") or {}).get("result_sha")
+                    ),
                     "last_validated_workflow_state": current_status,
                     "executed_commands": [str(item) for item in result.get("requested_commands", [])],
                     "artifacts": [str(item.get("path")) for item in result.get("artifacts", [])],
@@ -1993,7 +2132,7 @@ def run_scheduling_tick(
                         if status == "timed_out"
                         and (result.get("workspace") or {}).get("result_sha")
                         else "verified"
-                        if status == "succeeded"
+                        if status == "succeeded" and gateway_accepted
                         else None
                     ),
                 },

@@ -31,6 +31,8 @@ COMMANDS_REQUIRING_HUMAN_AUTH = frozenset(
         "IssueRunAuthorizationGrant",
         "RevokeRunAuthorizationGrant",
         "UpdateProjectProfile",
+        # Design Authority — only humans may assign/change authoritative level.
+        "SetDesignArtifactAuthority",
     }
 )
 

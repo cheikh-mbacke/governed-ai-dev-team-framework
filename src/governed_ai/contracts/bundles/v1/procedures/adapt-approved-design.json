@@ -1,0 +1,19 @@
+{
+  "procedure_id": "adapt-approved-design",
+  "revision": "1.0.0",
+  "intent": "Adapt an authoritative Design Contract only within explicitly permitted free zones and tolerances.",
+  "invocation_mode": "explicit_only",
+  "required_inputs": ["design_contract", "allowed_adaptations", "existing_ui_constraints"],
+  "steps": [
+    "Load the Design Contract and list free_zones and tolerances",
+    "Refuse adaptations outside declared free zones",
+    "Preserve mandatory text, elements, navigation and states",
+    "Record each adaptation with the contract tolerance rule that permits it",
+    "Escalate design-system conflicts instead of choosing silently"
+  ],
+  "required_outputs": ["implementation_artifacts", "adaptation_log", "visual_evidence_plan"],
+  "invariants": [
+    "Every allowed adaptation cites a Design Contract rule",
+    "Authoritative structure and content remain binding"
+  ]
+}
