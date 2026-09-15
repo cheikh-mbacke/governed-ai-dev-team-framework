@@ -27,6 +27,12 @@ from typing import Any
 
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)", re.DOTALL)
 
+# Source templates are copied from adapters/cursor/templates/.cursor/agents/ as a
+# starting point and still carry Cursor-only frontmatter keys (e.g. `readonly`,
+# meaningless — and misleading — in a Claude Code subagent). Drop them on render
+# rather than passing them through.
+_DROP_KEYS = frozenset({"readonly"})
+
 
 def parse_frontmatter(raw: str) -> tuple[list[tuple[str, str]], str]:
     """Return ordered frontmatter pairs and body text."""
@@ -71,6 +77,8 @@ def render_agent_from_role(template_text: str, role: dict[str, Any]) -> str:
     rendered_pairs: list[tuple[str, str]] = []
     seen: set[str] = set()
     for key, value in pairs:
+        if key in _DROP_KEYS:
+            continue
         if key in updates:
             rendered_pairs.append((key, updates[key]))
             seen.add(key)

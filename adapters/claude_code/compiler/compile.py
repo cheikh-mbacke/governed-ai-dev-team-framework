@@ -1,9 +1,10 @@
 """Compile a Published Contract Bundle into staged Claude Code artefacts.
 
-v1 (pilot) scope: only the roles in ``BUNDLE_ROLE_AGENT`` get frontmatter
-transformation, mirroring ``adapters/cursor/compiler/compile.py``. Growing
-past the pilot set is a follow-up increment (Document 3 §"Grain Claude Code
-résolu partiellement" / plan snug-knitting-catmull).
+``BUNDLE_ROLE_AGENT`` covers every role with a Cursor-parity agent template
+(role/skill parity increment). Only the role-driven ``tools``/``model``
+frontmatter mapping is ported — hooks, per-path write scoping and real CLI
+launch remain a follow-up (Document 3 §"Grain Claude Code résolu
+partiellement" / plan snug-knitting-catmull).
 """
 
 from __future__ import annotations
@@ -25,9 +26,30 @@ ADAPTER_ID = "claude-code"
 ADAPTER_VERSION = "0.1.0"
 CLAUDE_SUBDIR = ".claude"
 BUNDLE_ROLE_AGENT = {
+    "architect",
     "auditor",
     "backend-developer",
+    "code-reviewer",
+    "design-system-steward",
+    "frontend-developer",
+    "integration-steward",
+    "mandate-matcher",
+    "product-analyst",
+    "product-designer",
+    "qa-test",
+    "reconciliation-steward",
+    "release-agent",
+    "requirements-challenger",
+    "security-reviewer",
+    "test-strategist",
+    "visual-qa",
 }
+# Note: design-system-steward, product-designer and visual-qa are dynamically
+# role-driven here, unlike adapters/cursor/compiler/compile.py where they are
+# static (untransformed) templates. Their writes.product.level is "none" in
+# the bundle, matching their hardcoded `readonly: true` in the Cursor
+# template, so this is not a behavior change — just avoiding replicating a
+# gap that only exists in Cursor's compiler.
 
 
 def _default_templates_root() -> Path:

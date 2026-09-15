@@ -5,10 +5,10 @@
 ``artifact_kind``/``REQUIRED_TOP_LEVEL``/``validate_pre_install`` stay local:
 they encode the ``.claude/`` tree shape, which is specific to this Adaptateur.
 
-v1 scope note: only pilot-role agent frontmatter and ``settings.json`` are
-compiled today (see ``compile.py`` ``BUNDLE_ROLE_AGENT``); skills, rules and
+Scope note: agent frontmatter, skills and ``settings.json`` are compiled;
+rules (Cursor's ``.mdc`` files have no direct Claude Code equivalent yet) and
 hooks are a follow-up increment (Document 3 §"Grain Claude Code résolu
-partiellement"), so the required-kind coverage below only demands ``agent``.
+partiellement").
 """
 
 from __future__ import annotations
@@ -64,6 +64,6 @@ def validate_pre_install(staging_root: Path, manifest: dict[str, Any]) -> None:
         if required not in seen_paths:
             raise ValueError(f"required staged artifact missing from manifest: {required}")
 
-    for required_kind in ("agent",):
+    for required_kind in ("agent", "skill"):
         if required_kind not in kinds:
             raise ValueError(f"required artifact kind missing from manifest: {required_kind}")

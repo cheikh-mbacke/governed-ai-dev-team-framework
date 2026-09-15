@@ -7,18 +7,27 @@ versions produit suivent Semantic Versioning.
 
 ### Added
 
-- **Adaptateur Claude Code — squelette pilote** (`adapters/claude_code/`,
+- **Adaptateur Claude Code** (`adapters/claude_code/`,
   `src/governed_ai/adapters/claude_code/`) : les 5 opérations du SPI
   (`describe`, `check_compatibility`, `compile`, `execute`, `collect`)
-  implémentées et testées contre 2 rôles pilotes (`backend-developer`,
-  `auditor`), runtime en mode stub (pas de lancement CLI réel). `src/governed_ai/adapters/common/`
-  (nouveau) porte la logique partagée entre Adaptateurs (hash d'artefact, garde
-  d'autorité `RecordObservation`/`RecordGateDecision`, persistance
-  `RuntimeResult`), migrée hors de `adapters/cursor/` sans changement de
-  comportement (Cursor conserve des wrappers fins). Hors périmètre de cet
-  incrément : les 15 rôles et ~25 skills restants, le portage des hooks, le
-  lancement CLI réel, le câblage installeur, les fixtures golden gelées — voir
-  Document 3 §"Grain Claude Code résolu partiellement" et Document 0 §2.
+  implémentées et testées, runtime en mode stub (pas de lancement CLI réel).
+  `src/governed_ai/adapters/common/` (nouveau) porte la logique partagée entre
+  Adaptateurs (hash d'artefact, garde d'autorité `RecordObservation`/
+  `RecordGateDecision`, persistance `RuntimeResult`), migrée hors de
+  `adapters/cursor/` sans changement de comportement (Cursor conserve des
+  wrappers fins).
+  - Parité de rôles/skills avec Cursor : les 17 rôles dotés d'un agent Cursor
+    (14 pilotés par le bundle + 3 alignés dynamiquement — `design-system-steward`,
+    `product-designer`, `visual-qa` — statiques côté Cursor) et les 25 skills
+    sont portés vers `.claude/agents/*.md` et `.claude/skills/`. Le contenu des
+    skills est copié à l'identique (frontmatter `name`/`description`/
+    `disable-model-invocation` compatible tel quel) hormis 3 références
+    littérales à `.cursor/...` corrigées en `.claude/...`. Le champ Cursor
+    `readonly` est supprimé au rendu plutôt que propagé.
+  - Hors périmètre de cet incrément : le portage des hooks, le lancement CLI
+    réel, le câblage installeur, les fixtures golden gelées, le scoping
+    d'écriture par chemin (`writes.product.paths`) — voir Document 3
+    §"Grain Claude Code résolu partiellement" et Document 0 §2.
 - Notifications SMTP non bloquantes avec outbox dédupliquée, reprise sur échec,
   alertes immédiates, digest de fin de Run et routage adapté au profil
   d'autonomie. Transport installé par défaut sur `mail.agenteam.fr:465` en SSL,
