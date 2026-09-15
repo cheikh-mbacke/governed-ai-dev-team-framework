@@ -8,7 +8,7 @@
     "per_role_readonly": true,
     "per_role_product_scope": "partial",
     "mediated_core_commands": true,
-    "hooks": false,
+    "hooks": true,
     "mcp": true,
     "isolated_worktree": true
   }

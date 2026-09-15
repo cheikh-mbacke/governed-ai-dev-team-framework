@@ -24,10 +24,30 @@ versions produit suivent Semantic Versioning.
     `disable-model-invocation` compatible tel quel) hormis 3 références
     littérales à `.cursor/...` corrigées en `.claude/...`. Le champ Cursor
     `readonly` est supprimé au rendu plutôt que propagé.
-  - Hors périmètre de cet incrément : le portage des hooks, le lancement CLI
-    réel, le câblage installeur, les fixtures golden gelées, le scoping
-    d'écriture par chemin (`writes.product.paths`) — voir Document 3
-    §"Grain Claude Code résolu partiellement" et Document 0 §2.
+  - Hooks portés (`.claude/hooks/{audit_event,guard_shell,session_init,backup_push}.py`,
+    `run_hook.cmd`) et câblés dans `.claude/settings.json` (`PreToolUse`/
+    `PostToolUse` avec `matcher` par outil, `SessionStart`, `SubagentStart`/
+    `SubagentStop`, `Stop`) ; `guard_shell.py` bloque les mêmes opérations
+    destructrices que Cursor (`git push --force`, `git reset --hard`,
+    `rm -rf /`, `kubectl apply/delete/...`, `terraform apply/destroy`,
+    branches protégées) via le code de sortie 2 sur `PreToolUse`, le seul
+    mécanisme de blocage dur vérifié. Le schéma JSON exact des hooks Claude
+    Code (`tool_name`/`tool_input`, `hookSpecificOutput.permissionDecision`)
+    est une transcription de bonne foi, **non vérifiée contre une session
+    Claude Code réelle** dans cet incrément — testé fonctionnellement en
+    subprocess avec ce schéma supposé (13 tests), pas contre le runtime réel.
+  - Scoping d'écriture par chemin (`writes.product.paths`) délibérément **non**
+    tenté : les chemins sont des symboles (`<work-unit-scope>`) résolus par le
+    noyau à l'exécution (`ExecutionRequest.resolved_scope`), pas au moment de
+    la compilation — Cursor lui-même reporte ce mécanisme (`project_profile`
+    non exploité, "reserved for profile-driven allowlist diffs (later WU)").
+    Seules les interdictions statiques invariantes par rôle (secrets,
+    `.ai-team/constitution/**`, config d'Adaptateur, commandes destructrices)
+    sont portées, à parité stricte avec `.cursor/permissions.json`.
+  - Hors périmètre de cet incrément : le lancement CLI réel, le câblage
+    installeur, les fixtures golden gelées, les règles `.mdc` (pas
+    d'équivalent Claude Code direct retenu) — voir Document 3 §"Grain Claude
+    Code résolu partiellement" et Document 0 §2.
 - Notifications SMTP non bloquantes avec outbox dédupliquée, reprise sur échec,
   alertes immédiates, digest de fin de Run et routage adapté au profil
   d'autonomie. Transport installé par défaut sur `mail.agenteam.fr:465` en SSL,

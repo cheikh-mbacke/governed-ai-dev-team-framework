@@ -88,6 +88,14 @@ def test_compiled_skills_have_no_leftover_cursor_path_references(tmp_path: Path)
             )
 
 
+def test_compile_includes_all_hook_scripts(tmp_path: Path) -> None:
+    staging = tmp_path / "staging"
+    manifest = compile_manifest(BUNDLE_V1, staging)
+    paths = {entry["path"] for entry in manifest["artifacts"]}
+    for script in ("audit_event.py", "guard_shell.py", "session_init.py", "backup_push.py", "run_hook.cmd"):
+        assert f".claude/hooks/{script}" in paths
+
+
 def test_compile_is_deterministic(tmp_path: Path) -> None:
     manifest_a = compile_manifest(BUNDLE_V1, tmp_path / "a")
     manifest_b = compile_manifest(BUNDLE_V1, tmp_path / "b")

@@ -5,10 +5,10 @@
 ``artifact_kind``/``REQUIRED_TOP_LEVEL``/``validate_pre_install`` stay local:
 they encode the ``.claude/`` tree shape, which is specific to this Adaptateur.
 
-Scope note: agent frontmatter, skills and ``settings.json`` are compiled;
-rules (Cursor's ``.mdc`` files have no direct Claude Code equivalent yet) and
-hooks are a follow-up increment (Document 3 §"Grain Claude Code résolu
-partiellement").
+Scope note: agent frontmatter, skills, hooks and ``settings.json`` are
+compiled; rules (Cursor's ``.mdc`` files have no direct Claude Code
+equivalent yet) remain a follow-up increment (Document 3 §"Grain Claude
+Code résolu partiellement").
 """
 
 from __future__ import annotations
@@ -26,6 +26,8 @@ def artifact_kind(rel_posix: str) -> str:
         return "agent"
     if "/skills/" in rel_posix and rel_posix.endswith("SKILL.md"):
         return "skill"
+    if rel_posix.startswith(".claude/hooks/"):
+        return "hook"
     if rel_posix == ".claude/settings.json":
         return "settings"
     if rel_posix == ".claude/CLAUDE.md":
@@ -64,6 +66,6 @@ def validate_pre_install(staging_root: Path, manifest: dict[str, Any]) -> None:
         if required not in seen_paths:
             raise ValueError(f"required staged artifact missing from manifest: {required}")
 
-    for required_kind in ("agent", "skill"):
+    for required_kind in ("agent", "skill", "hook"):
         if required_kind not in kinds:
             raise ValueError(f"required artifact kind missing from manifest: {required_kind}")
