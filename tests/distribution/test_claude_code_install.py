@@ -13,10 +13,12 @@ import sys
 from pathlib import Path
 
 import yaml
+from adapters.claude_code.compiler.staging import sha256_bytes
 from distribution.installer.record import INSTALLATION_RECORD_FILE, is_installation_record
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALL = REPO_ROOT / "tools" / "install.py"
+GOLDEN_PATH = REPO_ROOT / "tests" / "fixtures" / "claude-code-compile" / "golden-manifest.json"
 
 
 def _run_install(
@@ -60,6 +62,18 @@ def test_fresh_install_with_adapter_claude_code_materializes_claude_dir(tmp_path
         (target / ".ai-team/project-profile.yaml").read_text(encoding="utf-8")
     )
     assert profile.get("active_adapter_id") == "claude-code"
+
+
+def test_fresh_install_with_adapter_claude_code_matches_golden_manifest(tmp_path: Path) -> None:
+    target = tmp_path / "cc-golden"
+    result = _run_install(target, adapter="claude-code")
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    golden = json.loads(GOLDEN_PATH.read_text(encoding="utf-8"))
+    for entry in golden["artifacts"]:
+        path = target / entry["path"]
+        assert path.is_file(), entry["path"]
+        assert sha256_bytes(path.read_bytes()) == entry["sha256"], entry["path"]
 
 
 def test_fresh_install_with_adapter_claude_code_passes_validate(tmp_path: Path) -> None:

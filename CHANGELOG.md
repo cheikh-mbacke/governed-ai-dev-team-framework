@@ -84,9 +84,30 @@ versions produit suivent Semantic Versioning.
     seul paramètre variable). Activé par la même variable d'opt-in
     `GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1` que Cursor ; désactivé par
     défaut, donc gratuit pour la suite de tests (mockée, comme pour Cursor).
-  - Hors périmètre de cet incrément : les fixtures golden gelées, les règles
-    `.mdc` (pas d'équivalent Claude Code direct retenu) — voir Document 3
-    §"Grain Claude Code résolu partiellement" et Document 0 §2.
+  - **Fixtures golden gelées** (`tests/fixtures/claude-code-compile/golden-manifest.json`,
+    `tests/generate_claude_code_compile_golden.py`, `adapters/claude_code/compiler/parity.py`) :
+    miroir du mécanisme Cursor, sans `shadow_compare` (pas d'arbre `.claude/`
+    historique séparé à comparer dans ce dépôt). Vérifié aussi via
+    l'installateur (`tools/install.py --adapter claude-code` produit des
+    fichiers dont le hash correspond au manifeste gelé).
+  - **Règles portées** : les 6 règles Cursor (`.cursor/rules/*.mdc`, toutes
+    `alwaysApply: true`) sont fusionnées dans `.claude/CLAUDE.md` plutôt que
+    dans un mécanisme `.claude/rules/*.md` non vérifié — CLAUDE.md est le
+    seul mécanisme d'injection de contexte confirmé chargé à chaque session.
+  - **Outillage préflight minimal** (`adapters/claude_code/runtime/checks.py`) :
+    présence du binaire `claude`, validité de `.claude/settings.json`, sondage
+    fonctionnel de `guard_shell.py` (code de sortie, pas le format JSON
+    `{"permission":...}` de Cursor). Volontairement plus restreint que
+    `adapters/cursor/runtime/checks.py` : les concepts `global_allowlist`/
+    `execution_surface`/`readonly_sandbox` de Cursor sont propres à son UI
+    d'approbation, sans équivalent Claude Code vérifié — non inventés ici.
+    **Non câblé** dans `scripts/ai-team/preflight.py` (son alias de mise en
+    page installée n'est vérifié que pour Cursor) ; `diagnose.py`,
+    `orchestrate.py` et `propose_allowlist.py` restent Cursor uniquement,
+    hors périmètre de cet incrément.
+  - Hors périmètre restant : le scoping d'écriture par chemin (voir plus
+    haut), l'outillage préflight/orchestration au-delà de ce qui précède —
+    voir Document 3 §"Grain Claude Code résolu partiellement" et Document 0 §2.
 - Notifications SMTP non bloquantes avec outbox dédupliquée, reprise sur échec,
   alertes immédiates, digest de fin de Run et routage adapté au profil
   d'autonomie. Transport installé par défaut sur `mail.agenteam.fr:465` en SSL,

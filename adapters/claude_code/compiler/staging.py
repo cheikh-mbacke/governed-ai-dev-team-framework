@@ -6,9 +6,11 @@
 they encode the ``.claude/`` tree shape, which is specific to this Adaptateur.
 
 Scope note: agent frontmatter, skills, hooks and ``settings.json`` are
-compiled; rules (Cursor's ``.mdc`` files have no direct Claude Code
-equivalent yet) remain a follow-up increment (Document 3 §"Grain Claude
-Code résolu partiellement").
+compiled. Cursor's ``.mdc`` rules (all ``alwaysApply: true``) have no
+direct Claude Code file-per-rule equivalent verified here, so their content
+is merged into ``CLAUDE.md`` instead — the one context-injection mechanism
+that is verified to load at every session start — rather than guessing at
+an unverified ``.claude/rules/*.md`` path-scoping mechanism.
 """
 
 from __future__ import annotations
