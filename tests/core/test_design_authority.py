@@ -2,24 +2,28 @@
 
 from __future__ import annotations
 
+import io
 import json
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Any
 
 import pytest
+from PIL import Image
 
 from governed_ai.core.design_authority.binding import (
     DesignBindingError,
     bind_design_to_work_unit,
     evaluate_g1_design_readiness,
 )
+from governed_ai.core.design_authority.capture_backend import CaptureObservation, FnCaptureBackend
 from governed_ai.core.design_authority.conformance import (
     ConformanceError,
     run_visual_conformance,
 )
-from governed_ai.core.design_authority.contract import compile_design_contract
 from governed_ai.core.design_authority.context import build_multimodal_design_context
+from governed_ai.core.design_authority.contract import compile_design_contract
 from governed_ai.core.design_authority.design_system import (
     detect_design_system_conflict,
     require_search_before_create,
@@ -63,9 +67,87 @@ def _workspace(tmp_path: Path) -> Workspace:
     return Workspace.from_root(root)
 
 
-def _png(path: Path, payload: bytes = b"\x89PNG\r\n\x1a\n" + b"mock-design-v1") -> Path:
-    path.write_bytes(payload)
+def _init_git(workspace: Workspace) -> str:
+    """Initialize a git repo and return the HEAD commit SHA (40 hex)."""
+    root = workspace.root
+    subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", "init"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
+    sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    return sha
+
+
+def _png_bytes(
+    *,
+    color: tuple[int, int, int] = (30, 144, 255),
+    size: tuple[int, int] = (32, 24),
+) -> bytes:
+    image = Image.new("RGB", size, color)
+    buf = io.BytesIO()
+    image.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def _png(
+    path: Path,
+    payload: bytes | None = None,
+    *,
+    color: tuple[int, int, int] = (30, 144, 255),
+    size: tuple[int, int] = (32, 24),
+) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if payload is None:
+        path.write_bytes(_png_bytes(color=color, size=size))
+    else:
+        # Allow callers to pass either raw PNG bytes or a legacy marker string.
+        if payload.startswith(b"\x89PNG"):
+            path.write_bytes(payload)
+        else:
+            # Deterministic color derived from payload for distinct mockups.
+            tone = sum(payload) % 200
+            path.write_bytes(_png_bytes(color=(tone, 80, 160), size=size))
     return path
+
+
+def _vcr_report(result: dict[str, Any]) -> dict[str, Any]:
+    assert "report" in result
+    return result["report"]
+
+
+def _matching_backend(
+    *,
+    reference_bytes: bytes,
+    text: list[str] | None = None,
+    components: list[str] | None = None,
+    color: tuple[int, int, int] | None = None,
+) -> FnCaptureBackend:
+    """Privileged test double that returns screenshots matching (or near) the reference."""
+
+    def _capture(spec: dict[str, Any]) -> CaptureObservation:
+        shot = reference_bytes if color is None else _png_bytes(color=color)
+        return CaptureObservation(
+            screenshot_bytes=shot,
+            text=list(text or []),
+            components=list(components or []),
+            dom={},
+            styles={},
+            environment={"backend": "test-double"},
+        )
+
+    return FnCaptureBackend(_capture)
 
 
 def _write_wu(workspace: Workspace, wu_id: str = "WU-UI-1") -> dict[str, Any]:
@@ -135,6 +217,10 @@ def test_register_svg_pdf_and_remote(tmp_path: Path) -> None:
         source_type="pdf",
     )
     pin = sha256_bytes(b"figma-node-frozen")
+    mirror = ws.root / "designs" / "figma-mirror.png"
+    _png(mirror, b"\x89PNG\r\n\x1a\n" + b"figma-node-frozen")
+    # Pin must match the mirror content hash for authoritative remotes.
+    pin = sha256_file(mirror)
     remote = register_remote_artifact(
         ws,
         design_artifact_id="DA-FIGMA-1",
@@ -142,12 +228,15 @@ def test_register_svg_pdf_and_remote(tmp_path: Path) -> None:
         registered_by="human:designer",
         authority_level="authoritative",
         content_pin=pin,
+        local_mirror_path="designs/figma-mirror.png",
         human_authorization={"granted_by": "human:designer"},
     )
     assert svg_doc["source_type"] == "svg"
     assert pdf_doc["source_type"] == "pdf"
     assert remote["frozen_remote"]["content_pin"] == pin
-
+    integrity = verify_artifact_integrity(ws, remote)
+    assert integrity["ok"] is True
+    assert integrity.get("verified_via") == "local_mirror"
 
 def test_agent_cannot_self_authorize_authoritative(tmp_path: Path) -> None:
     ws = _workspace(tmp_path)
@@ -165,6 +254,225 @@ def test_agent_cannot_self_authorize_authoritative(tmp_path: Path) -> None:
             },
         )
     assert exc.value.code == "agent_cannot_self_authorize"
+
+
+def _cmd_actor(role_id: str = "product-designer") -> dict[str, Any]:
+    return {
+        "kind": "role",
+        "execution_id": "EXE-design-cmd-test",
+        "role_id": role_id,
+        "bundle_version": "1.0.0",
+        "adapter_id": "cursor",
+    }
+
+
+def _cmd_envelope(
+    command_type: str,
+    *,
+    target: dict[str, Any],
+    payload: dict[str, Any],
+    key: str,
+    human_authorization: dict[str, Any] | None = None,
+    actor_role: str = "product-designer",
+) -> dict[str, Any]:
+    envelope: dict[str, Any] = {
+        "protocol_version": "1.0",
+        "command_id": f"CMD-{key}",
+        "idempotency_key": f"idem-{key}",
+        "correlation_id": "COR-design-cmd-test",
+        "type": command_type,
+        "issued_at": "2026-09-14T00:00:00Z",
+        "actor": _cmd_actor(actor_role),
+        "target": target,
+        "payload": payload,
+    }
+    if human_authorization is not None:
+        envelope["human_authorization"] = human_authorization
+    return envelope
+
+
+def _seed_preissued_authorization(
+    workspace: Workspace,
+    authorization_id: str,
+    *,
+    command_type: str,
+    target: dict[str, Any],
+    granted_by: str = "human:designer",
+    actor_kind: str = "human",
+    consumed_at: str | None = None,
+) -> None:
+    """Simulate a Core-owned record of a human approval issued out-of-band.
+
+    Nothing in the Command Gateway path may fabricate this file — it is the
+    proof that a human (not an agent, not the submitted envelope) approved
+    exactly this command against exactly this target.
+    """
+    path = workspace.ai_team / "authorizations" / f"{authorization_id}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    record = {
+        "authorization_id": authorization_id,
+        "granted_by": granted_by,
+        "actor": {"kind": actor_kind, "id": granted_by},
+        "command_type": command_type,
+        "target": target,
+        "issued_at": "2026-09-14T00:00:00Z",
+        "consumed_at": consumed_at,
+    }
+    path.write_text(json.dumps(record, indent=2), encoding="utf-8")
+
+
+def _register_design_artifact_envelope(
+    *,
+    artifact_id: str = "DA-CMD-1",
+    authorization_id: str | None,
+    granted_by: str = "human:designer",
+    key: str = "register-cmd-1",
+) -> dict[str, Any]:
+    target = {"kind": "design_artifact", "id": artifact_id}
+    human_auth = (
+        {"authorization_id": authorization_id, "granted_by": granted_by}
+        if authorization_id
+        else None
+    )
+    return _cmd_envelope(
+        "RegisterDesignArtifact",
+        target=target,
+        payload={
+            "design_artifact_id": artifact_id,
+            "source_path": "designs/cmd.png",
+            "authority_level": "authoritative",
+            "registered_by": "human:designer",
+            "screens": ["login"],
+            "states": ["content_available"],
+        },
+        key=key,
+        human_authorization=human_auth,
+    )
+
+
+def test_gateway_registers_authoritative_artifact_with_valid_human_authorization(
+    tmp_path: Path,
+) -> None:
+    """The real CommandGateway path accepts a genuine, correctly scoped,
+    Core-owned pre-issued human authorization — proving the happy path still
+    works once the strict check is wired in."""
+    from governed_ai.core.commands.gateway import CommandGateway
+
+    ws = _workspace(tmp_path)
+    _png(ws.root / "designs" / "cmd.png")
+    _seed_preissued_authorization(
+        ws,
+        "HAUTH-CMD-OK",
+        command_type="RegisterDesignArtifact",
+        target={"kind": "design_artifact", "id": "DA-CMD-1"},
+    )
+    gateway = CommandGateway(ws)
+    receipt, exit_code = gateway.execute_command(
+        _register_design_artifact_envelope(authorization_id="HAUTH-CMD-OK")
+    )
+    assert exit_code == 0, receipt
+    assert receipt["status"] == "accepted"
+    doc_path = ws.ai_team / "design" / "artifacts" / "DA-CMD-1.yaml"
+    assert doc_path.is_file()
+    auth_record = json.loads(
+        (ws.ai_team / "authorizations" / "HAUTH-CMD-OK.json").read_text(encoding="utf-8")
+    )
+    assert auth_record["consumed_at"] is not None
+
+
+def test_gateway_refuses_replayed_human_authorization(tmp_path: Path) -> None:
+    """Section 15 item 17 — a human authorization already consumed by one
+    RegisterDesignArtifact command cannot be replayed for a second one."""
+    from governed_ai.core.commands.gateway import CommandGateway
+
+    ws = _workspace(tmp_path)
+    _png(ws.root / "designs" / "cmd.png")
+    _seed_preissued_authorization(
+        ws,
+        "HAUTH-CMD-REPLAY",
+        command_type="RegisterDesignArtifact",
+        target={"kind": "design_artifact", "id": "DA-CMD-1"},
+        consumed_at="2026-09-13T00:00:00Z",  # already consumed by a prior command
+    )
+    gateway = CommandGateway(ws)
+    receipt, exit_code = gateway.execute_command(
+        _register_design_artifact_envelope(
+            authorization_id="HAUTH-CMD-REPLAY", key="register-cmd-replay"
+        )
+    )
+    assert exit_code != 0
+    assert receipt["status"] == "rejected"
+    assert receipt["errors"][0]["code"] == "UNAUTHORIZED"
+    assert not (ws.ai_team / "design" / "artifacts" / "DA-CMD-1.yaml").is_file()
+
+
+def test_gateway_refuses_agent_posing_as_human_authorizer(tmp_path: Path) -> None:
+    """Section 15 item 17 — the Core checks the pre-issued record's own
+    actor.kind, not the agent-submitted granted_by string. An agent cannot
+    make itself the human authorizer just by claiming a human: id."""
+    from governed_ai.core.commands.gateway import CommandGateway
+
+    ws = _workspace(tmp_path)
+    _png(ws.root / "designs" / "cmd.png")
+    _seed_preissued_authorization(
+        ws,
+        "HAUTH-CMD-AGENT",
+        command_type="RegisterDesignArtifact",
+        target={"kind": "design_artifact", "id": "DA-CMD-1"},
+        granted_by="human:designer",
+        actor_kind="agent",  # the Core-owned record itself was not human-issued
+    )
+    gateway = CommandGateway(ws)
+    receipt, exit_code = gateway.execute_command(
+        _register_design_artifact_envelope(
+            authorization_id="HAUTH-CMD-AGENT", key="register-cmd-agent"
+        )
+    )
+    assert exit_code != 0
+    assert receipt["status"] == "rejected"
+    assert receipt["errors"][0]["code"] == "UNAUTHORIZED"
+    assert not (ws.ai_team / "design" / "artifacts" / "DA-CMD-1.yaml").is_file()
+
+
+def test_gateway_refuses_authorization_scoped_to_another_target(tmp_path: Path) -> None:
+    """Section 15 item 17 — an authorization issued for a different artifact
+    cannot be redirected to authorize this one."""
+    from governed_ai.core.commands.gateway import CommandGateway
+
+    ws = _workspace(tmp_path)
+    _png(ws.root / "designs" / "cmd.png")
+    _seed_preissued_authorization(
+        ws,
+        "HAUTH-CMD-SCOPE",
+        command_type="RegisterDesignArtifact",
+        target={"kind": "design_artifact", "id": "DA-OTHER-ARTIFACT"},
+    )
+    gateway = CommandGateway(ws)
+    receipt, exit_code = gateway.execute_command(
+        _register_design_artifact_envelope(
+            authorization_id="HAUTH-CMD-SCOPE", key="register-cmd-scope"
+        )
+    )
+    assert exit_code != 0
+    assert receipt["status"] == "rejected"
+    assert receipt["errors"][0]["code"] == "UNAUTHORIZED"
+    assert not (ws.ai_team / "design" / "artifacts" / "DA-CMD-1.yaml").is_file()
+
+
+def test_gateway_refuses_register_design_artifact_without_authorization(tmp_path: Path) -> None:
+    """An authoritative RegisterDesignArtifact with no human_authorization at
+    all is refused before any registry mutation happens."""
+    from governed_ai.core.commands.gateway import CommandGateway
+
+    ws = _workspace(tmp_path)
+    _png(ws.root / "designs" / "cmd.png")
+    gateway = CommandGateway(ws)
+    receipt, exit_code = gateway.execute_command(
+        _register_design_artifact_envelope(authorization_id=None, key="register-cmd-none")
+    )
+    assert exit_code != 0
+    assert receipt["status"] == "rejected"
+    assert not (ws.ai_team / "design" / "artifacts" / "DA-CMD-1.yaml").is_file()
 
 
 def test_modified_reference_detected(tmp_path: Path) -> None:
@@ -220,6 +528,7 @@ def test_contradictory_authoritative_references_block(tmp_path: Path) -> None:
 
 def test_advisory_does_not_auto_block_conformance(tmp_path: Path) -> None:
     ws = _workspace(tmp_path)
+    sha = _init_git(ws)
     _png(ws.root / "designs" / "adv.png")
     register_local_artifact(
         ws,
@@ -236,7 +545,7 @@ def test_advisory_does_not_auto_block_conformance(tmp_path: Path) -> None:
         members=[{"design_artifact_id": "DA-ADV", "target": {"route": "/x"}}],
     )
     # create mode with advisory refs is fine; compile create without auth refs
-    contract = compile_design_contract(
+    compile_design_contract(
         ws,
         design_contract_id="DC-ADV",
         design_mode="create",
@@ -247,26 +556,19 @@ def test_advisory_does_not_auto_block_conformance(tmp_path: Path) -> None:
         viewports=[{"name": "desktop", "width": 1280, "height": 800}],
         mandatory_text=["Hello"],
     )
-    report = run_visual_conformance(
-        ws,
-        report_id="VCR-ADV",
-        design_contract_id="DC-ADV",
-        work_unit_id="WU-UI-1",
-        commit_sha="a" * 40,
-        verifier_role="visual-qa",
-        implementer_role="frontend-developer",
-        observations=[
-            {
-                "route": "/x",
-                "state": "content_available",
-                "viewport": {"name": "desktop"},
-                "observed_text": [],
-                "observed_components": [],
-            }
-        ],
+    # No backend → unverifiable; advisory divergences must not block alone.
+    report = _vcr_report(
+        run_visual_conformance(
+            ws,
+            report_id="VCR-ADV",
+            design_contract_id="DC-ADV",
+            work_unit_id="WU-UI-1",
+            commit_sha=sha,
+            verifier_role="visual-qa",
+            implementer_role="frontend-developer",
+        )
     )
-    assert report["status"] in {"passed", "failed"}
-    # advisory must not produce blocks_progress solely from advisory authority
+    assert report["status"] in {"passed", "failed", "unverifiable"}
     if report["divergences"]:
         assert all(
             not d.get("blocks_progress")
@@ -335,6 +637,7 @@ def test_backend_project_without_design(tmp_path: Path) -> None:
 
 def test_same_actor_cannot_verify(tmp_path: Path) -> None:
     ws = _workspace(tmp_path)
+    sha = _init_git(ws)
     _png(ws.root / "designs" / "c.png")
     register_local_artifact(
         ws,
@@ -367,16 +670,16 @@ def test_same_actor_cannot_verify(tmp_path: Path) -> None:
             report_id="VCR-SAME",
             design_contract_id="DC-C",
             work_unit_id="WU-UI-1",
-            commit_sha="b" * 40,
+            commit_sha=sha,
             verifier_role="frontend-developer",
             implementer_role="frontend-developer",
-            observations=[],
         )
     assert exc.value.code == "same_actor_implementation_and_verification"
 
 
 def test_stale_lease_epoch_refused(tmp_path: Path) -> None:
     ws = _workspace(tmp_path)
+    sha = _init_git(ws)
     _png(ws.root / "designs" / "d.png")
     register_local_artifact(
         ws,
@@ -409,14 +712,13 @@ def test_stale_lease_epoch_refused(tmp_path: Path) -> None:
             report_id="VCR-STALE",
             design_contract_id="DC-D",
             work_unit_id="WU-UI-1",
-            commit_sha="c" * 40,
+            commit_sha=sha,
             verifier_role="visual-qa",
             implementer_role="frontend-developer",
             lease_id="LEASE-OLD",
             epoch=1,
             expected_lease_id="LEASE-NEW",
             expected_epoch=2,
-            observations=[],
         )
     assert exc.value.code == "stale_lease"
 
@@ -424,7 +726,7 @@ def test_stale_lease_epoch_refused(tmp_path: Path) -> None:
 def test_end_to_end_conformant_pipeline(tmp_path: Path) -> None:
     ws = _workspace(tmp_path)
     _write_wu(ws)
-    mock = _png(ws.root / "designs" / "login.png", b"\x89PNG\r\n\x1a\n" + b"login-ref")
+    mock = _png(ws.root / "designs" / "login.png", color=(10, 20, 30))
     art = register_local_artifact(
         ws,
         design_artifact_id="DA-LOGIN",
@@ -456,7 +758,7 @@ def test_end_to_end_conformant_pipeline(tmp_path: Path) -> None:
         {"name": "desktop", "width": 1280, "height": 800},
         {"name": "mobile", "width": 390, "height": 844},
     ]
-    contract = compile_design_contract(
+    compile_design_contract(
         ws,
         design_contract_id="DC-LOGIN",
         design_mode="conform",
@@ -468,7 +770,7 @@ def test_end_to_end_conformant_pipeline(tmp_path: Path) -> None:
         mandatory_elements=["LoginForm"],
         states=states,
         viewports=viewports,
-        tolerances={"difference_threshold": 0.05, "masked_regions": ["#clock"]},
+        tolerances={"difference_threshold": 0.05, "masked_regions": [{"x": 0, "y": 0, "width": 2, "height": 2}]},
     )
     binding = bind_design_to_work_unit(
         ws,
@@ -550,74 +852,79 @@ def test_end_to_end_conformant_pipeline(tmp_path: Path) -> None:
         )
     assert exc.value.code == "missing_visual_input_capability"
 
+    sha = _init_git(ws)
     ref_bytes = mock.read_bytes()
-    observations = []
-    for vp in viewports:
-        for state in states:
-            observations.append(
-                {
-                    "route": "/login",
-                    "state": state,
-                    "viewport": vp,
-                    "observed_text": ["Sign in"],
-                    "observed_components": ["LoginForm"],
-                    "screenshot_bytes": ref_bytes,
-                    "reference_screenshot_bytes": ref_bytes,
-                    "diff_ratio": 0.0,
-                }
-            )
-    report = run_visual_conformance(
-        ws,
-        report_id="VCR-LOGIN-OK",
-        design_contract_id="DC-LOGIN",
-        work_unit_id="WU-UI-1",
-        commit_sha="e" * 40,
-        verifier_role="visual-qa",
-        implementer_role="frontend-developer",
-        observations=observations,
+    backend = _matching_backend(
+        reference_bytes=ref_bytes,
+        text=["Sign in"],
+        components=["LoginForm"],
+    )
+    report = _vcr_report(
+        run_visual_conformance(
+            ws,
+            report_id="VCR-LOGIN-OK",
+            design_contract_id="DC-LOGIN",
+            work_unit_id="WU-UI-1",
+            commit_sha=sha,
+            verifier_role="visual-qa",
+            implementer_role="frontend-developer",
+            capture_backend=backend,
+        )
     )
     assert report["status"] == "passed"
     assert report["blocks_progress"] is False
+    # Cartesian product: 1 route × 5 states × 2 viewports
+    assert len(report["captures"]) == 10
     for capture in report["captures"]:
         assert capture["route"] == "/login"
-        assert capture["commit_sha"] == "e" * 40
-        assert capture["reference_id"] == "DA-LOGIN"
+        assert capture["commit_sha"] == sha
         assert capture["viewport"] is not None
 
-    # Hostile agent: ignores mockup, changes palette signal, removes mandatory component.
-    hostile = run_visual_conformance(
-        ws,
-        report_id="VCR-LOGIN-HOSTILE",
-        design_contract_id="DC-LOGIN",
-        work_unit_id="WU-UI-1",
-        commit_sha="f" * 40,
-        verifier_role="visual-qa",
-        implementer_role="frontend-developer",
-        observations=[
-            {
-                "route": "/login",
-                "state": "content_available",
-                "viewport": {"name": "desktop"},
-                "observed_text": ["Welcome elsewhere"],
-                "observed_components": [],  # removed LoginForm
-                "screenshot_bytes": b"\x89PNG\r\n\x1a\n" + b"totally-different",
-                "reference_screenshot_bytes": ref_bytes,
-                "diff_ratio": 0.9,
-            }
-        ],
-        agent_claimed_passed=True,
+    # Hostile agent: different screenshot + missing mandatory content via backend.
+    hostile_backend = _matching_backend(
+        reference_bytes=ref_bytes,
+        text=["Welcome elsewhere"],
+        components=[],
+        color=(255, 0, 0),
+    )
+    hostile = _vcr_report(
+        run_visual_conformance(
+            ws,
+            report_id="VCR-LOGIN-HOSTILE",
+            design_contract_id="DC-LOGIN",
+            work_unit_id="WU-UI-1",
+            commit_sha=sha,
+            verifier_role="visual-qa",
+            implementer_role="frontend-developer",
+            capture_backend=hostile_backend,
+            agent_claimed_passed=True,
+        )
     )
     assert hostile["status"] == "failed"
     assert hostile["blocks_progress"] is True
     assert art["content_hash"] == sha256_file(mock)
+
+    # Caller-injected observation truth must be rejected.
+    with pytest.raises(ConformanceError) as inj:
+        run_visual_conformance(
+            ws,
+            report_id="VCR-INJECT",
+            design_contract_id="DC-LOGIN",
+            work_unit_id="WU-UI-1",
+            commit_sha=sha,
+            verifier_role="visual-qa",
+            implementer_role="frontend-developer",
+            observations=[{"screenshot_bytes": ref_bytes, "diff_ratio": 0.0}],
+        )
+    assert inj.value.code == "forbidden_caller_truth"
 
 
 def test_design_revision_invalidates_only_related(tmp_path: Path) -> None:
     ws = _workspace(tmp_path)
     _write_wu(ws, "WU-A")
     _write_wu(ws, "WU-B")
-    _png(ws.root / "designs" / "old.png", b"\x89PNG\r\n\x1a\n" + b"old")
-    _png(ws.root / "designs" / "new.png", b"\x89PNG\r\n\x1a\n" + b"new")
+    _png(ws.root / "designs" / "old.png", color=(1, 2, 3))
+    _png(ws.root / "designs" / "new.png", color=(4, 5, 6))
     register_local_artifact(
         ws,
         design_artifact_id="DA-OLD",
@@ -655,23 +962,17 @@ def test_design_revision_invalidates_only_related(tmp_path: Path) -> None:
     bind_design_to_work_unit(
         ws, work_unit_id="WU-A", design_contract_id="DC-OLD", design_mode="conform"
     )
+    sha = _init_git(ws)
+    ref_bytes = (ws.root / "designs" / "old.png").read_bytes()
     run_visual_conformance(
         ws,
         report_id="VCR-OLD",
         design_contract_id="DC-OLD",
         work_unit_id="WU-A",
-        commit_sha="1" * 40,
+        commit_sha=sha,
         verifier_role="visual-qa",
         implementer_role="frontend-developer",
-        observations=[
-            {
-                "route": "/a",
-                "state": "content_available",
-                "viewport": {"name": "desktop"},
-                "observed_text": [],
-                "observed_components": [],
-            }
-        ],
+        capture_backend=_matching_backend(reference_bytes=ref_bytes),
     )
     impact = reconcile_design_revision(
         ws,
@@ -723,7 +1024,7 @@ def test_create_blocked_when_authoritative_exists(tmp_path: Path) -> None:
 
 def test_allowed_adaptation_requires_tolerance_rule(tmp_path: Path) -> None:
     ws = _workspace(tmp_path)
-    _png(ws.root / "designs" / "t.png", b"\x89PNG\r\n\x1a\n" + b"tol")
+    _png(ws.root / "designs" / "t.png", color=(100, 100, 100))
     register_local_artifact(
         ws,
         design_artifact_id="DA-T",
@@ -748,31 +1049,118 @@ def test_allowed_adaptation_requires_tolerance_rule(tmp_path: Path) -> None:
         routes=["/"],
         states=["content_available"],
         viewports=[{"name": "desktop", "width": 1280, "height": 800}],
-        tolerances={"difference_threshold": 0.1},
+        tolerances={"difference_threshold": 0.01},
         free_zones=[{"id": "spacing", "description": "minor spacing"}],
     )
-    ref = (ws.root / "designs" / "t.png").read_bytes()
-    report = run_visual_conformance(
-        ws,
-        report_id="VCR-T",
-        design_contract_id="DC-T",
-        work_unit_id="WU-UI-1",
-        commit_sha="2" * 40,
-        verifier_role="visual-qa",
-        implementer_role="frontend-developer",
-        observations=[
-            {
-                "route": "/",
-                "state": "content_available",
-                "viewport": {"name": "desktop"},
-                "observed_text": [],
-                "observed_components": [],
-                "screenshot_bytes": ref + b"x",
-                "reference_screenshot_bytes": ref,
-                "diff_ratio": 0.25,
-                "allowed_by_tolerance_rule": "tolerances.difference_threshold",
-            }
-        ],
+    sha = _init_git(ws)
+    # Different pixels → exceeds threshold; adapt + free_zones → allowed_adaptation.
+    backend = _matching_backend(
+        reference_bytes=(ws.root / "designs" / "t.png").read_bytes(),
+        color=(200, 10, 10),
+    )
+    report = _vcr_report(
+        run_visual_conformance(
+            ws,
+            report_id="VCR-T",
+            design_contract_id="DC-T",
+            work_unit_id="WU-UI-1",
+            commit_sha=sha,
+            verifier_role="visual-qa",
+            implementer_role="frontend-developer",
+            capture_backend=backend,
+        )
     )
     assert any(d["kind"] == "allowed_adaptation" for d in report["divergences"])
     assert report["blocks_progress"] is False
+
+
+def test_no_backend_never_passes(tmp_path: Path) -> None:
+    ws = _workspace(tmp_path)
+    sha = _init_git(ws)
+    _png(ws.root / "designs" / "nb.png")
+    register_local_artifact(
+        ws,
+        design_artifact_id="DA-NB",
+        relative_path="designs/nb.png",
+        registered_by="human:designer",
+        authority_level="authoritative",
+        human_authorization={"granted_by": "human:designer"},
+    )
+    create_reference_set(
+        ws,
+        design_reference_set_id="DRS-NB",
+        title="NB",
+        created_by="human:designer",
+        members=[{"design_artifact_id": "DA-NB", "target": {"route": "/"}}],
+    )
+    compile_design_contract(
+        ws,
+        design_contract_id="DC-NB",
+        design_mode="conform",
+        design_reference_set_id="DRS-NB",
+        compiled_by="human:designer",
+        routes=["/"],
+        states=["content_available"],
+        viewports=[{"name": "desktop", "width": 1280, "height": 800}],
+    )
+    report = _vcr_report(
+        run_visual_conformance(
+            ws,
+            report_id="VCR-NB",
+            design_contract_id="DC-NB",
+            work_unit_id="WU-UI-1",
+            commit_sha=sha,
+            verifier_role="visual-qa",
+            implementer_role="frontend-developer",
+        )
+    )
+    assert report["status"] != "passed"
+    assert report["status"] in {"failed", "unverifiable"}
+
+
+def test_persist_false_stages_without_governed_writes(tmp_path: Path) -> None:
+    ws = _workspace(tmp_path)
+    _png(ws.root / "designs" / "p.png", color=(11, 22, 33))
+    register_local_artifact(
+        ws,
+        design_artifact_id="DA-P",
+        relative_path="designs/p.png",
+        registered_by="human:designer",
+        authority_level="authoritative",
+        human_authorization={"granted_by": "human:designer"},
+    )
+    create_reference_set(
+        ws,
+        design_reference_set_id="DRS-P",
+        title="P",
+        created_by="human:designer",
+        members=[{"design_artifact_id": "DA-P", "target": {"route": "/"}}],
+    )
+    compile_design_contract(
+        ws,
+        design_contract_id="DC-P",
+        design_mode="conform",
+        design_reference_set_id="DRS-P",
+        compiled_by="human:designer",
+        routes=["/"],
+        states=["content_available"],
+        viewports=[{"name": "desktop", "width": 1280, "height": 800}],
+    )
+    sha = _init_git(ws)
+    ref = (ws.root / "designs" / "p.png").read_bytes()
+    result = run_visual_conformance(
+        ws,
+        report_id="VCR-P",
+        design_contract_id="DC-P",
+        work_unit_id="WU-UI-1",
+        commit_sha=sha,
+        verifier_role="visual-qa",
+        implementer_role="frontend-developer",
+        capture_backend=_matching_backend(reference_bytes=ref),
+        persist=False,
+    )
+    assert "report" in result
+    assert result["planned_writes"]
+    assert not (ws.ai_team / "design" / "conformance" / "VCR-P.yaml").is_file()
+    for staged in result["staged_binaries"]:
+        assert Path(staged["temp_path"]).is_file()

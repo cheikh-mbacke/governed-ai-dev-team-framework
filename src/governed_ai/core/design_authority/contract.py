@@ -8,6 +8,7 @@ from typing import Any
 from governed_ai.core.design_authority.hashing import sha256_canonical
 from governed_ai.core.design_authority.models import (
     DESIGN_MODES,
+    INFORMATION_ORIGINS,
     SCHEMA_VERSION,
 )
 from governed_ai.core.design_authority.paths import contract_path, ensure_design_layout
@@ -37,15 +38,47 @@ def _origin_bucket(
     value: Any,
     *,
     origin: str,
-    validated_by_human: bool = False,
+    source_refs: list[Any] | None = None,
+    authority_level: str | None = None,
+    validated_by: str | None = None,
+    validated_at: str | None = None,
+    authorization_id: str | None = None,
 ) -> dict[str, Any]:
-    return {
+    if origin not in INFORMATION_ORIGINS:
+        raise DesignContractError(
+            "invalid_information_origin",
+            f"unknown information origin {origin!r}",
+        )
+    if authority_level is None:
+        authority_level = (
+            "authoritative"
+            if origin in {"explicitly_provided", "human_decision", "inference_validated"}
+            else "advisory"
+        )
+    bucket: dict[str, Any] = {
         "value": value,
         "origin": origin,
-        "validated_by_human": validated_by_human,
-        "authoritative": origin in {"explicitly_provided", "human_decision"}
-        and (origin != "proposed_inference"),
+        "source_refs": list(source_refs or []),
+        "authority_level": authority_level,
+        "validated_by": validated_by,
+        "validated_at": validated_at,
     }
+    if authorization_id:
+        bucket["authorization_id"] = authorization_id
+    return bucket
+
+
+def _provided_bucket(
+    provided: Any | None,
+    *,
+    default: Any,
+    default_origin: str = "compiler_default",
+    provided_origin: str = "inference_proposed",
+) -> dict[str, Any]:
+    """Caller-supplied values are inference_proposed until human-validated."""
+    if provided is not None:
+        return _origin_bucket(provided, origin=provided_origin)
+    return _origin_bucket(default, origin=default_origin)
 
 
 def compile_design_contract(
@@ -159,15 +192,24 @@ def compile_design_contract(
             details={"authoritative_artifact_ids": [r["design_artifact_id"] for r in auth_refs]},
         )
 
-    # Provenance-tagged fields: caller-supplied content is explicitly provided;
-    # inferences stay non-authoritative until human validation.
     tagged_inferences = []
     for item in inferences or []:
+        validated_by = str(item.get("validated_by") or "").strip()
+        auth_id = item.get("authorization_id")
+        # Never trust validated_by_human alone — require human: actor + authorization.
+        if validated_by.startswith("human:") and auth_id:
+            origin = "inference_validated"
+            authoritative = True
+        else:
+            origin = "inference_proposed"
+            authoritative = False
         tagged_inferences.append(
             {
-                **item,
-                "origin": "proposed_inference",
-                "authoritative": bool(item.get("validated_by_human")),
+                **{k: v for k, v in item.items() if k != "validated_by_human"},
+                "origin": origin,
+                "authoritative": authoritative,
+                "validated_by": validated_by or None,
+                "authorization_id": auth_id,
             }
         )
 
@@ -180,11 +222,15 @@ def compile_design_contract(
         "ignore_platform_font_raster": True,
         "ignore_animation_frames": True,
     }
-    if tolerances:
-        default_tolerances.update(tolerances)
+    if tolerances is not None:
+        merged_tolerances = dict(default_tolerances)
+        merged_tolerances.update(tolerances)
+        tolerances_bucket = _origin_bucket(merged_tolerances, origin="inference_proposed")
+    else:
+        tolerances_bucket = _origin_bucket(default_tolerances, origin="compiler_default")
 
-    default_states = states or ["loading", "empty", "error", "access_denied", "content_available"]
-    default_viewports = viewports or [
+    default_states = ["loading", "empty", "error", "access_denied", "content_available"]
+    default_viewports = [
         {"name": "desktop", "width": 1280, "height": 800},
         {"name": "mobile", "width": 390, "height": 844},
     ]
@@ -198,40 +244,34 @@ def compile_design_contract(
         "compiled_by": compiled_by,
         "design_reference_set_id": design_reference_set_id,
         "references": refs,
-        "screens": _origin_bucket(screens or [], origin="explicitly_provided"),
-        "routes": _origin_bucket(routes or [], origin="explicitly_provided"),
-        "components": _origin_bucket(components or [], origin="explicitly_provided"),
-        "structure": _origin_bucket(structure or {}, origin="explicitly_provided"),
-        "mandatory_text": _origin_bucket(mandatory_text or [], origin="explicitly_provided"),
-        "mandatory_elements": _origin_bucket(
-            mandatory_elements or [], origin="explicitly_provided"
+        "screens": _provided_bucket(screens, default=[]),
+        "routes": _provided_bucket(routes, default=[]),
+        "components": _provided_bucket(components, default=[]),
+        "structure": _provided_bucket(structure, default={}),
+        "mandatory_text": _provided_bucket(mandatory_text, default=[]),
+        "mandatory_elements": _provided_bucket(mandatory_elements, default=[]),
+        "forbidden_elements": _provided_bucket(forbidden_elements, default=[]),
+        "navigation": _provided_bucket(navigation, default={}),
+        "behaviors": _provided_bucket(behaviors, default=[]),
+        "states": _provided_bucket(states, default=default_states),
+        "viewports": _provided_bucket(viewports, default=default_viewports),
+        "breakpoints": _provided_bucket(breakpoints, default=[]),
+        "tokens": _provided_bucket(tokens, default={}),
+        "typography": _provided_bucket(typography, default={}),
+        "colors": _provided_bucket(colors, default={}),
+        "spacing": _provided_bucket(spacing, default={}),
+        "radii": _provided_bucket(radii, default={}),
+        "shadows": _provided_bucket(shadows, default={}),
+        "icons": _provided_bucket(icons, default=[]),
+        "assets": _provided_bucket(assets, default=[]),
+        "responsive_rules": _provided_bucket(responsive_rules, default=[]),
+        "accessibility": _provided_bucket(
+            accessibility, default={"required": True}
         ),
-        "forbidden_elements": _origin_bucket(
-            forbidden_elements or [], origin="explicitly_provided"
-        ),
-        "navigation": _origin_bucket(navigation or {}, origin="explicitly_provided"),
-        "behaviors": _origin_bucket(behaviors or [], origin="explicitly_provided"),
-        "states": _origin_bucket(default_states, origin="explicitly_provided"),
-        "viewports": _origin_bucket(default_viewports, origin="explicitly_provided"),
-        "breakpoints": _origin_bucket(breakpoints or [], origin="explicitly_provided"),
-        "tokens": _origin_bucket(tokens or {}, origin="explicitly_provided"),
-        "typography": _origin_bucket(typography or {}, origin="explicitly_provided"),
-        "colors": _origin_bucket(colors or {}, origin="explicitly_provided"),
-        "spacing": _origin_bucket(spacing or {}, origin="explicitly_provided"),
-        "radii": _origin_bucket(radii or {}, origin="explicitly_provided"),
-        "shadows": _origin_bucket(shadows or {}, origin="explicitly_provided"),
-        "icons": _origin_bucket(icons or [], origin="explicitly_provided"),
-        "assets": _origin_bucket(assets or [], origin="explicitly_provided"),
-        "responsive_rules": _origin_bucket(
-            responsive_rules or [], origin="explicitly_provided"
-        ),
-        "accessibility": _origin_bucket(
-            accessibility or {"required": True}, origin="explicitly_provided"
-        ),
-        "motion": _origin_bucket(motion or {}, origin="explicitly_provided"),
+        "motion": _provided_bucket(motion, default={}),
         "conformance_level": conformance_level,
-        "tolerances": _origin_bucket(default_tolerances, origin="explicitly_provided"),
-        "free_zones": _origin_bucket(free_zones or [], origin="agent_freedom"),
+        "tolerances": tolerances_bucket,
+        "free_zones": _provided_bucket(free_zones, default=[]),
         "human_decisions_required": human_decisions_required or [],
         "inferences": tagged_inferences,
         "design_system_precedence": design_system_precedence,

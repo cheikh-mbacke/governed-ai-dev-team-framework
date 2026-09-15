@@ -81,6 +81,108 @@ def resolve_agent_binary() -> str | None:
     return shutil.which("agent")
 
 
+def _unwrap_origin_bucket(value: Any) -> Any:
+    if isinstance(value, dict) and "value" in value:
+        return value.get("value")
+    return value
+
+
+def _format_design_context_section(
+    context_package: dict[str, Any],
+    *,
+    visual_attachments: list[Any] | None = None,
+) -> str:
+    """Render the multimodal design slice carried on the execution request."""
+    design = context_package.get("design")
+    if not isinstance(design, dict) or not design:
+        # Still allow a design-less package to advertise materialized attachments.
+        if not visual_attachments:
+            return ""
+        design = {}
+    contract = design.get("design_contract")
+    if not isinstance(contract, dict):
+        contract = {}
+
+    routes = _unwrap_origin_bucket(contract.get("routes"))
+    if routes is None:
+        routes = design.get("routes")
+    screens = design.get("screens")
+    if screens is None:
+        screens = _unwrap_origin_bucket(contract.get("screens"))
+    states = design.get("states_to_implement")
+    if states is None:
+        states = _unwrap_origin_bucket(contract.get("states"))
+    viewports = _unwrap_origin_bucket(contract.get("viewports"))
+    if viewports is None:
+        viewports = design.get("viewports")
+    tolerances = _unwrap_origin_bucket(contract.get("tolerances"))
+    if tolerances is None:
+        tolerances = design.get("tolerances")
+    free_zones = design.get("permitted_freedoms")
+    if free_zones is None:
+        free_zones = _unwrap_origin_bucket(contract.get("free_zones"))
+    known_divergences = (
+        design.get("known_divergences")
+        or design.get("divergences")
+        or contract.get("known_divergences")
+        or []
+    )
+
+    lines = [
+        "Design Context:",
+        f"  design_mode: {design.get('design_mode') or ''}",
+        f"  design_contract_id: {design.get('design_contract_id') or ''}",
+        f"  design_contract_hash: {design.get('design_contract_hash') or ''}",
+        f"  routes: {routes if routes is not None else []}",
+        f"  screens: {screens if screens is not None else []}",
+        f"  states: {states if states is not None else []}",
+        f"  viewports: {viewports if viewports is not None else []}",
+        f"  tolerances: {tolerances if tolerances is not None else {}}",
+        f"  free_zones: {free_zones if free_zones is not None else []}",
+        f"  known_divergences: {known_divergences}",
+    ]
+    if isinstance(visual_attachments, list) and visual_attachments:
+        lines.append("  visual_attachments:")
+        for item in visual_attachments:
+            if not isinstance(item, dict):
+                continue
+            path = str(item.get("path") or "").strip()
+            if not path:
+                continue
+            digest = str(item.get("content_hash") or "")
+            artifact_id = str(item.get("design_artifact_id") or "")
+            lines.append(
+                f"    - path={path}"
+                + (f" hash={digest}" if digest else "")
+                + (f" artifact={artifact_id}" if artifact_id else "")
+            )
+    return "\n".join(lines) + "\n"
+
+
+def _format_visual_attachments_section(request: dict[str, Any]) -> str:
+    """List real attachment paths only — never claim an image without a path."""
+    attachments = request.get("visual_attachments")
+    if not isinstance(attachments, list):
+        return ""
+    lines: list[str] = []
+    for item in attachments:
+        if not isinstance(item, dict):
+            continue
+        path = str(item.get("path") or "").strip()
+        if not path:
+            continue
+        digest = str(item.get("content_hash") or "")
+        artifact_id = str(item.get("design_artifact_id") or "")
+        lines.append(
+            f"ATTACHED DESIGN REFERENCE (read this file): {path}"
+            + (f" (hash={digest})" if digest else "")
+            + (f" [artifact={artifact_id}]" if artifact_id else "")
+        )
+    if not lines:
+        return ""
+    return "Visual attachments (workspace files):\n" + "\n".join(lines) + "\n"
+
+
 def build_prompt(project_root: Path, request: dict[str, Any]) -> str:
     """Best-effort prompt from the dispatched Work Unit and step.
 
@@ -105,30 +207,55 @@ def build_prompt(project_root: Path, request: dict[str, Any]) -> str:
             f"Scope include: {(wu.get('scope') or {}).get('include', [])}\n"
             f"Scope exclude: {(wu.get('scope') or {}).get('exclude', [])}\n"
         )
+
+    context_package = request.get("context_package")
+    design_section = ""
     context = ""
-    context_ref = request.get("context_package_ref")
-    if context_ref:
-        packages_root = (project_root / ".ai-team" / "context-packages").resolve()
-        ref_text = str(context_ref).strip().replace("\\", "/")
-        candidates: list[Path] = []
-        if ref_text and ".." not in Path(ref_text).parts and not (
-            ref_text.startswith("/") or re.match(r"^[A-Za-z]:", ref_text)
-        ):
-            if ref_text.endswith(".yaml") and ref_text.startswith(
-                ".ai-team/context-packages/"
+    visual_attachments = request.get("visual_attachments")
+    if isinstance(context_package, dict):
+        # Prefer the in-request package over loading context_package_ref YAML.
+        design_section = _format_design_context_section(
+            context_package,
+            visual_attachments=(
+                visual_attachments if isinstance(visual_attachments, list) else None
+            ),
+        )
+        try:
+            context = yaml.safe_dump(context_package, sort_keys=False)[:20000]
+        except (TypeError, ValueError, yaml.YAMLError):
+            context = str(context_package)[:20000]
+    else:
+        context_ref = request.get("context_package_ref")
+        if context_ref:
+            packages_root = (project_root / ".ai-team" / "context-packages").resolve()
+            ref_text = str(context_ref).strip().replace("\\", "/")
+            candidates: list[Path] = []
+            if ref_text and ".." not in Path(ref_text).parts and not (
+                ref_text.startswith("/") or re.match(r"^[A-Za-z]:", ref_text)
             ):
-                candidates.append((project_root / ref_text).resolve())
-            elif "/" not in ref_text and not ref_text.startswith("."):
-                name = ref_text if ref_text.endswith(".yaml") else f"{ref_text}.yaml"
-                candidates.append((packages_root / name).resolve())
-        for context_path in candidates:
-            try:
-                context_path.relative_to(packages_root)
-            except ValueError:
-                continue
-            if context_path.is_file():
-                context = context_path.read_text(encoding="utf-8")[:20000]
-                break
+                if ref_text.endswith(".yaml") and ref_text.startswith(
+                    ".ai-team/context-packages/"
+                ):
+                    candidates.append((project_root / ref_text).resolve())
+                elif "/" not in ref_text and not ref_text.startswith("."):
+                    name = ref_text if ref_text.endswith(".yaml") else f"{ref_text}.yaml"
+                    candidates.append((packages_root / name).resolve())
+            for context_path in candidates:
+                try:
+                    context_path.relative_to(packages_root)
+                except ValueError:
+                    continue
+                if context_path.is_file():
+                    context = context_path.read_text(encoding="utf-8")[:20000]
+                    break
+        # visual_attachments alone still deserve an explicit ATTACHED listing
+        if isinstance(visual_attachments, list) and visual_attachments and not design_section:
+            design_section = _format_design_context_section(
+                {},
+                visual_attachments=visual_attachments,
+            )
+
+    attachments_section = _format_visual_attachments_section(request)
     allowed_paths = sanitize_allowed_paths(request.get("allowed_paths") or [])
     required_checks = [str(item) for item in request.get("required_checks") or []]
     return (
@@ -138,6 +265,8 @@ def build_prompt(project_root: Path, request: dict[str, Any]) -> str:
         f"Allowed shell commands: {request.get('allowed_shell_commands', [])}.\n"
         f"Allowed paths: {allowed_paths}.\n"
         f"Required governed check names: {required_checks}.\n"
+        f"{design_section}"
+        f"{attachments_section}"
         f"Context package:\n{context}\n"
         "Execute only this governed step. Stay strictly "
         "within the declared scope. Never modify constitution, governance, "

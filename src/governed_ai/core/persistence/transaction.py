@@ -6,12 +6,12 @@ import hashlib
 import json
 import uuid
 from dataclasses import dataclass, field
-from governed_ai.compat.datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.persistence.atomic import atomic_write_bytes, atomic_write_text
 from governed_ai.core.persistence.failpoints import Failpoint, check_failpoint
@@ -33,7 +33,7 @@ def _journal_integrity_hash(writes: list[dict[str, Any]], domain_events: list[di
 @dataclass(frozen=True, slots=True)
 class PlannedWrite:
     relative_path: str
-    content: str
+    content: bytes
     before_hash: str | None
 
 
@@ -64,9 +64,13 @@ class Transaction:
         new_text = yaml.safe_dump(new_document, sort_keys=False, allow_unicode=True)
         before_hash = None
         if absolute_path.is_file():
-            before_hash = _sha256_text(absolute_path.read_text(encoding="utf-8"))
+            before_hash = _sha256_bytes(absolute_path.read_bytes())
         self.planned.append(
-            PlannedWrite(relative_path=rel, content=new_text, before_hash=before_hash)
+            PlannedWrite(
+                relative_path=rel,
+                content=new_text.encode("utf-8"),
+                before_hash=before_hash,
+            )
         )
 
     def plan_json_write(self, absolute_path: Path, new_document: Any) -> None:
@@ -74,9 +78,27 @@ class Transaction:
         new_text = json.dumps(new_document, indent=2) + "\n"
         before_hash = None
         if absolute_path.is_file():
-            before_hash = _sha256_text(absolute_path.read_text(encoding="utf-8"))
+            before_hash = _sha256_bytes(absolute_path.read_bytes())
         self.planned.append(
-            PlannedWrite(relative_path=rel, content=new_text, before_hash=before_hash)
+            PlannedWrite(
+                relative_path=rel,
+                content=new_text.encode("utf-8"),
+                before_hash=before_hash,
+            )
+        )
+
+    def plan_bytes_write(self, absolute_path: Path, content: bytes) -> None:
+        """Plan a binary artifact in the same journaled transaction as documents."""
+        rel = absolute_path.relative_to(self.workspace_root).as_posix()
+        before_hash = (
+            _sha256_bytes(absolute_path.read_bytes()) if absolute_path.is_file() else None
+        )
+        self.planned.append(
+            PlannedWrite(
+                relative_path=rel,
+                content=bytes(content),
+                before_hash=before_hash,
+            )
         )
 
     def plan_domain_event(self, absolute_path: Path, event_document: dict[str, Any]) -> None:
@@ -89,7 +111,11 @@ class Transaction:
                 "/domain_events",
             )
         self.planned_domain_events.append(
-            PlannedWrite(relative_path=rel, content=new_text, before_hash=None)
+            PlannedWrite(
+                relative_path=rel,
+                content=new_text.encode("utf-8"),
+                before_hash=None,
+            )
         )
 
     def _build_journal_writes(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -97,7 +123,7 @@ class Transaction:
             {
                 "relative_path": item.relative_path,
                 "before_hash": item.before_hash,
-                "after_hash": _sha256_text(item.content),
+                "after_hash": _sha256_bytes(item.content),
             }
             for item in self.planned
         ]
@@ -105,7 +131,7 @@ class Transaction:
             {
                 "relative_path": item.relative_path,
                 "before_hash": item.before_hash,
-                "after_hash": _sha256_text(item.content),
+                "after_hash": _sha256_bytes(item.content),
             }
             for item in self.planned_domain_events
         ]
@@ -128,10 +154,10 @@ class Transaction:
 
         for index, item in enumerate(self.planned):
             staging = self.journal_dir / f"stage-{index}.tmp"
-            atomic_write_bytes(staging, item.content.encode("utf-8"))
+            atomic_write_bytes(staging, item.content)
         for index, item in enumerate(self.planned_domain_events):
             staging = self.journal_dir / f"event-stage-{index}.tmp"
-            atomic_write_bytes(staging, item.content.encode("utf-8"))
+            atomic_write_bytes(staging, item.content)
 
         atomic_write_text(
             self.journal_path,
@@ -204,7 +230,7 @@ def _target_matches_hash(target: Path, expected_hash: str | None) -> bool:
         return False
     if not target.is_file():
         return False
-    return _sha256_text(target.read_text(encoding="utf-8")) == expected_hash
+    return _sha256_bytes(target.read_bytes()) == expected_hash
 
 
 def _apply_pending_writes(journal: dict[str, Any], tx_dir: Path, workspace_root: Path) -> None:
@@ -218,7 +244,7 @@ def _apply_pending_writes(journal: dict[str, Any], tx_dir: Path, workspace_root:
             continue
 
         if target.is_file() and before_hash:
-            current_hash = _sha256_text(target.read_text(encoding="utf-8"))
+            current_hash = _sha256_bytes(target.read_bytes())
             if current_hash != before_hash:
                 raise GatewayError(
                     ErrorCode.TRANSACTION_RECOVERY_REQUIRED,

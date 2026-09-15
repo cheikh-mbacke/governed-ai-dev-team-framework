@@ -163,7 +163,7 @@ class PortableHookRunnerTests(unittest.TestCase):
 
 class PreflightTests(unittest.TestCase):
     def test_preflight_reports_machine_readable_capabilities(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "preflight-client"
             install = subprocess.run(
                 [
@@ -388,7 +388,7 @@ class GuardShellTests(unittest.TestCase):
                 self.assertEqual(json.loads(result.stdout)["permission"], "deny")
 
     def test_working_branch_commits_are_allowed_but_protected_branch_is_blocked(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir)
             self.initialize_project(target)
 
@@ -416,7 +416,7 @@ class GuardShellTests(unittest.TestCase):
             self.assertIn("type(WU-ID)", json.loads(missing_work_unit.stdout)["message"])
 
     def test_framework_source_allows_conventional_commits(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir)
             (target / ".fabric").mkdir(parents=True)
             (target / ".fabric" / "project-profile.yaml").write_text(
@@ -466,6 +466,8 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             ["git", "init", "-q"],
             ["git", "config", "user.name", "Framework Test"],
             ["git", "config", "user.email", "framework-test@example.invalid"],
+            ["git", "config", "gc.auto", "0"],
+            ["git", "config", "maintenance.auto", "false"],
             ["git", "add", "."],
             ["git", "commit", "-qm", "test fixture"],
         ]
@@ -490,7 +492,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
         return install
 
     def test_install_update_and_validation_keep_both_cursor_modes(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             self.assertTrue((target / ".cursor" / "permissions.json").is_file())
@@ -548,7 +550,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertIn(".cursor/hooks.json", manifest["managed_files"])
 
     def test_propose_allowlist_derives_tokens_from_declared_commands_only(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target, "allowlist-test", "Allowlist Test")
             self.assertTrue((target / "scripts" / "ai-team" / "propose_allowlist.py").is_file())
@@ -618,7 +620,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertIn("Shell(make:install*)", rerun_report["cli_allow_additions"])
 
     def test_scripts_follow_communication_language_for_their_own_output(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target, "lang-test", "Lang Test")
             profile_path = target / ".ai-team" / "project-profile.yaml"
@@ -670,7 +672,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertIn("WARN  Project command", validate.stdout)
 
     def test_status_surfaces_open_human_checkpoints_deduped_by_work_unit(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target, "checkpoint-test", "Checkpoint Test")
             events_dir = target / ".ai-team" / "events"
@@ -739,7 +741,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             import docx
         except ModuleNotFoundError:
             self.skipTest("python-docx not installed")
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target, "docx-test", "Docx Test")
 
@@ -783,7 +785,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(missing.returncode, 2)
 
     def test_validation_rejects_global_only_settings_in_project_cli_config(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target, "global-setting-test", "Global Setting Test")
             cli_path = target / ".cursor" / "cli.json"
@@ -798,7 +800,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertIn("only permissions can be configured at project level", validate.stdout)
 
     def test_validation_rejects_malformed_cli_configuration(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target, "invalid-cli-test", "Invalid CLI Test")
             (target / ".cursor" / "cli.json").write_text("{not-json", encoding="utf-8")
@@ -810,7 +812,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertIn("Invalid JSON .cursor", validate.stdout)
 
     def test_update_dry_run_is_read_only_even_without_site_packages(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             cli_path = target / ".cursor" / "cli.json"
@@ -832,7 +834,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "WSL/Linux target-venv selection test")
     def test_update_started_without_site_packages_uses_target_venv_for_validation(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             marker = target / ".ai-team" / "framework-version.json"
@@ -860,7 +862,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertTrue(marker.is_file())
 
     def test_update_aborts_on_dirty_target_before_writing(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             self.initialize_git(target)
@@ -880,7 +882,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(cli_path.read_text(encoding="utf-8"), original)
 
     def test_update_rejects_unknown_future_version_before_writing(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             marker = target / ".ai-team" / "framework-version.json"
@@ -912,7 +914,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
                 self.assertEqual(record_after["core"]["version"], "99.0.0")
 
     def test_update_activates_new_constitution_only_between_cycles(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             marker = target / ".ai-team" / "framework-version.json"
@@ -937,7 +939,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(migrated["constitution_version"], "1.4.0")
 
     def test_update_refuses_constitution_change_during_active_cycle(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             marker = target / ".ai-team" / "framework-version.json"
@@ -965,7 +967,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             )
 
     def test_update_force_constitution_update_bypasses_freeze_and_logs_event(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             marker = target / ".ai-team" / "framework-version.json"
@@ -1010,7 +1012,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(event["details"]["phase_at_override"], "execution")
 
     def test_force_constitution_update_requires_update_flag(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             result = self.run_command(
                 [
@@ -1029,7 +1031,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertIn("require --update", result.stderr + result.stdout)
 
     def test_legacy_update_migrates_acceptance_and_keeps_backup(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             (target / ".ai-team" / "framework-version.json").unlink()
@@ -1079,7 +1081,7 @@ class InstallerCliIntegrationTests(unittest.TestCase):
             self.assertEqual(manifest["version"], "0.7.0")
 
     def test_failed_post_update_validation_rolls_back_all_touched_files(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir) / "target-project"
             self.install_target(target)
             marker = target / ".ai-team" / "framework-version.json"
@@ -1135,7 +1137,7 @@ class MigrationTests(unittest.TestCase):
         )
 
     def test_standalone_migration_is_dry_run_then_idempotent_apply(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir)
             acceptance_dir = target / ".ai-team" / "acceptance"
             acceptance_dir.mkdir(parents=True)
@@ -1161,7 +1163,7 @@ class MigrationTests(unittest.TestCase):
             self.assertIn("No project-data migration required", second.stdout)
 
     def test_migration_only_changes_status_inside_human_result(self):
-        with tempfile.TemporaryDirectory(dir=ROOT) as temp_dir:
+        with tempfile.TemporaryDirectory(dir=ROOT, ignore_cleanup_errors=True) as temp_dir:
             target = Path(temp_dir)
             acceptance_dir = target / ".ai-team" / "acceptance"
             acceptance_dir.mkdir(parents=True)

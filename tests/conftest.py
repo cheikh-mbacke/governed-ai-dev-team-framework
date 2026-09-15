@@ -24,3 +24,14 @@ def _skip_assessment_gate_for_install_tests(monkeypatch: pytest.MonkeyPatch) -> 
     Individual tests that assert the gate must clear this variable.
     """
     monkeypatch.setenv(ASSESSMENT_SKIP_ENV, "1")
+    # Short-lived fixture repositories must not spawn Git helpers: Windows
+    # fsmonitor daemons accumulate, and Linux auto-gc/maintenance can rewrite
+    # `.git` while TemporaryDirectory cleanup runs (Python 3.12 ENOTEMPTY).
+    monkeypatch.setenv("GIT_OPTIONAL_LOCKS", "0")
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "3")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.fsmonitor")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", "false")
+    monkeypatch.setenv("GIT_CONFIG_KEY_1", "gc.auto")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_1", "0")
+    monkeypatch.setenv("GIT_CONFIG_KEY_2", "maintenance.auto")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_2", "false")

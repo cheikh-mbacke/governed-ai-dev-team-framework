@@ -3,19 +3,27 @@
 from __future__ import annotations
 
 import re
-from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
 import yaml
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.human_authorization import consume_human_authorization
 from governed_ai.core.commands.validation import validate_against_schema
-from governed_ai.core.domain.gates import G4_COMPLETION_STATUSES, GATE_STATUS_BY_GATE, HUMAN_ACCEPTANCE_BY_GATE_STATUS
-from governed_ai.core.domain.gates.g4_preconditions import verify_g4_preconditions, work_units_to_verify
+from governed_ai.core.domain.gates import (
+    G4_COMPLETION_STATUSES,
+    GATE_STATUS_BY_GATE,
+    HUMAN_ACCEPTANCE_BY_GATE_STATUS,
+)
+from governed_ai.core.domain.gates.g4_preconditions import (
+    verify_g4_preconditions,
+    work_units_to_verify,
+)
 from governed_ai.core.domain.gates.naming import generate_gate_decision_id
 from governed_ai.core.domain.work_unit.paths import find_work_unit_path
 from governed_ai.core.persistence.transaction import Transaction
+from governed_ai.core.workspace import Workspace
 
 
 def handle_record_gate_decision(
@@ -52,9 +60,54 @@ def handle_record_gate_decision(
         work_unit_ids = [item.strip() for item in work_unit_ids.split(",") if item.strip()]
 
     preconditions_verified: list[dict[str, Any]] = []
+    workspace = (
+        workspace_root
+        if isinstance(workspace_root, Workspace)
+        else Workspace.from_root(
+            workspace_root.root if hasattr(workspace_root, "root") else workspace_root
+        )
+    )
+
+    if gate == "G1" and status == "approved":
+        from governed_ai.core.design_authority.binding import evaluate_g1_design_readiness
+
+        to_check = work_units_to_verify(project_state, work_unit_ids or None)
+        wu_dir = workspace_root.ai_team / "work-units"
+        g1_failures: list[dict[str, Any]] = []
+        for work_unit_id in to_check:
+            wu_path, ambiguity = find_work_unit_path(wu_dir, work_unit_id)
+            if ambiguity:
+                g1_failures.append({"work_unit_id": work_unit_id, "issues": [ambiguity]})
+                continue
+            if wu_path is None:
+                g1_failures.append(
+                    {"work_unit_id": work_unit_id, "issues": ["work unit file not found"]}
+                )
+                continue
+            work_unit = yaml.safe_load(wu_path.read_text(encoding="utf-8")) or {}
+            readiness = evaluate_g1_design_readiness(workspace, work_unit)
+            if not readiness.get("ok"):
+                blocking = [
+                    i for i in (readiness.get("issues") or []) if i.get("severity") == "blocking"
+                ]
+                g1_failures.append(
+                    {
+                        "work_unit_id": work_unit_id,
+                        "issues": blocking or readiness.get("issues") or [],
+                    }
+                )
+        if g1_failures:
+            raise GatewayError(
+                ErrorCode.INVARIANT_VIOLATION,
+                f"G1 design readiness not satisfied: {g1_failures}",
+                "/payload/gate",
+            )
+
     if gate == "G4" and status in G4_COMPLETION_STATUSES:
         to_verify = work_units_to_verify(project_state, work_unit_ids or None)
-        verified, failures = verify_g4_preconditions(workspace_root.ai_team, project_state, to_verify)
+        verified, failures = verify_g4_preconditions(
+            workspace_root.ai_team, project_state, to_verify, workspace=workspace
+        )
         if failures:
             raise GatewayError(
                 ErrorCode.INVARIANT_VIOLATION,

@@ -14,6 +14,12 @@
     "authority_level",
     "status"
   ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
   "properties": {
     "design_artifact_id": {
       "type": "string",
@@ -31,9 +37,10 @@
     },
     "source_uri": { "type": ["string", "null"] },
     "source_path": { "type": ["string", "null"] },
-    "content_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "content_hash": { "$ref": "#/$defs/sha256" },
     "created_at": { "type": "string", "minLength": 1 },
     "registered_at": { "type": "string", "minLength": 1 },
+    "updated_at": { "type": "string" },
     "registered_by": { "type": "string", "minLength": 1 },
     "authority_level": {
       "type": "string",
@@ -44,6 +51,8 @@
       "enum": ["active", "superseded", "withdrawn", "draft"]
     },
     "supersedes": { "type": ["string", "null"] },
+    "superseded_by": { "type": "string" },
+    "superseded_at": { "type": "string" },
     "screens": { "type": "array", "items": { "type": "string" } },
     "components": { "type": "array", "items": { "type": "string" } },
     "viewports": { "type": "array" },
@@ -51,11 +60,23 @@
     "provenance": { "type": "object" },
     "usage_rights": { "type": "object" },
     "notes": { "type": "object" },
-    "frozen_remote": { "type": "object" },
+    "frozen_remote": {
+      "type": "object",
+      "properties": {
+        "uri": { "type": "string" },
+        "host": { "type": "string" },
+        "kind": { "type": "string" },
+        "content_pin": { "$ref": "#/$defs/sha256" },
+        "pinned_at": { "type": "string" },
+        "local_mirror_path": { "type": "string" },
+        "local_mirror_hash": { "$ref": "#/$defs/sha256" }
+      },
+      "additionalProperties": false
+    },
     "human_authorization": { "type": "object" },
-    "registry_hash": { "type": "string" },
+    "registry_hash": { "$ref": "#/$defs/sha256" },
     "size_bytes": { "type": "integer" },
     "mime_type": { "type": ["string", "null"] }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

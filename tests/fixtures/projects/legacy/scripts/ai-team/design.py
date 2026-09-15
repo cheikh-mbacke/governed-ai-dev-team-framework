@@ -15,7 +15,7 @@ from install_paths import bootstrap_runtime
 
 bootstrap_runtime(_REPO_ROOT)
 
-from governed_ai.core.commands.errors import GatewayError, exit_code_for
+from governed_ai.core.commands.errors import ErrorCode, GatewayError, exit_code_for
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.design_authority.hashing import sha256_file
 from governed_ai.core.design_authority.registry import (
@@ -39,6 +39,37 @@ def _active_bundle_version(ai_team: Path) -> str:
         return "1.0.0"
 
 
+def _load_authorization(workspace: Workspace, authorization_id: str) -> dict:
+    path = workspace.ai_team / "authorizations" / f"{authorization_id}.json"
+    if not path.is_file():
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            f"authorization {authorization_id!r} not found under .ai-team/authorizations/",
+            "/human_authorization/authorization_id",
+        )
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            f"authorization {authorization_id!r} is unreadable: {exc}",
+            "/human_authorization/authorization_id",
+        ) from exc
+    if not isinstance(record, dict):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            f"authorization {authorization_id!r} must be an object",
+            "/human_authorization/authorization_id",
+        )
+    if record.get("consumed_at"):
+        raise GatewayError(
+            ErrorCode.UNAUTHORIZED,
+            f"authorization {authorization_id!r} already consumed",
+            "/human_authorization/authorization_id",
+        )
+    return record
+
+
 def _envelope(
     command_type: str,
     *,
@@ -46,6 +77,8 @@ def _envelope(
     payload: dict,
     role_id: str = "control-plane",
     human_by: str | None = None,
+    authorization_id: str | None = None,
+    authorization_record: dict | None = None,
     workspace: Workspace,
 ) -> dict:
     key = uuid.uuid4().hex
@@ -67,12 +100,15 @@ def _envelope(
         "target": target,
         "payload": payload,
     }
-    if human_by:
+    if human_by and authorization_id:
+        record = authorization_record or {}
+        granted_by = str(record.get("granted_by") or human_by)
+        scope = record.get("scope") or f"design:{command_type}:{target.get('id')}"
         env["human_authorization"] = {
-            "authorization_id": f"HAUTH-{uuid.uuid4().hex[:16].upper()}",
-            "granted_by": human_by,
-            "granted_at": now,
-            "scope": f"design:{command_type}",
+            "authorization_id": authorization_id,
+            "granted_by": granted_by,
+            "granted_at": record.get("granted_at") or now,
+            "scope": scope,
             "consumed_at": None,
         }
     return env
@@ -89,6 +125,33 @@ def _print(data: object, *, as_json: bool) -> None:
             print(data)
 
 
+def _require_authoritative_human_auth(args: argparse.Namespace, workspace: Workspace) -> dict:
+    if not args.human or not args.authorization_id:
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            "authoritative operations require explicit --human and --authorization-id "
+            "(never invent human_authorization from --by)",
+            "/human_authorization",
+        )
+    if not str(args.human).startswith("human:"):
+        raise GatewayError(
+            ErrorCode.HUMAN_AUTH_REQUIRED,
+            "--human must start with human:",
+            "/human_authorization/granted_by",
+        )
+    record = _load_authorization(workspace, args.authorization_id)
+    granted = str(record.get("granted_by") or "").strip()
+    if granted and granted != args.human:
+        raise GatewayError(
+            ErrorCode.UNAUTHORIZED,
+            f"--human {args.human!r} does not match authorization granted_by {granted!r}",
+            "/human_authorization/granted_by",
+        )
+    if not granted:
+        record = {**record, "granted_by": args.human}
+    return record
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Design Authority & Visual Conformance")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
@@ -98,17 +161,37 @@ def build_parser() -> argparse.ArgumentParser:
     reg.add_argument("--id", required=True, help="DA-… identifier")
     reg.add_argument("--path", default=None, help="workspace-relative path")
     reg.add_argument("--uri", default=None, help="remote URI (e.g. Figma)")
+    reg.add_argument("--local-mirror", default=None, help="local mirror for remote authoritative")
     reg.add_argument("--source-type", default=None)
     reg.add_argument(
         "--authority",
         default="advisory",
         choices=["authoritative", "advisory", "inspiration_only", "deprecated"],
     )
-    reg.add_argument("--by", required=True, help="registrant (human id for authoritative)")
+    reg.add_argument("--by", required=True, help="registrant (not used as human authorizer)")
     reg.add_argument("--content-pin", default=None, help="required for authoritative remotes")
     reg.add_argument("--screen", action="append", default=[])
     reg.add_argument("--state", action="append", default=[])
-    reg.add_argument("--human", default=None, help="human authorizer (defaults to --by)")
+    reg.add_argument(
+        "--human",
+        default=None,
+        help="human: authorizer (required for authoritative; never defaults from --by)",
+    )
+    reg.add_argument(
+        "--authorization-id",
+        default=None,
+        help="existing unconsumed authorization under .ai-team/authorizations/",
+    )
+
+    auth = sub.add_parser("set-authority", help="Change design artifact authority level")
+    auth.add_argument("--id", required=True)
+    auth.add_argument(
+        "--authority",
+        required=True,
+        choices=["authoritative", "advisory", "inspiration_only", "deprecated"],
+    )
+    auth.add_argument("--human", required=True, help="human: authorizer")
+    auth.add_argument("--authorization-id", required=True)
 
     cref = sub.add_parser("create-reference-set", help="Group artifacts into a reference set")
     cref.add_argument("--id", required=True)
@@ -195,7 +278,13 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "register":
-            human = args.human or (args.by if args.authority == "authoritative" else None)
+            human = None
+            authorization_id = None
+            auth_record = None
+            if args.authority == "authoritative":
+                auth_record = _require_authoritative_human_auth(args, workspace)
+                human = args.human
+                authorization_id = args.authorization_id
             payload = {
                 "design_artifact_id": args.id,
                 "authority_level": args.authority,
@@ -209,16 +298,39 @@ def main(argv: list[str] | None = None) -> int:
                 payload["source_uri"] = args.uri
             if args.path:
                 payload["source_path"] = args.path
+            if args.local_mirror:
+                payload["local_mirror_path"] = args.local_mirror
             receipt, code = gateway.execute_command(
                 _envelope(
                     "RegisterDesignArtifact",
                     target={"kind": "design_artifact", "id": args.id},
                     payload=payload,
                     human_by=human,
+                    authorization_id=authorization_id,
+                    authorization_record=auth_record,
                     workspace=workspace,
                 )
             )
             _print(receipt if as_json else {"status": receipt.get("status"), "id": args.id, "exit": code}, as_json=as_json)
+            return code
+
+        if args.command == "set-authority":
+            auth_record = _require_authoritative_human_auth(args, workspace)
+            receipt, code = gateway.execute_command(
+                _envelope(
+                    "SetDesignArtifactAuthority",
+                    target={"kind": "design_artifact", "id": args.id},
+                    payload={
+                        "design_artifact_id": args.id,
+                        "authority_level": args.authority,
+                    },
+                    human_by=args.human,
+                    authorization_id=args.authorization_id,
+                    authorization_record=auth_record,
+                    workspace=workspace,
+                )
+            )
+            _print(receipt, as_json=as_json)
             return code
 
         if args.command == "create-reference-set":

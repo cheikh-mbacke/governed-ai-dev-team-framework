@@ -42,7 +42,14 @@ TRANSACTION_IGNORE = (
 
 def _git(project_root: Path, args: list[str]) -> subprocess.CompletedProcess[str]:
     completed = subprocess.run(
-        ["git", "-c", f"safe.directory={project_root}", *args],
+        [
+            "git",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            f"safe.directory={project_root}",
+            *args,
+        ],
         cwd=str(project_root),
         capture_output=True,
         text=True,

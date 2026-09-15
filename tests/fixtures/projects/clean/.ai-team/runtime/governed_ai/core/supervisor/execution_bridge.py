@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
+from governed_ai.core.design_authority.hashing import sha256_file
+from governed_ai.core.design_authority.security import (
+    DesignSecurityError,
+    assert_relative_workspace_path,
+)
+from governed_ai.core.design_authority.visual_capabilities import merge_visual_capabilities
 from governed_ai.core.execution_gateway.capabilities import build_capability_descriptor
+from governed_ai.core.execution_gateway.errors import ExecutionGatewayError, StructuredError
 from governed_ai.core.execution_gateway.gateway import (
     AgentExecutionGateway,
     GatewayOutcome,
@@ -14,6 +22,96 @@ from governed_ai.core.execution_gateway.gateway import (
 from governed_ai.core.execution_gateway.progress import ProgressEventType, is_useful_progress
 from governed_ai.core.supervisor import journal
 from governed_ai.core.workspace import Workspace
+
+
+def _materialize_visual_attachments(
+    *,
+    context_package: dict[str, Any],
+    project_root: Path,
+) -> list[dict[str, Any]]:
+    """Copy authoritative local design references into a controlled attachment area.
+
+    Fail-closed: missing files or content-hash mismatches refuse execution.
+    """
+    design = context_package.get("design")
+    if not isinstance(design, dict):
+        return []
+    references = design.get("references")
+    if not isinstance(references, list):
+        return []
+
+    root = project_root.resolve()
+    attachments: list[dict[str, Any]] = []
+    for ref in references:
+        if not isinstance(ref, dict):
+            continue
+        attachment_hint = ref.get("adapter_attachment") or {}
+        if not isinstance(attachment_hint, dict):
+            attachment_hint = {}
+        authority = str(ref.get("authority_level") or "")
+        must_read = bool(attachment_hint.get("must_be_readable")) or authority == "authoritative"
+        source_path = str(ref.get("source_path") or attachment_hint.get("path") or "").strip()
+        if not source_path or not must_read:
+            continue
+
+        artifact_id = str(ref.get("design_artifact_id") or "unknown")
+        expected_hash = str(ref.get("content_hash") or "")
+        try:
+            absolute = assert_relative_workspace_path(root, source_path)
+        except DesignSecurityError as exc:
+            raise ExecutionGatewayError(
+                StructuredError(
+                    code="design_attachment_unavailable",
+                    message=f"design reference path refused: {exc.message}",
+                    path="context_package.design.references",
+                    details={
+                        "design_artifact_id": artifact_id,
+                        "source_path": source_path,
+                        "security_code": exc.code,
+                    },
+                )
+            ) from exc
+        if not absolute.is_file():
+            raise ExecutionGatewayError(
+                StructuredError(
+                    code="design_attachment_unavailable",
+                    message=f"design reference file missing: {source_path}",
+                    path="context_package.design.references",
+                    details={
+                        "design_artifact_id": artifact_id,
+                        "source_path": source_path,
+                    },
+                )
+            )
+        actual_hash = sha256_file(absolute)
+        if expected_hash and actual_hash != expected_hash:
+            raise ExecutionGatewayError(
+                StructuredError(
+                    code="design_attachment_hash_mismatch",
+                    message="design reference content hash mismatch after re-hash",
+                    path="context_package.design.references",
+                    details={
+                        "design_artifact_id": artifact_id,
+                        "source_path": source_path,
+                        "expected": expected_hash,
+                        "actual": actual_hash,
+                    },
+                )
+            )
+
+        dest_dir = root / ".ai-team" / "execution-attachments" / artifact_id
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        dest_path = dest_dir / absolute.name
+        shutil.copy2(absolute, dest_path)
+        attachments.append(
+            {
+                "design_artifact_id": artifact_id,
+                "path": str(dest_path.resolve()),
+                "content_hash": actual_hash,
+                "authority_level": authority or None,
+            }
+        )
+    return attachments
 
 
 class SpiCompatibleAdapter:
@@ -38,6 +136,20 @@ class SpiCompatibleAdapter:
             merged["execution_workspace"] = request["execution_workspace"]
         if "protocol_version" not in merged:
             merged["protocol_version"] = self._spi_request.get("protocol_version") or "1.0"
+
+        context_package = merged.get("context_package")
+        if not isinstance(context_package, dict):
+            context_package = request.get("context_package")
+        if isinstance(context_package, dict):
+            merged["context_package"] = context_package
+            workspace_raw = merged.get("execution_workspace")
+            if workspace_raw:
+                project_root = Path(str(workspace_raw))
+                merged["visual_attachments"] = _materialize_visual_attachments(
+                    context_package=context_package,
+                    project_root=project_root,
+                )
+
         return self._adapter.execute(merged)
 
 
@@ -75,14 +187,21 @@ def _default_capabilities(
     adapter_id = "external"
     adapter_version = "1.0.0"
     protocol_versions = ["1.0"]
+    declared_caps: dict[str, Any] = {}
     if callable(describe):
         try:
             descriptor = describe()
             adapter_id = str(descriptor.get("adapter_id") or adapter_id)
             adapter_version = str(descriptor.get("adapter_version") or adapter_version)
             protocol_versions = list(descriptor.get("protocol_versions") or protocol_versions)
+            raw_caps = descriptor.get("capabilities")
+            if isinstance(raw_caps, dict):
+                declared_caps = dict(raw_caps)
         except Exception:  # noqa: BLE001 — capability probe must fail closed to defaults
-            pass
+            declared_caps = {}
+    visual = merge_visual_capabilities(declared_caps)
+    formats = visual.get("visual_formats")
+    visual_formats = list(formats) if isinstance(formats, list) else []
     roles = sorted(role_procedures)
     procedures = sorted({proc for procs in role_procedures.values() for proc in procs})
     combinations = [
@@ -103,6 +222,16 @@ def _default_capabilities(
         command_enforcement=True,
         filesystem_enforcement=True,
         maximum_parallelism=1,
+        visual_input=visual.get("visual_input") is True,
+        visual_formats=visual_formats,
+        pdf=visual.get("pdf") is True,
+        svg=visual.get("svg") is True,
+        figma_url=visual.get("figma_url") is True,
+        screenshot=visual.get("screenshot") is True,
+        browser_automation=visual.get("browser_automation") is True,
+        viewport_control=visual.get("viewport_control") is True,
+        dom_inspection=visual.get("dom_inspection") is True,
+        visual_comparison=visual.get("visual_comparison") is True,
     )
     caps["supported_role_procedures"] = combinations
     return caps

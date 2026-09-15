@@ -26,10 +26,12 @@ SourceType = Literal[
 ]
 InformationOrigin = Literal[
     "explicitly_provided",
-    "mechanically_extracted",
-    "proposed_inference",
     "human_decision",
-    "agent_freedom",
+    "extracted_from_artifact",
+    "inherited_design_system",
+    "compiler_default",
+    "inference_proposed",
+    "inference_validated",
 ]
 ConformanceLevel = Literal[
     "exact",
@@ -54,6 +56,17 @@ DESIGN_MODES: frozenset[str] = frozenset(
 )
 AUTHORITY_LEVELS: frozenset[str] = frozenset(
     {"authoritative", "advisory", "inspiration_only", "deprecated"}
+)
+INFORMATION_ORIGINS: frozenset[str] = frozenset(
+    {
+        "explicitly_provided",
+        "human_decision",
+        "extracted_from_artifact",
+        "inherited_design_system",
+        "compiler_default",
+        "inference_proposed",
+        "inference_validated",
+    }
 )
 CREATIVE_PROCEDURES: frozenset[str] = frozenset(
     {"create-frontend-design", "frontend-design"}

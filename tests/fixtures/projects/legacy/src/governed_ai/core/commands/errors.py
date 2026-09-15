@@ -53,7 +53,7 @@ def exit_code_for(error_code: ErrorCode) -> int:
     return EXIT_INTERNAL
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class GatewayError(Exception):
     code: ErrorCode
     message: str

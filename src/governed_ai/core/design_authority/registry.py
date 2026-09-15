@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from governed_ai.core.design_authority.hashing import sha256_bytes, sha256_canonical, sha256_text
 from governed_ai.core.design_authority.models import (
@@ -19,6 +18,8 @@ from governed_ai.core.design_authority.security import (
 )
 from governed_ai.core.persistence.io import dump_yaml, load_yaml
 from governed_ai.core.workspace import Workspace
+
+RemoteFetcher = Callable[[str], bytes]
 
 
 def _now_iso() -> str:
@@ -41,6 +42,7 @@ def _require_human_for_authoritative(
 ) -> None:
     if authority_level != "authoritative":
         return
+    # Never trust payload validated_by_human alone — require a real human grant.
     if not human_authorization:
         raise DesignRegistryError(
             "human_auth_required_for_authoritative",
@@ -52,13 +54,32 @@ def _require_human_for_authoritative(
             "human_auth_required_for_authoritative",
             "human_authorization.granted_by is required for authoritative artifacts",
         )
-    # Agents must not self-proclaim as authoritative authors.
-    if registered_by.startswith("agent:") or registered_by.startswith("role:"):
-        if granted_by == registered_by:
+    if granted_by.startswith("agent:") or granted_by.startswith("role:"):
+        raise DesignRegistryError(
+            "agent_cannot_self_authorize",
+            "granted_by must be a human: identity; agent:/role: cannot authorize",
+        )
+    if not granted_by.startswith("human:"):
+        raise DesignRegistryError(
+            "human_auth_required_for_authoritative",
+            "granted_by must start with human: (Core-owned convention)",
+        )
+
+    registrant = str(registered_by or "").strip()
+    if registrant.startswith("human:"):
+        return
+    # Agents/roles may register under a distinct human authorization only.
+    if registrant.startswith("agent:") or registrant.startswith("role:"):
+        if granted_by == registrant:
             raise DesignRegistryError(
                 "agent_cannot_self_authorize",
                 "agents cannot self-proclaim authoritative design references",
             )
+        return
+    raise DesignRegistryError(
+        "human_auth_required_for_authoritative",
+        "registered_by must be human:… or an agent/role acting under distinct human authorization",
+    )
 
 
 def build_artifact_document(
@@ -211,6 +232,7 @@ def register_remote_artifact(
     authority_level: str = "advisory",
     source_type: str = "figma_link",
     content_pin: str | None = None,
+    local_mirror_path: str | None = None,
     human_authorization: dict[str, Any] | None = None,
     allow_figma: bool = True,
     approved_hosts: list[str] | None = None,
@@ -222,7 +244,7 @@ def register_remote_artifact(
     supersedes: str | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
-    """Register a remote reference. Authoritative remotes MUST be pinned."""
+    """Register a remote reference. Authoritative remotes MUST be pinned + mirrored."""
     _require_human_for_authoritative(
         authority_level,
         human_authorization=human_authorization,
@@ -247,21 +269,49 @@ def register_remote_artifact(
             "remote_must_be_pinned",
             "authoritative remote references require a frozen version/hash pin",
         )
+    if authority_level == "authoritative" and not local_mirror_path:
+        raise DesignRegistryError(
+            "remote_must_have_local_mirror",
+            "authoritative remote references require content_pin and a hashed local_mirror_path",
+        )
+
     pin = content_pin or sha256_text(source_uri)
-    frozen = {
+    frozen: dict[str, Any] = {
         "uri": remote["uri"],
         "host": remote["host"],
         "kind": remote["kind"],
         "content_pin": pin,
         "pinned_at": _now_iso(),
     }
+
+    content_hash = pin if content_pin else sha256_text(f"{remote['uri']}|{pin}")
+    if local_mirror_path:
+        try:
+            meta = validate_local_artifact(
+                workspace.root,
+                local_mirror_path,
+                source_type=source_type if source_type not in {"figma_link"} else None,
+            )
+        except DesignSecurityError as exc:
+            raise DesignRegistryError(exc.code, exc.message, details=exc.details) from exc
+        mirror_hash = sha256_bytes(meta["content"])
+        if content_pin and mirror_hash != content_pin:
+            raise DesignRegistryError(
+                "remote_mirror_hash_mismatch",
+                "local_mirror_path content hash does not match content_pin",
+                details={"expected": content_pin, "actual": mirror_hash},
+            )
+        frozen["local_mirror_path"] = local_mirror_path.replace("\\", "/")
+        frozen["local_mirror_hash"] = mirror_hash
+        content_hash = mirror_hash
+
     doc = build_artifact_document(
         design_artifact_id=design_artifact_id,
         source_type=source_type if source_type else remote["kind"],
         registered_by=registered_by,
         authority_level=authority_level,
         source_uri=remote["uri"],
-        content_hash=pin if content_pin else sha256_text(f"{remote['uri']}|{pin}"),
+        content_hash=content_hash,
         screens=screens,
         components=components,
         viewports=viewports,
@@ -293,8 +343,13 @@ def load_artifact(workspace: Workspace, design_artifact_id: str) -> dict[str, An
     return doc
 
 
-def verify_artifact_integrity(workspace: Workspace, artifact: dict[str, Any]) -> dict[str, Any]:
-    """Recompute hash for local sources; detect post-approval mutation."""
+def verify_artifact_integrity(
+    workspace: Workspace,
+    artifact: dict[str, Any],
+    *,
+    remote_fetcher: RemoteFetcher | None = None,
+) -> dict[str, Any]:
+    """Recompute hash for local sources; verify remotes via mirror or fetcher."""
     source_path = artifact.get("source_path")
     if source_path:
         try:
@@ -325,14 +380,70 @@ def verify_artifact_integrity(workspace: Workspace, artifact: dict[str, Any]) ->
 
     frozen = artifact.get("frozen_remote") or {}
     if artifact.get("source_uri") and frozen.get("content_pin"):
-        # Remote content is considered intact when the pin recorded at approval
-        # is still present. Live re-download is intentionally not performed here.
+        pin = str(frozen.get("content_pin") or "")
+        expected = str(artifact.get("content_hash") or pin)
+        mirror = frozen.get("local_mirror_path")
+        if mirror:
+            try:
+                meta = validate_local_artifact(
+                    workspace.root,
+                    str(mirror),
+                    source_type=str(artifact.get("source_type") or None)
+                    if artifact.get("source_type") not in {"figma_link", None}
+                    else None,
+                )
+            except DesignSecurityError as exc:
+                return {
+                    "ok": False,
+                    "code": exc.code,
+                    "message": exc.message,
+                    "authority_level": artifact.get("authority_level"),
+                }
+            actual = sha256_bytes(meta["content"])
+            if actual not in {expected, pin}:
+                return {
+                    "ok": False,
+                    "code": "remote_mirror_hash_mismatch",
+                    "message": "local mirror hash does not match content_pin/content_hash",
+                    "expected": expected,
+                    "actual": actual,
+                    "authority_level": artifact.get("authority_level"),
+                }
+            return {"ok": True, "content_hash": actual, "verified_via": "local_mirror"}
+
+        if remote_fetcher is not None:
+            uri = str(frozen.get("uri") or artifact.get("source_uri") or "")
+            try:
+                payload = remote_fetcher(uri)
+            except Exception as exc:  # noqa: BLE001
+                return {
+                    "ok": False,
+                    "code": "remote_fetch_failed",
+                    "message": str(exc),
+                    "authority_level": artifact.get("authority_level"),
+                }
+            actual = sha256_bytes(payload) if isinstance(payload, (bytes, bytearray)) else sha256_text(str(payload))
+            if actual not in {expected, pin}:
+                return {
+                    "ok": False,
+                    "code": "remote_content_hash_mismatch",
+                    "message": "fetched remote content hash does not match pin",
+                    "expected": expected,
+                    "actual": actual,
+                    "authority_level": artifact.get("authority_level"),
+                }
+            return {"ok": True, "content_hash": actual, "verified_via": "remote_fetcher"}
+
         return {
-            "ok": True,
-            "content_hash": artifact.get("content_hash"),
-            "pin": frozen.get("content_pin"),
-            "limitation": "remote_pin_checked_not_redownloaded",
+            "ok": False,
+            "code": "remote_unverifiable",
+            "message": (
+                "remote authoritative refs require a hashed local immutable mirror "
+                "(or a remote_fetcher); pin-only checks are not sufficient"
+            ),
+            "authority_level": artifact.get("authority_level"),
         }
+
     if artifact.get("source_uri") and not frozen.get("content_pin"):
         return {
             "ok": False,
@@ -364,6 +475,7 @@ def set_authority_level(
     authority_level: str,
     human_authorization: dict[str, Any],
     registered_by: str,
+    persist: bool = True,
 ) -> dict[str, Any]:
     """Only humans may raise/lower to or from authoritative."""
     if authority_level not in AUTHORITY_LEVELS:
@@ -391,5 +503,6 @@ def set_authority_level(
     doc["registry_hash"] = sha256_canonical(
         {k: v for k, v in doc.items() if k != "registry_hash"}
     )
-    dump_yaml(artifact_path(workspace, design_artifact_id), doc)
+    if persist:
+        dump_yaml(artifact_path(workspace, design_artifact_id), doc)
     return doc

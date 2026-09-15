@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
+from governed_ai.core.commands.human_authorization import consume_human_authorization
 from governed_ai.core.commands.validation import validate_against_schema
 from governed_ai.core.design_authority.binding import (
     DesignBindingError,
@@ -42,6 +44,33 @@ def _workspace_from_root(workspace_root) -> Workspace:
     return Workspace.from_root(workspace_root.root if hasattr(workspace_root, "root") else workspace_root)
 
 
+def _validate_auth_scope(
+    envelope: dict[str, Any],
+    *,
+    command_type: str,
+    artifact_id: str | None = None,
+) -> None:
+    auth = envelope.get("human_authorization")
+    if not isinstance(auth, dict):
+        return
+    scope = auth.get("scope")
+    if scope is None or scope == "":
+        return
+    scope_s = str(scope)
+    if command_type not in scope_s:
+        raise GatewayError(
+            ErrorCode.UNAUTHORIZED,
+            f"human_authorization.scope must include command type {command_type!r}",
+            "/human_authorization/scope",
+        )
+    if artifact_id and artifact_id not in scope_s:
+        raise GatewayError(
+            ErrorCode.UNAUTHORIZED,
+            f"human_authorization.scope must include artifact id {artifact_id!r}",
+            "/human_authorization/scope",
+        )
+
+
 def handle_register_design_artifact(
     envelope: dict[str, Any],
     *,
@@ -62,6 +91,23 @@ def handle_register_design_artifact(
     human_auth = envelope.get("human_authorization")
     authority = str(payload.get("authority_level") or "advisory")
     registered_by = str(payload.get("registered_by") or envelope["actor"].get("role_id"))
+    # Authority decisions use human_authorization.granted_by, not registered_by alone.
+    if authority == "authoritative":
+        if not isinstance(human_auth, dict):
+            raise GatewayError(
+                ErrorCode.HUMAN_AUTH_REQUIRED,
+                "human_authorization required for authoritative artifacts",
+                "/human_authorization",
+            )
+        _validate_auth_scope(
+            envelope,
+            command_type="RegisterDesignArtifact",
+            artifact_id=str(artifact_id),
+        )
+        auth_actor = str(human_auth.get("granted_by") or "")
+        # Keep payload registered_by for provenance; auth check uses grant actor.
+        if not registered_by.startswith(("human:", "agent:", "role:")):
+            registered_by = auth_actor
 
     try:
         if payload.get("source_uri"):
@@ -73,6 +119,7 @@ def handle_register_design_artifact(
                 authority_level=authority,
                 source_type=str(payload.get("source_type") or "figma_link"),
                 content_pin=payload.get("content_pin"),
+                local_mirror_path=payload.get("local_mirror_path"),
                 human_authorization=human_auth if isinstance(human_auth, dict) else None,
                 allow_figma=bool(payload.get("allow_figma", True)),
                 approved_hosts=list(payload.get("approved_hosts") or []),
@@ -119,7 +166,12 @@ def handle_register_design_artifact(
         raise GatewayError(code, exc.message, "/payload") from exc
 
     validate_against_schema(workspace.ai_team, doc, "design-artifact.schema.json")
-    # Already persisted by registry; transaction notes the affected entity.
+    if authority == "authoritative" and isinstance(human_auth, dict):
+        consume_human_authorization(
+            envelope,
+            workspace_ai_team=workspace.ai_team,
+            transaction=transaction,
+        )
     transaction.plan_yaml_write(
         workspace.ai_team / "design" / "artifacts" / f"{artifact_id}.yaml",
         doc,
@@ -143,23 +195,37 @@ def handle_set_design_artifact_authority(
             "human_authorization required to change design authority",
             "/human_authorization",
         )
+    artifact_id = str(payload["design_artifact_id"])
+    _validate_auth_scope(
+        envelope,
+        command_type="SetDesignArtifactAuthority",
+        artifact_id=artifact_id,
+    )
+    # Use granted_by as the authoritative actor — do not trust registered_by alone.
+    auth_actor = str(human_auth.get("granted_by") or "")
     workspace = _workspace_from_root(workspace_root)
     try:
         doc = set_authority_level(
             workspace,
-            design_artifact_id=str(payload["design_artifact_id"]),
+            design_artifact_id=artifact_id,
             authority_level=str(payload["authority_level"]),
             human_authorization=human_auth,
-            registered_by=str(payload.get("registered_by") or human_auth.get("granted_by")),
+            registered_by=auth_actor,
+            persist=False,
         )
     except DesignRegistryError as exc:
         raise GatewayError(ErrorCode.INVALID_SCHEMA, exc.message, "/payload") from exc
+    consume_human_authorization(
+        envelope,
+        workspace_ai_team=workspace.ai_team,
+        transaction=transaction,
+    )
     transaction.plan_yaml_write(
-        workspace.ai_team / "design" / "artifacts" / f"{payload['design_artifact_id']}.yaml",
+        workspace.ai_team / "design" / "artifacts" / f"{artifact_id}.yaml",
         doc,
     )
     return {
-        "affected": [{"kind": "design_artifact", "id": payload["design_artifact_id"]}]
+        "affected": [{"kind": "design_artifact", "id": artifact_id}]
     }, []
 
 
@@ -218,19 +284,19 @@ def handle_compile_design_contract(
             design_reference_set_id=payload.get("design_reference_set_id"),
             authoritative_artifact_ids=list(payload.get("authoritative_artifact_ids") or []),
             compiled_by=str(payload.get("compiled_by") or envelope["actor"].get("role_id")),
-            screens=list(payload.get("screens") or []),
-            routes=list(payload.get("routes") or []),
-            components=list(payload.get("components") or []),
-            mandatory_text=list(payload.get("mandatory_text") or []),
-            mandatory_elements=list(payload.get("mandatory_elements") or []),
-            forbidden_elements=list(payload.get("forbidden_elements") or []),
+            screens=list(payload.get("screens") or []) or None,
+            routes=list(payload.get("routes") or []) or None,
+            components=list(payload.get("components") or []) or None,
+            mandatory_text=list(payload.get("mandatory_text") or []) or None,
+            mandatory_elements=list(payload.get("mandatory_elements") or []) or None,
+            forbidden_elements=list(payload.get("forbidden_elements") or []) or None,
             states=list(payload.get("states") or []) or None,
             viewports=list(payload.get("viewports") or []) or None,
             tokens=payload.get("tokens") if isinstance(payload.get("tokens"), dict) else None,
             tolerances=payload.get("tolerances")
             if isinstance(payload.get("tolerances"), dict)
             else None,
-            free_zones=list(payload.get("free_zones") or []),
+            free_zones=list(payload.get("free_zones") or []) or None,
             inferences=list(payload.get("inferences") or []),
             conformance_level=str(payload.get("conformance_level") or "tolerant_visual"),
             design_system_precedence=str(
@@ -305,8 +371,10 @@ def handle_record_visual_conformance(
     if not isinstance(payload, dict):
         raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
     workspace = _workspace_from_root(workspace_root)
+    # Capture backends are privileged and attached out-of-band by adapters.
+    # Command payloads must not inject observation truth (DOM/styles/screenshots).
     try:
-        report = run_visual_conformance(
+        result = run_visual_conformance(
             workspace,
             report_id=str(payload["report_id"]),
             design_contract_id=str(payload["design_contract_id"]),
@@ -318,20 +386,37 @@ def handle_record_visual_conformance(
             epoch=payload.get("epoch"),
             expected_lease_id=payload.get("expected_lease_id"),
             expected_epoch=payload.get("expected_epoch"),
-            observations=list(payload.get("observations") or []),
             agent_claimed_passed=payload.get("agent_claimed_passed"),
             persist=False,
         )
     except ConformanceError as exc:
         raise GatewayError(ErrorCode.INVALID_SCHEMA, exc.message, "/payload") from exc
+
+    report = result["report"]
     validate_against_schema(workspace.ai_team, report, "visual-conformance-report.schema.json")
-    transaction.plan_yaml_write(
-        workspace.ai_team / "design" / "conformance" / f"{payload['report_id']}.yaml",
-        report,
-    )
+
+    # YAML/JSON and binary evidence are journaled in the same transaction.
+    for planned in result.get("planned_writes") or []:
+        path = planned.get("path")
+        document = planned.get("document")
+        if not path or document is None:
+            continue
+        abs_path = Path(path)
+        if not abs_path.is_absolute():
+            abs_path = workspace.root / path
+        if abs_path.suffix.lower() == ".json":
+            transaction.plan_json_write(abs_path, document)
+        else:
+            transaction.plan_yaml_write(abs_path, document)
+    for staged in result.get("staged_binaries") or []:
+        temp_path = Path(str(staged["temp_path"]))
+        dest = workspace.root / str(staged["dest_relative"])
+        transaction.plan_bytes_write(dest, temp_path.read_bytes())
+        temp_path.unlink(missing_ok=True)
     return {
         "affected": [{"kind": "visual_conformance_report", "id": payload["report_id"]}],
         "report": report,
+        "transaction_binary_promotion": True,
     }, []
 
 
@@ -356,13 +441,9 @@ def handle_reconcile_design_revision(
         )
     except ReconcileError as exc:
         raise GatewayError(ErrorCode.INVALID_SCHEMA, exc.message, "/payload") from exc
-    transaction.plan_yaml_write(
-        workspace.ai_team
-        / "design"
-        / "reconciliations"
-        / f"{payload['reconciliation_id']}.yaml",
-        impact,
-    )
+    planned = list(impact.pop("planned_documents", []) or [])
+    for item in planned:
+        transaction.plan_yaml_write(item["path"], item["document"])
     return {
         "affected": [{"kind": "design_reconciliation", "id": payload["reconciliation_id"]}],
         "impact": impact,

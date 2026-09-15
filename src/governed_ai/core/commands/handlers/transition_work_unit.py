@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
 import yaml
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.domain.work_unit.done import missing_done_prerequisites
 from governed_ai.core.domain.work_unit.revision import RevisionError, current_revision
 from governed_ai.core.domain.work_unit.state_machine import is_transition_allowed
 from governed_ai.core.persistence.transaction import Transaction
+from governed_ai.core.workspace import Workspace
 
 
 def handle_transition_work_unit(
@@ -61,7 +62,14 @@ def handle_transition_work_unit(
         )
 
     if to_status == "done":
-        missing = missing_done_prerequisites(document)
+        workspace = (
+            workspace_root
+            if isinstance(workspace_root, Workspace)
+            else Workspace.from_root(
+                workspace_root.root if hasattr(workspace_root, "root") else workspace_root
+            )
+        )
+        missing = missing_done_prerequisites(document, workspace=workspace)
         if missing:
             raise GatewayError(
                 ErrorCode.INVARIANT_VIOLATION,

@@ -751,6 +751,135 @@ def test_tick_dispatches_execution_and_advances_on_success(workspace: Workspace)
     assert heartbeat_after != heartbeat_before
 
 
+def test_real_adapter_receives_compiled_multimodal_design_context(
+    workspace: Workspace,
+) -> None:
+    """The real Supervisor -> Gateway -> Adapter path (Document 6, Design
+    Authority §2/§3) must carry the compiled Design Contract and a materialized
+    visual attachment through to the actual Cursor adapter's assembled prompt —
+    not a FakeAdapter double, not an artificial descriptor built in the test.
+    """
+    from adapters.cursor.runtime import execute as cursor_execute
+
+    from governed_ai.adapters.cursor import CursorAdapter
+    from governed_ai.core.design_authority.binding import bind_design_to_work_unit
+    from governed_ai.core.design_authority.contract import compile_design_contract
+    from governed_ai.core.design_authority.hashing import sha256_file
+    from governed_ai.core.design_authority.reference_set import create_reference_set
+    from governed_ai.core.design_authority.registry import register_local_artifact
+
+    png_path = workspace.root / "designs" / "login.png"
+    png_path.parent.mkdir(parents=True, exist_ok=True)
+    png_path.write_bytes(b"\x89PNG\r\n\x1a\n" + b"login-mockup-fixture")
+
+    register_local_artifact(
+        workspace,
+        design_artifact_id="DA-TICK-LOGIN",
+        relative_path="designs/login.png",
+        registered_by="human:designer",
+        authority_level="authoritative",
+        human_authorization={"granted_by": "human:designer"},
+        screens=["login"],
+        states=["content_available"],
+    )
+    create_reference_set(
+        workspace,
+        design_reference_set_id="DRS-TICK-LOGIN",
+        title="Login set",
+        created_by="human:designer",
+        members=[
+            {
+                "design_artifact_id": "DA-TICK-LOGIN",
+                "target": {"route": "/login", "state": "content_available"},
+            }
+        ],
+    )
+    compile_design_contract(
+        workspace,
+        design_contract_id="DC-TICK-LOGIN",
+        design_mode="conform",
+        design_reference_set_id="DRS-TICK-LOGIN",
+        compiled_by="human:designer",
+        routes=["/login"],
+        screens=["login"],
+        mandatory_text=["Sign in"],
+        states=["content_available"],
+        viewports=[{"name": "desktop", "width": 1280, "height": 800}],
+    )
+    # The dispatch step runs against an isolated git checkout of base_sha —
+    # the mockup must be committed so it exists in that checkout too.
+    _git(workspace.root, "add", "-A")
+    _git(workspace.root, "commit", "-m", "add design mockup + contract")
+
+    gateway = CommandGateway(workspace)
+    gateway.execute_command(_open_run("RUN-DESIGN-TICK", work_unit_ids=["WU-A"]))
+    _seed_work_unit(
+        workspace,
+        "WU-A",
+        status="in_progress",
+        implementation_role="frontend-developer",
+        area="frontend",
+        staffing_proposal={"primary_role": "frontend-developer"},
+    )
+    bind_design_to_work_unit(
+        workspace,
+        work_unit_id="WU-A",
+        design_contract_id="DC-TICK-LOGIN",
+        design_mode="conform",
+    )
+    gateway.execute_command(
+        _envelope(
+            "AcquireWorkerLease",
+            target={"kind": "worker_lease", "id": "LEASE-DESIGN-TICK"},
+            payload={
+                "id": "LEASE-DESIGN-TICK",
+                "run_id": "RUN-DESIGN-TICK",
+                "work_unit_id": "WU-A",
+                "worker_id": "w1",
+            },
+            key="acquire-design-tick",
+        )
+    )
+
+    adapter = CursorAdapter(
+        project_root=workspace.root,
+        bundle_dir=REPO_ROOT / "src" / "governed_ai" / "contracts" / "bundles" / "v1",
+    )
+    cursor_execute.last_execution_prompt = None
+    cursor_execute.last_execution_request = None
+
+    tick_result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-DESIGN-TICK", adapter=adapter, worker_id="w1"
+    )
+    # The real Cursor runtime stub records "blocked" (no real agent launch is
+    # enabled in tests), which pauses the Work Unit — what matters here is
+    # that the real adapter was actually invoked with the compiled context.
+    assert tick_result.action == "paused_work_unit", (tick_result.action, tick_result.details)
+
+    # The real adapter actually received the request — not a stand-in.
+    prompt = cursor_execute.last_execution_prompt
+    request = cursor_execute.last_execution_request
+    assert prompt is not None, "real CursorAdapter.execute() never reached build_prompt"
+    assert request is not None
+
+    # Compiled design context (Design Contract id/mode) reached the adapter.
+    assert "DC-TICK-LOGIN" in prompt
+    assert "design_mode: conform" in prompt
+    assert "Sign in" in prompt
+
+    # A real, hash-verified, readable file — not just a path claimed in prose.
+    context_package = request.get("context_package") or {}
+    references = ((context_package.get("design") or {}).get("references")) or []
+    assert references, "context_package.design.references was not populated"
+    attachments = request.get("visual_attachments") or []
+    assert attachments, "no visual_attachments were materialized for the adapter"
+    attachment = attachments[0]
+    attached_path = Path(attachment["path"])
+    assert attached_path.is_file()
+    assert attachment["content_hash"] == sha256_file(attached_path)
+    assert f"ATTACHED DESIGN REFERENCE (read this file): {attachment['path']}" in prompt
+
+
 def test_out_of_scope_write_stops_the_whole_run(workspace: Workspace) -> None:
     """Document 6 §9.5 — a write outside a Work Unit's declared scope is one of
     the fixed conditions that stops the whole Run, not just this Work Unit.

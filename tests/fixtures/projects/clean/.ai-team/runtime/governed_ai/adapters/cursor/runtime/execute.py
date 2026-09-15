@@ -3,15 +3,22 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from governed_ai.adapters.spi import ExecutionRequest, RuntimeResult
 
-from .agent_cli import invoke_agent_cli, is_real_agent_launch_enabled
+from .agent_cli import build_prompt, invoke_agent_cli, is_real_agent_launch_enabled
 from .results import (
     build_runtime_result,
     load_runtime_result,
     persist_runtime_result,
 )
+
+# Test/integration hook: last prompt assembled for an execute_runtime call
+# (stub or real). Callers may monkeypatch execute and still inspect attachments
+# via the request; this captures the prompt text when the stub path is used.
+last_execution_prompt: str | None = None
+last_execution_request: dict[str, Any] | None = None
 
 
 def execute_runtime(project_root: Path, request: ExecutionRequest) -> RuntimeResult:
@@ -24,13 +31,21 @@ def execute_runtime(project_root: Path, request: ExecutionRequest) -> RuntimeRes
     existing test suite) calls this function. Without that opt-in, behavior
     is unchanged from the original WU-P4-RUNTIME harness stub.
     """
+    global last_execution_prompt, last_execution_request
     _validate_request(request)
+    request_dict = dict(request)
+    last_execution_request = request_dict
+    # Always assemble the prompt so stub execute still exposes design
+    # attachments for tests that monkeypatch/intercept this path.
+    last_execution_prompt = build_prompt(project_root, request_dict)
     if is_real_agent_launch_enabled():
         timeout_raw = request.get("timeout_seconds")
         timeout_kwargs = {}
         if timeout_raw is not None:
             timeout_kwargs["timeout_seconds"] = float(timeout_raw)
-        outcome = invoke_agent_cli(project_root, request, **timeout_kwargs)
+        # Full request (including context_package / visual_attachments) is
+        # passed through; invoke_agent_cli → build_prompt uses the same dict.
+        outcome = invoke_agent_cli(project_root, request_dict, **timeout_kwargs)
         result = build_runtime_result(
             request,
             status=outcome.status,

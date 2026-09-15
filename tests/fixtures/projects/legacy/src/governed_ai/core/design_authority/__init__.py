@@ -16,16 +16,21 @@ from governed_ai.core.design_authority.binding import (
     default_design_mode_for_work_unit,
     evaluate_g1_design_readiness,
 )
+from governed_ai.core.design_authority.capture_backend import (
+    CaptureBackend,
+    CaptureObservation,
+    FnCaptureBackend,
+)
 from governed_ai.core.design_authority.conformance import (
     ConformanceError,
     run_visual_conformance,
 )
+from governed_ai.core.design_authority.context import build_multimodal_design_context
 from governed_ai.core.design_authority.contract import (
     DesignContractError,
     compile_design_contract,
     load_design_contract,
 )
-from governed_ai.core.design_authority.context import build_multimodal_design_context
 from governed_ai.core.design_authority.design_system import (
     detect_design_system_conflict,
     find_existing_component,
@@ -66,10 +71,13 @@ __all__ = [
     "DESIGN_MODES",
     "MODE_TO_PROCEDURE",
     "SCHEMA_VERSION",
+    "CaptureBackend",
+    "CaptureObservation",
     "ConformanceError",
     "DesignBindingError",
     "DesignContractError",
     "DesignRegistryError",
+    "FnCaptureBackend",
     "ProcedureSelectionError",
     "ReferenceSetError",
     "assert_procedure_matches_binding",
@@ -96,6 +104,7 @@ __all__ = [
     "select_frontend_procedure",
     "set_authority_level",
     "verify_artifact_integrity",
+    "verify_visual_conformance_for_work_unit",
 ]
 
 
@@ -104,4 +113,10 @@ def __getattr__(name: str):
         from governed_ai.core.design_authority import visual_capabilities as _vc
 
         return getattr(_vc, name)
+    if name == "verify_visual_conformance_for_work_unit":
+        from governed_ai.core.design_authority.gate_checks import (
+            verify_visual_conformance_for_work_unit,
+        )
+
+        return verify_visual_conformance_for_work_unit
     raise AttributeError(name)
