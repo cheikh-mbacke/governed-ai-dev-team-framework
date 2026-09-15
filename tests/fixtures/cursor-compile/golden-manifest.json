@@ -50,7 +50,7 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/design-system-steward.md",
-      "sha256": "sha256:c890dc23dfaca0c3726d1378af89bb643bcfea0af191026afcc70b5d37e60785"
+      "sha256": "sha256:bacb53d139662bee351305197c56fc140e3037c06e888d9ae3507a6a3bae511f"
     },
     {
       "kind": "agent",
@@ -75,7 +75,7 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/product-designer.md",
-      "sha256": "sha256:9d18c4bc808afc61aa94a8c2f2f5a3d0c65aee07e27914b5d78835305600eae8"
+      "sha256": "sha256:f994a8a3e0802243bd3f482b00f21e959d64b459f8333ca6b0dba4ffab49b5f8"
     },
     {
       "kind": "agent",
@@ -110,7 +110,7 @@
     {
       "kind": "agent",
       "path": ".cursor/agents/visual-qa.md",
-      "sha256": "sha256:7bcb875b91dea234b11ee6a490797d9118a2ea77862ada74e61c66cc41b59773"
+      "sha256": "sha256:7524046926421bcf38e5bebde46e7c6b0a6bf354b94c0fcc4a9d8c77803c199e"
     },
     {
       "kind": "cli_config",
@@ -185,7 +185,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/adapt-approved-design/SKILL.md",
-      "sha256": "sha256:81bec0f9a90c0f33e3af2d8a347bc00062d36112d2cc237ac7f5d7da5bede8b8"
+      "sha256": "sha256:ae7c61775f8198b08359d1e202830cfcc02996268f109ff141624d41a6fc19a8"
     },
     {
       "kind": "skill",
@@ -215,17 +215,17 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/create-frontend-design/SKILL.md",
-      "sha256": "sha256:49a696ae5bf0eb8583955a58057a6d93b62bf83df87d0c0f5d1f84e32d0d98d7"
+      "sha256": "sha256:d6eb1c49817b2b419f30fa116dc4b02d0441233ae25d1c95f25c67bab4febd5a"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/design-change-reconciliation/SKILL.md",
-      "sha256": "sha256:ff09b3a3192529b71fb6892f0d5d2802477ed505e044251f8bf6bd4e99d690ea"
+      "sha256": "sha256:89b28259b280f649582aaeb511070fca792c0cd7bc4e5ba6c6a4feec52f450d6"
     },
     {
       "kind": "skill",
       "path": ".cursor/skills/design-system-integration/SKILL.md",
-      "sha256": "sha256:a481e7ec882ac39f05601115e90a2874bdfecd207b7dbd8a00d96ad8b091d028"
+      "sha256": "sha256:2a2551948597ccb5706adc5ef49290859eaab54a2f05df10e548d4e1b322fd2a"
     },
     {
       "kind": "skill",
@@ -255,7 +255,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/implement-approved-design/SKILL.md",
-      "sha256": "sha256:81413e6d86538a1c6da16502004771072c7296029a9e9ad70640c36f982f7976"
+      "sha256": "sha256:e7ecd5d8928a40db076ee01575442df6f79e7d3fd1a135c6d9008358313b2d7d"
     },
     {
       "kind": "skill",
@@ -295,7 +295,7 @@
     {
       "kind": "skill",
       "path": ".cursor/skills/visual-conformance-review/SKILL.md",
-      "sha256": "sha256:ce7b01abe0128280c131d44d40cd383fec034f77a63825e4ca2d729a5be41e23"
+      "sha256": "sha256:61c6404f86a55f61fdc4f719d7e43ed7ca98bf955acb6152f9b86841f0e3459b"
     },
     {
       "kind": "adapter_file",
