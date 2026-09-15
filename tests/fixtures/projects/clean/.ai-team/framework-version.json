@@ -69,6 +69,7 @@
     ".ai-team/runtime/governed_ai/__init__.py",
     ".ai-team/runtime/governed_ai/adapters/__init__.py",
     ".ai-team/runtime/governed_ai/adapters/common/__init__.py",
+    ".ai-team/runtime/governed_ai/adapters/common/agent_invocation.py",
     ".ai-team/runtime/governed_ai/adapters/common/bundle.py",
     ".ai-team/runtime/governed_ai/adapters/common/guard.py",
     ".ai-team/runtime/governed_ai/adapters/common/platform.py",

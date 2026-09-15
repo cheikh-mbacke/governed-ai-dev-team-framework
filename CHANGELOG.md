@@ -64,10 +64,29 @@ versions produit suivent Semantic Versioning.
     manuellement (`.claude/` matérialisé, `.cursor/` absent,
     `installation-record.json` et `project-profile.yaml` cohérents,
     `validate.py` propre) + 4 tests d'intégration.
-  - Hors périmètre de cet incrément : le lancement CLI réel, les fixtures
-    golden gelées, les règles `.mdc` (pas d'équivalent Claude Code direct
-    retenu) — voir Document 3 §"Grain Claude Code résolu partiellement" et
-    Document 0 §2.
+  - **Lancement CLI réel** (`adapters/claude_code/runtime/claude_cli.py`) :
+    contrairement aux hooks, ce contrat **est vérifié de première main** —
+    `claude --help` puis deux appels réels `claude -p --output-format json`
+    (un ayant atteint `--max-budget-usd`, un complet) le 2026-09-15, sur
+    abonnement Claude Pro (`claude auth status`), pas une clé API. Le schéma
+    JSON diffère de celui de Cursor : `usage.input_tokens`/`output_tokens`
+    en snake_case (pas `inputTokens`/`outputTokens`), pas de champ
+    `request_id` (`uuid` utilisé à la place), `total_cost_usd` au niveau
+    racine. `-p` saute nativement le dialogue de confiance workspace (pas
+    d'équivalent `--trust` requis) ; `--permission-mode bypassPermissions`
+    remplace `--force` de Cursor — l'application reste `.claude/settings.json`
+    (`permissions.deny`) et `guard_shell.py` (sortie 2 sur `PreToolUse`), pas
+    ce mode. `governed_ai.adapters.common.agent_invocation` (nouveau) porte
+    la construction de prompt, le chien de garde kill-switch/Run, l'environ-
+    nement assaini et l'arrêt d'arbre de process — extraits de
+    `adapters/cursor/runtime/agent_cli.py` sans changement de comportement
+    (wrapper fin conservé, `CURSOR_PROJECT_DIR` vs `CLAUDE_PROJECT_DIR` en
+    seul paramètre variable). Activé par la même variable d'opt-in
+    `GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1` que Cursor ; désactivé par
+    défaut, donc gratuit pour la suite de tests (mockée, comme pour Cursor).
+  - Hors périmètre de cet incrément : les fixtures golden gelées, les règles
+    `.mdc` (pas d'équivalent Claude Code direct retenu) — voir Document 3
+    §"Grain Claude Code résolu partiellement" et Document 0 §2.
 - Notifications SMTP non bloquantes avec outbox dédupliquée, reprise sur échec,
   alertes immédiates, digest de fin de Run et routage adapté au profil
   d'autonomie. Transport installé par défaut sur `mail.agenteam.fr:465` en SSL,

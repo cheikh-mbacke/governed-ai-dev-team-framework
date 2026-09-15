@@ -228,6 +228,7 @@
     "src/governed_ai/adapters/claude_code/adapter.py",
     "src/governed_ai/adapters/claude_code/compile.py",
     "src/governed_ai/adapters/common/__init__.py",
+    "src/governed_ai/adapters/common/agent_invocation.py",
     "src/governed_ai/adapters/common/bundle.py",
     "src/governed_ai/adapters/common/guard.py",
     "src/governed_ai/adapters/common/platform.py",

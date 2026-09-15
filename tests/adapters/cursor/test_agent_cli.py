@@ -21,6 +21,7 @@ import yaml
 from adapters.cursor.runtime import agent_cli
 from adapters.cursor.runtime.execute import execute_runtime
 
+from governed_ai.adapters.common import agent_invocation
 from governed_ai.adapters.spi import ExecutionRequest
 
 BASE_SHA = "a" * 40
@@ -336,7 +337,7 @@ def test_running_agent_is_terminated_when_grant_is_revoked(
     terminated: list[object] = []
     monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
     monkeypatch.setattr(
-        agent_cli, "_terminate_process_tree", lambda proc: terminated.append(proc)
+        agent_invocation, "terminate_process_tree", lambda proc: terminated.append(proc)
     )
     completed, reason = agent_cli._run_agent_process(
         ["agent"],
@@ -376,7 +377,7 @@ def test_running_agent_is_terminated_when_owning_run_stops(
     terminated: list[object] = []
     monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
     monkeypatch.setattr(
-        agent_cli, "_terminate_process_tree", lambda proc: terminated.append(proc)
+        agent_invocation, "terminate_process_tree", lambda proc: terminated.append(proc)
     )
     completed, reason = agent_cli._run_agent_process(
         ["agent"],

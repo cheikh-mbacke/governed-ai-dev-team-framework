@@ -270,6 +270,10 @@
         "installed_sha256": "sha256:0a607f59bbc669b5a78d35cec51d951168304e17773917493993b97b2be7d9d8"
       },
       {
+        "path": ".ai-team/runtime/governed_ai/adapters/common/agent_invocation.py",
+        "installed_sha256": "sha256:255d1272a3111a8584995c6eaf180590854d1a7ad47710673f94feb280cef9ea"
+      },
+      {
         "path": ".ai-team/runtime/governed_ai/adapters/common/bundle.py",
         "installed_sha256": "sha256:03d36ba83379828d686297351e5c3d3626f95d830a96d8434cc65d0ae6c027eb"
       },
@@ -1570,7 +1574,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/agent_cli.py",
-          "installed_sha256": "sha256:257b8600c02d5bae1017c342a58b71b5aafb84497c775a604b3bf8d6e2db951a"
+          "installed_sha256": "sha256:99f01b5510f8c7e2b5243ffa0fef8aa8a8a73dfa6c35a5e01623c61c563ddba5"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/checks.py",

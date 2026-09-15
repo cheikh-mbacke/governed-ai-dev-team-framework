@@ -1,41 +1,51 @@
-"""Real invocation of the Cursor `agent` CLI.
+"""Real invocation of the Claude Code CLI.
 
-The contract below was discovered by probing `agent --help` and a live,
-authenticated invocation directly (2026-08-30) — it is not documented
-anywhere upstream, and `adapters/cursor/runtime/checks.py` previously only
-ever checked for the binary's presence on PATH (`shutil.which("agent")`),
-never invoked it.
+Contract verified by hand against a live, authenticated invocation
+(2026-09-15) — `claude --help` and two real `claude -p` calls (one hitting
+`--max-budget-usd`, one completing) — not by reading upstream docs. Unlike
+the hooks (Document 3 §"Grain Claude Code résolu partiellement"), this
+contract IS first-hand verified, the same way Cursor's `agent --help`
+contract was probed before `agent_cli.py` was written.
 
 Observed contract:
-  agent --print --output-format json --workspace <dir> --trust --force
-        [--model <model>] "<prompt>"
+  claude -p --output-format json [--model <model>]
+        --permission-mode bypassPermissions --no-session-persistence "<prompt>"
 
-- `--print` switches to non-interactive/scriptable mode. Without `--trust`
-  it still blocks on an interactive workspace-trust prompt even under
-  `--print` — exactly the invisible-blocking risk Document 6 §9.6 describes.
-  `--force` (a.k.a. `--yolo`) is required for it to run shell/write tool
-  calls without prompting; passing it here is not a new escalation, since
-  the caller (`run_scheduling_tick`) only reaches this point after the
-  Work Unit's `execution_ceiling` already authorized this exact capability.
-- On success it prints one JSON object to stdout:
+- `-p`/`--print` switches to non-interactive mode. Per `claude --help`, the
+  workspace-trust dialog is *already* skipped in this mode — no `--trust`-
+  equivalent flag is needed, unlike Cursor's `agent --trust`.
+- `--permission-mode bypassPermissions` is the equivalent of Cursor's
+  `--force`: without it, a permission decision that would otherwise prompt
+  a human has no TTY to prompt in non-interactive mode, and the actual
+  fail-open/fail-closed behavior of an unanswered prompt under `-p` was not
+  probed here. Passing it here is not a new escalation for the same reason
+  `--force` isn't for Cursor: the caller only reaches this point after the
+  Work Unit's `execution_ceiling` already authorized this exact capability,
+  and `.claude/settings.json`'s `permissions.deny` plus `guard_shell.py`
+  (PreToolUse exit 2) remain the actual enforcement layer — matching
+  Document 3 §4.7 ("ne pas dépendre d'un hook/mode comme unique barrière").
+- On success it prints one JSON object to stdout. Verified fields:
     {"type":"result","subtype":"success","is_error":false,
-     "duration_ms":...,"result":"<text>","session_id":"...",
-     "request_id":"...","usage":{...}}
-- Some pre-flight validation errors (e.g. an unknown --model) print plain
-  text instead of JSON and exit non-zero — treated as a hard failure here,
-  not parsed as a result.
+     "duration_ms":...,"result":"<text>","session_id":"...","uuid":"...",
+     "total_cost_usd":...,"usage":{"input_tokens":...,"output_tokens":...,
+     "cache_creation_input_tokens":...,"cache_read_input_tokens":...},
+     "modelUsage":{...},"stop_reason":"end_turn","num_turns":1,
+     "terminal_reason":"completed"}
+  Note the *inner* `usage.input_tokens`/`usage.output_tokens` are already
+  snake_case here — unlike Cursor's `usage.inputTokens`/`outputTokens` — so
+  this adapter's stdout parser is not reusable for Cursor's envelope or
+  vice versa. There is no `request_id` field; `uuid` is the closest
+  equivalent and is used as `provider_request_id` below.
+- A budget/error outcome instead carries `"is_error":true`, an `"errors"`
+  list, and omits `"result"`/`"terminal_reason"`/`"api_error_status"` —
+  verified via `--max-budget-usd` during probing.
 
-Real invocation costs real API credits and can execute arbitrary shell
-commands / file writes on the target workspace. It is opt-in only — see
-`is_real_agent_launch_enabled()` — so the existing test suite (and any
-caller that does not explicitly opt in) keeps getting the pre-existing
-stub behavior in `execute.py`, unchanged and free.
-
-Prompt assembly, the kill-switch/Run-state watchdog, sanitized subprocess
-environment and process-tree teardown live in
-``governed_ai.adapters.common.agent_invocation`` — none of that was
-Cursor-specific; only the binary name, its flags, and its JSON envelope
-shape are.
+Real invocation costs real Claude usage (subscription allowance or API
+tokens, whichever the local `claude` CLI is authenticated with) and can
+execute arbitrary shell/file-write tool calls in the target workspace. It
+is opt-in only — see `is_real_agent_launch_enabled()`, shared with Cursor's
+adapter — so the existing test suite keeps getting the pre-existing stub
+behavior in `execute.py`, unchanged and free.
 """
 
 from __future__ import annotations
@@ -48,11 +58,11 @@ from typing import Any
 
 from governed_ai.adapters.common.agent_invocation import (
     DEFAULT_TIMEOUT_SECONDS,
-    ENABLE_ENV_VAR,  # noqa: F401 — re-exported, imported by name in checks.py/tests
+    ENABLE_ENV_VAR,  # noqa: F401 — re-exported for parity with agent_cli.py
     AgentInvocationOutcome,
     build_prompt,
     git_head,
-    is_real_agent_launch_enabled,  # noqa: F401 — re-exported, imported by checks.py
+    is_real_agent_launch_enabled,  # noqa: F401 — re-exported, imported by execute.py
     sanitized_process_env,
 )
 from governed_ai.adapters.common.agent_invocation import (
@@ -62,23 +72,23 @@ from governed_ai.compat.datetime import UTC, datetime
 
 from .results import HANDOFF_DIAGNOSTIC_MAX, HANDOFF_SUMMARY_MAX, extract_governed_handoff
 
-CURSOR_PROJECT_DIR_ENV_VAR = "CURSOR_PROJECT_DIR"
+CLAUDE_PROJECT_DIR_ENV_VAR = "CLAUDE_PROJECT_DIR"
 
 
-def resolve_agent_binary() -> str | None:
-    return shutil.which("agent")
+def resolve_claude_binary() -> str | None:
+    return shutil.which("claude")
 
 
-def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvocationOutcome:
+def _parse_claude_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvocationOutcome:
     text = stdout.strip()
     try:
         payload = json.loads(text)
     except (json.JSONDecodeError, ValueError):
-        fallback = (text or stderr or "agent CLI produced no parseable output").strip()
+        fallback = (text or stderr or "claude CLI produced no parseable output").strip()
         return AgentInvocationOutcome(
             status="failed",
             summary=fallback[:HANDOFF_DIAGNOSTIC_MAX],
-            limitations=["agent CLI did not return the expected JSON envelope"],
+            limitations=["claude CLI did not return the expected JSON envelope"],
         )
 
     is_error = bool(payload.get("is_error"))
@@ -86,6 +96,10 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
     status = "failed" if (is_error or returncode != 0) else "succeeded"
     structured: dict[str, Any] = {}
     limitations: list[str] = []
+    if is_error:
+        errors = payload.get("errors")
+        if isinstance(errors, list) and errors:
+            limitations.append("; ".join(str(item) for item in errors))
     if status == "succeeded":
         structured_handoff, extract_error = extract_governed_handoff(result_text)
         if structured_handoff is not None:
@@ -93,15 +107,18 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
         else:
             status = "failed"
             limitations.append(
-                extract_error or "agent result was not the required governed JSON handoff"
+                extract_error or "claude result was not the required governed JSON handoff"
             )
     outer_usage = payload.get("usage") if isinstance(payload.get("usage"), dict) else {}
-    input_tokens = int(outer_usage.get("inputTokens", 0) or 0)
-    output_tokens = int(outer_usage.get("outputTokens", 0) or 0)
+    input_tokens = int(outer_usage.get("input_tokens", 0) or 0)
+    output_tokens = int(outer_usage.get("output_tokens", 0) or 0)
     usage = dict(structured.get("usage") or {})
     usage.setdefault("input_tokens", input_tokens)
     usage.setdefault("output_tokens", output_tokens)
     usage.setdefault("total_tokens", input_tokens + output_tokens)
+    total_cost_usd = payload.get("total_cost_usd")
+    if isinstance(total_cost_usd, (int, float)):
+        usage.setdefault("total_cost_usd", total_cost_usd)
     if structured:
         summary = str(structured.get("summary") or "")[:HANDOFF_SUMMARY_MAX]
     else:
@@ -120,11 +137,11 @@ def _parse_agent_stdout(stdout: str, stderr: str, returncode: int) -> AgentInvoc
             else None
         ),
         provider_session_id=(str(payload["session_id"]) if payload.get("session_id") else None),
-        provider_request_id=(str(payload["request_id"]) if payload.get("request_id") else None),
+        provider_request_id=(str(payload["uuid"]) if payload.get("uuid") else None),
     )
 
 
-def _run_agent_process(
+def _run_claude_process(
     command: list[str],
     *,
     project_root: Path,
@@ -143,14 +160,14 @@ def _run_agent_process(
         kill_switch_path=kill_switch_path,
         allowed_shell_commands=allowed_shell_commands,
         allowed_paths=allowed_paths,
-        project_dir_env_var=CURSOR_PROJECT_DIR_ENV_VAR,
+        project_dir_env_var=CLAUDE_PROJECT_DIR_ENV_VAR,
         accessible_secrets=accessible_secrets,
         telemetry_context=telemetry_context,
         run_state_path=run_state_path,
     )
 
 
-def invoke_agent_cli(
+def invoke_claude_cli(
     project_root: Path,
     request: dict[str, Any],
     *,
@@ -170,12 +187,12 @@ def invoke_agent_cli(
             )
         return outcome
 
-    binary = resolve_agent_binary()
+    binary = resolve_claude_binary()
     if binary is None:
         return _with_timing(AgentInvocationOutcome(
             status="blocked",
-            summary="Cursor `agent` CLI not found on PATH.",
-            limitations=["agent binary unavailable"],
+            summary="Claude Code `claude` CLI not found on PATH.",
+            limitations=["claude binary unavailable"],
         ))
 
     command = [
@@ -183,10 +200,9 @@ def invoke_agent_cli(
         "--print",
         "--output-format",
         "json",
-        "--workspace",
-        str(project_root),
-        "--trust",
-        "--force",
+        "--permission-mode",
+        "bypassPermissions",
+        "--no-session-persistence",
     ]
     model = request.get("model")
     if model:
@@ -203,7 +219,7 @@ def invoke_agent_cli(
     kill_switch = request.get("kill_switch_path")
     try:
         if kill_switch:
-            completed, cancellation_reason = _run_agent_process(
+            completed, cancellation_reason = _run_claude_process(
                 command,
                 project_root=project_root,
                 timeout_seconds=timeout_seconds,
@@ -225,7 +241,7 @@ def invoke_agent_cli(
             if cancellation_reason is not None:
                 return _with_timing(AgentInvocationOutcome(
                     status="cancelled",
-                    summary=f"agent CLI stopped: {cancellation_reason}",
+                    summary=f"claude CLI stopped: {cancellation_reason}",
                     limitations=[],
                 ))
             assert completed is not None
@@ -233,7 +249,7 @@ def invoke_agent_cli(
             process_env = sanitized_process_env(
                 [str(item) for item in request.get("accessible_secrets") or []]
             )
-            process_env[CURSOR_PROJECT_DIR_ENV_VAR] = str(project_root.resolve())
+            process_env[CLAUDE_PROJECT_DIR_ENV_VAR] = str(project_root.resolve())
             process_env.update(telemetry_context)
             completed = subprocess.run(
                 command,
@@ -247,11 +263,11 @@ def invoke_agent_cli(
     except subprocess.TimeoutExpired:
         return _with_timing(AgentInvocationOutcome(
             status="timed_out",
-            summary=f"agent CLI exceeded {timeout_seconds}s timeout",
+            summary=f"claude CLI exceeded {timeout_seconds}s timeout",
             limitations=[],
         ))
 
-    outcome = _parse_agent_stdout(completed.stdout, completed.stderr, completed.returncode)
+    outcome = _parse_claude_stdout(completed.stdout, completed.stderr, completed.returncode)
     if outcome.status == "succeeded":
         object.__setattr__(outcome, "result_sha", git_head(project_root))
     return _with_timing(outcome)
