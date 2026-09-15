@@ -266,20 +266,12 @@
         "installed_sha256": "sha256:b5109b68705e93e63b75535ed17a39be94c5004d882fbf8e3cc7f20346a5ffca"
       },
       {
-        "path": ".ai-team/runtime/governed_ai/adapters/claude_code/__init__.py",
-        "installed_sha256": "sha256:5e5eca817c113423b130102447d14c30e540a987c1843b5fcc5b393f0d7129c0"
-      },
-      {
-        "path": ".ai-team/runtime/governed_ai/adapters/claude_code/adapter.py",
-        "installed_sha256": "sha256:11a3ab3d52d2e91366afe8ce36838b542a165582c6cf202879f8d32d1fae76bb"
-      },
-      {
-        "path": ".ai-team/runtime/governed_ai/adapters/claude_code/compile.py",
-        "installed_sha256": "sha256:bbb5f98630f262cd8edd39132a35db3c6765976a9ca5a51a7732044db6979606"
-      },
-      {
         "path": ".ai-team/runtime/governed_ai/adapters/common/__init__.py",
         "installed_sha256": "sha256:0a607f59bbc669b5a78d35cec51d951168304e17773917493993b97b2be7d9d8"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/common/bundle.py",
+        "installed_sha256": "sha256:03d36ba83379828d686297351e5c3d3626f95d830a96d8434cc65d0ae6c027eb"
       },
       {
         "path": ".ai-team/runtime/governed_ai/adapters/common/guard.py",
@@ -288,6 +280,10 @@
       {
         "path": ".ai-team/runtime/governed_ai/adapters/common/platform.py",
         "installed_sha256": "sha256:3cc71565c840d038333c03033d3394d2f94659e337da177a8ebe78b9326f8c30"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/common/project_profile.py",
+        "installed_sha256": "sha256:2f1419fdc7029c7e77a356f7ef47a689c9c376e96dd17fa322e447e208485cf8"
       },
       {
         "path": ".ai-team/runtime/governed_ai/adapters/common/results.py",
@@ -1507,11 +1503,11 @@
       },
       {
         "path": "scripts/ai-team/validate.py",
-        "installed_sha256": "sha256:46a1230e902490185e1a237828aba59b28b3aabf85a669cd15a107463be8e0ca"
+        "installed_sha256": "sha256:9b3e3c438ad81359b0e14e9c0f8784cdebb084bec6aad3e71f398c75a642280f"
       },
       {
         "path": "scripts/ai-team/validate_ownership.py",
-        "installed_sha256": "sha256:f4463d6da337820bbc9e5de97603023d606c3a63b06d290ed9d133f91609007e"
+        "installed_sha256": "sha256:de897a1353cefb88e4ffc03dbf5064937c8983bf02579aea2b7199b443cafc08"
       }
     ]
   },
@@ -1554,11 +1550,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/install_support.py",
-          "installed_sha256": "sha256:0bb2586dcf45aedbbc3de278ee7fc743fe83dbc0198c9dfb085f7e46d1305048"
+          "installed_sha256": "sha256:a29dfcbffc6e2267bf0c699ca0acdf829f483b5564d92a03d4f74d5f013b2582"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/parity.py",
-          "installed_sha256": "sha256:acf342ca0964238e8471a49d161404d424b8d632cc5d72cd24cf75ea555653a7"
+          "installed_sha256": "sha256:d4cbf1a73d145bc1803965356f19d96e02cea9d5e82a550d8edae6ce47470151"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/staging.py",

@@ -13,11 +13,24 @@ DIRECT_COPY_ITEMS = (
     "AGENTS.md",
 )
 
-# Relocated items: framework-source prefix -> target-project prefix.
+# Relocated items: framework-source prefix -> target-project prefix. Both
+# adapters are always registered here (bidirectional path mapping must work
+# regardless of which one is active) — which one's files actually get copied
+# is decided separately, by active_adapter_id, in source_files.py.
 RELOCATED_COPY_PREFIXES: tuple[tuple[str, str], ...] = (
     ("src/governed_ai", ".ai-team/runtime/governed_ai"),
     ("adapters/cursor", ".ai-team/runtime/governed_ai/adapters/cursor"),
+    ("adapters/claude_code", ".ai-team/runtime/governed_ai/adapters/claude_code"),
 )
+
+# adapter_id (Document 12 descriptor string) -> on-disk/import package name.
+# adapter_id may contain a hyphen (product-name spelling); the directory and
+# Python package must be a valid identifier, hence the underscore for
+# claude-code. See Document 11 §3's naming-convention note.
+ADAPTER_DIR_NAMES: dict[str, str] = {
+    "cursor": "cursor",
+    "claude-code": "claude_code",
+}
 
 RELOCATED_COPY_FILES: tuple[tuple[str, str], ...] = (
     ("requirements.txt", ".ai-team/requirements.txt"),
@@ -96,12 +109,17 @@ def compile_source_root(source_root: Path, target: Path | None = None) -> Path:
     return source_root.resolve()
 
 
-def adapter_templates_root(source_root: Path, target: Path | None = None) -> Path:
+def adapter_templates_root(
+    source_root: Path, target: Path | None = None, *, adapter_id: str = "cursor"
+) -> Path:
+    dir_name = ADAPTER_DIR_NAMES[adapter_id]
     root = compile_source_root(source_root, target)
-    installed = root / ".ai-team" / "runtime" / "governed_ai" / "adapters" / "cursor" / "templates"
+    installed = (
+        root / ".ai-team" / "runtime" / "governed_ai" / "adapters" / dir_name / "templates"
+    )
     if installed.is_dir():
         return installed
-    return root / "adapters" / "cursor" / "templates"
+    return root / "adapters" / dir_name / "templates"
 
 
 def adapter_compiler_import_root(source_root: Path, target: Path | None = None) -> Path:

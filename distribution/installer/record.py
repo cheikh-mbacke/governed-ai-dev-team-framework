@@ -8,7 +8,7 @@ from typing import Any
 
 LEGACY_VERSION_FILE = Path(".ai-team/framework-version.json")
 INSTALLATION_RECORD_FILE = Path(".ai-team/installation-record.json")
-KNOWN_ADAPTER_IDS = frozenset({"cursor"})
+KNOWN_ADAPTER_IDS = frozenset({"cursor", "claude-code"})
 
 
 def normalize_path(path: str | Path) -> str:

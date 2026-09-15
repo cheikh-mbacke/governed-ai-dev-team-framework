@@ -7,7 +7,16 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from distribution.installer.constants import COPY_ITEMS, LEGACY_VERSION_REL, PROJECT_OWNED_PATTERNS
+from distribution.installer.adapter_registry import adapter_registration
+from distribution.installer.constants import (
+    LEGACY_VERSION_REL,
+    PROJECT_OWNED_PATTERNS,
+    copy_items_for_adapter,
+)
+from distribution.installer.fabrication_layout import (
+    read_repository_kind,
+    source_ai_team_dir,
+)
 from distribution.installer.paths import (
     DIRECT_COPY_ITEMS,
     RELOCATED_COPY_FILES,
@@ -15,10 +24,6 @@ from distribution.installer.paths import (
     adapter_compiler_import_root,
     compile_source_root,
     map_source_relative_to_target,
-)
-from distribution.installer.fabrication_layout import (
-    read_repository_kind,
-    source_ai_team_dir,
 )
 from distribution.installer.record import INSTALLATION_RECORD_FILE, LEGACY_VERSION_FILE
 
@@ -129,7 +134,7 @@ def _iter_relocated_file_items(source_root: Path):
 
 def compile_profile_for_target(source_root: Path, target: Path, project_id: str | None = None) -> dict:
     bootstrap_adapter_imports(source_root, target)
-    from adapters.cursor.compiler.install_support import (
+    from governed_ai.adapters.common.project_profile import (
         load_project_profile_yaml,
         minimal_project_profile,
     )
@@ -148,7 +153,15 @@ def iter_managed_source_files(
     project_id: str | None = None,
     *,
     compile_cursor: bool = True,
+    active_adapter_id: str = "cursor",
 ):
+    """Yield ``(target_relative_path, source_file)`` for every managed file.
+
+    ``compile_cursor`` compiles whichever Adaptateur ``active_adapter_id``
+    names (kept under its historical name — renaming it would touch call
+    sites this increment doesn't otherwise need to change).
+    """
+    registration = adapter_registration(active_adapter_id)
     profile = (
         compile_profile_for_target(source_root, target, project_id=project_id)
         if target and compile_cursor
@@ -158,24 +171,23 @@ def iter_managed_source_files(
     handled_prefixes = {prefix for prefix, _ in RELOCATED_COPY_PREFIXES}
     handled_files = {src for src, _ in RELOCATED_COPY_FILES}
 
-    for item in COPY_ITEMS:
-        if item == ".cursor":
+    for item in copy_items_for_adapter(active_adapter_id):
+        if item == registration.compiled_dir_item:
             if not compile_cursor:
                 if target is None:
                     continue
-                cursor_root = target / ".cursor"
-                if not cursor_root.is_dir():
+                compiled_root = target / registration.compiled_dir_item
+                if not compiled_root.is_dir():
                     continue
-                for path in sorted(cursor_root.rglob("*")):
+                for path in sorted(compiled_root.rglob("*")):
                     if path.is_file():
                         relative = path.relative_to(target)
                         yield relative, path
                 continue
             bootstrap_adapter_imports(source_root, target)
-            from adapters.cursor.compiler.install_support import iter_compiled_cursor_files
 
             compile_root = compile_source_root(source_root, target)
-            for relative, path in iter_compiled_cursor_files(compile_root, profile, target=target):
+            for relative, path in registration.iter_files(compile_root, profile, target=target):
                 rel_posix = relative.as_posix()
                 if is_project_owned(rel_posix):
                     continue
@@ -196,13 +208,25 @@ def iter_managed_source_files(
     yield from _iter_relocated_file_items(source_root)
 
 
-def materialize_cursor_dir(source_root: Path, target: Path, project_id: str | None = None) -> None:
+def materialize_adapter_dir(
+    source_root: Path,
+    target: Path,
+    project_id: str | None = None,
+    *,
+    active_adapter_id: str = "cursor",
+) -> None:
+    registration = adapter_registration(active_adapter_id)
     bootstrap_adapter_imports(source_root, target)
-    from adapters.cursor.compiler.install_support import compile_cursor_tree
-
     profile = compile_profile_for_target(source_root, target, project_id=project_id)
     compile_root = compile_source_root(source_root, target)
-    compile_cursor_tree(compile_root, target / ".cursor", profile, target=target)
+    registration.compile_tree(
+        compile_root, target / registration.compiled_dir_item, profile, target=target
+    )
+
+
+def materialize_cursor_dir(source_root: Path, target: Path, project_id: str | None = None) -> None:
+    """Backward-compatible alias — Cursor is materialize_adapter_dir's default."""
+    materialize_adapter_dir(source_root, target, project_id, active_adapter_id="cursor")
 
 
 @dataclass(frozen=True)
@@ -219,11 +243,16 @@ def build_copy_plan(
     *,
     compile_cursor: bool = True,
     project_id: str | None = None,
+    active_adapter_id: str = "cursor",
 ) -> tuple[list[CopyPlanEntry], list[str]]:
     entries: list[CopyPlanEntry] = []
     managed: list[str] = []
     for relative, source in iter_managed_source_files(
-        source_root, target, project_id=project_id, compile_cursor=compile_cursor
+        source_root,
+        target,
+        project_id=project_id,
+        compile_cursor=compile_cursor,
+        active_adapter_id=active_adapter_id,
     ):
         rel_posix = relative.as_posix()
         if rel_posix == "AGENTS.md":

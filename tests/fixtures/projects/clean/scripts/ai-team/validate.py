@@ -52,7 +52,36 @@ LANG = project_language(ROOT)
 errors = []
 warnings = []
 
+
+def _active_adapter_id_for_validation() -> str:
+    # Read directly rather than via load_yaml(): a malformed profile is
+    # reported once, below, when the profile is loaded for real — this
+    # early read only decides which adapter's required files to check.
+    if not PROFILE_PATH.is_file():
+        return "cursor"
+    try:
+        data = yaml.safe_load(PROFILE_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return "cursor"
+    return str(data.get("active_adapter_id") or "cursor") if isinstance(data, dict) else "cursor"
+
+
+_ACTIVE_ADAPTER_ID = _active_adapter_id_for_validation()
+_ADAPTER_REQUIRED_FILES = {
+    "cursor": [
+        ROOT / ".cursor" / "hooks.json",
+        ROOT / ".cursor" / "hooks" / "run_hook.cmd",
+        ROOT / ".cursor" / "permissions.json",
+        ROOT / ".cursor" / "cli.json",
+    ],
+    "claude-code": [
+        ROOT / ".claude" / "settings.json",
+    ],
+}
+
 if IS_FABRICATION:
+    # The fabrication repo's own root .cursor/ overlay (AGENTS.md) is
+    # unconditional — it is not an installed-project adapter choice.
     required = [
         FABRIC / "project-profile.yaml",
         FABRIC / "framework-version.json",
@@ -78,10 +107,7 @@ else:
         AI / "sources" / "source-registry.yaml",
         AI / "state" / "project-state.yaml",
         AI / "framework-version.json",
-        ROOT / ".cursor" / "hooks.json",
-        ROOT / ".cursor" / "hooks" / "run_hook.cmd",
-        ROOT / ".cursor" / "permissions.json",
-        ROOT / ".cursor" / "cli.json",
+        *_ADAPTER_REQUIRED_FILES.get(_ACTIVE_ADAPTER_ID, _ADAPTER_REQUIRED_FILES["cursor"]),
         ROOT / "scripts" / "ai-team" / "migrate.py",
         ROOT / "scripts" / "ai-team" / "feedback.py",
         AI / "schemas" / "observation.schema.json",

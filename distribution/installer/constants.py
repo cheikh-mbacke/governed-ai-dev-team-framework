@@ -7,15 +7,30 @@ from pathlib import Path
 from distribution.installer.version_policy import SUPPORTED_UPDATE_FROM
 
 # Installed-target copy map (Document 11 §4). Framework repo layout unchanged.
-COPY_ITEMS = [
-    ".cursor",
+# Items common to every Adaptateur, plus each Adaptateur's own two items
+# (its compiled output directory and its runtime source). Exactly one
+# Adaptateur's items are used per install, chosen by active_adapter_id —
+# see copy_items_for_adapter().
+BASE_COPY_ITEMS = [
     ".ai-team",
     "scripts",
     "AGENTS.md",
     "src/governed_ai",
-    "adapters/cursor",
     "requirements.txt",
 ]
+
+ADAPTER_COPY_ITEMS: dict[str, list[str]] = {
+    "cursor": [".cursor", "adapters/cursor"],
+    "claude-code": [".claude", "adapters/claude_code"],
+}
+
+
+def copy_items_for_adapter(adapter_id: str) -> list[str]:
+    return [*BASE_COPY_ITEMS, *ADAPTER_COPY_ITEMS[adapter_id]]
+
+
+# Backward-compatible default (Cursor) for any direct importer.
+COPY_ITEMS = copy_items_for_adapter("cursor")
 
 PROJECT_OWNED_PATTERNS = [
     ".ai-team/project-profile.yaml",
@@ -72,10 +87,13 @@ FRAMEWORK_INSTALL_MARKERS = frozenset(
 )
 
 __all__ = [
+    "ADAPTER_COPY_ITEMS",
+    "BASE_COPY_ITEMS",
     "COPY_ITEMS",
     "FRESH_PROJECT_SEEDS",
     "FRAMEWORK_INSTALL_MARKERS",
     "LEGACY_VERSION_REL",
     "PROJECT_OWNED_PATTERNS",
     "SUPPORTED_UPDATE_FROM",
+    "copy_items_for_adapter",
 ]

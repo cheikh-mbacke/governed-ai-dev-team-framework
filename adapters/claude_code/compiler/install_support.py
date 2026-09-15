@@ -1,4 +1,7 @@
-"""Install-time Cursor compilation (Distribution bridge until WU-P5)."""
+"""Install-time Claude Code compilation (Distribution bridge until WU-P5).
+
+Mirrors ``adapters/cursor/compiler/install_support.py``.
+"""
 
 from __future__ import annotations
 
@@ -9,13 +12,13 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+from governed_ai.adapters.common.bundle import resolve_bundle_dir
 from governed_ai.adapters.common.project_profile import (
     load_project_profile_yaml,
     minimal_project_profile,
 )
 
 from .compile import compile_manifest
-from .parity import resolve_bundle_dir
 
 
 def _ensure_import_paths(source_root: Path, target: Path | None = None) -> None:
@@ -37,25 +40,25 @@ def _ensure_import_paths(source_root: Path, target: Path | None = None) -> None:
 def _templates_root(source_root: Path, target: Path | None = None) -> Path:
     from distribution.installer.paths import adapter_templates_root
 
-    return adapter_templates_root(source_root, target)
+    return adapter_templates_root(source_root, target, adapter_id="claude-code")
 
 
-def compile_cursor_tree(
+def compile_claude_code_tree(
     source_root: Path,
-    destination_cursor: Path,
+    destination_claude: Path,
     project_profile: dict[str, Any] | None = None,
     *,
     target: Path | None = None,
 ) -> dict[str, Any]:
-    """Compile bundle + profile and copy staged ``.cursor/`` to ``destination_cursor``."""
+    """Compile bundle + profile and copy staged ``.claude/`` to ``destination_claude``."""
     _ensure_import_paths(source_root, target)
     source_root = source_root.resolve()
-    destination_cursor = destination_cursor.resolve()
+    destination_claude = destination_claude.resolve()
     bundle_dir = resolve_bundle_dir(source_root, target=target)
     templates_root = _templates_root(source_root, target)
     profile = project_profile or minimal_project_profile()
 
-    with tempfile.TemporaryDirectory(prefix="cursor-compile-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="claude-code-compile-") as temp_dir:
         staging = Path(temp_dir)
         manifest = compile_manifest(
             bundle_dir,
@@ -63,27 +66,27 @@ def compile_cursor_tree(
             profile,
             templates_root=templates_root if templates_root.is_dir() else None,
         )
-        staged_cursor = staging / ".cursor"
-        if destination_cursor.exists():
-            shutil.rmtree(destination_cursor)
-        shutil.copytree(staged_cursor, destination_cursor)
+        staged_claude = staging / ".claude"
+        if destination_claude.exists():
+            shutil.rmtree(destination_claude)
+        shutil.copytree(staged_claude, destination_claude)
     return manifest
 
 
-def iter_compiled_cursor_files(
+def iter_compiled_claude_code_files(
     source_root: Path,
     project_profile: dict[str, Any] | None = None,
     *,
     target: Path | None = None,
 ) -> Iterator[tuple[Path, Path]]:
-    """Yield ``(relative_path, absolute_source_file)`` for a compiled ``.cursor/`` tree."""
+    """Yield ``(relative_path, absolute_source_file)`` for a compiled ``.claude/`` tree."""
     _ensure_import_paths(source_root, target)
     source_root = source_root.resolve()
     bundle_dir = resolve_bundle_dir(source_root, target=target)
     templates_root = _templates_root(source_root, target)
     profile = project_profile or minimal_project_profile()
 
-    with tempfile.TemporaryDirectory(prefix="cursor-compile-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="claude-code-compile-") as temp_dir:
         staging = Path(temp_dir)
         compile_manifest(
             bundle_dir,
@@ -91,16 +94,16 @@ def iter_compiled_cursor_files(
             profile,
             templates_root=templates_root if templates_root.is_dir() else None,
         )
-        cursor_root = staging / ".cursor"
-        for path in sorted(cursor_root.rglob("*")):
+        claude_root = staging / ".claude"
+        for path in sorted(claude_root.rglob("*")):
             if path.is_file():
-                relative = Path(".cursor") / path.relative_to(cursor_root)
+                relative = Path(".claude") / path.relative_to(claude_root)
                 yield relative, path
 
 
 __all__ = [
-    "compile_cursor_tree",
-    "iter_compiled_cursor_files",
+    "compile_claude_code_tree",
+    "iter_compiled_claude_code_files",
     "load_project_profile_yaml",
     "minimal_project_profile",
 ]

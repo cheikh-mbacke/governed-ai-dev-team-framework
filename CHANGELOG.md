@@ -44,10 +44,30 @@ versions produit suivent Semantic Versioning.
     Seules les interdictions statiques invariantes par rôle (secrets,
     `.ai-team/constitution/**`, config d'Adaptateur, commandes destructrices)
     sont portées, à parité stricte avec `.cursor/permissions.json`.
-  - Hors périmètre de cet incrément : le lancement CLI réel, le câblage
-    installeur, les fixtures golden gelées, les règles `.mdc` (pas
-    d'équivalent Claude Code direct retenu) — voir Document 3 §"Grain Claude
-    Code résolu partiellement" et Document 0 §2.
+  - **Câblage installeur** : `tools/install.py --adapter {cursor,claude-code}`
+    (défaut `cursor`, inchangé) choisit l'Adaptateur à la première install ;
+    `--update` garde toujours l'Adaptateur déjà installé (refuse `--adapter`).
+    `active_adapter_id` — jusque-là écrit mais jamais réellement consulté —
+    devient un vrai aiguillage : `distribution/installer/adapter_registry.py`
+    (nouveau) centralise la correspondance id → répertoire compilé
+    (`.cursor`/`.claude`), source relocalisée et fonctions de compilation,
+    remplaçant les branches Cursor en dur dans `source_files.py`/`apply.py`.
+    `ownership.py`/`scripts/ai-team/validate_ownership.py` classifient
+    désormais `.claude/`/`adapters/claude_code/` sous `adapter:claude-code` ;
+    `scripts/ai-team/validate.py` n'exige les fichiers `.cursor/*` que si
+    l'Adaptateur actif est `cursor` (sinon `.claude/settings.json`) — sans ce
+    correctif, un projet installé en `claude-code` échouait `validate.py`
+    avec des erreurs sur des fichiers Cursor qui n'ont jamais existé.
+    `resolve_bundle_dir`/`minimal_project_profile`/`load_project_profile_yaml`
+    déplacés vers `governed_ai.adapters.common` (même pattern d'extraction que
+    précédemment). Installation `claude-code` bout en bout vérifiée
+    manuellement (`.claude/` matérialisé, `.cursor/` absent,
+    `installation-record.json` et `project-profile.yaml` cohérents,
+    `validate.py` propre) + 4 tests d'intégration.
+  - Hors périmètre de cet incrément : le lancement CLI réel, les fixtures
+    golden gelées, les règles `.mdc` (pas d'équivalent Claude Code direct
+    retenu) — voir Document 3 §"Grain Claude Code résolu partiellement" et
+    Document 0 §2.
 - Notifications SMTP non bloquantes avec outbox dédupliquée, reprise sur échec,
   alertes immédiates, digest de fin de Run et routage adapté au profil
   d'autonomie. Transport installé par défaut sur `mail.agenteam.fr:465` en SSL,

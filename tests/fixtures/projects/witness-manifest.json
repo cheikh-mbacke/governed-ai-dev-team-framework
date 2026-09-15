@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-15T19:17:26+00:00",
+  "generated_at": "2026-09-15T20:48:43+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -33,7 +33,7 @@
     {
       "name": "clean",
       "root": "clean",
-      "file_count": 522,
+      "file_count": 524,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -281,11 +281,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "353a75218dfa949ae140abf49fb491553dcd8427bf4c12f8a2fbfd43446167c9"
+          "sha256": "7e964a6ec2e3bf8c4427f962c577737bdb9c620a92dd9b09c13a930e4a1a1abe"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "37ebe05ea0b77e5b0b0b3bf4257e1621166f5168f65eb528d5383294b9a301ec"
+          "sha256": "d148b693051922d4227a6b2479692cc3f39d65344edab2d574c2cc102ce9e342"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -324,12 +324,20 @@
           "sha256": "0a607f59bbc669b5a78d35cec51d951168304e17773917493993b97b2be7d9d8"
         },
         {
+          "path": ".ai-team/runtime/governed_ai/adapters/common/bundle.py",
+          "sha256": "03d36ba83379828d686297351e5c3d3626f95d830a96d8434cc65d0ae6c027eb"
+        },
+        {
           "path": ".ai-team/runtime/governed_ai/adapters/common/guard.py",
           "sha256": "3b74ff1d46884236891e2227b69ae9ecacb6e2879017aba3147fd71b27946a2f"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/common/platform.py",
           "sha256": "3cc71565c840d038333c03033d3394d2f94659e337da177a8ebe78b9326f8c30"
+        },
+        {
+          "path": ".ai-team/runtime/governed_ai/adapters/common/project_profile.py",
+          "sha256": "2f1419fdc7029c7e77a356f7ef47a689c9c376e96dd17fa322e447e208485cf8"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/common/results.py",
@@ -373,11 +381,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/install_support.py",
-          "sha256": "0bb2586dcf45aedbbc3de278ee7fc743fe83dbc0198c9dfb085f7e46d1305048"
+          "sha256": "a29dfcbffc6e2267bf0c699ca0acdf829f483b5564d92a03d4f74d5f013b2582"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/parity.py",
-          "sha256": "acf342ca0964238e8471a49d161404d424b8d632cc5d72cd24cf75ea555653a7"
+          "sha256": "d4cbf1a73d145bc1803965356f19d96e02cea9d5e82a550d8edae6ce47470151"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/staging.py",
@@ -2117,18 +2125,18 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "46a1230e902490185e1a237828aba59b28b3aabf85a669cd15a107463be8e0ca"
+          "sha256": "9b3e3c438ad81359b0e14e9c0f8784cdebb084bec6aad3e71f398c75a642280f"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "f4463d6da337820bbc9e5de97603023d606c3a63b06d290ed9d133f91609007e"
+          "sha256": "de897a1353cefb88e4ffc03dbf5064937c8983bf02579aea2b7199b443cafc08"
         }
       ]
     },
     {
       "name": "legacy",
       "root": "legacy",
-      "file_count": 538,
+      "file_count": 540,
       "files": [
         {
           "path": ".ai-team/constitution/00-authority.yaml",
@@ -2408,11 +2416,11 @@
         },
         {
           "path": ".ai-team/framework-version.json",
-          "sha256": "c538acd72d9947e509d9ceb13779ca8017b94adec06d806e60879a9240b9aea0"
+          "sha256": "017452fced3a577c7a89fdc456c5595f9835f92cc6abc64b9b9120c7a5d320af"
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "91e54f148f2eefd81fdd875bb0d0debfd451f6d63efa565abe2b1dbfadac938d"
+          "sha256": "ded58baf110b3ceec220699bfc8de9a0a39591d5547931eb40db843885f7792f"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2936,11 +2944,11 @@
         },
         {
           "path": "adapters/cursor/compiler/install_support.py",
-          "sha256": "0bb2586dcf45aedbbc3de278ee7fc743fe83dbc0198c9dfb085f7e46d1305048"
+          "sha256": "a29dfcbffc6e2267bf0c699ca0acdf829f483b5564d92a03d4f74d5f013b2582"
         },
         {
           "path": "adapters/cursor/compiler/parity.py",
-          "sha256": "acf342ca0964238e8471a49d161404d424b8d632cc5d72cd24cf75ea555653a7"
+          "sha256": "d4cbf1a73d145bc1803965356f19d96e02cea9d5e82a550d8edae6ce47470151"
         },
         {
           "path": "adapters/cursor/compiler/staging.py",
@@ -3332,11 +3340,11 @@
         },
         {
           "path": "scripts/ai-team/validate.py",
-          "sha256": "46a1230e902490185e1a237828aba59b28b3aabf85a669cd15a107463be8e0ca"
+          "sha256": "9b3e3c438ad81359b0e14e9c0f8784cdebb084bec6aad3e71f398c75a642280f"
         },
         {
           "path": "scripts/ai-team/validate_ownership.py",
-          "sha256": "f4463d6da337820bbc9e5de97603023d606c3a63b06d290ed9d133f91609007e"
+          "sha256": "de897a1353cefb88e4ffc03dbf5064937c8983bf02579aea2b7199b443cafc08"
         },
         {
           "path": "src/governed_ai/__init__.py",
@@ -3363,12 +3371,20 @@
           "sha256": "0a607f59bbc669b5a78d35cec51d951168304e17773917493993b97b2be7d9d8"
         },
         {
+          "path": "src/governed_ai/adapters/common/bundle.py",
+          "sha256": "03d36ba83379828d686297351e5c3d3626f95d830a96d8434cc65d0ae6c027eb"
+        },
+        {
           "path": "src/governed_ai/adapters/common/guard.py",
           "sha256": "3b74ff1d46884236891e2227b69ae9ecacb6e2879017aba3147fd71b27946a2f"
         },
         {
           "path": "src/governed_ai/adapters/common/platform.py",
           "sha256": "3cc71565c840d038333c03033d3394d2f94659e337da177a8ebe78b9326f8c30"
+        },
+        {
+          "path": "src/governed_ai/adapters/common/project_profile.py",
+          "sha256": "2f1419fdc7029c7e77a356f7ef47a689c9c376e96dd17fa322e447e208485cf8"
         },
         {
           "path": "src/governed_ai/adapters/common/results.py",
