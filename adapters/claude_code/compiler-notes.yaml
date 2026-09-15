@@ -1,0 +1,27 @@
+# Adapter compiler sidecar — NOT part of the Published Contract Bundle manifest.
+# validate_bundle does not read this file. Adapter artefact paths resolve at compile time.
+#
+# v1 (pilot) scope note: only the two pilot roles (backend-developer, auditor)
+# and their procedures are mapped here. The remaining bundle procedures have no
+# Claude Code artefact yet — see plan snug-knitting-catmull, "Suite" section.
+schema_version: 1
+bundle_version: "1.0.0"
+adapter_id: claude-code
+note: "Maps agnostic procedure steps to adapter-specific agents (skills/hooks not yet ported)."
+procedures:
+  implement-work-unit:
+    adapter_sources:
+      - agents/backend-developer.md
+    adapter_only_steps:
+      - agnostic_step: "Create a coherent commit on the isolated Work Unit branch referencing the Work Unit identifier"
+        adapter_artefacts:
+          - agents/backend-developer.md
+        adapter_notes: "Subagent frontmatter model preference comes from role bundle; tools list omitted (full inheritance) since writes.product.level is scoped, not none"
+  audit-release:
+    adapter_sources:
+      - agents/auditor.md
+    adapter_only_steps:
+      - agnostic_step: "Reconstruct observed facts and measure conformity without remediating"
+        adapter_artefacts:
+          - agents/auditor.md
+        adapter_notes: "Subagent tools list restricted to Read, Grep, Glob — verified hard boundary for writes.product.level == none"

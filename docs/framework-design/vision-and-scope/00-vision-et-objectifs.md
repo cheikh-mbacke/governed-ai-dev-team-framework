@@ -1,6 +1,6 @@
 # Document 0 — Vision et objectifs
 
-**Statut** : version 1.1 corrigée après audit indépendant du dépôt à la révision `9f77085eb2fc7a1f372556e9ad2714cf5318bd98`.
+**Statut** : version 1.2 — corrigée après audit indépendant du dépôt à la révision `9f77085eb2fc7a1f372556e9ad2714cf5318bd98` ; amendée le 15 septembre 2026 pour ouvrir le périmètre de cette refonte à l’implémentation de l’Adaptateur Claude Code (ADR-007, Document 11 §1).
 
 ## 1. Problème observé
 
@@ -20,9 +20,10 @@ La cible comporte :
 
 - un **noyau de Gouvernance** agnostique de l’outil d’exécution ;
 - un **Adaptateur Cursor** offrant au moins la parité fonctionnelle avec le dépôt actuel ;
-- un **contrat publié et versionné** permettant de concevoir ultérieurement des Adaptateurs Claude Code et Codex CLI sans modifier le modèle de Gouvernance.
+- un **Adaptateur Claude Code** implémenté contre le même contrat publié, sans modifier le modèle de Gouvernance ;
+- un **contrat publié et versionné** permettant de concevoir ultérieurement un Adaptateur Codex CLI sans modifier le modèle de Gouvernance.
 
-Claude Code et Codex CLI sont étudiés pour vérifier la portabilité du contrat ; leurs Adaptateurs ne sont pas implémentés dans cette refonte.
+Codex CLI reste étudié pour vérifier la portabilité du contrat ; son Adaptateur n’est pas implémenté dans cette refonte. L’Adaptateur Claude Code n’est déclaré conforme qu’après avoir passé la suite de conformité du Document 14 — l’implémenter ne préjuge pas de sa conformité.
 
 ## 3. Domaine cœur
 
@@ -33,7 +34,7 @@ Les artefacts d’un outil — frontmatter d’agent, fichiers de permissions, h
 ## 4. Hors périmètre
 
 - Session Cloud, son interface web/mobile et les sessions distantes ;
-- l’implémentation des Adaptateurs Claude Code et Codex CLI ;
+- l’implémentation de l’Adaptateur Codex CLI ;
 - le choix détaillé des packages, API et formats de migration, qui relève des spécifications techniques suivantes.
 
 ## 5. Critères de fin
@@ -43,14 +44,15 @@ La refonte est terminée lorsque :
 1. chaque fichier livré est classé `core`, `adapter:<id>`, `distribution` ou `project-owned` ;
 2. le noyau et ses interfaces publiques ne contiennent aucune dépendance à Cursor, Claude Code ou Codex ;
 3. les écritures d’état faisant autorité passent par des commandes du noyau validées, et non par des écritures libres des Adaptateurs ;
-4. l’Adaptateur Cursor conserve les comportements utiles actuels et passe une suite de conformité au contrat publié ;
-5. les contrats de Rôle, Procédure et résultat sont versionnés et suffisent à étudier un autre Adaptateur ;
+4. l’Adaptateur Cursor conserve les comportements utiles actuels et passe une suite de conformité au contrat publié ; l’Adaptateur Claude Code passe la même suite de conformité avant d’être déclaré conforme ;
+5. les contrats de Rôle, Procédure et résultat sont versionnés et suffisent à étudier ou implémenter un autre Adaptateur ;
 6. l’installation et la mise à jour préservent les fichiers possédés par le projet ainsi que le suivi des fichiers gérés.
 
 ## 6. Limites
 
 - La parité du futur Adaptateur Cursor n’est pas encore démontrée.
-- La faisabilité des Adaptateurs Claude Code et Codex CLI reste documentaire tant qu’aucun test de conformité n’est exécuté.
+- L’Adaptateur Claude Code est en cours d’implémentation ; sa conformité n’est pas démontrée tant que la suite du Document 14 ne passe pas contre un runtime Claude Code réel.
+- La faisabilité de l’Adaptateur Codex CLI reste documentaire tant qu’aucun test de conformité n’est exécuté.
 - La frontière exacte des scripts génériques et spécifiques doit être tranchée dans la conception technique.
 
 ## Sources observées

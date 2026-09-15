@@ -56,7 +56,7 @@ Le runtime framework **n'est plus copié** à la racine sous `src/`, `adapters/`
 
 ## Limites connues
 
-- Seul l'**Adaptateur Cursor** est livré en `0.7.0`. Aucun Adaptateur Claude Code ou Codex n'est fourni.
+- Seul l'**Adaptateur Cursor** est livré en `0.7.0`. L'**Adaptateur Claude Code** est en cours d'implémentation (périmètre rouvert le 2026-09-15, ADR-007 amendé) et n'est pas encore déclaré conforme. Aucun Adaptateur Codex n'est fourni.
 - Le comportement d'un Cursor réel dépend de la version et de la plateforme ; qualification via Document 14 (niveaux L3/L4).
 - Distribution ne dépend pas du noyau à l'exécution ; le noyau ne dépend pas de Distribution.
 - L'**assessment d'adoption** est livré (`tools/assess.py`, Documents 19–20) — voir [adoption-assessment.md](adoption-assessment.md).

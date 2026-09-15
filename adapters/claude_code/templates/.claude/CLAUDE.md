@@ -1,0 +1,26 @@
+# Governed AI Team Instructions
+
+This repository uses the Engineering Constitution under `.ai-team/constitution/`.
+
+## Installed client project
+
+Read `.ai-team/project-profile.yaml` and `.ai-team/state/project-state.yaml`
+before runtime activation.
+
+- Use `/reconcile-project` after install and whenever human sources or
+  project-owned content change; `/compile-project` requires its current baseline.
+- Use `/compile-project` after reconciliation when no approved execution plan
+  exists or after material human source changes.
+- Product work is attributable to Work Units under `.ai-team/work-units/`.
+- Respect human gates G0–G4 and the orchestrator Control Plane.
+- Record reusable friction with `python scripts/ai-team/feedback.py record`
+  on this installed target when appropriate.
+- Inspect SMTP readiness with `python scripts/ai-team/notify.py status`; delivery
+  failures stay non-blocking and credentials must remain under
+  `.ai-team/secrets/` or in environment variables.
+- Follow `.ai-team/constitution/95-git-release-policy.yaml` for branches,
+  commits, evidence, and merge discipline.
+
+Do not invent missing product or policy decisions. Treat repository state and
+runtime evidence as observed reality, not as permission to contradict human
+authoritative sources under `docs/product/` and `.ai-team/sources/`.

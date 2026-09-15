@@ -9,14 +9,16 @@ from pathlib import Path
 from typing import Any, Protocol
 
 import yaml
-
-from adapters.cursor.compiler.staging import resolve_under_staging, validate_pre_install
+from adapters.cursor.compiler.staging import validate_pre_install as cursor_validate_pre_install
 from adapters.cursor.runtime.guard import (
     CapabilityNotEnforceableError,
     ExecutionGuardError,
     UnsupportedContractError,
 )
-from adapters.cursor.runtime.results import validate_runtime_result
+from tests.contracts.semantic_parity import ADAPTER_ONLY_AGENTS
+
+from governed_ai.adapters.common.results import validate_runtime_result
+from governed_ai.adapters.common.staging import resolve_under_staging
 from governed_ai.adapters.spi import (
     AdapterSPI,
     ExecutionRequest,
@@ -25,7 +27,6 @@ from governed_ai.adapters.spi import (
     PublishedContractBundle,
     RoleDefinitionRevision,
 )
-from tests.contracts.semantic_parity import ADAPTER_ONLY_AGENTS
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BUNDLE_V1 = REPO_ROOT / "src" / "governed_ai" / "contracts" / "bundles" / "v1"
@@ -127,12 +128,14 @@ def sample_execution_request(
     protocol_version: str = "1.0",
     platform: str = "linux",
     requested_commands: list[dict[str, Any]] | None = None,
+    adapter_id: str = "cursor",
+    adapter_version: str = "0.5.0",
 ) -> ExecutionRequest:
     request = ExecutionRequest(
         protocol_version=protocol_version,
         execution_id=execution_id,
         correlation_id=f"COR-{execution_id}",
-        adapter={"id": "cursor", "version": "0.5.0"},
+        adapter={"id": adapter_id, "version": adapter_version},
         contract={
             "bundle_version": "1.0.0",
             "bundle_hash": "sha256:" + "b" * 64,
@@ -155,8 +158,8 @@ def sample_execution_request(
     return request
 
 
-def run_ad001_descriptor(adapter: AdapterSPI) -> None:
-    expected = json.loads(ADAPTER_MANIFEST.read_text(encoding="utf-8"))
+def run_ad001_descriptor(adapter: AdapterSPI, *, manifest_path: Path = ADAPTER_MANIFEST) -> None:
+    expected = json.loads(manifest_path.read_text(encoding="utf-8"))
     descriptor = adapter.describe()
     assert descriptor["adapter_id"] == expected["adapter_id"]
     assert descriptor["adapter_version"] == expected["adapter_version"]
@@ -171,6 +174,8 @@ def run_ad002_compile(
     tmp_path: Path,
     *,
     bundle_dir: Path = BUNDLE_V1,
+    expected_adapter_id: str = "cursor",
+    validate_pre_install_fn: Any = cursor_validate_pre_install,
 ) -> None:
     staging = tmp_path / "staging"
     adapter = adapter_factory(
@@ -180,7 +185,7 @@ def run_ad002_compile(
     )
     bundle = load_bundle_manifest(bundle_dir)
     manifest = adapter.compile(bundle, DEFAULT_PROFILE)
-    assert manifest["adapter_id"] == "cursor"
+    assert manifest["adapter_id"] == expected_adapter_id
     assert manifest["bundle_version"] == "1.0.0"
     assert manifest["artifacts"]
     for entry in manifest["artifacts"]:
@@ -189,7 +194,7 @@ def run_ad002_compile(
         target = resolve_under_staging(staging, rel)
         assert target.is_file()
         assert entry["sha256"].startswith("sha256:")
-    validate_pre_install(staging, dict(manifest))
+    validate_pre_install_fn(staging, dict(manifest))
 
 
 def run_ad003_deterministic_compile(
@@ -360,13 +365,15 @@ def run_ad008_human_auth_required(
 def run_ad009_runtime_result_complete(
     adapter_factory: AdapterFactory,
     tmp_path: Path,
+    *,
+    expected_adapter_id: str = "cursor",
 ) -> None:
     write_minimal_project(tmp_path)
     adapter = adapter_factory(tmp_path, bundle_dir=BUNDLE_V1)
     request = sample_execution_request(execution_id="EXE-AD009")
     result = adapter.execute(request)
     assert result["execution_id"] == "EXE-AD009"
-    assert result["adapter"]["id"] == "cursor"
+    assert result["adapter"]["id"] == expected_adapter_id
     assert result["contract"]["role_id"] == "backend-developer"
     assert result["started_at"]
     assert result["finished_at"]

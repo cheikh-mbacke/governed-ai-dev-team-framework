@@ -2,19 +2,16 @@
 
 from __future__ import annotations
 
-import hashlib
 from pathlib import Path
 from typing import Any
+
+from governed_ai.adapters.common.staging import resolve_under_staging, sha256_bytes
 
 REQUIRED_TOP_LEVEL = (
     ".cursor/hooks.json",
     ".cursor/permissions.json",
     ".cursor/cli.json",
 )
-
-
-def sha256_bytes(data: bytes) -> str:
-    return "sha256:" + hashlib.sha256(data).hexdigest()
 
 
 def artifact_kind(rel_posix: str) -> str:
@@ -33,15 +30,6 @@ def artifact_kind(rel_posix: str) -> str:
     if rel_posix == ".cursor/cli.json":
         return "cli_config"
     return "adapter_file"
-
-
-def resolve_under_staging(staging_root: Path, rel_path: str) -> Path:
-    """Resolve a manifest-relative path and reject escapes (AD-012)."""
-    staging_resolved = staging_root.resolve()
-    candidate = (staging_root / rel_path).resolve()
-    if not candidate.is_relative_to(staging_resolved):
-        raise ValueError(f"artifact path escapes staging: {rel_path}")
-    return candidate
 
 
 def validate_pre_install(staging_root: Path, manifest: dict[str, Any]) -> None:

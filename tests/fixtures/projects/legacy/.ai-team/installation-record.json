@@ -266,6 +266,38 @@
         "installed_sha256": "sha256:b5109b68705e93e63b75535ed17a39be94c5004d882fbf8e3cc7f20346a5ffca"
       },
       {
+        "path": ".ai-team/runtime/governed_ai/adapters/claude_code/__init__.py",
+        "installed_sha256": "sha256:5e5eca817c113423b130102447d14c30e540a987c1843b5fcc5b393f0d7129c0"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/claude_code/adapter.py",
+        "installed_sha256": "sha256:11a3ab3d52d2e91366afe8ce36838b542a165582c6cf202879f8d32d1fae76bb"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/claude_code/compile.py",
+        "installed_sha256": "sha256:bbb5f98630f262cd8edd39132a35db3c6765976a9ca5a51a7732044db6979606"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/common/__init__.py",
+        "installed_sha256": "sha256:0a607f59bbc669b5a78d35cec51d951168304e17773917493993b97b2be7d9d8"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/common/guard.py",
+        "installed_sha256": "sha256:3b74ff1d46884236891e2227b69ae9ecacb6e2879017aba3147fd71b27946a2f"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/common/platform.py",
+        "installed_sha256": "sha256:3cc71565c840d038333c03033d3394d2f94659e337da177a8ebe78b9326f8c30"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/common/results.py",
+        "installed_sha256": "sha256:26de04f8fa9038a42be7f6f7e3262fa654e1a6d0996b5a8564c6faf8753b9d30"
+      },
+      {
+        "path": ".ai-team/runtime/governed_ai/adapters/common/staging.py",
+        "installed_sha256": "sha256:f13391d7099cb94c0d7e84b726fb0a620f95535c0a1d461f59e61a3a378b46a5"
+      },
+      {
         "path": ".ai-team/runtime/governed_ai/adapters/spi.py",
         "installed_sha256": "sha256:157c13df0be493301cf5d3b0044c96320b86318c819bf40cc8cefce0d27be7a6"
       },
@@ -1530,7 +1562,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/compiler/staging.py",
-          "installed_sha256": "sha256:3bb236988fb667b58da51555f8264a34923670d87301bf76868c965bbf687dc9"
+          "installed_sha256": "sha256:249a77e03e6ed6ff28863f23b8ef457730cc71abc5d6cff5c8934c753f42959d"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/manifest.json",
@@ -1554,11 +1586,11 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/guard.py",
-          "installed_sha256": "sha256:39309c48136bdee51b5c2872e7ca9528010794a249aab22d5a06c777cae07ca2"
+          "installed_sha256": "sha256:7e21cb331e1da376bb7d515e3708994028df6d8f3f4ecdc9a93932c81777450c"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/runtime/results.py",
-          "installed_sha256": "sha256:a7eb56197aba9d0976c20605a9d222ca483893c7c8eba7af5b08bf5f6f86a2a6"
+          "installed_sha256": "sha256:066c4a81c755bc23079bd35ea961ad67bd23fd76c186f31ee52f3b1c661dfabf"
         },
         {
           "path": ".ai-team/runtime/governed_ai/adapters/cursor/templates/.cursor/.gitattributes",

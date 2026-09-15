@@ -7,6 +7,18 @@ versions produit suivent Semantic Versioning.
 
 ### Added
 
+- **Adaptateur Claude Code — squelette pilote** (`adapters/claude_code/`,
+  `src/governed_ai/adapters/claude_code/`) : les 5 opérations du SPI
+  (`describe`, `check_compatibility`, `compile`, `execute`, `collect`)
+  implémentées et testées contre 2 rôles pilotes (`backend-developer`,
+  `auditor`), runtime en mode stub (pas de lancement CLI réel). `src/governed_ai/adapters/common/`
+  (nouveau) porte la logique partagée entre Adaptateurs (hash d'artefact, garde
+  d'autorité `RecordObservation`/`RecordGateDecision`, persistance
+  `RuntimeResult`), migrée hors de `adapters/cursor/` sans changement de
+  comportement (Cursor conserve des wrappers fins). Hors périmètre de cet
+  incrément : les 15 rôles et ~25 skills restants, le portage des hooks, le
+  lancement CLI réel, le câblage installeur, les fixtures golden gelées — voir
+  Document 3 §"Grain Claude Code résolu partiellement" et Document 0 §2.
 - Notifications SMTP non bloquantes avec outbox dédupliquée, reprise sur échec,
   alertes immédiates, digest de fin de Run et routage adapté au profil
   d'autonomie. Transport installé par défaut sur `mail.agenteam.fr:465` en SSL,
@@ -29,6 +41,7 @@ versions produit suivent Semantic Versioning.
 
 ### Changed
 
+- **ADR-007 amendé (2026-09-15)** : le périmètre de cette refonte s'ouvre à l'implémentation de l'**Adaptateur Claude Code**, aux côtés de l'Adaptateur Cursor déjà livré. Codex CLI reste hors périmètre (étude de portabilité du contrat uniquement). Voir Document 0 §2, Document 11 §1 (ADR-007), Document 3 §3 (matrice de traduction revérifiée le 2026-09-15).
 - Remontée Feedback ADR-009 : URL produit par défaut `https://feedback.agenteam.fr/v1/feedback-exports` ; enrollment auto à l'install ; submit **HMAC-SHA256-V1** (plus de Bearer `GOVERNED_AI_FEEDBACK_SUBMIT_TOKEN`) ; secrets sous `.ai-team/secrets/feedback-ingest.json`.
 - Documentation produit alignée sur `gov.py` et Installation Record v3 (suppression des références actives à `record_gate.py`).
 - **WU-MODE-NUIT-CONFORMITY** clôturée (L4 réel documenté hors scope 0.7.0).
