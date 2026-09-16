@@ -20,6 +20,7 @@ from governed_ai.core.execution_gateway.gateway import (
     GatewayOutcome,
 )
 from governed_ai.core.execution_gateway.progress import ProgressEventType, is_useful_progress
+from governed_ai.core.execution_gateway.scope import resolve_role_write_paths
 from governed_ai.core.supervisor import journal
 from governed_ai.core.workspace import Workspace
 
@@ -155,7 +156,7 @@ class SpiCompatibleAdapter:
 
 def _bundle_role_procedures(
     workspace: Workspace,
-) -> tuple[set[str], dict[str, set[str]]]:
+) -> tuple[set[str], dict[str, set[str]], dict[str, list[str]]]:
     """Compile real role/procedure attachments from the published active bundle."""
     from governed_ai.contracts.compatibility import resolve_active_bundle_dir
 
@@ -163,6 +164,7 @@ def _bundle_role_procedures(
     manifest = json.loads((bundle_dir / "manifest.json").read_text(encoding="utf-8"))
     known_roles: set[str] = set()
     role_procedures: dict[str, set[str]] = {}
+    role_write_paths: dict[str, list[str]] = {}
     for relative in manifest.get("roles") or []:
         role_path = bundle_dir / str(relative)
         role = json.loads(role_path.read_text(encoding="utf-8"))
@@ -175,7 +177,11 @@ def _bundle_role_procedures(
             for item in (role.get("procedure_refs") or [])
             if isinstance(item, dict) and item.get("procedure_id")
         }
-    return known_roles, role_procedures
+        writes = role.get("writes") or {}
+        product = writes.get("product") if isinstance(writes, dict) else None
+        paths = product.get("paths") if isinstance(product, dict) else None
+        role_write_paths[role_id] = [str(item) for item in (paths or [])]
+    return known_roles, role_procedures, role_write_paths
 
 
 def _default_capabilities(
@@ -264,6 +270,7 @@ def run_governed_execution(
     role_procedures: dict[str, set[str]] | None = None,
     known_roles: set[str] | None = None,
     execution_ceiling_paths: list[str] | None = None,
+    role_write_paths: list[str] | None = None,
     fence_authoritative_lease: bool = True,
     grant_axis_present: bool = True,
 ) -> GatewayOutcome:
@@ -271,12 +278,26 @@ def run_governed_execution(
 
     Used by the orchestrator tick and supervisor-managed executions. Callers must
     not consume the raw adapter result — only an accepted ``GatewayOutcome``.
+
+    ``role_write_paths`` is normally left unset: when the caller also leaves
+    ``known_roles``/``role_procedures`` unset (the real production path, via
+    the orchestrator tick), it is derived from the active bundle's
+    ``writes.product.paths`` for ``role_id`` and resolved against
+    ``work_unit`` with ``resolve_role_write_paths`` (Document 12 §2.2). It
+    only feeds ``gateway.compile_request()`` (so ``contract.effective_scope``
+    is correctly role-resolved) — see the comment above the
+    ``gateway.execute()`` call below for why it is deliberately not also used
+    to reject a real commit yet.
     """
     gateway = AgentExecutionGateway(workspace)
     if known_roles is None or role_procedures is None:
-        bundle_roles, bundle_pairs = _bundle_role_procedures(workspace)
+        bundle_roles, bundle_pairs, bundle_write_paths = _bundle_role_procedures(workspace)
         compiled_roles = bundle_roles if known_roles is None else set(known_roles)
         compiled_pairs = bundle_pairs if role_procedures is None else role_procedures
+        if role_write_paths is None:
+            role_write_paths = resolve_role_write_paths(
+                bundle_write_paths.get(role_id), work_unit=work_unit
+            )
     else:
         compiled_roles = set(known_roles)
         compiled_pairs = role_procedures
@@ -303,9 +324,26 @@ def run_governed_execution(
         role_procedures=compiled_pairs,
         adapter_id=str(caps.get("adapter_id") or "external"),
         execution_ceiling_paths=execution_ceiling_paths,
+        role_write_paths=role_write_paths,
         grant_axis_present=grant_axis_present,
     )
     bridged = SpiCompatibleAdapter(adapter, spi_request=spi_request or {})
+    # role_write_paths is NOT passed to gateway.execute() here. Its post-hoc
+    # boundary check (validate_paths_against_scope) classifies files against
+    # `inspect_changed_paths(root, base_sha, ...)` — the diff since the Work
+    # Unit's own base_sha, shared cumulatively across every lifecycle step
+    # (implementation, verification, review, audit), not a per-role/per-step
+    # incremental diff. A tests_only role's real files (e.g. only "tests/")
+    # would then be checked against files an earlier role already legitimately
+    # wrote (e.g. "src/app.py"), producing a false "out-of-role-scope" reject
+    # — confirmed via a real regression in
+    # test_orchestrator_tick.py::test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test.
+    # Enforcing this axis correctly needs a per-role incremental diff (since
+    # this role's own execution started), which does not exist yet — a
+    # separate increment, not guessed at here. role_write_paths still reaches
+    # gateway.compile_request() above, so contract.effective_scope is
+    # correctly role-resolved (Document 12 §2.2) even though it is not yet
+    # used to reject a real commit.
     outcome = gateway.execute(
         request=request,
         adapter=bridged,

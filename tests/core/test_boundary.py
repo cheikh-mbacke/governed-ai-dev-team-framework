@@ -147,3 +147,90 @@ def test_boundary_allows_product_plus_wu_evidence() -> None:
         allowed_paths=["src/**"],
     )
     assert error is None
+
+
+def test_role_write_paths_none_does_not_constrain() -> None:
+    """role_write_paths=None (the default) means the axis is not applicable —
+    identical behavior to before this axis existed."""
+    assert (
+        classify_changed_path(
+            "src/module.py",
+            work_unit_id="WU-A",
+            scope_include=["src/**"],
+            scope_exclude=[],
+            allowed_paths=["src/**"],
+            role_write_paths=None,
+        )
+        == "allowed_product"
+    )
+
+
+def test_role_write_paths_rejects_out_of_role_scope_write() -> None:
+    assert (
+        classify_changed_path(
+            "src/app.py",
+            work_unit_id="WU-A",
+            scope_include=["src/**"],
+            scope_exclude=[],
+            allowed_paths=["src/**"],
+            role_write_paths=["tests/"],
+        )
+        == "forbidden_role_scope"
+    )
+
+
+def test_role_write_paths_allows_write_within_role_scope() -> None:
+    assert (
+        classify_changed_path(
+            "tests/unit/test_app.py",
+            work_unit_id="WU-A",
+            scope_include=["src/**", "tests/**"],
+            scope_exclude=[],
+            allowed_paths=["src/**", "tests/**"],
+            role_write_paths=["tests/"],
+        )
+        == "allowed_product"
+    )
+
+
+def test_role_write_paths_does_not_override_governed_output_or_exclude() -> None:
+    """A role-scope axis narrower than the WU/envelope must still let governed
+    outputs (evidence, runtime-results) through, and scope.exclude still wins."""
+    assert (
+        classify_changed_path(
+            ".ai-team/evidence/WU-A/ac-1.md",
+            work_unit_id="WU-A",
+            scope_include=["src/**"],
+            scope_exclude=[],
+            allowed_paths=["src/**"],
+            role_write_paths=["tests/"],
+        )
+        == "allowed_governed"
+    )
+    assert (
+        classify_changed_path(
+            "tests/secrets/token.txt",
+            work_unit_id="WU-A",
+            scope_include=["src/**", "tests/**"],
+            scope_exclude=["tests/secrets/**"],
+            allowed_paths=["src/**", "tests/**"],
+            role_write_paths=["tests/"],
+        )
+        == "forbidden_exclude"
+    )
+
+
+def test_boundary_error_reports_out_of_role_scope_writes() -> None:
+    error = boundary_error_for_changed_files(
+        ["tests/unit/test_app.py", "src/app.py"],
+        work_unit_id="WU-A",
+        wu_document={"scope": {"include": ["src/**", "tests/**"], "exclude": []}},
+        allowed_paths=["src/**", "tests/**"],
+        role_write_paths=["tests/"],
+    )
+    assert error is not None
+    message, stop = error
+    assert stop == "out_of_workspace_write"
+    assert "out-of-role-scope writes" in message
+    assert "src/app.py" in message
+    assert "tests/unit/test_app.py" not in message

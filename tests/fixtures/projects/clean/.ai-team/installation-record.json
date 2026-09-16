@@ -939,7 +939,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/execution_gateway/gateway.py",
-        "installed_sha256": "sha256:4be9d3f2b24260c825bdba0b9fbfeb1bd738ad233840b2382d074fdf36b445c1"
+        "installed_sha256": "sha256:9df298407335867eb033d4617b72031512a0332675838f2c62ccad67d672724e"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/execution_gateway/legacy.py",
@@ -955,7 +955,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/execution_gateway/scope.py",
-        "installed_sha256": "sha256:7d91196ff6f154ab7d04f7a6ea42a818bd7c7159c819163903c126c50b51cc85"
+        "installed_sha256": "sha256:b0fbe6c914885e0a322fdf98cb178de1c44cb9dd1b4e048421196ba6b06bf5a3"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/execution_gateway/security.py",
@@ -963,7 +963,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/execution_gateway/transactional.py",
-        "installed_sha256": "sha256:218ac0e3a1c775b385bf03451dea5be915f5f7f9e1e16486867c83f711d124fb"
+        "installed_sha256": "sha256:8e0081e54e718ce44e8298f5dc0e054d9006ed3a7ac5245238793910774d5e2d"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/execution_gateway/validation.py",
@@ -983,7 +983,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/boundary.py",
-        "installed_sha256": "sha256:f12011f037b7f9759f1095e957fdfa506046d96d744e6d77985216bdabf6f938"
+        "installed_sha256": "sha256:fa24cc05958bb20466d4ebb8bfc0880ec01d3bd7a776cacae09ef6a7a44b6397"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/orchestrator/context_package.py",
@@ -1063,7 +1063,7 @@
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/supervisor/execution_bridge.py",
-        "installed_sha256": "sha256:b373148819f83fa2deff02170e3772ab2a5f6bb5788ff2d8d20204b5da937b1a"
+        "installed_sha256": "sha256:330daddcdfdb2161d7c71f4196cb7f40ec3bb6b0264140f0be451485e6cdefe0"
       },
       {
         "path": ".ai-team/runtime/governed_ai/core/supervisor/file_lock.py",

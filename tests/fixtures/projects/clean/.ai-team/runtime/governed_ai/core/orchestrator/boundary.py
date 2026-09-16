@@ -78,11 +78,24 @@ def classify_changed_path(
     scope_include: list[str] | tuple[str, ...] | None,
     scope_exclude: list[str] | tuple[str, ...] | None,
     allowed_paths: list[str] | tuple[str, ...] | None,
+    role_write_paths: list[str] | tuple[str, ...] | None = None,
 ) -> str:
-    """Return a classification token for one changed path."""
+    """Return a classification token for one changed path.
+
+    ``role_write_paths`` is the resolved (see
+    ``execution_gateway.scope.resolve_role_write_paths``) form of the acting
+    role's ``writes.product.paths`` — ``None`` means the axis does not apply
+    (readonly role, or a placeholder that could not be resolved yet), not
+    "allow nothing".
+    """
     include = path_scope_patterns(scope_include)
     exclude = path_scope_patterns(scope_exclude)
     envelope = [str(item) for item in (allowed_paths or []) if str(item).strip()]
+    role_scope = (
+        [str(item) for item in role_write_paths if str(item).strip()]
+        if role_write_paths is not None
+        else None
+    )
 
     if is_forbidden_governance_mutation(path):
         return "forbidden_governance"
@@ -94,6 +107,8 @@ def classify_changed_path(
         return "forbidden_scope"
     if envelope and not path_is_allowed(path, envelope):
         return "forbidden_envelope"
+    if role_scope is not None and not path_is_allowed(path, role_scope):
+        return "forbidden_role_scope"
     return "allowed_product"
 
 
@@ -103,6 +118,7 @@ def boundary_error_for_changed_files(
     work_unit_id: str,
     wu_document: dict[str, Any],
     allowed_paths: list[str],
+    role_write_paths: list[str] | None = None,
 ) -> tuple[str, str | None] | None:
     """Return (message, global_stop_condition) when writes violate the boundary."""
     scope = wu_document.get("scope") or {}
@@ -113,6 +129,7 @@ def boundary_error_for_changed_files(
     forbidden_exclude: list[str] = []
     forbidden_scope: list[str] = []
     forbidden_envelope: list[str] = []
+    forbidden_role_scope: list[str] = []
 
     for path in files:
         kind = classify_changed_path(
@@ -121,6 +138,7 @@ def boundary_error_for_changed_files(
             scope_include=scope_include,
             scope_exclude=scope_exclude,
             allowed_paths=allowed_paths,
+            role_write_paths=role_write_paths,
         )
         if kind == "forbidden_governance":
             forbidden_governance.append(path)
@@ -130,6 +148,8 @@ def boundary_error_for_changed_files(
             forbidden_scope.append(path)
         elif kind == "forbidden_envelope":
             forbidden_envelope.append(path)
+        elif kind == "forbidden_role_scope":
+            forbidden_role_scope.append(path)
 
     if forbidden_governance:
         return (
@@ -146,6 +166,11 @@ def boundary_error_for_changed_files(
     if forbidden_envelope:
         return (
             f"out-of-envelope writes detected: {forbidden_envelope}",
+            "out_of_workspace_write",
+        )
+    if forbidden_role_scope:
+        return (
+            f"out-of-role-scope writes detected: {forbidden_role_scope}",
             "out_of_workspace_write",
         )
     return None

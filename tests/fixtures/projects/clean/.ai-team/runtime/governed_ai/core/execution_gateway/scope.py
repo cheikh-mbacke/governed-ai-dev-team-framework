@@ -60,6 +60,47 @@ def _clean_patterns(patterns: list[str] | tuple[str, ...] | None) -> list[str]:
     ]
 
 
+def resolve_role_write_paths(
+    role_paths: list[str] | tuple[str, ...] | None,
+    *,
+    work_unit: dict[str, Any],
+) -> list[str] | None:
+    """Resolve a role's ``writes.product.paths`` template against a Work Unit.
+
+    Document 12 §2.2: "Les chemins symboliques comme `<work-unit-scope>` sont
+    résolus par le noyau avant transmission." Every role bundle that writes
+    product code declares this axis symbolically (``<work-unit-scope>``, or
+    ``<work-unit-scope>/tests`` for test-only roles) — the concrete paths are
+    only known once a Work Unit exists. This substitutes each ``<...>``
+    placeholder with the Work Unit's own ``scope.include`` entries.
+
+    Returns ``None`` (axis not applicable — do not narrow) rather than ``[]``
+    (axis present but empty — deny all writes) whenever there is nothing to
+    resolve: a role with no declared product-write paths at all
+    (``writes.product.level == "none"``), or a placeholder role has not yet
+    been assigned a concrete Work Unit scope. Returning ``[]`` in either case
+    would make ``compute_effective_scope`` reject the request outright before
+    the agent ever runs, which is not what an unresolved placeholder means.
+    """
+    templates = [str(item) for item in (role_paths or []) if str(item).strip()]
+    if not templates:
+        return None
+    wu_include = path_scope_patterns((work_unit.get("scope") or {}).get("include") or [])
+    resolved: list[str] = []
+    for template in templates:
+        start = template.find("<")
+        end = template.find(">", start + 1) if start != -1 else -1
+        if start == -1 or end == -1:
+            resolved.append(template)
+            continue
+        if not wu_include:
+            continue
+        prefix, suffix = template[:start], template[end + 1 :]
+        for entry in wu_include:
+            resolved.append(f"{prefix}{entry}{suffix}")
+    return resolved or None
+
+
 def compute_effective_scope(
     *,
     work_unit: dict[str, Any],

@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-16T05:35:00+00:00",
+  "generated_at": "2026-09-16T06:29:44+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -285,7 +285,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "36bf6e113ed35bfb46fc2a062e22c76d49d67aed402d4034301e800c0496df57"
+          "sha256": "e71d8fb820bf21c3251fb9762be8cd4a5c2a5930da5a5c50552203469c4a2c08"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1309,7 +1309,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/execution_gateway/gateway.py",
-          "sha256": "b00bee20d2adf23a60aea48c77ffc067598d6eb6fa0445c627219ffca3e5363a"
+          "sha256": "9df298407335867eb033d4617b72031512a0332675838f2c62ccad67d672724e"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/execution_gateway/legacy.py",
@@ -1325,7 +1325,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/execution_gateway/scope.py",
-          "sha256": "4bf7e2d0f539aa187a1bb5b27ee62ada2c93c409c711103f5c24be425d4722f1"
+          "sha256": "b0fbe6c914885e0a322fdf98cb178de1c44cb9dd1b4e048421196ba6b06bf5a3"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/execution_gateway/security.py",
@@ -1333,7 +1333,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/execution_gateway/transactional.py",
-          "sha256": "218ac0e3a1c775b385bf03451dea5be915f5f7f9e1e16486867c83f711d124fb"
+          "sha256": "8e0081e54e718ce44e8298f5dc0e054d9006ed3a7ac5245238793910774d5e2d"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/execution_gateway/validation.py",
@@ -1353,7 +1353,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/boundary.py",
-          "sha256": "f12011f037b7f9759f1095e957fdfa506046d96d744e6d77985216bdabf6f938"
+          "sha256": "fa24cc05958bb20466d4ebb8bfc0880ec01d3bd7a776cacae09ef6a7a44b6397"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/context_package.py",
@@ -1433,7 +1433,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/supervisor/execution_bridge.py",
-          "sha256": "b373148819f83fa2deff02170e3772ab2a5f6bb5788ff2d8d20204b5da937b1a"
+          "sha256": "330daddcdfdb2161d7c71f4196cb7f40ec3bb6b0264140f0be451485e6cdefe0"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/supervisor/file_lock.py",
@@ -2424,7 +2424,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "a8b8288bcb833eecb9c6f5240dbb99f15104675087116bf784bd01dbefe4f3ef"
+          "sha256": "14e115a7fc9c8f80377dcd71ab69bc6fa63a5e42846bd23f1b17205a768be3ce"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -4056,7 +4056,7 @@
         },
         {
           "path": "src/governed_ai/core/execution_gateway/gateway.py",
-          "sha256": "b00bee20d2adf23a60aea48c77ffc067598d6eb6fa0445c627219ffca3e5363a"
+          "sha256": "9df298407335867eb033d4617b72031512a0332675838f2c62ccad67d672724e"
         },
         {
           "path": "src/governed_ai/core/execution_gateway/legacy.py",
@@ -4072,7 +4072,7 @@
         },
         {
           "path": "src/governed_ai/core/execution_gateway/scope.py",
-          "sha256": "4bf7e2d0f539aa187a1bb5b27ee62ada2c93c409c711103f5c24be425d4722f1"
+          "sha256": "b0fbe6c914885e0a322fdf98cb178de1c44cb9dd1b4e048421196ba6b06bf5a3"
         },
         {
           "path": "src/governed_ai/core/execution_gateway/security.py",
@@ -4080,7 +4080,7 @@
         },
         {
           "path": "src/governed_ai/core/execution_gateway/transactional.py",
-          "sha256": "218ac0e3a1c775b385bf03451dea5be915f5f7f9e1e16486867c83f711d124fb"
+          "sha256": "8e0081e54e718ce44e8298f5dc0e054d9006ed3a7ac5245238793910774d5e2d"
         },
         {
           "path": "src/governed_ai/core/execution_gateway/validation.py",
@@ -4100,7 +4100,7 @@
         },
         {
           "path": "src/governed_ai/core/orchestrator/boundary.py",
-          "sha256": "f12011f037b7f9759f1095e957fdfa506046d96d744e6d77985216bdabf6f938"
+          "sha256": "fa24cc05958bb20466d4ebb8bfc0880ec01d3bd7a776cacae09ef6a7a44b6397"
         },
         {
           "path": "src/governed_ai/core/orchestrator/context_package.py",
@@ -4180,7 +4180,7 @@
         },
         {
           "path": "src/governed_ai/core/supervisor/execution_bridge.py",
-          "sha256": "b373148819f83fa2deff02170e3772ab2a5f6bb5788ff2d8d20204b5da937b1a"
+          "sha256": "330daddcdfdb2161d7c71f4196cb7f40ec3bb6b0264140f0be451485e6cdefe0"
         },
         {
           "path": "src/governed_ai/core/supervisor/file_lock.py",

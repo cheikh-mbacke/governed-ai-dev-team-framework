@@ -361,6 +361,7 @@ def validate_paths_against_scope(
     work_unit: dict[str, Any],
     allowed_paths: list[str],
     workspace_root: Path | None = None,
+    role_write_paths: list[str] | None = None,
 ) -> None:
     for path in files:
         assert_not_control_plane(path)
@@ -372,6 +373,7 @@ def validate_paths_against_scope(
         work_unit_id=work_unit_id,
         wu_document=work_unit,
         allowed_paths=allowed_paths,
+        role_write_paths=role_write_paths,
     )
     if error:
         message, stop = error

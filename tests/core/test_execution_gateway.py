@@ -376,6 +376,40 @@ def test_empty_and_contradictory_scope() -> None:
     assert exc2.value.code == "contradictory_path_policy"
 
 
+def test_compile_request_resolves_role_write_paths_into_effective_scope(
+    tmp_path: Path,
+) -> None:
+    """Document 12 §2.2: contract.effective_scope must be role-resolved, not
+    the raw Work Unit scope — this is compile_request's role_write_paths axis,
+    fed by resolve_role_write_paths (see test_role_write_paths_resolution.py).
+    A qa-test-style role narrows an otherwise-broader WU/grant scope down to
+    just its own declared writable area."""
+    workspace, sha = _workspace(tmp_path)
+    gateway = AgentExecutionGateway(workspace)
+    work_unit = {
+        "id": "WU-A",
+        "title": "Update app",
+        "scope": {"include": ["src/**", "tests/**"], "exclude": []},
+        "acceptance_criteria": [],
+    }
+    request, _context = gateway.compile_request(
+        execution_id="EXE-ROLE-SCOPE",
+        run_id="RUN-1",
+        work_unit=work_unit,
+        lease_id="LEASE-1",
+        epoch=1,
+        role_id="qa-test",
+        procedure_id="webapp-testing",
+        base_sha=sha,
+        grant_allowed_paths=["src/**", "tests/**"],
+        allowed_shell_commands=[],
+        required_checks=["tests"],
+        capabilities=_capabilities(),
+        role_write_paths=["tests/"],
+    )
+    assert request["contract"]["effective_scope"] == ["tests/**"]
+
+
 def test_control_plane_and_traversal(tmp_path: Path) -> None:
     workspace, _ = _workspace(tmp_path)
     with pytest.raises(ExecutionGatewayError):

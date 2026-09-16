@@ -7,6 +7,39 @@ versions produit suivent Semantic Versioning.
 
 ### Added
 
+- **Scoping d'écriture par chemin, partiellement réalisé** (Core uniquement — partagé
+  par les deux Adaptateurs, aucun changement côté Cursor ni Claude Code) :
+  `writes.product.paths` des rôles est déclaré symboliquement (`<work-unit-scope>`,
+  `<work-unit-scope>/tests`) dans les 17 rôles — jusqu'ici **résolu nulle part** :
+  `compute_effective_scope` (`src/governed_ai/core/execution_gateway/scope.py`) accepte
+  bien un paramètre `role_write_paths` depuis sa création, mais le seul appelant réel en
+  production (`execution_bridge.run_governed_execution`) ne le renseignait jamais — l'axe
+  "rôle" de l'intersection de scope était donc silencieusement désactivé pour chaque
+  exécution réelle, en contradiction avec Document 12 §2.2 ("Les chemins symboliques...
+  sont résolus par le noyau avant transmission").
+  - Nouvelle fonction `resolve_role_write_paths()` (`scope.py`) : substitue chaque `<...>`
+    par les entrées de `work_unit.scope.include`, préserve les entrées littérales
+    (ex. `tests/` pour `qa-test`/`test-strategist`), et retourne `None` (axe non
+    applicable) plutôt que `[]` (axe présent mais vide) quand rien n'est résolvable —
+    l'inverse aurait fait échouer `compile_request` avant même le lancement de l'agent
+    pour tout rôle en lecture seule ou tout Work Unit sans `scope.include` encore défini.
+  - `execution_bridge.run_governed_execution` résout désormais ce paramètre depuis le
+    bundle actif et le transmet à `gateway.compile_request()` : `contract.effective_scope`
+    reflète enfin le rôle réel, pas seulement le scope brut du Work Unit.
+  - `boundary.classify_changed_path`/`boundary_error_for_changed_files` et
+    `transactional.validate_paths_against_scope` acceptent un paramètre
+    `role_write_paths` optionnel (nouvelle classification `forbidden_role_scope`) pour
+    un futur rejet post-hoc réel — **non câblé dans `gateway.execute()`** : une régression
+    réelle sur `test_orchestrator_tick.py` a révélé que le diff post-hoc
+    (`inspect_changed_paths(root, base_sha, ...)`) est cumulatif depuis le `base_sha`
+    du Work Unit sur tout son cycle de vie (implémentation → vérification → revue →
+    audit), pas incrémental par rôle/étape — appliquer une restriction par rôle
+    dessus rejette à tort les fichiers légitimement écrits par un rôle précédent
+    (ex. `qa-test`, restreint à `tests/`, se voit reprocher le `src/app.py` écrit plus
+    tôt par `backend-developer` dans le même Work Unit). Un vrai rejet par rôle
+    nécessiterait un diff incrémental par exécution de rôle, qui n'existe pas
+    aujourd'hui — hors périmètre de cet incrément, non deviné. Voir le commentaire
+    au-dessus de l'appel `gateway.execute()` dans `execution_bridge.py`.
 - **Adaptateur Claude Code** (`adapters/claude_code/`,
   `src/governed_ai/adapters/claude_code/`) : les 5 opérations du SPI
   (`describe`, `check_compatibility`, `compile`, `execute`, `collect`)
