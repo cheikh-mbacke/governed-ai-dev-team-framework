@@ -410,6 +410,61 @@ def test_compile_request_resolves_role_write_paths_into_effective_scope(
     assert request["contract"]["effective_scope"] == ["tests/**"]
 
 
+def test_run_governed_execution_transmits_role_resolved_scope_on_spi(
+    tmp_path: Path,
+) -> None:
+    """Document 12 §2.2: SPI resolved_scope must equal contract.effective_scope
+    at the Adaptateur boundary, even when the orchestrator placeholder was the
+    broader Work Unit include. A backend-developer role limited to src/**
+    must not still see tests/** on the SPI envelope. Post-hoc commit rejection
+    is still not wired (see execution_bridge.py); this only asserts transmission."""
+    from governed_ai.core.supervisor.execution_bridge import run_governed_execution
+
+    workspace, sha = _workspace(tmp_path)
+    work_unit = {
+        "id": "WU-A",
+        "title": "Update app",
+        "scope": {"include": ["src/**", "tests/**"], "exclude": []},
+        "acceptance_criteria": [],
+    }
+    captured: dict[str, Any] = {}
+
+    class _Capture(FakeProductAdapter):
+        def execute(self, request: dict[str, Any]) -> dict[str, Any]:
+            captured.update(request)
+            return super().execute(request)
+
+    outcome = run_governed_execution(
+        workspace,
+        adapter=_Capture(),
+        work_unit=work_unit,
+        run_id="RUN-1",
+        execution_id="EXE-SPI-SCOPE",
+        lease_id="LEASE-1",
+        epoch=1,
+        role_id="backend-developer",
+        procedure_id="implement-work-unit",
+        base_sha=sha,
+        grant_allowed_paths=["src/**", "tests/**"],
+        allowed_shell_commands=[],
+        required_checks=["implementation"],
+        use_ephemeral_workspace=True,
+        run_independent_verification=False,
+        fence_authoritative_lease=False,
+        known_roles={"backend-developer"},
+        role_procedures={"backend-developer": {"implement-work-unit"}},
+        role_write_paths=["src/**"],
+        spi_request={
+            "protocol_version": "1.0",
+            "resolved_scope": ["src/**", "tests/**"],
+            "contract": {"bundle_version": "1.0.0", "role_id": "backend-developer"},
+        },
+    )
+    assert outcome.ok, outcome.error
+    assert captured["resolved_scope"] == ["src/**"]
+    assert captured["contract"]["effective_scope"] == ["src/**"]
+
+
 def test_control_plane_and_traversal(tmp_path: Path) -> None:
     workspace, _ = _workspace(tmp_path)
     with pytest.raises(ExecutionGatewayError):

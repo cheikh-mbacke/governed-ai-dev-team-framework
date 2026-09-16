@@ -26,6 +26,10 @@ versions produit suivent Semantic Versioning.
   - `execution_bridge.run_governed_execution` résout désormais ce paramètre depuis le
     bundle actif et le transmet à `gateway.compile_request()` : `contract.effective_scope`
     reflète enfin le rôle réel, pas seulement le scope brut du Work Unit.
+  - SPI `resolved_scope` (Document 12 §5, lu par le prompt agent) est aligné sur
+    `contract.effective_scope` à la transmission (`SpiCompatibleAdapter`) : le tick
+    remplissait encore ce champ avec le `scope.include` brut du Work Unit, donc
+    l'Adaptateur voyait le périmètre large même après la résolution du contrat.
   - `boundary.classify_changed_path`/`boundary_error_for_changed_files` et
     `transactional.validate_paths_against_scope` acceptent un paramètre
     `role_write_paths` optionnel (nouvelle classification `forbidden_role_scope`) pour
@@ -211,8 +215,16 @@ versions produit suivent Semantic Versioning.
 - Le hook Cursor `audit_event.py` minimise et hache les données sensibles avant écriture (commande, sortie, identifiants de session), applique une rotation/rétention configurable (`telemetry.raw_log_retention_days`) et peut être désactivé par projet (`telemetry.collection: disabled`).
 - `ExportFeedback` n'exige plus de `human_authorization` : l'usage du framework suffit (ADR-009).
 - Feedback Export format `1.2` (`transmission` status).
-- `telemetry.collection` : `disabled` | `consented_share` uniquement.### Fixed
+- `telemetry.collection` : `disabled` | `consented_share` uniquement.
 
+### Fixed
+
+- Manifeste golden Claude Code (`tests/fixtures/claude-code-compile/golden-manifest.json`)
+  resynchronisé avec le compile actuel (agents dynamiques `design-system-steward` /
+  `product-designer` / `visual-qa` et skills design). Le compilateur normalise
+  désormais les artefacts texte en LF avant hash/écriture — `*.cmd` est `eol=crlf`
+  à la racine du dépôt, ce qui faisait dériver `.claude/hooks/run_hook.cmd` sur
+  Windows. `.claude/.gitattributes` pinne ce fichier en LF, à parité Cursor.
 - Séparation explicite dépôt framework vs projet installé ; suppression du record dogfood incohérent.
 - Intégrité du `RuntimeResult` : le `sha256` de l'artefact `runtime_result` est désormais calculé sur le contenu réellement persisté (il était auparavant calculé avant une réécriture ultérieure du fichier, donc invalide).
 

@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-16T06:29:44+00:00",
+  "generated_at": "2026-09-16T09:07:49+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -285,7 +285,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "e71d8fb820bf21c3251fb9762be8cd4a5c2a5930da5a5c50552203469c4a2c08"
+          "sha256": "5c33b5db0fe65b0b9b181a3595257466db1101dc6d7ad9072f59eac95d98c6b4"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -1369,7 +1369,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/orchestrator/tick.py",
-          "sha256": "41269bcd38fefa471c4241df73b146d8a555ea458ba6b689d39c50808df75acf"
+          "sha256": "93e31e1da34b2d2e8eb849d0e6d054867954a8ff909c88336088247a71029dd5"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/persistence/__init__.py",
@@ -1433,7 +1433,7 @@
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/supervisor/execution_bridge.py",
-          "sha256": "330daddcdfdb2161d7c71f4196cb7f40ec3bb6b0264140f0be451485e6cdefe0"
+          "sha256": "6fe78cf7f2d0a91c42110198278f74047fe074691a15606bb2fd421fb3fb64c6"
         },
         {
           "path": ".ai-team/runtime/governed_ai/core/supervisor/file_lock.py",
@@ -2424,7 +2424,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "14e115a7fc9c8f80377dcd71ab69bc6fa63a5e42846bd23f1b17205a768be3ce"
+          "sha256": "0125a8a76709f56841f911739655dc1cff409d559053b754d50e8e3ea345615b"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -4116,7 +4116,7 @@
         },
         {
           "path": "src/governed_ai/core/orchestrator/tick.py",
-          "sha256": "41269bcd38fefa471c4241df73b146d8a555ea458ba6b689d39c50808df75acf"
+          "sha256": "93e31e1da34b2d2e8eb849d0e6d054867954a8ff909c88336088247a71029dd5"
         },
         {
           "path": "src/governed_ai/core/persistence/__init__.py",
@@ -4180,7 +4180,7 @@
         },
         {
           "path": "src/governed_ai/core/supervisor/execution_bridge.py",
-          "sha256": "330daddcdfdb2161d7c71f4196cb7f40ec3bb6b0264140f0be451485e6cdefe0"
+          "sha256": "6fe78cf7f2d0a91c42110198278f74047fe074691a15606bb2fd421fb3fb64c6"
         },
         {
           "path": "src/governed_ai/core/supervisor/file_lock.py",

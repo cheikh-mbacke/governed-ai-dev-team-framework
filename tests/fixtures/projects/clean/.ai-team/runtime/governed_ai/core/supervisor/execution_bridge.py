@@ -115,6 +115,23 @@ def _materialize_visual_attachments(
     return attachments
 
 
+def align_spi_resolved_scope(merged: dict[str, Any]) -> dict[str, Any]:
+    """Set SPI ``resolved_scope`` from the compiled ``contract.effective_scope``.
+
+    Document 12 §2.2: symbolic role paths (``<work-unit-scope>``) are resolved
+    by the core before transmission; the Adaptateur must not interpret them.
+    The orchestrator fills ``resolved_scope`` with the raw Work Unit include as
+    a pre-compile placeholder (it does not yet have the intersection). After
+    ``compile_request``, ``contract.effective_scope`` is the authoritative
+    intersection (WU ∩ grant ∩ role ∩ adapter ∩ ceiling). This copies that
+    list onto the SPI field the Adaptateur and agent prompt actually read.
+    """
+    effective = (merged.get("contract") or {}).get("effective_scope")
+    if isinstance(effective, list):
+        merged["resolved_scope"] = [str(item) for item in effective]
+    return merged
+
+
 class SpiCompatibleAdapter:
     """Wrap an SPI adapter so the gateway can invoke it with a merged request.
 
@@ -151,6 +168,7 @@ class SpiCompatibleAdapter:
                     project_root=project_root,
                 )
 
+        align_spi_resolved_scope(merged)
         return self._adapter.execute(merged)
 
 
@@ -284,8 +302,9 @@ def run_governed_execution(
     the orchestrator tick), it is derived from the active bundle's
     ``writes.product.paths`` for ``role_id`` and resolved against
     ``work_unit`` with ``resolve_role_write_paths`` (Document 12 §2.2). It
-    only feeds ``gateway.compile_request()`` (so ``contract.effective_scope``
-    is correctly role-resolved) — see the comment above the
+    feeds ``gateway.compile_request()`` (so ``contract.effective_scope`` is
+    role-resolved) and ``SpiCompatibleAdapter`` copies that list onto SPI
+    ``resolved_scope`` before the Adaptateur runs. See the comment above the
     ``gateway.execute()`` call below for why it is deliberately not also used
     to reject a real commit yet.
     """
@@ -341,9 +360,9 @@ def run_governed_execution(
     # Enforcing this axis correctly needs a per-role incremental diff (since
     # this role's own execution started), which does not exist yet — a
     # separate increment, not guessed at here. role_write_paths still reaches
-    # gateway.compile_request() above, so contract.effective_scope is
-    # correctly role-resolved (Document 12 §2.2) even though it is not yet
-    # used to reject a real commit.
+    # gateway.compile_request() above, and SpiCompatibleAdapter copies that
+    # list onto SPI resolved_scope (Document 12 §2.2 transmission), even
+    # though it is not yet used to reject a real commit.
     outcome = gateway.execute(
         request=request,
         adapter=bridged,

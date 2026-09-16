@@ -23,6 +23,12 @@ __all__ = [
     "verify_golden_compile",
 ]
 
+CMD_LINE_ENDING_NOTE = (
+    "Compiled text artefacts, including .claude/hooks/run_hook.cmd, are stored "
+    "with LF line endings. Root .gitattributes maps *.cmd to CRLF in the "
+    "working tree; the compiler normalizes before hash and write."
+)
+
 
 @dataclass(frozen=True)
 class GoldenManifest:
@@ -56,7 +62,14 @@ def build_golden_manifest(
         "schema_version": 1,
         "bundle_version": compile_manifest_payload["bundle_version"],
         "adapter_version": compile_manifest_payload["adapter_version"],
-        "documented_differences": documented_differences or [],
+        "documented_differences": documented_differences
+        or [
+            {
+                "kind": "line_endings",
+                "paths": [".claude/hooks/run_hook.cmd"],
+                "explanation": CMD_LINE_ENDING_NOTE,
+            }
+        ],
         "artifacts": compile_manifest_payload["artifacts"],
     }
 

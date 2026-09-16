@@ -18,6 +18,7 @@ from governed_ai.contracts.validate_bundle import validate_bundle
 from .agents import render_agent_from_role
 from .staging import (
     artifact_kind,
+    normalize_artifact_bytes,
     sha256_bytes,
     validate_pre_install,
 )
@@ -132,6 +133,7 @@ def compile_manifest(
         rel_posix = f"{CLAUDE_SUBDIR}/{rel_under_claude}"
         content = src_path.read_bytes()
         content = _transform_file(rel_posix, content, roles)
+        content = normalize_artifact_bytes(rel_posix, content)
 
         dst_path = staging_dir / rel_posix
         dst_path.parent.mkdir(parents=True, exist_ok=True)

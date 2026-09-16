@@ -21,6 +21,28 @@ from typing import Any
 from governed_ai.adapters.common.staging import resolve_under_staging, sha256_bytes
 
 REQUIRED_TOP_LEVEL = (".claude/settings.json",)
+TEXT_SUFFIXES = {".md", ".json", ".txt", ".cmd", ".yaml", ".yml", ".py"}
+
+
+def normalize_text_bytes(data: bytes) -> bytes:
+    """Normalize CRLF/CR to LF so compile hashes are host-independent."""
+    if b"\r" not in data:
+        return data
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def normalize_artifact_bytes(rel_posix: str, data: bytes) -> bytes:
+    """Hash and write text artefacts as LF regardless of working-tree checkout.
+
+    Root ``.gitattributes`` sets ``*.cmd text eol=crlf``, so ``run_hook.cmd``
+    is CRLF in the working tree on every OS; Cursor pins the same file to LF
+    via ``.cursor/.gitattributes``. Without this, frozen golden hashes drift
+    with the host checkout.
+    """
+    suffix = Path(rel_posix).suffix.lower()
+    if suffix in TEXT_SUFFIXES or rel_posix.endswith(".gitattributes"):
+        return normalize_text_bytes(data)
+    return data
 
 
 def artifact_kind(rel_posix: str) -> str:
