@@ -24,7 +24,12 @@ from typing import Any
 from governed_ai.adapters.common.agent_invocation import is_real_agent_launch_enabled
 from governed_ai.adapters.common.platform import platform_profile
 
-__all__ = ["collect_preflight_report", "platform_profile", "probe_hook"]
+__all__ = [
+    "collect_preflight_report",
+    "last_hook_activity",
+    "platform_profile",
+    "probe_hook",
+]
 
 
 def _claude_dir(project_root: Path) -> Path:
@@ -117,6 +122,31 @@ def check_guard_hook(project_root: Path) -> tuple[str, str]:
         {"tool_name": "Bash", "tool_input": {"command": "git status"}},
     )
     return ("pass" if ok else "fail"), detail
+
+
+def last_hook_activity(project_root: Path) -> dict[str, Any] | None:
+    """Mirrors adapters/cursor/runtime/checks.py::last_hook_activity, reading
+    the log path audit_event.py actually writes for this Adaptateur
+    (claude-code-events.jsonl, verified — see the hook's own docstring)."""
+    if (project_root / ".fabric" / "project-profile.yaml").is_file():
+        log_path = project_root / ".fabric" / "logs" / "claude-code-events.jsonl"
+    else:
+        log_path = project_root / ".ai-team" / "logs" / "claude-code-events.jsonl"
+    if not log_path.is_file():
+        return None
+    last_line = None
+    with log_path.open(encoding="utf-8") as handle:
+        for line in handle:
+            stripped = line.strip()
+            if stripped:
+                last_line = stripped
+    if not last_line:
+        return None
+    try:
+        record = json.loads(last_line)
+    except json.JSONDecodeError:
+        return {"parse_error": True}
+    return record if isinstance(record, dict) else None
 
 
 def collect_preflight_report(project_root: Path, *, unattended: bool = False) -> dict[str, Any]:

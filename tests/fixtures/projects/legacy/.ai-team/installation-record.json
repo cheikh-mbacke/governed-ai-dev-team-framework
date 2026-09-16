@@ -1427,7 +1427,7 @@
       },
       {
         "path": "scripts/ai-team/diagnose.py",
-        "installed_sha256": "sha256:09429d6b1f4449a4cd112c0572d1c1cc04ec710079d20eab5ce635c4acc04d58"
+        "installed_sha256": "sha256:9396e0cf088a202413d5cb6d05b6833e61083ce37889f16ebd0d859fd13aadfd"
       },
       {
         "path": "scripts/ai-team/feedback.py",
@@ -1451,7 +1451,7 @@
       },
       {
         "path": "scripts/ai-team/install_paths.py",
-        "installed_sha256": "sha256:507bb18a342c1cd193d8666072048f12a00ef3f9ec160128fe725f34f421dfd4"
+        "installed_sha256": "sha256:e1a516e28c0439e9651a353ca22614d638e3b6164f8381e690e57ee1e84a55ec"
       },
       {
         "path": "scripts/ai-team/migrate.py",
@@ -1471,7 +1471,7 @@
       },
       {
         "path": "scripts/ai-team/orchestrate.py",
-        "installed_sha256": "sha256:1d4a125c4a1f9476c07795a10503346c1b204e791448969a2173d06ac23fcb33"
+        "installed_sha256": "sha256:8e20893d8f9a3210ac3df2d2e6388721d4272eee280e852f08768194ed2b50d7"
       },
       {
         "path": "scripts/ai-team/preflight.py",

@@ -1,6 +1,6 @@
 {
   "framework_version": "0.7.0",
-  "generated_at": "2026-09-15T21:07:53+00:00",
+  "generated_at": "2026-09-16T05:35:00+00:00",
   "platform": "win32",
   "description": "Reproducible witness projects for migration and distribution tests (Document 13 \u00a73, Document 14 \u00a72).",
   "scenarios": {
@@ -285,7 +285,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "2f33a850d4213c3b085e23702893c635227681cbd25763b9305176d1b0b9f151"
+          "sha256": "36bf6e113ed35bfb46fc2a062e22c76d49d67aed402d4034301e800c0496df57"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -2049,7 +2049,7 @@
         },
         {
           "path": "scripts/ai-team/diagnose.py",
-          "sha256": "09429d6b1f4449a4cd112c0572d1c1cc04ec710079d20eab5ce635c4acc04d58"
+          "sha256": "9396e0cf088a202413d5cb6d05b6833e61083ce37889f16ebd0d859fd13aadfd"
         },
         {
           "path": "scripts/ai-team/feedback.py",
@@ -2073,7 +2073,7 @@
         },
         {
           "path": "scripts/ai-team/install_paths.py",
-          "sha256": "507bb18a342c1cd193d8666072048f12a00ef3f9ec160128fe725f34f421dfd4"
+          "sha256": "e1a516e28c0439e9651a353ca22614d638e3b6164f8381e690e57ee1e84a55ec"
         },
         {
           "path": "scripts/ai-team/migrate.py",
@@ -2093,7 +2093,7 @@
         },
         {
           "path": "scripts/ai-team/orchestrate.py",
-          "sha256": "1d4a125c4a1f9476c07795a10503346c1b204e791448969a2173d06ac23fcb33"
+          "sha256": "8e20893d8f9a3210ac3df2d2e6388721d4272eee280e852f08768194ed2b50d7"
         },
         {
           "path": "scripts/ai-team/preflight.py",
@@ -2424,7 +2424,7 @@
         },
         {
           "path": ".ai-team/installation-record.json",
-          "sha256": "d85710d0b6d77b1ee35886f6e5c6e2f3bc6cb745e07b8bc9ad7e04391562795a"
+          "sha256": "a8b8288bcb833eecb9c6f5240dbb99f15104675087116bf784bd01dbefe4f3ef"
         },
         {
           "path": ".ai-team/migration-backups/.gitignore",
@@ -3264,7 +3264,7 @@
         },
         {
           "path": "scripts/ai-team/diagnose.py",
-          "sha256": "09429d6b1f4449a4cd112c0572d1c1cc04ec710079d20eab5ce635c4acc04d58"
+          "sha256": "9396e0cf088a202413d5cb6d05b6833e61083ce37889f16ebd0d859fd13aadfd"
         },
         {
           "path": "scripts/ai-team/feedback.py",
@@ -3288,7 +3288,7 @@
         },
         {
           "path": "scripts/ai-team/install_paths.py",
-          "sha256": "507bb18a342c1cd193d8666072048f12a00ef3f9ec160128fe725f34f421dfd4"
+          "sha256": "e1a516e28c0439e9651a353ca22614d638e3b6164f8381e690e57ee1e84a55ec"
         },
         {
           "path": "scripts/ai-team/migrate.py",
@@ -3308,7 +3308,7 @@
         },
         {
           "path": "scripts/ai-team/orchestrate.py",
-          "sha256": "1d4a125c4a1f9476c07795a10503346c1b204e791448969a2173d06ac23fcb33"
+          "sha256": "8e20893d8f9a3210ac3df2d2e6388721d4272eee280e852f08768194ed2b50d7"
         },
         {
           "path": "scripts/ai-team/preflight.py",

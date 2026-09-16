@@ -105,7 +105,67 @@ print('OK')
     assert "OK" in result.stdout
 
 
-def test_orchestrate_source_uses_import_adapters_cursor() -> None:
+def test_fresh_install_imports_claude_code_adapter_without_top_level_adapters(
+    tmp_path: Path,
+) -> None:
+    """Mirrors test_fresh_install_imports_cursor_adapter_without_top_level_adapters
+    for the second Adaptateur — the same installed-layout aliasing
+    (_ensure_adapter_alias) must work for adapters.claude_code too."""
+    target = tmp_path / "installed"
+    install = subprocess.run(
+        [
+            sys.executable,
+            str(INSTALL),
+            "--target",
+            str(target),
+            "--project-id",
+            "portability-smoke-claude-code",
+            "--project-name",
+            "Portability Smoke Claude Code",
+            "--adapter",
+            "claude-code",
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        timeout=180,
+        check=False,
+    )
+    assert install.returncode == 0, install.stdout + install.stderr
+    assert not (target / "adapters").exists()
+    assert (target / "scripts" / "ai-team" / "install_paths.py").is_file()
+
+    result = _run_python(
+        target,
+        """
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path('scripts/ai-team').resolve()))
+from install_paths import bootstrap_runtime, import_adapter_module
+
+root = Path('.').resolve()
+bootstrap_runtime(root)
+checks = import_adapter_module('claude_code', 'runtime.checks')
+assert hasattr(checks, 'platform_profile')
+from governed_ai.adapters.claude_code.adapter import ClaudeCodeAdapter
+adapter = ClaudeCodeAdapter(project_root=root)
+descriptor = adapter.describe()
+assert descriptor['adapter_id'] == 'claude-code'
+assert 'linux' in descriptor['platforms']
+print('OK')
+""",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "OK" in result.stdout
+
+
+def test_orchestrate_source_avoids_bare_adapter_imports() -> None:
+    """orchestrate.py must import CursorAdapter/ClaudeCodeAdapter through the
+    layout-safe governed_ai.adapters.* namespace, never a bare adapters.*
+    import that would break in installed layout without the alias."""
     text = (REPO_ROOT / "scripts" / "ai-team" / "orchestrate.py").read_text(encoding="utf-8")
-    assert "import_adapters_cursor" in text
     assert "from adapters.cursor.runtime.agent_cli import" not in text
+    assert "from adapters.cursor." not in text
+    assert "from adapters.claude_code." not in text
+    assert "from governed_ai.adapters.cursor.adapter import CursorAdapter" in text
+    assert "from governed_ai.adapters.claude_code.adapter import ClaudeCodeAdapter" in text

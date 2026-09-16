@@ -2,7 +2,10 @@
 """Answer 'is anything actually waiting on me, and what happened last?'
 
 Run this before stopping and restarting anything. It never modifies state.
-Core project diagnostics and Cursor hook diagnostics are separated.
+Core project diagnostics and adapter (Cursor/Claude Code) hook diagnostics
+are separated; only Cursor has a documented UI-approval-prompt stall mode
+(see _print_hook_activity's caller) — no equivalent is guessed for Claude
+Code here.
 """
 from __future__ import annotations
 
@@ -21,10 +24,26 @@ except ModuleNotFoundError:
     raise SystemExit(1)
 
 ROOT = Path(__file__).resolve().parents[2]
-from install_paths import bootstrap_runtime, import_adapters_cursor
+from install_paths import bootstrap_runtime, import_adapter_module
 
 bootstrap_runtime(ROOT)
-_checks = import_adapters_cursor("runtime.checks")
+
+
+def _active_adapter_id(root: Path) -> str:
+    profile = root / ".ai-team" / "project-profile.yaml"
+    if not profile.is_file():
+        return "cursor"
+    try:
+        data = yaml.safe_load(profile.read_text(encoding="utf-8")) or {}
+    except Exception:  # noqa: BLE001 — diagnostics must never fail on this
+        return "cursor"
+    return str(data.get("active_adapter_id") or "cursor") if isinstance(data, dict) else "cursor"
+
+
+_ACTIVE_ADAPTER_ID = _active_adapter_id(ROOT)
+_checks = import_adapter_module(
+    "claude_code" if _ACTIVE_ADAPTER_ID == "claude-code" else "cursor", "runtime.checks"
+)
 last_hook_activity = _checks.last_hook_activity
 from i18n import project_language, t
 
@@ -37,13 +56,23 @@ from governed_ai.core.workspace_mode import is_framework_source
 LANG = project_language(ROOT)
 
 
+def _log_file_name() -> str:
+    return "claude-code-events.jsonl" if _ACTIVE_ADAPTER_ID == "claude-code" else "cursor-events.jsonl"
+
+
+def _adapter_display_name() -> str:
+    return "Claude Code" if _ACTIVE_ADAPTER_ID == "claude-code" else "Cursor"
+
+
 def _print_hook_activity() -> None:
+    log_name = _log_file_name()
+    display_name = _adapter_display_name()
     record = last_hook_activity(ROOT)
     if record is None:
         print("\n" + t(
             LANG,
-            "No .ai-team/logs/cursor-events.jsonl yet — no Cursor hook activity recorded.",
-            "Pas encore de .ai-team/logs/cursor-events.jsonl - aucune activite Cursor (hook) enregistree.",
+            f"No .ai-team/logs/{log_name} yet — no {display_name} hook activity recorded.",
+            f"Pas encore de .ai-team/logs/{log_name} - aucune activite {display_name} (hook) enregistree.",
         ))
         return
     if record.get("parse_error"):
@@ -61,8 +90,8 @@ def _print_hook_activity() -> None:
     minutes = int(delta.total_seconds() // 60)
     print("\n" + t(
         LANG,
-        f"Last recorded Cursor hook activity: {minutes} minute(s) ago ({ts}).",
-        f"Derniere activite Cursor (hook) enregistree : il y a {minutes} minute(s) ({ts}).",
+        f"Last recorded {display_name} hook activity: {minutes} minute(s) ago ({ts}).",
+        f"Derniere activite {display_name} (hook) enregistree : il y a {minutes} minute(s) ({ts}).",
     ))
     event_kind = None
     inner = record.get("event")
@@ -96,19 +125,25 @@ def main() -> int:
         print()
         return 0
 
-    print(t(
-        LANG,
-        "Before anything below: scroll up in the Cursor chat and check for a\n"
-        "pending command-approval prompt (a 'Run' / 'Approve' button waiting\n"
-        "for a click). This script cannot see that state - Cursor suspends the\n"
-        "agent before it can write anything this script could read. It is the\n"
-        "single most common invisible-stall cause; check it first.",
-        "Avant toute chose : remontez dans le chat Cursor et cherchez une\n"
-        "invite d'autorisation de commande en attente (un bouton 'Run' / 'Approve'\n"
-        "qui attend un clic). Ce script ne peut pas voir cet etat - Cursor suspend\n"
-        "l'agent avant qu'il puisse ecrire quoi que ce soit que ce script pourrait lire.\n"
-        "C'est la cause de blocage invisible la plus frequente ; verifiez-la en premier.",
-    ))
+    if _ACTIVE_ADAPTER_ID == "cursor":
+        # Cursor-UI-specific: its own approval-prompt stall is a documented,
+        # observed failure mode. No verified Claude Code UI equivalent exists
+        # (see Document 3 §"Grain Claude Code résolu partiellement") — showing
+        # this Cursor-specific advice unconditionally would be actively wrong
+        # for a claude-code project, so it is gated rather than guessed at.
+        print(t(
+            LANG,
+            "Before anything below: scroll up in the Cursor chat and check for a\n"
+            "pending command-approval prompt (a 'Run' / 'Approve' button waiting\n"
+            "for a click). This script cannot see that state - Cursor suspends the\n"
+            "agent before it can write anything this script could read. It is the\n"
+            "single most common invisible-stall cause; check it first.",
+            "Avant toute chose : remontez dans le chat Cursor et cherchez une\n"
+            "invite d'autorisation de commande en attente (un bouton 'Run' / 'Approve'\n"
+            "qui attend un clic). Ce script ne peut pas voir cet etat - Cursor suspend\n"
+            "l'agent avant qu'il puisse ecrire quoi que ce soit que ce script pourrait lire.\n"
+            "C'est la cause de blocage invisible la plus frequente ; verifiez-la en premier.",
+        ))
 
     open_human_events = collect_open_human_events(ROOT)
     if open_human_events:
@@ -159,15 +194,24 @@ def main() -> int:
             "Next step: nothing is explicitly asking for you, but Work Units are mid-flight.",
             "Prochaine etape : rien ne vous sollicite explicitement, mais des Work Units sont en cours.",
         ))
-        print(t(
-            LANG,
-            "If Cursor's own UI shows a subagent stalled with no recent hook activity above,\n"
-            "that's a real stall with no recorded reason. Consult the Governed AI adopter guide\n"
-            "before stopping/restarting.",
-            "Si l'interface Cursor montre un subagent bloque sans activite (hook) recente ci-dessus,\n"
-            "c'est un vrai blocage sans raison enregistree. Consulter le guide d'adoption Governed AI\n"
-            "avant d'arreter/redemarrer quoi que ce soit.",
-        ))
+        if _ACTIVE_ADAPTER_ID == "cursor":
+            print(t(
+                LANG,
+                "If Cursor's own UI shows a subagent stalled with no recent hook activity above,\n"
+                "that's a real stall with no recorded reason. Consult the Governed AI adopter guide\n"
+                "before stopping/restarting.",
+                "Si l'interface Cursor montre un subagent bloque sans activite (hook) recente ci-dessus,\n"
+                "c'est un vrai blocage sans raison enregistree. Consulter le guide d'adoption Governed AI\n"
+                "avant d'arreter/redemarrer quoi que ce soit.",
+            ))
+        elif not last_hook_activity(ROOT):
+            print(t(
+                LANG,
+                "No recent hook activity above either — consult the Governed AI adopter guide\n"
+                "before stopping/restarting.",
+                "Aucune activite (hook) recente non plus ci-dessus - consulter le guide d'adoption\n"
+                "Governed AI avant d'arreter/redemarrer quoi que ce soit.",
+            ))
     else:
         print(t(
             LANG,

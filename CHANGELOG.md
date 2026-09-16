@@ -108,6 +108,47 @@ versions produit suivent Semantic Versioning.
   - Hors périmètre restant : le scoping d'écriture par chemin (voir plus
     haut), l'outillage préflight/orchestration au-delà de ce qui précède —
     voir Document 3 §"Grain Claude Code résolu partiellement" et Document 0 §2.
+  - **Schéma des hooks vérifié de première main** (2026-09-16, invocations
+    réelles `claude -p` avec `.claude/settings.json` et hooks non modifiés) :
+    payloads `SessionStart`/`UserPromptSubmit`/`PreToolUse`/`PostToolUse`/`Stop`
+    capturés verbatim (fixtures `REAL_PRE_TOOL_USE_BASH_PAYLOAD`/
+    `REAL_POST_TOOL_USE_BASH_PAYLOAD` dans `tests/adapters/claude_code/test_hooks.py`).
+    Un vrai bug trouvé et corrigé : `audit_event.py` supposait `tool_response`
+    string alors que c'est un objet (`{"stdout":...,"stderr":...}`) sur
+    `PostToolUse` — la sortie de commande n'était jamais journalisée. Blocage
+    dur reconfirmé de bout en bout : `git commit --amend` réellement tenté
+    par le modèle a été bloqué par `guard_shell.py` (code de sortie 2), le
+    message de refus exact étant relayé tel quel par le modèle. Les
+    docstrings des 3 hooks sont mis à jour de "best-effort, non vérifié" à
+    "vérifié" avec la preuve citée.
+  - **Dispatch réel d'un sous-agent Claude Code depuis un Work Unit gouverné
+    vérifié de bout en bout** : `execute_runtime()` non mocké, lancement réel
+    activé, arbre `.claude/` livré (non debug) — un sous-agent Claude Code
+    réel a écrit un fichier réel, avec les hooks actifs pendant l'exécution ;
+    la discipline de gouvernance (`status` reste `"failed"` sans le handoff
+    JSON structuré requis, même si la tâche a réellement abouti) s'est
+    appliquée sans dérogation, conforme à CG-012/AD-010.
+  - **`orchestrate.py`/`diagnose.py` rendus adaptatifs** : l'orchestrateur
+    (`scripts/ai-team/orchestrate.py`, seul processus long réellement autonome
+    du framework) lit désormais `active_adapter_id` du profil projet et
+    instancie `ClaudeCodeAdapter` ou `CursorAdapter` en conséquence (au lieu
+    de coder `CursorAdapter` en dur) ; `diagnose.py` lit le même id pour
+    choisir le bon fichier de log (`claude-code-events.jsonl` vs
+    `cursor-events.jsonl`) et n'affiche le conseil "remontez dans le chat
+    Cursor" que pour un projet Cursor — aucun équivalent UI Claude Code n'est
+    inventé pour le cas contraire. `propose_allowlist.py` reste Cursor
+    uniquement : la génération de motifs de permission pour
+    `.claude/settings.json` demanderait une conception nouvelle, pas un
+    portage mécanique — délibérément non tenté.
+  - **Correctif de portabilité en layout installé** : l'alias d'import
+    `adapters.<nom>` vers la copie runtime installée
+    (`install_paths.py::_ensure_adapters_cursor_alias`, désormais généralisé
+    en `_ensure_adapter_alias`) ne couvrait que `cursor`. Un vrai projet
+    installé en `claude-code` (sans paquet `adapters/` racine) aurait échoué
+    à l'import dans tout code appelant `ClaudeCodeAdapter` en dehors du
+    compilateur — bug latent non exercé jusqu'ici, trouvé en étendant
+    `orchestrate.py`, corrigé, et couvert par un nouveau test d'installation
+    réelle bout en bout.
 - Notifications SMTP non bloquantes avec outbox dédupliquée, reprise sur échec,
   alertes immédiates, digest de fin de Run et routage adapté au profil
   d'autonomie. Transport installé par défaut sur `mail.agenteam.fr:465` en SSL,

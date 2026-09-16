@@ -3,11 +3,11 @@
 
 Ported from adapters/cursor/templates/.cursor/hooks/session_init.py — the
 message logic is unchanged. Output uses Claude Code's
-"hookSpecificOutput.additionalContext" shape (best-effort mapping, not
-verified against a real Claude Code session in this increment — see
-Document 3 §"Grain Claude Code résolu partiellement"); this hook is
-non-blocking either way, so a schema mismatch here only means the context
-is not injected, not that anything breaks.
+"hookSpecificOutput.additionalContext" shape — VERIFIED 2026-09-16: a real
+`claude -p` session's persisted transcript showed this hook's exact stdout
+recorded as a "hook_success" attachment, and its additionalContext text
+appearing verbatim as a following "hook_additional_context" attachment
+actually injected into the conversation before the first user message.
 """
 import json
 import os

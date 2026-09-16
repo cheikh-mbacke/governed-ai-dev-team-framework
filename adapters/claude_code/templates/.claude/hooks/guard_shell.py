@@ -7,19 +7,18 @@ PreToolUse hook, matcher "Bash". Ported from
 adapters/cursor/compiler/../templates/.cursor/hooks/guard_shell.py — the
 shell-command safety logic below (regex patterns, protected-branch/commit
 checks, unattended-run allowlist) is unchanged and adapter-agnostic; only
-the I/O envelope differs from Cursor's:
+the I/O envelope differs from Cursor's.
 
-- Cursor's hook receives a flatter payload with a top-level "command" key.
-  Claude Code's PreToolUse payload is expected to carry "tool_name" and
-  "tool_input" (mirroring the Bash tool's own input schema, i.e.
-  tool_input.command) — this shape has NOT been confirmed against a real
-  Claude Code session in this increment (see plan snug-knitting-catmull /
-  Document 3 §"Grain Claude Code résolu partiellement"); a mismatch would
-  make this hook a silent no-op rather than fail loudly, so treat it as
-  best-effort until verified.
-- The verified, load-bearing blocking mechanism is exit code 2 (PreToolUse
-  only). The "hookSpecificOutput.permissionDecision" JSON field is emitted
-  as a best-effort supplement, not the primary mechanism relied upon here.
+VERIFIED end-to-end 2026-09-16 against two real, live `claude -p` sessions
+(not just this script in isolation): the PreToolUse payload carries
+"tool_name":"Bash" and "tool_input":{"command": "..."} exactly as coded
+below, and a real `git commit --amend` attempt was genuinely blocked —
+Claude Code refused to run it and relayed this file's own deny() message
+text verbatim back to the model. Cursor's hook receives a flatter payload
+with a top-level "command" key; Claude Code's nests it under tool_input.
+Exit code 2 (PreToolUse only) is the confirmed blocking mechanism; the
+"hookSpecificOutput.permissionDecision" JSON field is also confirmed
+surfaced to the model as the block explanation, not merely a supplement.
 """
 import json
 import os

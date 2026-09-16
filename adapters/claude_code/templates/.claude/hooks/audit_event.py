@@ -2,14 +2,22 @@
 """Append privacy-minimized Claude Code hook events to the local audit journal.
 
 Ported from adapters/cursor/templates/.cursor/hooks/audit_event.py — logging
-logic and minimization rules are unchanged. The project-root resolution
-(CLAUDE_PROJECT_DIR env var, falling back to the hook payload's "cwd") is
-Claude Code's own convention rather than Cursor's CURSOR_PROJECT_DIR; the
-exact payload field names (tool_name, hook_event_name) are a best-effort
-mapping, not verified against a real Claude Code session in this increment
-(see Document 3 §"Grain Claude Code résolu partiellement"). This hook is
-non-blocking (always allows) regardless of parse outcome, so a schema
-mismatch degrades to sparser log entries rather than breaking execution.
+logic and minimization rules are unchanged.
+
+VERIFIED 2026-09-16 against real `claude -p` sessions: "hook_event_name",
+"tool_name", "cwd", and "tool_input.command" all appear exactly as coded
+below (captured raw stdin from PreToolUse/PostToolUse/SessionStart/
+UserPromptSubmit/Stop). One real mismatch was found and fixed here:
+"tool_response" is an object (e.g. {"stdout":..., "stderr":...}), not a
+bare string — the original guess assumed a string and silently skipped
+logging output size/hash as a result.
+
+NOT separately verified: the CLAUDE_PROJECT_DIR env var itself (this hook
+prefers it, falling back to the payload's confirmed-real "cwd" field, so an
+absent/differently-named env var degrades safely rather than breaking).
+This hook is non-blocking (always allows) regardless of parse outcome, so
+any remaining schema gap would degrade to sparser log entries, not break
+execution.
 """
 
 from __future__ import annotations
@@ -82,7 +90,16 @@ def _safe_event(payload: dict[str, Any], root: Path) -> dict[str, Any]:
             "character_count": len(command),
             "sha256": _digest(command),
         }
-    output = payload.get("tool_response") or payload.get("output")
+    tool_response = payload.get("tool_response")
+    if isinstance(tool_response, dict):
+        # Verified shape (2026-09-16, real claude -p invocation): tool_response is
+        # an object, e.g. {"stdout": "...", "stderr": "...", "interrupted": false,
+        # "isImage": false, "noOutputExpected": false} for Bash — not a bare string.
+        output = "\n".join(
+            str(tool_response.get(key) or "") for key in ("stdout", "stderr")
+        ).strip() or None
+    else:
+        output = payload.get("output")
     if isinstance(output, str):
         safe["output"] = {
             "byte_count": len(output.encode("utf-8", errors="replace")),

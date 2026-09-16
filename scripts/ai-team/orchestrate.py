@@ -7,8 +7,10 @@ tested: real wall-clock behavior over a real interval is exactly what
 docs/framework-design/requirements/mode-nuit-preuve-resilience-couverture.md flags
 as needing a real run, not a unit test.
 
-`adapters/cursor/runtime/execute.py::execute_runtime()` launches the native
-Cursor agent only after explicit unattended opt-in and a passing preflight.
+`adapters/<active adapter>/runtime/execute.py::execute_runtime()` launches
+the native agent (Cursor or Claude Code, whichever `active_adapter_id`
+names — see Document 11 ADR-007 amended) only after explicit unattended
+opt-in and a passing preflight.
 
 With `--workers N > 1`, N threads tick concurrently, each under its own
 worker id. `CommandGateway.execute_command()` is safe to share across
@@ -34,10 +36,11 @@ import uuid
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-from install_paths import bootstrap_runtime, import_adapters_cursor
+from install_paths import bootstrap_runtime
 
 bootstrap_runtime(_REPO_ROOT)
 
+from governed_ai.adapters.common.agent_invocation import is_real_agent_launch_enabled
 from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import (
     GatewayError,
@@ -52,6 +55,30 @@ from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
 from governed_ai.notifications.service import dispatch_notifications
 
 _print_lock = threading.Lock()
+
+
+def _active_adapter_id(workspace: Workspace) -> str:
+    if not workspace.profile_path.is_file():
+        return "cursor"
+    try:
+        import yaml
+
+        data = yaml.safe_load(workspace.profile_path.read_text(encoding="utf-8")) or {}
+    except Exception:  # noqa: BLE001 — never let this become a new failure mode
+        return "cursor"
+    if not isinstance(data, dict):
+        return "cursor"
+    return str(data.get("active_adapter_id") or "cursor")
+
+
+def _build_adapter(workspace: Workspace, bundle_dir: Path, adapter_id: str):
+    if adapter_id == "claude-code":
+        from governed_ai.adapters.claude_code.adapter import ClaudeCodeAdapter
+
+        return ClaudeCodeAdapter(project_root=workspace.root, bundle_dir=bundle_dir)
+    from governed_ai.adapters.cursor.adapter import CursorAdapter
+
+    return CursorAdapter(project_root=workspace.root, bundle_dir=bundle_dir)
 
 
 def _process_record_path(workspace: Workspace, run_id: str) -> Path:
@@ -127,7 +154,7 @@ def _close_run_after_process_failure(
                 "execution_id": f"EXE-orchestrator-failure-{token[:8]}",
                 "role_id": "control-plane",
                 "bundle_version": "1.0.0",
-                "adapter_id": "cursor",
+                "adapter_id": _active_adapter_id(workspace),
             },
             "target": {
                 "kind": "run",
@@ -279,10 +306,9 @@ def main(argv: list[str] | None = None) -> int:
         print(exc.message, file=sys.stderr)
         return exit_code_for(exc.code)
 
-    agent_cli = import_adapters_cursor("runtime.agent_cli")
-
-    from governed_ai.adapters.cursor.adapter import CursorAdapter
     from governed_ai.contracts.compatibility import resolve_active_bundle_dir
+
+    active_adapter_id = _active_adapter_id(workspace)
 
     gateway = CommandGateway(workspace)
     run_path = workspace.ai_team / "runs" / f"{args.run_id}.yaml"
@@ -292,18 +318,16 @@ def main(argv: list[str] | None = None) -> int:
     import yaml
 
     run_document = yaml.safe_load(run_path.read_text(encoding="utf-8")) or {}
-    if (
-        is_unattended_preset(run_document.get("autonomy_preset"))
-        and not agent_cli.is_real_agent_launch_enabled()
-    ):
+    if is_unattended_preset(run_document.get("autonomy_preset")) and not is_real_agent_launch_enabled():
         print(
-            "Unattended orchestration refused: native Cursor agent launch is disabled. "
-            "Set GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1 and regenerate a passing preflight.",
+            f"Unattended orchestration refused: native {active_adapter_id} agent launch is "
+            "disabled. Set GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH=1 and regenerate a passing "
+            "preflight.",
             file=sys.stderr,
         )
         return 3
     bundle_dir = resolve_active_bundle_dir(workspace.ai_team / "contracts")
-    adapter = CursorAdapter(project_root=workspace.root, bundle_dir=bundle_dir)
+    adapter = _build_adapter(workspace, bundle_dir, active_adapter_id)
 
     stop_event = threading.Event()
     worker_errors: list[str] = []

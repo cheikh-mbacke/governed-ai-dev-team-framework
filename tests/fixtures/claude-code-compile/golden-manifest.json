@@ -97,7 +97,7 @@
     {
       "kind": "hook",
       "path": ".claude/hooks/audit_event.py",
-      "sha256": "sha256:48bc6d73c63f5a9e4381e7ec0c27ef78624c35df2b57312311aac11a9e277fa6"
+      "sha256": "sha256:79057419a83f82511355fbd78a7e861f13ef060d395ca102e1dabb79ff531a0f"
     },
     {
       "kind": "hook",
@@ -107,7 +107,7 @@
     {
       "kind": "hook",
       "path": ".claude/hooks/guard_shell.py",
-      "sha256": "sha256:53b4779400b1a13f0d8574a68fa98ad75238fa982f63d92678f55d41afcc5ef6"
+      "sha256": "sha256:86590b801d72a2581143214330d7804a0fec7cf3cb43dc8290e2ce909f70799d"
     },
     {
       "kind": "hook",
@@ -117,7 +117,7 @@
     {
       "kind": "hook",
       "path": ".claude/hooks/session_init.py",
-      "sha256": "sha256:22737f42764f20ebf473edf068cc0e85b873a25a5c4fbbdc8cc9df19cdc30435"
+      "sha256": "sha256:3117e7444006553c56ae9c99e8d6a498b85038a15cf0cd3cd5b7c0c142d6112f"
     },
     {
       "kind": "settings",
