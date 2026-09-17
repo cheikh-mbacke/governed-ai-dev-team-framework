@@ -68,6 +68,14 @@
       "type": "string",
       "minLength": 1
     },
+    "member_id": {
+      "description": "Ensemble member this Work Unit writes. Omitted or null in standalone and integration Work Units.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z][a-z0-9._-]*$"
+    },
     "zone": {
       "type": "object",
       "required": [

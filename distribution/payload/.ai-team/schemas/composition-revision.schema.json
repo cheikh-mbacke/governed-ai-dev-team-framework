@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CompositionRevision",
+  "type": "object",
+  "required": [
+    "id",
+    "ensemble_id",
+    "kind",
+    "members",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^CR-[A-Za-z0-9._-]+$"
+    },
+    "ensemble_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "const": "composition"
+    },
+    "members": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9._-]*$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{40}$"
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

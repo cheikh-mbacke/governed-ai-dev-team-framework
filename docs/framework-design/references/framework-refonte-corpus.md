@@ -49,10 +49,12 @@ Cette édition révise les Documents 00 à 10 après audit indépendant du dép�
 | 20 | Conformité assessment d’adoption | `acceptance-criteria/` | [`20-conformite-assessment-adoption.md`](../acceptance-criteria/20-conformite-assessment-adoption.md) |
 | 21 | Réconciliation pré-compilation | `requirements/` | [`21-reconciliation-pre-compilation.md`](../requirements/21-reconciliation-pre-compilation.md) |
 | 22 | Conformité réconciliation | `acceptance-criteria/` | [`22-conformite-reconciliation.md`](../acceptance-criteria/22-conformite-reconciliation.md) |
+| 25 | Gouvernance hors-arbre (Instance, Ensemble, Membre) | `architecture-and-constraints/` | [`25-gouvernance-instance-hors-arbre.md`](../architecture-and-constraints/25-gouvernance-instance-hors-arbre.md) |
+| 26 | Conformité Instance hors-arbre | `acceptance-criteria/` | [`26-conformite-instance-hors-arbre.md`](../acceptance-criteria/26-conformite-instance-hors-arbre.md) |
 
 ## Ordre de lecture
 
-00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10, puis les spécifications techniques 11 → 14. Les Documents **19–20** couvrent l’assessment d’adoption ; les Documents **21–22** couvrent la réconciliation post-installation avant compilation. Les systèmes consommateurs externes disposent de leur propre corpus ; seule leur frontière contractuelle avec le framework est référencée sous [`docs/integration-contracts/`](../../integration-contracts/).
+00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10, puis les spécifications techniques 11 → 14. Les Documents **19–20** couvrent l’assessment d’adoption ; les Documents **21–22** couvrent la réconciliation post-installation avant compilation. Les Documents **25–26** couvrent l’instance hors-arbre (Ensemble / Membres) visée en `0.8.0` ; ils n’autorisent pas d’agir depuis le dépôt source du framework. Les systèmes consommateurs externes disposent de leur propre corpus ; seule leur frontière contractuelle avec le framework est référencée sous [`docs/integration-contracts/`](../../integration-contracts/).
 
 Le rapport d’audit d’origine reste disponible à la racine du dépôt sous `rapport-audit-ddd-governed-ai.md` s’il y est ajouté.
 

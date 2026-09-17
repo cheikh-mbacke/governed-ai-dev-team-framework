@@ -99,6 +99,10 @@ if IS_FABRICATION:
         AI / "schemas" / "retrospective.schema.json",
         AI / "schemas" / "feedback-export.schema.json",
         AI / "schemas" / "reconciliation.schema.json",
+        AI / "schemas" / "catalog.schema.json",
+        AI / "schemas" / "ensemble-members.schema.json",
+        AI / "schemas" / "composition-revision.schema.json",
+        AI / "schemas" / "member-link.schema.json",
     ]
 else:
     required = [

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EnsembleMembers",
+  "type": "object",
+  "required": [
+    "ensemble_id",
+    "members"
+  ],
+  "properties": {
+    "ensemble_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "path"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]*$"
+          },
+          "kind": {
+            "enum": [
+              "service",
+              "ui",
+              "docs",
+              "contracts",
+              "other"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_roots": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "commands": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
