@@ -61,6 +61,7 @@
     "adapters/claude_code/runtime/execute.py": "adapter:claude-code",
     "adapters/claude_code/runtime/guard.py": "adapter:claude-code",
     "adapters/claude_code/runtime/results.py": "adapter:claude-code",
+    "adapters/claude_code/templates/.claude/.gitattributes": "adapter:claude-code",
     "adapters/claude_code/templates/.claude/CLAUDE.md": "adapter:claude-code",
     "adapters/claude_code/templates/.claude/agents/architect.md": "adapter:claude-code",
     "adapters/claude_code/templates/.claude/agents/auditor.md": "adapter:claude-code",
