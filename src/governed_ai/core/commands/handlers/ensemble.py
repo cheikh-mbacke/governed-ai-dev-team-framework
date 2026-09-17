@@ -11,6 +11,7 @@ import yaml
 from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
+from governed_ai.core.member_overlay import write_member_overlay
 from governed_ai.core.orchestrator.git_workspace import GitWorkspaceError, head_sha
 from governed_ai.core.persistence.transaction import Transaction
 from governed_ai.core.workspace import MEMBERS_FILE_NAME, Workspace
@@ -356,6 +357,26 @@ def handle_register_member(
         transaction,
         updated_ensemble_id=ensemble_id,
         updated_members_doc=updated,
+    )
+    link_document = {
+        "schema_version": 1,
+        "instance_id": _instance_id(workspace_root),
+        "ensemble_id": ensemble_id,
+        "member_id": member_id,
+        "instance_path": str(workspace_root.instance_root),
+    }
+    validate_against_schema(
+        workspace_root.ai_team,
+        link_document,
+        "member-link.schema.json",
+        root_path="",
+    )
+    write_member_overlay(
+        resolved,
+        instance_id=link_document["instance_id"],
+        ensemble_id=ensemble_id,
+        member_id=member_id,
+        instance_path=workspace_root.instance_root,
     )
     return {
         "affected": [

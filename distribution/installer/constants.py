@@ -75,6 +75,7 @@ FRESH_PROJECT_SEEDS = (
     ".ai-team/project-profile.yaml",
     ".ai-team/state/project-state.yaml",
     ".ai-team/sources/source-registry.yaml",
+    ".ai-team/catalog.yaml",
 )
 
 LEGACY_VERSION_REL = Path(".ai-team/framework-version.json")

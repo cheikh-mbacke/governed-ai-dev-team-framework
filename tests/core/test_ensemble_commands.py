@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -147,6 +148,13 @@ def test_register_ensemble_and_two_members_updates_catalog(
     assert catalog["ensembles"] == [
         {"id": "boutique", "status": "registered", "members": ["backend", "frontend"]}
     ]
+    backend_link = json.loads((backend / ".ai-team" / "member-link.json").read_text(encoding="utf-8"))
+    assert backend_link["member_id"] == "backend"
+    assert backend_link["ensemble_id"] == "boutique"
+    assert backend_link["instance_path"] == str(instance_workspace.root)
+    agents = (backend / "AGENTS.md").read_text(encoding="utf-8")
+    assert "governed-ai-member:start" in agents
+    assert str(instance_workspace.root) in agents
 
 
 def test_non_git_and_instance_path_are_rejected(
@@ -341,3 +349,36 @@ def test_register_ensemble_rejected_on_framework_source(tmp_path: Path) -> None:
     assert code != 0
     assert receipt["errors"][0]["code"] == ErrorCode.UNSUPPORTED_CONTRACT.value
     assert not (workspace.ensembles_root / "boutique" / "members.yaml").exists()
+
+
+def test_gateway_refuses_client_cycle_discovered_from_member(
+    instance_workspace: Workspace, tmp_path: Path
+) -> None:
+    backend = _repository(tmp_path / "boutique-api", "api.py", "print(1)\n")
+    _register_ensemble(instance_workspace, "boutique", "CMD-ens-cwd")
+    receipt, code = _execute(
+        instance_workspace,
+        _envelope(
+            "RegisterMember",
+            target={"kind": "ensemble", "id": "boutique", "expected_revision": 1},
+            payload={"id": "backend", "kind": "service", "path": str(backend)},
+            command_id="CMD-mem-cwd",
+        ),
+    )
+    assert code == 0, receipt
+    discovered = Workspace.discover(backend)
+    assert discovered.root == instance_workspace.root
+    assert discovered.discovered_member_id == "backend"
+    receipt, code = _execute(
+        discovered,
+        _envelope(
+            "RegisterEnsemble",
+            target={"kind": "ensemble", "id": "intranet"},
+            payload={"id": "intranet"},
+            command_id="CMD-ens-from-member",
+        ),
+    )
+    assert code != 0
+    assert receipt["errors"][0]["code"] == ErrorCode.UNSUPPORTED_CONTRACT.value
+    assert str(instance_workspace.root) in receipt["errors"][0]["message"]
+    assert not (instance_workspace.ensembles_root / "intranet" / "members.yaml").exists()

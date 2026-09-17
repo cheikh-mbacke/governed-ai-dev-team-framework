@@ -527,6 +527,7 @@
     "src/governed_ai/core/execution_gateway/validation.py": "core",
     "src/governed_ai/core/execution_gateway/verification.py": "core",
     "src/governed_ai/core/fabrication_overlay.py": "core",
+    "src/governed_ai/core/member_overlay.py": "core",
     "src/governed_ai/core/orchestrator/__init__.py": "core",
     "src/governed_ai/core/orchestrator/boundary.py": "core",
     "src/governed_ai/core/orchestrator/context_package.py": "core",
