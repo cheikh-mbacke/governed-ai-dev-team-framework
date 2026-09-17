@@ -57,6 +57,7 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/catalog.yaml",
     ".ai-team/ensembles/*",
     ".ai-team/member-link.json",
+    ".ai-team/active-ensemble.yaml",
     ".ai-team/runs/*",
     ".ai-team/runs/leases/*",
     ".ai-team/runs/execution-attempts/*",

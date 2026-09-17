@@ -14,6 +14,7 @@ PAYLOAD_AI_TEAM_REL = Path("distribution") / "payload" / ".ai-team"
 CATALOG_REL = Path("catalog.yaml")
 ENSEMBLES_DIR_NAME = "ensembles"
 MEMBERS_FILE_NAME = "members.yaml"
+ACTIVE_ENSEMBLE_FILE = "active-ensemble.yaml"
 
 
 class WorkspaceError(RuntimeError):
@@ -105,7 +106,11 @@ class Workspace:
 
     @classmethod
     def from_root(cls, root: Path | str) -> Workspace:
-        return cls(root=Path(root).resolve())
+        resolved = Path(root).resolve()
+        return cls(
+            root=resolved,
+            active_ensemble_id=_read_active_ensemble_id(resolved / AI_TEAM_DIR_NAME),
+        )
 
     @classmethod
     def discover(cls, start: Path | str) -> Workspace:
@@ -124,7 +129,10 @@ class Workspace:
             if link_path.is_file():
                 return cls._from_member_link(link_path, current)
             if (current / AI_TEAM_DIR_NAME).is_dir():
-                return cls(root=current)
+                return cls(
+                    root=current,
+                    active_ensemble_id=_read_active_ensemble_id(current / AI_TEAM_DIR_NAME),
+                )
             parent = current.parent
             if parent == current:
                 msg = (
@@ -169,6 +177,26 @@ class Workspace:
             active_ensemble_id=ensemble_id,
             discovered_member_id=member_id,
         )
+
+
+def _read_active_ensemble_id(ai_team: Path) -> str | None:
+    path = ai_team / ACTIVE_ENSEMBLE_FILE
+    if not path.is_file():
+        return None
+    try:
+        import yaml
+    except ModuleNotFoundError:
+        return None
+    try:
+        document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return None
+    if not isinstance(document, dict):
+        return None
+    value = document.get("ensemble_id")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
 
 
 def _member_entry(members_path: Path, member_id: str) -> dict[str, Any]:

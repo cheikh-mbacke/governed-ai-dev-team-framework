@@ -136,6 +136,7 @@ def classify_owner(path: str) -> str:
         ".ai-team/catalog.yaml",
         ".ai-team/ensembles/",
         ".ai-team/member-link.json",
+        ".ai-team/active-ensemble.yaml",
         ".ai-team/migration-backups/",
     )
     for prefix in project_prefixes:

@@ -8,6 +8,21 @@ from governed_ai.core.commands.handlers.create_decision_request import (
     handle_create_decision_request,
 )
 from governed_ai.core.commands.handlers.create_work_unit import handle_create_work_unit
+from governed_ai.core.commands.handlers.design_authority import (
+    handle_bind_design_to_work_unit,
+    handle_compile_design_contract,
+    handle_create_design_reference_set,
+    handle_reconcile_design_revision,
+    handle_record_visual_conformance,
+    handle_register_design_artifact,
+    handle_set_design_artifact_authority,
+)
+from governed_ai.core.commands.handlers.ensemble import (
+    handle_pin_composition,
+    handle_register_ensemble,
+    handle_register_member,
+    handle_set_active_ensemble,
+)
 from governed_ai.core.commands.handlers.escalate_work_unit_risk import (
     handle_escalate_work_unit_risk,
 )
@@ -64,15 +79,6 @@ from governed_ai.core.commands.handlers.transition_work_unit import handle_trans
 from governed_ai.core.commands.handlers.update_project_profile import (
     handle_update_project_profile,
 )
-from governed_ai.core.commands.handlers.design_authority import (
-    handle_bind_design_to_work_unit,
-    handle_compile_design_contract,
-    handle_create_design_reference_set,
-    handle_reconcile_design_revision,
-    handle_record_visual_conformance,
-    handle_register_design_artifact,
-    handle_set_design_artifact_authority,
-)
 from governed_ai.core.commands.handlers.write_checkpoint import handle_write_checkpoint
 
 HANDLERS = {
@@ -109,6 +115,10 @@ HANDLERS = {
     "RegisterMissionArtifact": handle_register_mission_artifact,
     "RecordMissionArtifactChallenge": handle_record_mission_artifact_challenge,
     "UpdateProjectProfile": handle_update_project_profile,
+    "RegisterEnsemble": handle_register_ensemble,
+    "RegisterMember": handle_register_member,
+    "PinComposition": handle_pin_composition,
+    "SetActiveEnsemble": handle_set_active_ensemble,
     "RegisterDesignArtifact": handle_register_design_artifact,
     "SetDesignArtifactAuthority": handle_set_design_artifact_authority,
     "CreateDesignReferenceSet": handle_create_design_reference_set,
