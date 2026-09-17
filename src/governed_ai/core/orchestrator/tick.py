@@ -1429,7 +1429,11 @@ def run_scheduling_tick(
                 details={"errors": start_receipt.get("errors")},
             )
 
-        execution_root = workspace.root
+        execution_root = workspace.member_root(
+            wu_document.get("member_id")
+            if isinstance(wu_document.get("member_id"), str)
+            else None
+        )
         try:
             descriptor = adapter.describe()
         except (AttributeError, NotImplementedError):
@@ -1502,13 +1506,15 @@ def run_scheduling_tick(
                     run_document.get("recovery_start_shas_by_work_unit") or {}
                 )
                 execution_root = ensure_work_unit_worktree(
-                    workspace.root,
+                    execution_root,
                     run_id,
                     work_unit_id,
                     start_sha=(
                         recovery_start_shas.get(work_unit_id)
                         or _checkpoint_start_sha(workspace, work_unit_id)
                     ),
+                    worktree_home=workspace.instance_root,
+                    ensemble_id=workspace.active_ensemble_id,
                 )
             except GitWorkspaceError as exc:
                 failed_receipt, failed_exit = gateway.execute_command(
