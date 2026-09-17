@@ -9,12 +9,20 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+from governed_ai.adapters.common.project_profile import (
+    load_project_profile_yaml,
+    minimal_project_profile,
+)
+
 from .compile import compile_manifest
 from .parity import resolve_bundle_dir
 
 
 def _ensure_import_paths(source_root: Path, target: Path | None = None) -> None:
-    from distribution.installer.paths import adapter_compiler_import_root, is_installed_runtime_layout
+    from distribution.installer.paths import (
+        adapter_compiler_import_root,
+        is_installed_runtime_layout,
+    )
 
     root = source_root.resolve()
     import_root = adapter_compiler_import_root(root, target)
@@ -30,37 +38,6 @@ def _templates_root(source_root: Path, target: Path | None = None) -> Path:
     from distribution.installer.paths import adapter_templates_root
 
     return adapter_templates_root(source_root, target)
-
-
-def minimal_project_profile(
-    *,
-    project_id: str = "unknown",
-    primary_language: str = "python",
-    package_manager: str = "pip",
-) -> dict[str, Any]:
-    return {
-        "project_id": project_id,
-        "primary_language": primary_language,
-        "package_manager": package_manager,
-    }
-
-
-def load_project_profile_yaml(profile_path: Path) -> dict[str, Any]:
-    try:
-        import yaml
-    except ModuleNotFoundError:
-        return minimal_project_profile()
-    if not profile_path.is_file():
-        return minimal_project_profile()
-    data = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
-    project = data.get("project") if isinstance(data, dict) else {}
-    if not isinstance(project, dict):
-        project = {}
-    return minimal_project_profile(
-        project_id=str(project.get("id", "unknown")),
-        primary_language=str(project.get("primary_language", "python")),
-        package_manager=str(project.get("package_manager", "pip")),
-    )
 
 
 def compile_cursor_tree(

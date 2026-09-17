@@ -343,6 +343,7 @@ class AgentExecutionGateway:
         worker_id: str | None = None,
         context_package: dict[str, Any] | None = None,
         fence_authoritative_lease: bool = True,
+        role_write_paths: list[str] | None = None,
     ) -> GatewayOutcome:
         """Full transactional cycle: invoke adapter → verify → promote or reject."""
         events: list[dict[str, Any]] = []
@@ -500,6 +501,7 @@ class AgentExecutionGateway:
                 work_unit=work_unit,
                 allowed_paths=grant_allowed_paths,
                 workspace_root=root,
+                role_write_paths=role_write_paths,
             )
             fingerprint = snapshot_workspace_fingerprint(root, files)
 
@@ -572,6 +574,7 @@ class AgentExecutionGateway:
                 work_unit=work_unit,
                 allowed_paths=grant_allowed_paths,
                 workspace_root=root,
+                role_write_paths=role_write_paths,
             )
             assert_fingerprint_unchanged(root, fingerprint)
             if set(rechecked) != set(files):

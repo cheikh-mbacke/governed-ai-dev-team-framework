@@ -298,15 +298,22 @@ def _can_compile_cursor(source_root: Path, target: Path | None = None) -> bool:
         return False
 
 
-def build_update_plan(source_root: Path, target: Path, *, compile_cursor: bool | None = None) -> UpdatePlan:
+def build_update_plan(
+    source_root: Path,
+    target: Path,
+    *,
+    compile_cursor: bool | None = None,
+    active_adapter_id: str | None = None,
+) -> UpdatePlan:
     installed = read_installed_manifest(target)
     new_version = current_version(source_root)
     git_state, dirty_paths = target_git_status(target)
     cursor_compile = (
         _can_compile_cursor(source_root, target) if compile_cursor is None else compile_cursor
     )
+    resolved_adapter_id = active_adapter_id or _active_adapter_id(target)
     entries, managed_files = build_copy_plan(
-        source_root, target, compile_cursor=cursor_compile
+        source_root, target, compile_cursor=cursor_compile, active_adapter_id=resolved_adapter_id
     )
     old_managed = set(installed.get("managed_files") or [])
     obsolete = detect_obsolete_managed(old_managed, set(managed_files))
@@ -606,7 +613,8 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
         print("Post-update validation: PASS")
     else:
         print("WARNING: post-update validation was explicitly skipped.")
-    print("Before Cursor CLI, run: python scripts/ai-team/preflight.py.")
+    if active_adapter == "cursor":
+        print("Before Cursor CLI, run: python scripts/ai-team/preflight.py.")
     return 0
 
 
@@ -665,7 +673,7 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
         )
 
     profile = _yaml_module().safe_load(profile_path.read_text(encoding="utf-8"))
-    profile["active_adapter_id"] = "cursor"
+    profile["active_adapter_id"] = getattr(args, "adapter", None) or "cursor"
     from governed_ai.feedback.constants import (
         DEFAULT_ENROLL_URL,
         DEFAULT_ENROLLMENT_TOKEN,
@@ -801,8 +809,11 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
 
     _ = _yaml
     target.mkdir(parents=True, exist_ok=True)
+    active_adapter = getattr(args, "adapter", None) or "cursor"
 
-    entries, managed_files = build_copy_plan(source_root, target, project_id=args.project_id)
+    entries, managed_files = build_copy_plan(
+        source_root, target, project_id=args.project_id, active_adapter_id=active_adapter
+    )
     seed_destinations = [target / dest_rel for _src_rel, dest_rel in FRESH_PROJECT_SEED_SOURCES]
     copy_destinations = collect_changed_destinations(entries)
     collision_destinations = seed_destinations + copy_destinations
@@ -834,7 +845,7 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
                 project_id=args.project_id,
                 version=version,
                 managed_files=managed_files,
-                active_adapter_id="cursor",
+                active_adapter_id=active_adapter,
                 schema_version=3,
             )
         except Exception as exc:
@@ -845,10 +856,20 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
 
     print(f"Installed governed AI team framework {version} into {target}")
     print("Next:")
-    print("  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)")
-    print("  2. Add and register authoritative product documents")
-    print("  3. Run: python scripts/ai-team/validate.py")
-    print("  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py")
-    print("  5. In Cursor UI or interactive CLI, invoke /reconcile-project")
-    print("  6. After reconciliation is ready, invoke /compile-project")
+    if active_adapter == "cursor":
+        # Exact wording covered by the legacy-0.4 CLI golden fixture
+        # (tests/fixtures/legacy-0.4/cli/install-fresh.json) — do not reword
+        # this branch without regenerating that fixture.
+        print("  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)")
+        print("  2. Add and register authoritative product documents")
+        print("  3. Run: python scripts/ai-team/validate.py")
+        print("  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py")
+        print("  5. In Cursor UI or interactive CLI, invoke /reconcile-project")
+        print("  6. After reconciliation is ready, invoke /compile-project")
+    else:
+        print("  1. Fill .ai-team/project-profile.yaml (or ask the agent: /propose-profile)")
+        print("  2. Add and register authoritative product documents")
+        print("  3. Run: python scripts/ai-team/validate.py")
+        print("  4. Invoke /reconcile-project")
+        print("  5. After reconciliation is ready, invoke /compile-project")
     return 0

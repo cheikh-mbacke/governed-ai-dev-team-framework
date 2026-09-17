@@ -1,4 +1,4 @@
-"""Document 11 §5 rule 1 / Document 14 §12: Core must not import Cursor or Distribution."""
+"""Document 11 §5 rule 1 / Document 14 §12: Core must not import an Adaptateur or Distribution."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures"
 FORBIDDEN_MODULE_PREFIXES = (
     "adapters.cursor",
     "governed_ai.adapters.cursor",
+    "adapters.claude_code",
+    "governed_ai.adapters.claude_code",
     "distribution",
     "governed_ai.distribution",
 )
@@ -62,7 +64,8 @@ def find_forbidden_imports(root: Path) -> list[str]:
 def test_core_does_not_import_adapters_cursor_or_distribution() -> None:
     violations = find_forbidden_imports(CORE_ROOT)
     assert violations == [], (
-        "Core must not import adapters.cursor or distribution:\n" + "\n".join(violations)
+        "Core must not import an Adaptateur (cursor, claude_code) or distribution:\n"
+        + "\n".join(violations)
     )
 
 

@@ -8,7 +8,9 @@ import json
 import sys
 from pathlib import Path
 
-VALID_OWNERS = frozenset({"core", "adapter:cursor", "distribution", "project"})
+VALID_OWNERS = frozenset(
+    {"core", "adapter:cursor", "adapter:claude-code", "distribution", "project"}
+)
 
 SCOPE_DIRS = (
     "tests/fixtures",
@@ -18,6 +20,7 @@ SCOPE_DIRS = (
     "scripts",
     "tools",
     "adapters/cursor",
+    "adapters/claude_code",
     "src",
 )
 SCOPE_FILES = ("AGENTS.md",)
@@ -41,12 +44,16 @@ def classify_owner(path: str) -> str:
 
     if p.startswith(".ai-team/runtime/governed_ai/adapters/cursor/"):
         return "adapter:cursor"
+    if p.startswith(".ai-team/runtime/governed_ai/adapters/claude_code/"):
+        return "adapter:claude-code"
     if p.startswith(".ai-team/runtime/governed_ai/"):
         return "core"
     if p == ".ai-team/requirements.txt":
         return "core"
     if p.startswith(".cursor/"):
         return "adapter:cursor"
+    if p.startswith(".claude/"):
+        return "adapter:claude-code"
     if p == "tools/install.py":
         return "distribution"
     if p.startswith("tools/"):
@@ -69,6 +76,8 @@ def classify_owner(path: str) -> str:
         return "core"
     if p.startswith("adapters/cursor/"):
         return "adapter:cursor"
+    if p.startswith("adapters/claude_code/"):
+        return "adapter:claude-code"
     if p.startswith("scripts/ai-team/"):
         return "core"
     if p.startswith("tests/fixtures/"):

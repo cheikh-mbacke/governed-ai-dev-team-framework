@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "bundle_version": "1.0.0",
+  "adapter_version": "0.1.0",
+  "documented_differences": [
+    {
+      "kind": "line_endings",
+      "paths": [
+        ".claude/hooks/run_hook.cmd"
+      ],
+      "explanation": "Compiled text artefacts, including .claude/hooks/run_hook.cmd, are stored with LF line endings. Root .gitattributes maps *.cmd to CRLF in the working tree; the compiler normalizes before hash and write."
+    }
+  ],
+  "artifacts": [
+    {
+      "kind": "adapter_file",
+      "path": ".claude/.gitattributes",
+      "sha256": "sha256:39b8621bc56c12be0e05264916679128cebee744d10a50561a7e969c1652836e"
+    },
+    {
+      "kind": "claude_md",
+      "path": ".claude/CLAUDE.md",
+      "sha256": "sha256:f493370b54bef8d43e99a62a6014c6f64c52dedd71963103b604e7ba53ea23ca"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/architect.md",
+      "sha256": "sha256:aa1011f543007dbe641d24994883b647d359e4ef2a4e5dac7fa9f72661fae816"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/auditor.md",
+      "sha256": "sha256:6448697625230c163c7e0d22a3a926f04ea475c276e5a738603895f6986d5fa8"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/backend-developer.md",
+      "sha256": "sha256:d1ece20cf5b25eb3955678d313bc08ad8b1f84b19f0a71511f3ee8fe6b420f3b"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/code-reviewer.md",
+      "sha256": "sha256:c7fb95139633c721e2cc2bedf65bf5fdf6b807b9c7acb7c7d2874d7588d70ee9"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/design-system-steward.md",
+      "sha256": "sha256:5f65ad75714bbf1b2cf2994b0f1652e32ca743529ce64bfa8ec6357c3de895ee"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/frontend-developer.md",
+      "sha256": "sha256:ef3967aaaea73f4fc6fb32be7114302e0cfae4f3f49852fc2d3d076e242ee44b"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/integration-steward.md",
+      "sha256": "sha256:6e29baf62cb4a0d34e0083add874eaf5278dd6b0d6d67ac17e156124049efe99"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/mandate-matcher.md",
+      "sha256": "sha256:fd7322038bed38802834d4119614f44071f4df3a6e55bd31575e0275ad051955"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/product-analyst.md",
+      "sha256": "sha256:a88b96c6bb5ec29f2c10eda052396128e00483dd32db1c9380eb029b0fc59970"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/product-designer.md",
+      "sha256": "sha256:9675cd692c47f3eb4788fde5ae926f2477d2f02a590bde92e5d37dfd6bbc378a"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/qa-test.md",
+      "sha256": "sha256:c9707c2591a68478057dba6586084b69cec5d36adf36880bad5920c47d8f6ee8"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/reconciliation-steward.md",
+      "sha256": "sha256:f90b9838501396829c28d06efd8c69cda236b997b4c60230e72fcbd5f6ac7adc"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/release-agent.md",
+      "sha256": "sha256:86d76c7315b1429030440d093be3d1bc3f428f1a4e18acf4492e76f4ada54fd4"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/requirements-challenger.md",
+      "sha256": "sha256:e7a912cc5a0786237ea8728a82de1f39aa74ada5e4251a4ebd5bef3a6b463683"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/security-reviewer.md",
+      "sha256": "sha256:7e7c6654f441f43aeaec2381d1b2cc0725e03392defb7273ecf031b6f2b7e8b4"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/test-strategist.md",
+      "sha256": "sha256:c57a580e4bbb46f0ad1a11634acf38bb2819129937974cf9e6e235e71c67a707"
+    },
+    {
+      "kind": "agent",
+      "path": ".claude/agents/visual-qa.md",
+      "sha256": "sha256:797af30c38758cb52696ff6a5dbb3fe1c120af9d0245427b4bf0dc0aebe7bf0a"
+    },
+    {
+      "kind": "hook",
+      "path": ".claude/hooks/audit_event.py",
+      "sha256": "sha256:79057419a83f82511355fbd78a7e861f13ef060d395ca102e1dabb79ff531a0f"
+    },
+    {
+      "kind": "hook",
+      "path": ".claude/hooks/backup_push.py",
+      "sha256": "sha256:5350b7579a31625ccde4ce368695ef20192a90f2ec5518c3e26381f443eef396"
+    },
+    {
+      "kind": "hook",
+      "path": ".claude/hooks/guard_shell.py",
+      "sha256": "sha256:86590b801d72a2581143214330d7804a0fec7cf3cb43dc8290e2ce909f70799d"
+    },
+    {
+      "kind": "hook",
+      "path": ".claude/hooks/run_hook.cmd",
+      "sha256": "sha256:e00861cdac3e2a1730365615f7be64493b72867d129a0a780c31c248e556ec47"
+    },
+    {
+      "kind": "hook",
+      "path": ".claude/hooks/session_init.py",
+      "sha256": "sha256:3117e7444006553c56ae9c99e8d6a498b85038a15cf0cd3cd5b7c0c142d6112f"
+    },
+    {
+      "kind": "settings",
+      "path": ".claude/settings.json",
+      "sha256": "sha256:3cb228bc8ad81151811ed49443d226eba20e184c17d44284703d53b5909a0c2f"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/adapt-approved-design/SKILL.md",
+      "sha256": "sha256:ae7c61775f8198b08359d1e202830cfcc02996268f109ff141624d41a6fc19a8"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/audit-release/SKILL.md",
+      "sha256": "sha256:00f42f3c1b166f40618f59d9562523aea3982b61c9ea19bba7684ae6e7537e53"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/build-context/SKILL.md",
+      "sha256": "sha256:aaf3a61cbf072ccf57297df146708b73900b8d73a2b446134ca3cc259e78814d"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/capture-feedback/SKILL.md",
+      "sha256": "sha256:0e09392da7fff85ba5e1cce15d13b97ed679177c052226c9d92c31c88fd9cb29"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/challenge-requirements/SKILL.md",
+      "sha256": "sha256:7f325924852b8a01a8c078a1a86be622f5b8744ecddb7ba6633005ebd2670a21"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/compile-project/SKILL.md",
+      "sha256": "sha256:b3063a063b7c34317e64dc2082f2840132056f9dcf3805faa9e63573e30cce51"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/create-frontend-design/SKILL.md",
+      "sha256": "sha256:d6eb1c49817b2b419f30fa116dc4b02d0441233ae25d1c95f25c67bab4febd5a"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/design-change-reconciliation/SKILL.md",
+      "sha256": "sha256:89b28259b280f649582aaeb511070fca792c0cd7bc4e5ba6c6a4feec52f450d6"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/design-system-integration/SKILL.md",
+      "sha256": "sha256:2a2551948597ccb5706adc5ef49290859eaab54a2f05df10e548d4e1b322fd2a"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/design-verification/SKILL.md",
+      "sha256": "sha256:e266ae2f06892ee125c4ae0792353bb02b72f1ae2c753180689334e8a68e9e00"
+    },
+    {
+      "kind": "adapter_file",
+      "path": ".claude/skills/frontend-design/LICENSE.txt",
+      "sha256": "sha256:0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "kind": "adapter_file",
+      "path": ".claude/skills/frontend-design/NOTICE.md",
+      "sha256": "sha256:23a7b165383f51cca21422dd95eab9466555de0504d0d7f4183bdbf921625f42"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/frontend-design/SKILL.md",
+      "sha256": "sha256:d853732f5649646205e125b4993251d43c36740442d108e281cf8a2f529ffe4e"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/impact-analysis/SKILL.md",
+      "sha256": "sha256:4e616431853c9e63138d9405097dd6aacea3607352897c0863953766b4a835b9"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/implement-approved-design/SKILL.md",
+      "sha256": "sha256:e7ecd5d8928a40db076ee01575442df6f79e7d3fd1a135c6d9008358313b2d7d"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/integrate-work-units/SKILL.md",
+      "sha256": "sha256:90ff23de9841b62047eef57de18bcfdb7e72c58aee344bc9ee2e99a8edda68dd"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/match-mandate/SKILL.md",
+      "sha256": "sha256:30413cf243ceef95fac8baaed101fc53e951282845c6a01b4853282c45401a9d"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/orchestrator/SKILL.md",
+      "sha256": "sha256:4efdcf74a26d81276a92ec9e695771dde2ae3e4fa6fab4940646771853770999"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/prepare-acceptance/SKILL.md",
+      "sha256": "sha256:acb4b7d730986675657683027d493c4b0b67277d9880c46035c310a268ebf2ea"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/propose-profile/SKILL.md",
+      "sha256": "sha256:63486d7cc4e75b132728b78bd39745501d1424382ecb6a7692c8dbbcb60e1ad5"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/reconcile-project/SKILL.md",
+      "sha256": "sha256:38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/verify-work-unit/SKILL.md",
+      "sha256": "sha256:4af0a0c7c1b32c17016004a2b21dfd76bfc1ae6be6e14fc181c4dba699304d3c"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/visual-conformance-review/SKILL.md",
+      "sha256": "sha256:61c6404f86a55f61fdc4f719d7e43ed7ca98bf955acb6152f9b86841f0e3459b"
+    },
+    {
+      "kind": "adapter_file",
+      "path": ".claude/skills/webapp-testing/LICENSE.txt",
+      "sha256": "sha256:0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "kind": "adapter_file",
+      "path": ".claude/skills/webapp-testing/NOTICE.md",
+      "sha256": "sha256:3887cde9e3b11925421eb10d4c3934a2531d26ba8ac9ac62e70f2f4c8a554fca"
+    },
+    {
+      "kind": "skill",
+      "path": ".claude/skills/webapp-testing/SKILL.md",
+      "sha256": "sha256:4bf54100287180b020ff7351c844a0c0172ee5fe29662b3014bd63acedafeef9"
+    }
+  ]
+}

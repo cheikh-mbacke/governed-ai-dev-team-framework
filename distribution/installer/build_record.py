@@ -7,16 +7,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from distribution.installer.hashes import sha256_file
 from distribution.installer.ownership import (
+    OWNER_BY_ADAPTER_ID,
     OWNER_CORE,
-    OWNER_CURSOR,
     OWNER_DISTRIBUTION,
     partition_managed_files,
 )
-from distribution.installer.record import INSTALLATION_RECORD_FILE, LEGACY_VERSION_FILE, normalize_path
-from distribution.installer.hashes import sha256_file
-
-KNOWN_ADAPTER_IDS = frozenset({"cursor"})
+from distribution.installer.record import (
+    INSTALLATION_RECORD_FILE,
+    KNOWN_ADAPTER_IDS,
+    LEGACY_VERSION_FILE,
+    normalize_path,
+)
 
 
 def utc_now_iso() -> str:
@@ -65,14 +68,15 @@ def build_installation_record(
         raise ValueError(f"unknown active_adapter_id: {active_adapter_id}")
 
     distribution_paths = _finalize_distribution_files(buckets[OWNER_DISTRIBUTION])
+    adapter_owner = OWNER_BY_ADAPTER_ID[active_adapter_id]
 
     if schema_version >= 3 and target is not None:
         core_files = _hash_entries(buckets[OWNER_CORE], target)
-        cursor_files = _hash_entries(buckets[OWNER_CURSOR], target)
+        adapter_files = _hash_entries(buckets[adapter_owner], target)
         distribution_files = _hash_entries(distribution_paths, target)
     else:
         core_files = buckets[OWNER_CORE]
-        cursor_files = buckets[OWNER_CURSOR]
+        adapter_files = buckets[adapter_owner]
         distribution_files = distribution_paths
 
     record: dict[str, Any] = {
@@ -85,9 +89,9 @@ def build_installation_record(
         },
         "adapters": [
             {
-                "id": "cursor",
+                "id": active_adapter_id,
                 "version": version,
-                "managed_files": cursor_files,
+                "managed_files": adapter_files,
             }
         ],
         "distribution": {
@@ -165,6 +169,7 @@ def managed_files_union_from_record(record: dict[str, Any]) -> set[str]:
 
 
 from distribution.installer.errors import InstallationValidationError
+
 
 def validate_installation_record(record: dict[str, Any]) -> None:
     adapter_id = str(record.get("active_adapter_id", ""))

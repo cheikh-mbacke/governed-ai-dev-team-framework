@@ -43,8 +43,13 @@ Messages `DEPRECATED` émis sur stderr par les wrappers legacy.
 
 ## Non livré (hors périmètre 0.5.0)
 
-- Adaptateurs **Claude Code** et **Codex CLI** — étude de portabilité du contrat uniquement ; **aucun stub fonctionnel**.
+- Adaptateur **Codex CLI** — étude de portabilité du contrat uniquement ; **aucun stub fonctionnel**.
 - Session Cloud, API publique Internet, synchronisation mobile.
+
+Le périmètre de l'Adaptateur **Claude Code** a été rouvert le 2026-09-15 (ADR-007 amendé,
+Document 11 §1 ; Document 0 §2) : implémentation en cours sous `adapters/claude-code/`,
+non déclarée conforme tant que la suite du Document 14 n'est pas exécutée contre un
+runtime Claude Code réel.
 
 ## Limites à ne pas présenter comme garanties
 

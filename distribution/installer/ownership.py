@@ -16,10 +16,17 @@ from validate_ownership import classify_owner  # noqa: E402
 
 OWNER_CORE = "core"
 OWNER_CURSOR = "adapter:cursor"
+OWNER_CLAUDE_CODE = "adapter:claude-code"
 OWNER_DISTRIBUTION = "distribution"
 OWNER_PROJECT = "project"
 
-V2_OWNER_BUCKETS = frozenset({OWNER_CORE, OWNER_CURSOR, OWNER_DISTRIBUTION})
+V2_OWNER_BUCKETS = frozenset({OWNER_CORE, OWNER_CURSOR, OWNER_CLAUDE_CODE, OWNER_DISTRIBUTION})
+
+# adapter_id -> its Installation Record owner bucket.
+OWNER_BY_ADAPTER_ID = {
+    "cursor": OWNER_CURSOR,
+    "claude-code": OWNER_CLAUDE_CODE,
+}
 
 
 class UnclassifiableManagedFileError(ValueError):
@@ -36,6 +43,8 @@ def classify_managed_file(path: str | Path) -> str:
         return OWNER_CORE
     if normalized.startswith(".ai-team/runtime/governed_ai/adapters/cursor/"):
         return OWNER_CURSOR
+    if normalized.startswith(".ai-team/runtime/governed_ai/adapters/claude_code/"):
+        return OWNER_CLAUDE_CODE
     if normalized.startswith(".ai-team/runtime/governed_ai/"):
         return OWNER_CORE
     # Legacy installed layout (pre-0.7.0) — still classifiable during migration.
@@ -49,6 +58,8 @@ def classify_managed_file(path: str | Path) -> str:
         return OWNER_CORE
     if normalized.startswith("adapters/cursor/"):
         return OWNER_CURSOR
+    if normalized.startswith("adapters/claude_code/"):
+        return OWNER_CLAUDE_CODE
     if normalized == "requirements.txt":
         return OWNER_CORE
     if normalized.startswith(".ai-team/contracts/"):
@@ -70,6 +81,7 @@ def partition_managed_files(paths: list[str]) -> dict[str, list[str]]:
     buckets: dict[str, list[str]] = {
         OWNER_CORE: [],
         OWNER_CURSOR: [],
+        OWNER_CLAUDE_CODE: [],
         OWNER_DISTRIBUTION: [],
     }
     for raw in paths:

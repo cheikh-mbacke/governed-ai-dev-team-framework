@@ -1,0 +1,120 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Edit(**)",
+      "Write(**)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git branch:*)",
+      "Bash(python scripts/ai-team/validate.py:*)",
+      "Bash(python scripts/ai-team/status.py:*)",
+      "Bash(python scripts/ai-team/diagnose.py:*)",
+      "Bash(python scripts/ai-team/preflight.py:*)",
+      "Bash(python scripts/ai-team/check_done.py:*)",
+      "Bash(python scripts/ai-team/propose_allowlist.py:*)",
+      "Bash(python scripts/ai-team/feedback.py:*)",
+      "Bash(python scripts/ai-team/human_feedback.py:*)",
+      "Bash(python scripts/ai-team/notify.py:*)",
+      "Bash(python scripts/ai-team/read_docx.py:*)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(**/.env*)",
+      "Read(**/*.key)",
+      "Read(**/*.pem)",
+      "Edit(.ai-team/constitution/**)",
+      "Write(.ai-team/constitution/**)",
+      "Edit(.claude/settings.json)",
+      "Write(.claude/settings.json)",
+      "Bash(git push:*--force*)",
+      "Bash(git push:*-f*)",
+      "Bash(git reset:*--hard*)",
+      "Bash(git commit:*--amend*)",
+      "Bash(git rebase:*)",
+      "Bash(git branch:*-D*)",
+      "Bash(git branch:*--delete*--force*)",
+      "Bash(rm:-rf*)",
+      "Bash(kubectl apply:*)",
+      "Bash(kubectl delete:*)",
+      "Bash(kubectl patch:*)",
+      "Bash(kubectl replace:*)",
+      "Bash(kubectl scale:*)",
+      "Bash(kubectl rollout:*)",
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/session_init.py"}
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/audit_event.py"},
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/guard_shell.py"}
+        ]
+      },
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/audit_event.py"}
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/audit_event.py"}
+        ]
+      },
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/audit_event.py"}
+        ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/audit_event.py"}
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/audit_event.py"}
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/audit_event.py"},
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/backup_push.py"}
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/run_hook.cmd .claude/hooks/audit_event.py"}
+        ]
+      }
+    ]
+  }
+}

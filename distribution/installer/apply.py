@@ -5,8 +5,13 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
+from distribution.installer.adapter_registry import ADAPTERS
 from distribution.installer.agents_md import write_agents_md
-from distribution.installer.source_files import CopyPlanEntry, materialize_cursor_dir
+from distribution.installer.source_files import CopyPlanEntry, materialize_adapter_dir
+
+_COMPILED_DIR_TO_ADAPTER_ID = {
+    registration.compiled_dir_item: adapter_id for adapter_id, registration in ADAPTERS.items()
+}
 
 
 def apply_copy_entries(
@@ -16,20 +21,23 @@ def apply_copy_entries(
     *,
     project_id: str | None = None,
 ) -> None:
-    cursor_touched = False
+    touched_adapter_id: str | None = None
     for entry in entries:
         if entry.action == "unchanged":
             continue
         if entry.relative.as_posix() == "AGENTS.md":
             write_agents_md(entry.destination, entry.source)
             continue
-        if entry.relative.parts and entry.relative.parts[0] == ".cursor":
-            cursor_touched = True
+        top = entry.relative.parts[0] if entry.relative.parts else None
+        if top in _COMPILED_DIR_TO_ADAPTER_ID:
+            touched_adapter_id = _COMPILED_DIR_TO_ADAPTER_ID[top]
             continue
         entry.destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(entry.source, entry.destination)
-    if cursor_touched:
-        materialize_cursor_dir(source_root, target, project_id=project_id)
+    if touched_adapter_id is not None:
+        materialize_adapter_dir(
+            source_root, target, project_id, active_adapter_id=touched_adapter_id
+        )
 
 
 def collect_changed_destinations(entries: list[CopyPlanEntry]) -> list[Path]:

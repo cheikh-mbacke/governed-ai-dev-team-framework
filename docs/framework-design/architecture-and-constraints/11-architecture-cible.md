@@ -1,6 +1,6 @@
 # Document 11 — Spécification technique : architecture cible
 
-**Statut** : version 1.1 — normative pour la refonte (audit technique indépendant du 28 août 2026 appliqué : précision failpoint §7.3). Les termes **DOIT**, **NE DOIT PAS**, **DEVRAIT** et **PEUT** expriment respectivement une obligation, une interdiction, une recommandation forte et une option.
+**Statut** : version 1.2 — normative pour la refonte (audit technique indépendant du 28 août 2026 appliqué : précision failpoint §7.3 ; ADR-007 amendé le 15 septembre 2026 pour ouvrir le périmètre à l'Adaptateur Claude Code, voir Document 0 §2). Les termes **DOIT**, **NE DOIT PAS**, **DEVRAIT** et **PEUT** expriment respectivement une obligation, une interdiction, une recommandation forte et une option.
 
 ## 1. Décisions structurantes
 
@@ -12,7 +12,7 @@
 | ADR-004 | La persistance reste YAML/JSON lisible par l’humain. | Une unité de travail fichier + verrou + journal de transaction assure validation, récupération et idempotence. |
 | ADR-005 | Rôles et Procédures sont publiés dans un bundle atomique versionné. | L’Adaptateur compile une révision exacte ; les références croisées sont vérifiées avant publication. |
 | ADR-006 | La sortie native d’un agent est opérationnelle, non autoritaire. | Un `RuntimeResult` réussi ne déclenche aucune transition sans commande noyau valide. |
-| ADR-007 | L’Adaptateur Cursor est le seul Adaptateur livré par cette refonte. | Claude Code et Codex ne sont utilisés que comme contrôles de portabilité du contrat. |
+| ADR-007 | *(amendé 2026-09-15)* Les Adaptateurs Cursor et Claude Code sont livrés par cette refonte. | Codex reste utilisé uniquement comme contrôle de portabilité du contrat ; aucun stub fonctionnel Codex n’est livré. L’Adaptateur Claude Code suit les mêmes obligations (§4 du Document 3) et n’est déclaré conforme qu’après passage de la suite du Document 14. |
 | ADR-008 | Session Cloud reste hors périmètre. | Aucun compte distant, synchronisation mobile ou surface Session Cloud n’est ajouté. |
 | ADR-009 | Remontée Feedback liée à l’usage. | **Installer ou utiliser le framework vaut acceptation.** Le choix de l’adoptant est d’utiliser le framework ou de ne pas l’utiliser — pas un mode « privacy » intermédiaire. Sous `telemetry.collection: consented_share` (défaut à l’install), le projet **DOIT** transmettre un Feedback Export **complet** (y compris `project_id`, texte libre, exécutions) vers `https://feedback.agenteam.fr/v1/feedback-exports` (défaut produit ; surcharge possible via `telemetry.submit_url` / env) avec **HMAC-SHA256-V1** et les secrets d’install (`.ai-team/secrets/feedback-ingest.json`, émis à l’enrollment). Sans anonymisation, sans niveau `structured` imposé et sans `human_authorization` par export. L’outbox locale ne sert qu’aux échecs réseau / secrets absents. Seul `collection: disabled` coupe la remontée (cas exceptionnel hors ligne). Ce canal unidirectionnel n’est **pas** Session Cloud. |
 
@@ -29,13 +29,21 @@
 └───────────────┬───────────────────────────┬─────────────┘
                 │ Adapter SPI               │ read model
                 ▼                           ▼
-┌──────────────────────────────┐   ┌──────────────────────┐
-│ CURSOR ADAPTER               │   │ FEEDBACK             │
-│ compiler │ launcher │ mapper │   │ observations/reports │
-└───────────────┬──────────────┘   └──────────────────────┘
+┌───────────────────────────────┐  ┌──────────────────────┐
+│ CURSOR ADAPTER                │  │ FEEDBACK             │
+│ compiler │ launcher │ mapper  │  │ observations/reports │
+└───────────────┬───────────────┘  └──────────────────────┘
                 │ native artifacts
                 ▼
              CURSOR
+
+┌───────────────────────────────┐
+│ CLAUDE CODE ADAPTER            │
+│ compiler │ launcher │ mapper  │
+└───────────────┬───────────────┘
+                │ native artifacts
+                ▼
+           CLAUDE CODE
 
 ┌─────────────────────────────────────────────────────────┐
 │ DISTRIBUTION                                            │
@@ -43,7 +51,7 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
-Feedback est un module du déploiement du noyau mais conserve son modèle et ses commandes propres. Distribution dépend des manifestes publiés par Core et Cursor ; ni Core ni Cursor ne dépendent de Distribution.
+Feedback est un module du déploiement du noyau mais conserve son modèle et ses commandes propres. Distribution dépend des manifestes publiés par Core et par chaque Adaptateur livré ; ni Core ni un Adaptateur ne dépendent de Distribution. Les Adaptateurs livrés ne dépendent pas l’un de l’autre.
 
 ## 3. Arborescence source cible
 
@@ -63,11 +71,21 @@ src/governed_ai/
     compatibility.py
   adapters/
     spi.py               # interfaces agnostiques
+    common/              # utilitaires partagés par les Adaptateurs livrés (hash, garde
+                          # d'autorité, persistance RuntimeResult) — agnostiques de tout outil
+    cursor/              # implémentation SPI (CursorAdapter), pont vers adapters/cursor/
+    claude_code/         # implémentation SPI (ClaudeCodeAdapter), pont vers adapters/claude_code/
 adapters/cursor/
   manifest.json
   compiler/              # bundle → fichiers Cursor
   templates/
     .cursor/
+  runtime/               # collecte RuntimeResult, diagnostics
+adapters/claude_code/
+  manifest.json
+  compiler/              # bundle → fichiers Claude Code
+  templates/
+    .claude/
   runtime/               # collecte RuntimeResult, diagnostics
 distribution/
   installer/
@@ -83,6 +101,12 @@ tests/
 ```
 
 `scripts/ai-team/` ne contient plus de logique métier : uniquement des points d’entrée stables vers les modules testables.
+
+L’identifiant d’Adaptateur (`adapter_id`, ex. `"claude-code"`) est une chaîne produit et
+n’a pas à être un identifiant Python valide. Le chemin de paquet correspondant (ex.
+`adapters/claude_code/`, `governed_ai.adapters.claude_code`) utilise le trait de
+soulignement lorsque l’identifiant produit contient un trait d’union, pour rester
+importable.
 
 ## 4. Arborescence installée cible
 
@@ -102,20 +126,21 @@ tests/
   .transactions/               # récupération technique, ignoré par Git
   locks/                        # verrous techniques, ignoré par Git
   installation-record.json     # distribution-managed
-.cursor/                        # adapter:cursor-managed
+.cursor/                        # adapter:cursor-managed, si actif
+.claude/                        # adapter:claude-code-managed, si actif
 scripts/ai-team/*.py            # wrappers core/distribution-managed
 AGENTS.md                       # core-managed, agnostique
 ```
 
-Chaque chemin DOIT avoir un propriétaire unique dans `installation-record.json` : `core`, `adapter:cursor`, `distribution` ou `project`. Les données runtime sont `project` et ne sont jamais écrasées par une mise à jour.
+Chaque chemin DOIT avoir un propriétaire unique dans `installation-record.json` : `core`, `adapter:cursor`, `adapter:claude-code`, `distribution` ou `project`. Les données runtime sont `project` et ne sont jamais écrasées par une mise à jour. Un projet installé active l’un ou l’autre Adaptateur via `active_adapter_id` dans `.ai-team/project-profile.yaml` (Document 12 §3) ; les deux ne sont pas nécessairement co-installés.
 
 ## 5. Règles de dépendance
 
-1. `core` NE DOIT PAS importer `adapters.cursor` ou `distribution`.
+1. `core` NE DOIT PAS importer `adapters.cursor`, `adapters.claude_code` ou `distribution`.
 2. `feedback` PEUT importer les identifiants et interfaces de lecture de `core`, jamais ses repositories concrets.
-3. `adapters.cursor` dépend seulement de `contracts` et du SPI d’Adaptateur.
+3. `adapters.cursor` et `adapters.claude_code` dépendent seulement de `contracts`, du SPI d’Adaptateur et des utilitaires partagés sous `governed_ai.adapters.common` ; ils ne dépendent pas l’un de l’autre.
 4. `distribution` lit les manifestes de composants ; il n’importe aucune règle de domaine.
-5. Les fichiers sous `.cursor/` NE DOIVENT PAS être référencés par les schémas ou politiques du noyau.
+5. Les fichiers sous `.cursor/` ou `.claude/` NE DOIVENT PAS être référencés par les schémas ou politiques du noyau.
 6. Les migrations d’état projet utilisent une API de migration dédiée ; elles NE DOIVENT PAS appeler des handlers runtime avec une fausse identité humaine.
 
 Un test d’architecture inspecte les imports Python et les références textuelles interdites.

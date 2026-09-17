@@ -1578,6 +1578,9 @@ def run_scheduling_tick(
             ),
             "work_unit_id": work_unit_id,
             "requested_at": now.isoformat(),
+            # Pre-compile placeholder (raw WU include). SpiCompatibleAdapter
+            # overwrites this with contract.effective_scope before the
+            # Adaptateur sees the request (Document 12 §2.2).
             "resolved_scope": (wu_document.get("scope") or {}).get("include", []),
             "execution_workspace": str(execution_root),
             "work_unit_snapshot": wu_document,

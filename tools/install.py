@@ -27,6 +27,16 @@ def parse_args():
     parser.add_argument("--project-id")
     parser.add_argument("--project-name")
     parser.add_argument(
+        "--adapter",
+        choices=["cursor", "claude-code"],
+        default=None,
+        help=(
+            "Fresh install only: which Adaptateur to compile and activate "
+            "(default: cursor). Not declared conformant yet for claude-code "
+            "(Document 0 §2, Document 11 ADR-007) — see Document 3."
+        ),
+    )
+    parser.add_argument(
         "--assessment-report",
         help=(
             "Fresh install: path to JSON report from tools/assess.py with verdict "
@@ -98,6 +108,11 @@ def parse_args():
         parser.error("--project-id and --project-name are required for a fresh install")
     if args.update and (args.assessment_report or args.skip_assessment_gate):
         parser.error("--assessment-report and --skip-assessment-gate apply only to fresh install")
+    if args.update and args.adapter is not None:
+        parser.error(
+            "--adapter applies only to fresh install; an --update always keeps the "
+            "target's already-installed Adaptateur"
+        )
     return args
 
 
