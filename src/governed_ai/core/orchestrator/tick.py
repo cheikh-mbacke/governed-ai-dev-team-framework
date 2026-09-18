@@ -49,6 +49,11 @@ from governed_ai.core.orchestrator.context_package import (
     completeness_error,
     evaluate_context_package_completeness,
 )
+from governed_ai.core.ensemble_workspace import (
+    apply_member_execution_fields,
+    product_work_unit_missing_member_id,
+    work_unit_member_id,
+)
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
     changed_files,
@@ -1429,11 +1434,9 @@ def run_scheduling_tick(
                 details={"errors": start_receipt.get("errors")},
             )
 
-        execution_root = workspace.member_root(
-            wu_document.get("member_id")
-            if isinstance(wu_document.get("member_id"), str)
-            else None
-        )
+        execution_member_id = work_unit_member_id(wu_document)
+        member_missing = product_work_unit_missing_member_id(workspace, wu_document)
+        execution_root = workspace.member_root(execution_member_id)
         try:
             descriptor = adapter.describe()
         except (AttributeError, NotImplementedError):
@@ -1500,7 +1503,7 @@ def run_scheduling_tick(
                     "errors": stop_receipt.get("errors"),
                 },
             )
-        if isolated_worktree:
+        if isolated_worktree and not member_missing:
             try:
                 recovery_start_shas = (
                     run_document.get("recovery_start_shas_by_work_unit") or {}
@@ -1608,6 +1611,7 @@ def run_scheduling_tick(
                 ),
             ),
         }
+        apply_member_execution_fields(workspace, wu_document, spi_request)
         if base_sha is not None:
             spi_request["base_sha"] = base_sha
         # Keep ``request`` alias for downstream RecordExecutionAttempt payloads.
@@ -1618,7 +1622,20 @@ def run_scheduling_tick(
         gateway_accepted = False
         boundary_stop_condition: str | None = None
         boundary_error: str | None = None
-        if context_error:
+        if member_missing:
+            result = {
+                "status": "blocked",
+                "summary": (
+                    "member_id is required to execute a product Work Unit when "
+                    "the ensemble has two or more members"
+                ),
+                "checks": [],
+                "artifacts": [],
+                "requested_commands": [],
+                "usage": {},
+                "limitations": ["missing_member_id"],
+            }
+        elif context_error:
             result = {
                 "status": "blocked",
                 "summary": context_error,
