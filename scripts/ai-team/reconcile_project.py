@@ -11,23 +11,20 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
 
-ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 from install_paths import bootstrap_runtime
 
-bootstrap_runtime(ROOT)
+bootstrap_runtime(_REPO_ROOT)
 
 from governed_ai.core.commands.errors import GatewayError, exit_code_for
 from governed_ai.core.reconciliation import (
-    REPORT_RELATIVE_PATH,
+    fingerprint_ensemble,
     fingerprint_project,
-    load_report,
     new_report,
     semantic_issues,
 )
 from governed_ai.core.workspace import Workspace
 from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
-
-SCHEMA_PATH = ROOT / ".ai-team" / "schemas" / "reconciliation.schema.json"
 
 
 def _now() -> str:
@@ -43,14 +40,19 @@ def _emit(payload: dict, *, as_json: bool) -> None:
         print(f"- {issue}")
 
 
-def _project_id() -> str:
-    profile_path = ROOT / ".ai-team" / "project-profile.yaml"
-    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
+def _project_id(workspace: Workspace) -> str:
+    if workspace.active_ensemble_id:
+        return workspace.active_ensemble_id
+    profile = yaml.safe_load(workspace.profile_path.read_text(encoding="utf-8")) or {}
     return str((profile.get("project") or {}).get("id") or profile.get("project_id") or "project")
 
 
-def _write_report(report: dict) -> Path:
-    path = ROOT / REPORT_RELATIVE_PATH
+def _report_path(workspace: Workspace) -> Path:
+    return workspace.reconciliation_report_path
+
+
+def _write_report(workspace: Workspace, report: dict) -> Path:
+    path = _report_path(workspace)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         yaml.safe_dump(report, sort_keys=False, allow_unicode=True),
@@ -59,8 +61,9 @@ def _write_report(report: dict) -> Path:
     return path
 
 
-def _schema_issues(report: dict) -> list[str]:
-    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+def _schema_issues(workspace: Workspace, report: dict) -> list[str]:
+    schema_path = workspace.ai_team / "schemas" / "reconciliation.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
     errors = sorted(Draft202012Validator(schema).iter_errors(report), key=lambda e: list(e.path))
     return [
         f"{'/'.join(str(part) for part in error.path) or '<root>'}: {error.message}"
@@ -68,24 +71,32 @@ def _schema_issues(report: dict) -> list[str]:
     ]
 
 
-def init_report(force: bool, as_json: bool) -> int:
-    path = ROOT / REPORT_RELATIVE_PATH
+def _load_report(workspace: Workspace) -> dict:
+    path = _report_path(workspace)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path.as_posix()} root must be an object")
+    return payload
+
+
+def init_report(workspace: Workspace, force: bool, as_json: bool) -> int:
+    path = _report_path(workspace)
     if path.exists() and not force:
         _emit(
             {
                 "status": "exists",
-                "summary": f"Reconciliation report already exists: {REPORT_RELATIVE_PATH.as_posix()}",
+                "summary": f"Reconciliation report already exists: {path.as_posix()}",
                 "issues": ["Use --force only to intentionally replace the draft."],
             },
             as_json=as_json,
         )
         return 2
-    report = new_report(_project_id(), ROOT, _now())
-    _write_report(report)
+    report = new_report(_project_id(workspace), workspace.root, _now(), workspace=workspace)
+    _write_report(workspace, report)
     _emit(
         {
             "status": "draft",
-            "summary": f"Created reconciliation draft: {REPORT_RELATIVE_PATH.as_posix()}",
+            "summary": f"Created reconciliation draft: {path.as_posix()}",
             "inventory_entries": len(report["inventory"]["entries"]),
             "issues": [],
         },
@@ -94,19 +105,19 @@ def init_report(force: bool, as_json: bool) -> int:
     return 0
 
 
-def finalize_report(as_json: bool) -> int:
+def finalize_report(workspace: Workspace, as_json: bool) -> int:
     try:
-        report = load_report(ROOT)
+        report = _load_report(workspace)
     except (OSError, ValueError, yaml.YAMLError) as exc:
         _emit(
             {"status": "blocked", "summary": "Cannot load reconciliation report.", "issues": [str(exc)]},
             as_json=as_json,
         )
         return 2
-    issues = _schema_issues(report)
+    issues = _schema_issues(workspace, report)
     if report.get("status") not in {"approved", "applying"}:
         issues.append("status must be 'approved' or 'applying' before finalization")
-    issues.extend(semantic_issues(report, root=ROOT))
+    issues.extend(semantic_issues(report, root=workspace.root, workspace=workspace))
     if issues:
         _emit(
             {"status": "blocked", "summary": "Reconciliation cannot be finalized.", "issues": issues},
@@ -114,10 +125,19 @@ def finalize_report(as_json: bool) -> int:
         )
         return 1
 
-    fingerprint = fingerprint_project(ROOT)
+    if workspace.declared_members():
+        fingerprint, member_prints = fingerprint_ensemble(workspace)
+        baseline = {**fingerprint.as_dict(), "verified_at": _now()}
+        baseline["members"] = {
+            member_id: {"digest": item.digest, "file_count": item.file_count}
+            for member_id, item in member_prints.items()
+        }
+    else:
+        fingerprint = fingerprint_project(workspace.root)
+        baseline = {**fingerprint.as_dict(), "verified_at": _now()}
     report["status"] = "ready"
-    report["baseline"] = {**fingerprint.as_dict(), "verified_at": _now()}
-    _write_report(report)
+    report["baseline"] = baseline
+    _write_report(workspace, report)
     _emit(
         {
             "status": "ready",
@@ -130,8 +150,8 @@ def finalize_report(as_json: bool) -> int:
     return 0
 
 
-def check_report(as_json: bool) -> int:
-    path = ROOT / REPORT_RELATIVE_PATH
+def check_report(workspace: Workspace, as_json: bool) -> int:
+    path = _report_path(workspace)
     if not path.is_file():
         _emit(
             {
@@ -143,16 +163,22 @@ def check_report(as_json: bool) -> int:
         )
         return 1
     try:
-        report = load_report(ROOT)
+        report = _load_report(workspace)
     except (OSError, ValueError, yaml.YAMLError) as exc:
         _emit(
             {"status": "invalid", "summary": "Invalid reconciliation report.", "issues": [str(exc)]},
             as_json=as_json,
         )
         return 1
-    issues = _schema_issues(report)
+    issues = _schema_issues(workspace, report)
     issues.extend(
-        semantic_issues(report, root=ROOT, require_ready=True, verify_fingerprint=True)
+        semantic_issues(
+            report,
+            root=workspace.root,
+            workspace=workspace,
+            require_ready=True,
+            verify_fingerprint=True,
+        )
     )
     payload = {
         "status": "ready" if not issues else "blocked",
@@ -178,16 +204,17 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        ensure_client_cycle_allowed(Workspace.from_root(ROOT))
+        workspace = Workspace.discover(Path.cwd())
+        ensure_client_cycle_allowed(workspace)
     except GatewayError as exc:
         print(exc.message)
         return exit_code_for(exc.code)
 
     if args.command == "init":
-        return init_report(args.force, args.json)
+        return init_report(workspace, args.force, args.json)
     if args.command == "finalize":
-        return finalize_report(args.json)
-    return check_report(args.json)
+        return finalize_report(workspace, args.json)
+    return check_report(workspace, args.json)
 
 
 if __name__ == "__main__":

@@ -78,7 +78,19 @@
             "algorithm": { "const": "sha256" },
             "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
             "file_count": { "type": "integer", "minimum": 0 },
-            "verified_at": { "type": "string", "minLength": 1 }
+            "verified_at": { "type": "string", "minLength": 1 },
+            "members": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["digest", "file_count"],
+                "properties": {
+                  "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+                  "file_count": { "type": "integer", "minimum": 0 }
+                },
+                "additionalProperties": false
+              }
+            }
           },
           "additionalProperties": false
         }
@@ -102,7 +114,8 @@
       "properties": {
         "path": { "type": "string", "minLength": 1 },
         "kind": { "enum": ["code", "architecture", "test", "data", "dependency", "documentation", "debt", "infrastructure", "other"] },
-        "evidence": { "type": "string", "minLength": 1 }
+        "evidence": { "type": "string", "minLength": 1 },
+        "member_id": { "type": "string", "pattern": "^[a-z][a-z0-9._-]*$" }
       },
       "additionalProperties": false
     },

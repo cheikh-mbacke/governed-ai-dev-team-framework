@@ -76,6 +76,10 @@
       ],
       "pattern": "^[a-z][a-z0-9._-]*$"
     },
+    "kind": {
+      "description": "product writes one member Git; integration must not write product code.",
+      "enum": ["product", "integration"]
+    },
     "zone": {
       "type": "object",
       "required": [

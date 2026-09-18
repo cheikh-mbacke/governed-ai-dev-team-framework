@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
+from governed_ai.core.ensemble_compile import enforce_ensemble_work_unit
 from governed_ai.core.persistence.transaction import Transaction
 
 
@@ -66,6 +67,8 @@ def handle_create_work_unit(
             "initial status must be draft or ready",
             "/payload/status",
         )
+
+    enforce_ensemble_work_unit(workspace_root, document)
 
     validate_against_schema(
         workspace_root.ai_team,

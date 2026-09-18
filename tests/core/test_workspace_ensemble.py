@@ -173,3 +173,25 @@ def test_work_unit_accepts_optional_member_id() -> None:
         "member_id": "frontend",
     }
     Draft202012Validator(schema).validate(payload)
+
+
+def test_work_unit_accepts_integration_kind() -> None:
+    schema = _load_schema("work-unit.schema.json")
+    Draft202012Validator(schema).validate(
+        {
+            "id": "WU-boutique-integration",
+            "title": "boutique integration",
+            "kind": "integration",
+            "objective": {"result": "integrate members without product writes"},
+            "scope": {"include": [], "exclude": ["**"]},
+            "expected_behavior": "no product file is written",
+            "acceptance_criteria": ["no product write"],
+            "dependencies": ["WU-boutique-backend", "WU-boutique-frontend"],
+            "risk": {"class": "medium", "reasons": ["cross-member"]},
+            "required_verification": {"unit_tests": True},
+            "status": "draft",
+            "revision": 1,
+            "created_at": "2026-09-18T00:00:00Z",
+            "updated_at": "2026-09-18T00:00:00Z",
+        }
+    )

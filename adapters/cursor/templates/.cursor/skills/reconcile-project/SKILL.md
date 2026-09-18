@@ -14,13 +14,21 @@ Read `.ai-team/project-profile.yaml` → `project.repository_kind` first.
 When `repository_kind` is `framework_source`, **stop immediately**. This command
 is only for installed client projects.
 
+## Member checkout guard
+
+If `.ai-team/member-link.json` exists here, **stop immediately**. This checkout is
+an Ensemble member. Read `instance_path` from that file and run `/reconcile-project`
+from the instance directory — never from the member Git.
+
 This operation prepares a project for compilation. It does not create Work Units,
 set G1, or run `/compile-project`.
 
 ## Start or resume
 
-1. Run `python scripts/ai-team/reconcile_project.py init` when
-   `.ai-team/reconciliation/baseline.yaml` does not exist.
+1. Run `python scripts/ai-team/reconcile_project.py init` when the report
+   does not exist: `.ai-team/reconciliation/baseline.yaml` (standalone) or
+   `.ai-team/ensembles/<ensemble-id>/reconciliation/baseline.yaml` when an
+   Ensemble is active.
 2. When the report exists, resume it. Never replace it with `--force` unless the
    human explicitly requests a new reconciliation.
 3. Read:
@@ -28,7 +36,9 @@ set G1, or run `/compile-project`.
    - `.ai-team/project-profile.yaml`;
    - `.ai-team/sources/source-registry.yaml`;
    - every registered authoritative product source;
-   - `.ai-team/reconciliation/baseline.yaml`;
+   - the reconciliation report path above;
+   - on an Ensemble: product intent under `docs/product/<ensemble-id>/` on the
+     instance, and each declared member tree as observed reality;
    - repository content as observed reality only.
 
 ## Phase 1 — human material

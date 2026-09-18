@@ -151,6 +151,33 @@ def fingerprint_project(root: Path) -> ProjectFingerprint:
     return ProjectFingerprint("sha256", f"sha256:{digest.hexdigest()}", count)
 
 
+def fingerprint_ensemble(workspace: Any) -> tuple[ProjectFingerprint, dict[str, ProjectFingerprint]]:
+    """Fingerprint the instance plus every declared member tree.
+
+    Standalone (no members file): identical to ``fingerprint_project(workspace.root)``.
+    """
+    members = workspace.declared_members() if hasattr(workspace, "declared_members") else []
+    member_prints: dict[str, ProjectFingerprint] = {}
+    digest = hashlib.sha256()
+    total = 0
+    instance = fingerprint_project(workspace.root)
+    digest.update(b"instance\0")
+    digest.update(instance.digest.encode("utf-8"))
+    total += instance.file_count
+    for entry in members:
+        member_id = entry["id"]
+        member_root = workspace.member_root(member_id)
+        observed = fingerprint_project(member_root)
+        member_prints[member_id] = observed
+        digest.update(member_id.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(observed.digest.encode("utf-8"))
+        total += observed.file_count
+    if not members:
+        return instance, {}
+    return ProjectFingerprint("sha256", f"sha256:{digest.hexdigest()}", total), member_prints
+
+
 def has_application_code(root: Path) -> bool:
     for name in _CODE_ROOTS:
         candidate = root / name
@@ -255,7 +282,31 @@ def _project_id_from_profile(root: Path) -> str | None:
     return str(project_id) if project_id else None
 
 
-def new_report(project_id: str, root: Path, generated_at: str) -> dict[str, Any]:
+def new_report(
+    project_id: str,
+    root: Path,
+    generated_at: str,
+    *,
+    workspace: Any | None = None,
+) -> dict[str, Any]:
+    entries: list[dict[str, str]] = []
+    members = workspace.declared_members() if workspace is not None else []
+    if members:
+        for entry in members:
+            member_id = entry["id"]
+            member_root = workspace.member_root(member_id)
+            for item in discover_inventory(member_root):
+                entries.append(
+                    {
+                        **item,
+                        "path": f"{member_id}:{item['path']}",
+                        "member_id": member_id,
+                    }
+                )
+        for item in discover_inventory(root):
+            entries.append(item)
+    else:
+        entries = discover_inventory(root)
     return {
         "schema_version": 1,
         "project_id": project_id,
@@ -267,7 +318,7 @@ def new_report(project_id: str, root: Path, generated_at: str) -> dict[str, Any]
         },
         "inventory": {
             "generated_at": generated_at,
-            "entries": discover_inventory(root),
+            "entries": entries,
         },
         "convergence": [],
         "decisions": [],
@@ -282,6 +333,7 @@ def semantic_issues(
     root: Path | None = None,
     require_ready: bool = False,
     verify_fingerprint: bool = False,
+    workspace: Any | None = None,
 ) -> list[str]:
     issues: list[str] = []
     status = report.get("status")
@@ -295,12 +347,19 @@ def semantic_issues(
     material = report.get("human_material") or {}
     authoritative_source_ids: set[str] | None = None
     if root is not None:
-        expected_project_id = _project_id_from_profile(root)
-        if expected_project_id is not None and report.get("project_id") != expected_project_id:
-            issues.append(
-                "reconciliation project_id does not match project-profile.yaml "
-                f"({report.get('project_id')!r} != {expected_project_id!r})"
-            )
+        if workspace is not None and workspace.active_ensemble_id:
+            if report.get("project_id") != workspace.active_ensemble_id:
+                issues.append(
+                    "reconciliation project_id does not match the active ensemble "
+                    f"({report.get('project_id')!r} != {workspace.active_ensemble_id!r})"
+                )
+        else:
+            expected_project_id = _project_id_from_profile(root)
+            if expected_project_id is not None and report.get("project_id") != expected_project_id:
+                issues.append(
+                    "reconciliation project_id does not match project-profile.yaml "
+                    f"({report.get('project_id')!r} != {expected_project_id!r})"
+                )
         authoritative_source_ids, source_issues = _authoritative_source_ids(root)
         issues.extend(source_issues)
     for key in REQUIRED_HUMAN_MATERIAL:
@@ -320,10 +379,17 @@ def semantic_issues(
                     + ", ".join(unknown_refs)
                 )
 
-    if root is not None and has_application_code(root):
-        entries = (report.get("inventory") or {}).get("entries") or []
-        if not entries:
-            issues.append("brownfield application code requires a non-empty as-built inventory")
+    if root is not None:
+        brownfield = has_application_code(root)
+        if workspace is not None:
+            for entry in workspace.declared_members():
+                if has_application_code(workspace.member_root(entry["id"])):
+                    brownfield = True
+                    break
+        if brownfield:
+            entries = (report.get("inventory") or {}).get("entries") or []
+            if not entries:
+                issues.append("brownfield application code requires a non-empty as-built inventory")
 
     open_decisions = [
         item.get("id", "<unknown>")
@@ -400,7 +466,32 @@ def semantic_issues(
     if require_ready and not isinstance(baseline, dict):
         issues.append("ready reconciliation needs a baseline fingerprint")
     if verify_fingerprint and isinstance(baseline, dict) and root is not None:
-        observed = fingerprint_project(root)
+        if workspace is not None and workspace.declared_members():
+            observed, member_prints = fingerprint_ensemble(workspace)
+            expected_members = baseline.get("members") or {}
+            if not expected_members:
+                issues.append("ensemble reconciliation baseline is missing per-member fingerprints")
+            for member_id, expected in expected_members.items():
+                actual = member_prints.get(member_id)
+                if actual is None:
+                    issues.append(f"reconciliation baseline member {member_id!r} is no longer declared")
+                    continue
+                if expected.get("digest") != actual.digest:
+                    issues.append(
+                        f"reconciliation baseline is stale: member {member_id!r} content changed"
+                    )
+                if expected.get("file_count") != actual.file_count:
+                    issues.append(
+                        f"reconciliation baseline is stale: member {member_id!r} file count changed"
+                    )
+            missing = sorted(set(member_prints) - set(expected_members))
+            if missing:
+                issues.append(
+                    "reconciliation baseline is stale: undeclared members in fingerprint: "
+                    + ", ".join(missing)
+                )
+        else:
+            observed = fingerprint_project(root)
         if baseline.get("algorithm") != observed.algorithm:
             issues.append("baseline fingerprint algorithm is unsupported or changed")
         if baseline.get("digest") != observed.digest:
@@ -415,6 +506,7 @@ __all__ = [
     "ProjectFingerprint",
     "REPORT_RELATIVE_PATH",
     "discover_inventory",
+    "fingerprint_ensemble",
     "fingerprint_project",
     "has_application_code",
     "iter_project_owned_files",

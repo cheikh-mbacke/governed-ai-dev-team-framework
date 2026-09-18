@@ -104,6 +104,33 @@ class Workspace:
             )
         return resolved
 
+    def declared_members(self) -> list[dict[str, Any]]:
+        """Return ensemble member records, or an empty list in standalone mode."""
+        path = self.ensemble_members_path
+        if path is None or not path.is_file():
+            return []
+        try:
+            import yaml
+        except ModuleNotFoundError as exc:
+            raise WorkspaceError("PyYAML is required to resolve ensemble members") from exc
+        try:
+            document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError) as exc:
+            raise WorkspaceError(f"cannot read ensemble members at {path}: {exc}") from exc
+        if not isinstance(document, dict):
+            raise WorkspaceError(f"ensemble members at {path} must be an object")
+        return [
+            entry
+            for entry in document.get("members") or []
+            if isinstance(entry, dict) and isinstance(entry.get("id"), str)
+        ]
+
+    @property
+    def reconciliation_report_path(self) -> Path:
+        if self.active_ensemble_id and self.ensemble_dir is not None:
+            return self.ensemble_dir / "reconciliation" / "baseline.yaml"
+        return self.root / AI_TEAM_DIR_NAME / "reconciliation" / "baseline.yaml"
+
     @classmethod
     def from_root(cls, root: Path | str) -> Workspace:
         resolved = Path(root).resolve()

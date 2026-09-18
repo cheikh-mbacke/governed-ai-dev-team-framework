@@ -165,7 +165,7 @@
     {
       "kind": "skill",
       "path": ".claude/skills/compile-project/SKILL.md",
-      "sha256": "sha256:b3063a063b7c34317e64dc2082f2840132056f9dcf3805faa9e63573e30cce51"
+      "sha256": "sha256:57f83c9f6eca0813c424791bd9762012d98800edf60a744543db893409419bf2"
     },
     {
       "kind": "skill",
@@ -240,7 +240,7 @@
     {
       "kind": "skill",
       "path": ".claude/skills/reconcile-project/SKILL.md",
-      "sha256": "sha256:38ecfef23a93bf8351d002848ca5ebc7da3f930e1c4d118e954ee4bb686bf47d"
+      "sha256": "sha256:7770ca901dda90bd50ac6a1009f889bb697a2c3a9e2a7299b13d0976ad41ab6d"
     },
     {
       "kind": "skill",

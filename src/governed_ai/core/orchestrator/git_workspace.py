@@ -160,6 +160,27 @@ def _worktree_checkout_path(
     return base / _safe(run_id) / leaf
 
 
+def ensure_detached_worktree(git_root: Path, checkout: Path, sha: str) -> Path:
+    """Create or reuse a detached worktree at ``sha``; git cwd is ``git_root``."""
+    git_root = Path(git_root).resolve()
+    checkout = Path(checkout).resolve()
+    sha = sha.lower()
+    if (checkout / ".git").exists() or (
+        checkout.is_dir() and any(checkout.iterdir())
+    ):
+        try:
+            observed = head_sha(checkout)
+        except GitWorkspaceError:
+            observed = ""
+        if observed == sha:
+            return checkout
+        _run(git_root, ["worktree", "remove", "--force", str(checkout)])
+    checkout.parent.mkdir(parents=True, exist_ok=True)
+    _run(git_root, ["cat-file", "-e", f"{sha}^{{commit}}"])
+    _run(git_root, ["worktree", "add", "--detach", str(checkout), sha])
+    return checkout
+
+
 def ensure_work_unit_worktree(
     project_root: Path,
     run_id: str,
