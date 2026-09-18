@@ -64,7 +64,7 @@ Soit Gate Decision devient un journal append-only fiable avec identifiant unique
 | Révision de composition (cible) | `.ai-team/ensembles/<id>/compositions/CR-*.yaml` — Document 25 |
 | Lien mince membre (cible) | `<membre>/.ai-team/member-link.json` — Document 25 |
 
-En mode **standalone** (0.7.x), les chemins observés ci-dessus restent la racine unique : instance = produit. Les chemins `ensembles/` et le lien mince n’ont pas de writer en v0.7 ; les schémas sont livrés pour la Phase 1 de 0.8.0.
+En mode **standalone** (0.7.x), les chemins observés ci-dessus restent la racine unique : instance = produit (**INS-ADR-008**). En hors-arbre, l’autorité vit sous l’instance ; les membres ne portent que le lien mince (**INS-ADR-005**, **INS-ADR-009**). Les writers Gateway `RegisterEnsemble` / `RegisterMember` / `PinComposition` / `SetActiveEnsemble` et la migration opt-in `tools/migrate_to_instance.py` sont livrés (Document 25 Phases 3–8).
 
 Ces chemins sont des frontières de persistance observées, pas à eux seuls des Repositories DDD. Un Repository doit également offrir les opérations et protéger les invariants de l’Agrégat.
 
@@ -72,8 +72,8 @@ Ces chemins sont des frontières de persistance observées, pas à eux seuls des
 
 - Les dossiers ne contiennent pas d’instances YAML métier dans ce dépôt gabarit ; `.ai-team/logs/cursor-events.jsonl` constitue seulement une trace runtime.
 - Le writer de Decision Request reste à définir.
-- Les transitions, transactions et règles d’immutabilité cibles ne sont pas implémentées.
-- Instance, Ensemble et composition n’ont pas encore de commandes Gateway (Document 25 Phases 3+) ; seuls schémas et résolution `Workspace` existent.
+- Les transitions, transactions et règles d’immutabilité cibles ne sont pas implémentées pour tous les Agrégats candidats.
+- La conformité Cursor réelle L3/L4 hors-arbre (cwd membre) est la Phase 7b, hors définition de « code mergé ».
 
 ## Sources
 

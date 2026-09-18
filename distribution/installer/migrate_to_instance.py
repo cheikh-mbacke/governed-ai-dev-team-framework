@@ -383,6 +383,25 @@ def _write_member_overlay(
         atomic_write_text(agents_path, wrapped)
 
 
+def _write_active_code_workspace(instance: Path) -> Path | None:
+    """Write ``<ensemble-id>.code-workspace`` for the active ensemble (INS-AC-017)."""
+    from governed_ai.core.ensemble_workspace import active_ensemble_folders
+    from governed_ai.core.workspace import Workspace
+
+    workspace = Workspace.from_root(instance)
+    ensemble_id = workspace.active_ensemble_id
+    if not ensemble_id:
+        return None
+    folders = active_ensemble_folders(workspace)
+    document = {
+        "folders": [{"name": item["name"], "path": item["path"]} for item in folders],
+        "settings": {},
+    }
+    path = workspace.instance_root / f"{ensemble_id}.code-workspace"
+    path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 def migrate_in_tree_to_instance(
     *,
     source: Path,
@@ -470,6 +489,8 @@ def migrate_in_tree_to_instance(
         if fail_after == "overlay":
             raise InstanceMigrationError("FAILPOINT", "fail_after=overlay")
 
+        code_workspace = _write_active_code_workspace(plan.instance)
+
         # Persist a zip (short path) under the instance; avoid nested MAX_PATH copies.
         backups_dir = plan.instance / AI_TEAM / "migration-backups"
         backups_dir.mkdir(parents=True, exist_ok=True)
@@ -518,6 +539,7 @@ def migrate_in_tree_to_instance(
         "member_path": plan.member_rel_path,
         "instance_id": plan.instance_id,
         "backup_dir": str(backup_root),
+        "code_workspace": str(code_workspace) if code_workspace else None,
         "managed_files_count": len(
             managed_files_union(load_installation_record(plan.instance) or {})
         ),

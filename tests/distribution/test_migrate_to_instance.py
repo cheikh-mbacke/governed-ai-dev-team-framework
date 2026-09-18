@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -106,6 +107,8 @@ def test_migrate_in_tree_to_instance_round_trip(tmp_path: Path) -> None:
     assert (instance / ".ai-team" / "installation-record.json").is_file()
     assert (instance / ".ai-team" / "ensembles" / "boutique" / "members.yaml").is_file()
     assert (instance / ".ai-team" / "active-ensemble.yaml").is_file()
+    assert (instance / "boutique.code-workspace").is_file()
+    assert result.get("code_workspace")
     assert (source / ".ai-team" / "member-link.json").is_file()
     assert not (source / ".ai-team" / "installation-record.json").exists()
     assert not (source / ".cursor").exists()
@@ -155,6 +158,76 @@ def test_migrate_rollback_on_failure(tmp_path: Path) -> None:
     ) == before_record
     assert not (source / ".ai-team" / "member-link.json").exists()
     assert not instance.exists() or not (instance / ".ai-team").exists()
+
+
+def test_migrate_legacy_fixture_round_trip_and_rollback(tmp_path: Path) -> None:
+    """Document 25 Phase 8: aller/rollback on a copy of the legacy in-tree fixture."""
+    legacy = REPO_ROOT / "tests" / "fixtures" / "projects" / "legacy"
+    source = tmp_path / "legacy-app"
+    instance = tmp_path / "legacy-instance"
+    shutil.copytree(
+        legacy,
+        source,
+        ignore=shutil.ignore_patterns(
+            "__pycache__",
+            ".pytest_cache",
+            "*.pyc",
+            ".git",
+            "node_modules",
+        ),
+    )
+    _git_init(source)
+    assert (source / ".ai-team" / "installation-record.json").is_file()
+    assert not (source / ".ai-team" / "member-link.json").exists()
+
+    result = migrate_in_tree_to_instance(
+        source=source,
+        instance=instance,
+        ensemble_id="witness-legacy",
+        member_id="app",
+        member_kind="service",
+        instance_id="legacy-instance",
+    )
+    assert result["status"] == "migrated"
+    assert (source / ".ai-team" / "member-link.json").is_file()
+    assert not (source / ".ai-team" / "installation-record.json").exists()
+    assert (instance / ".ai-team" / "installation-record.json").is_file()
+    assert (instance / "witness-legacy.code-workspace").is_file()
+    workspace = Workspace.from_root(instance)
+    assert workspace.member_root("app") == source.resolve()
+
+    # Fixture on disk must remain untouched (copy-only).
+    assert (legacy / ".ai-team" / "installation-record.json").is_file()
+    assert not (legacy / ".ai-team" / "member-link.json").exists()
+
+    # Rollback path on a second copy.
+    source2 = tmp_path / "legacy-app-2"
+    instance2 = tmp_path / "legacy-instance-2"
+    shutil.copytree(
+        legacy,
+        source2,
+        ignore=shutil.ignore_patterns(
+            "__pycache__",
+            ".pytest_cache",
+            "*.pyc",
+            ".git",
+            "node_modules",
+        ),
+    )
+    _git_init(source2)
+    before = (source2 / ".ai-team" / "installation-record.json").read_text(encoding="utf-8")
+    with pytest.raises(InstanceMigrationError, match="fail_after=configure"):
+        migrate_in_tree_to_instance(
+            source=source2,
+            instance=instance2,
+            ensemble_id="witness-legacy",
+            member_id="app",
+            fail_after="configure",
+        )
+    assert (source2 / ".ai-team" / "installation-record.json").read_text(
+        encoding="utf-8"
+    ) == before
+    assert not (source2 / ".ai-team" / "member-link.json").exists()
 
 
 def test_migrate_cli_dry_run(tmp_path: Path) -> None:
