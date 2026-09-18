@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-from install_paths import bootstrap_runtime
+from install_paths import bootstrap_runtime, import_adapters_cursor
 
 bootstrap_runtime(_REPO_ROOT)
 
@@ -25,6 +25,10 @@ from governed_ai.core.commands.errors import (
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.workspace import Workspace
 from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+
+_write_active_ensemble_workspace = import_adapters_cursor(
+    "compiler.ensemble_workspace"
+).write_active_ensemble_workspace
 
 
 def _now_iso() -> str:
@@ -69,6 +73,16 @@ def _execute(workspace: Workspace, envelope: dict) -> int:
     receipt, exit_code = CommandGateway(workspace).execute_command(envelope)
     _emit(receipt)
     return exit_code
+
+
+def _refresh_active_code_workspace(workspace: Workspace) -> None:
+    """Rewrite the active-ensemble ``.code-workspace`` after a successful CLI mutation.
+
+    Kept on the CLI (not the Gateway) so compile/gateway paths stay free of
+    Cursor-named artifacts (Document 25 Phase 7).
+    """
+    refreshed = Workspace.from_root(workspace.root)
+    _write_active_ensemble_workspace(refreshed)
 
 
 def _load_members_revision(workspace: Workspace, ensemble_id: str) -> int:
@@ -143,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
             payload = {"id": args.id, "kind": args.kind, "path": args.path}
             if args.origin:
                 payload["origin"] = args.origin
-            return _execute(
+            exit_code = _execute(
                 workspace,
                 _envelope(
                     "RegisterMember",
@@ -156,6 +170,9 @@ def main(argv: list[str] | None = None) -> int:
                     workspace=workspace,
                 ),
             )
+            if exit_code == 0:
+                _refresh_active_code_workspace(workspace)
+            return exit_code
         if args.command == "pin-composition":
             payload = {"id": args.id, "ensemble_id": args.ensemble}
             if args.member:
@@ -180,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
                 ),
             )
         if args.command == "set-active":
-            return _execute(
+            exit_code = _execute(
                 workspace,
                 _envelope(
                     "SetActiveEnsemble",
@@ -189,6 +206,9 @@ def main(argv: list[str] | None = None) -> int:
                     workspace=workspace,
                 ),
             )
+            if exit_code == 0:
+                _refresh_active_code_workspace(workspace)
+            return exit_code
     except GatewayError as exc:
         _emit(
             {
