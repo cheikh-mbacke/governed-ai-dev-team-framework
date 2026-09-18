@@ -64,6 +64,13 @@ Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le d�
 - [ ] Backup `migration-backups/` vérifié après update.
 - [ ] Aucun chemin non classable bloquant.
 
+## 5bis. Instance hors-arbre (opt-in, si applicable)
+
+- [ ] [out-of-tree-instance.md](out-of-tree-instance.md) lu.
+- [ ] Soit install fraîche d’instance + `ensemble.py register-*`, soit
+      `tools/migrate_to_instance.py` (jamais via `--update` seul).
+- [ ] Cursor ouvert sur l’**instance** ; membres n’ont que le lien mince.
+
 ## 6. Exploitation courante
 
 - [ ] Work Units travaillées sur branches isolées `wu/<id>`.

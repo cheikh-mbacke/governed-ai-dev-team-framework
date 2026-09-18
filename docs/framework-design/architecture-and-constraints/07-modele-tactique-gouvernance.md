@@ -1,6 +1,6 @@
 # Document 7 — Modèle tactique du domaine cœur Gouvernance
 
-**Statut** : version 1.1 corrigée. Les classifications sont indiquées comme observées, candidates ou cibles ; un fichier ou un champ `status` ne suffit pas à démontrer un Agrégat.
+**Statut** : version 1.3 — amendée pour l’instance hors-arbre (Document 25, **INS-ADR-***). Les classifications sont indiquées comme observées, candidates ou cibles ; un fichier ou un champ `status` ne suffit pas à démontrer un Agrégat.
 
 ## 1. Agrégats candidats
 
@@ -59,6 +59,12 @@ Soit Gate Decision devient un journal append-only fiable avec identifiant unique
 | Context Package | `.ai-team/context-packages/` |
 | Project Profile | `.ai-team/project-profile.yaml` |
 | Source Registry | `.ai-team/sources/source-registry.yaml` |
+| Catalogue d’instance (cible) | `.ai-team/catalog.yaml` — Document 25 |
+| Membres d’Ensemble (cible) | `.ai-team/ensembles/<id>/members.yaml` — Document 25 |
+| Révision de composition (cible) | `.ai-team/ensembles/<id>/compositions/CR-*.yaml` — Document 25 |
+| Lien mince membre (cible) | `<membre>/.ai-team/member-link.json` — Document 25 |
+
+En mode **standalone** (0.7.x), les chemins observés ci-dessus restent la racine unique : instance = produit (**INS-ADR-008**). En hors-arbre, l’autorité vit sous l’instance ; les membres ne portent que le lien mince (**INS-ADR-005**, **INS-ADR-009**). Les writers Gateway `RegisterEnsemble` / `RegisterMember` / `PinComposition` / `SetActiveEnsemble` et la migration opt-in `tools/migrate_to_instance.py` sont livrés (Document 25 Phases 3–8).
 
 Ces chemins sont des frontières de persistance observées, pas à eux seuls des Repositories DDD. Un Repository doit également offrir les opérations et protéger les invariants de l’Agrégat.
 
@@ -66,7 +72,8 @@ Ces chemins sont des frontières de persistance observées, pas à eux seuls des
 
 - Les dossiers ne contiennent pas d’instances YAML métier dans ce dépôt gabarit ; `.ai-team/logs/cursor-events.jsonl` constitue seulement une trace runtime.
 - Le writer de Decision Request reste à définir.
-- Les transitions, transactions et règles d’immutabilité cibles ne sont pas implémentées.
+- Les transitions, transactions et règles d’immutabilité cibles ne sont pas implémentées pour tous les Agrégats candidats.
+- La conformité Cursor réelle L3/L4 hors-arbre (cwd membre) est la Phase 7b, hors définition de « code mergé ».
 
 ## Sources
 

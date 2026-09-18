@@ -1,6 +1,6 @@
 # Document 9 — Modèle tactique : Distribution/Installation
 
-**Statut** : version 1.1 corrigée.
+**Statut** : version 1.2 — corrigée ; amendement Document 25 (**INS-ADR-008**, **INS-F-014**) : le passage standalone → instance hors-arbre est une commande explicite, jamais un `--update` silencieux.
 
 ## 1. État actuel
 

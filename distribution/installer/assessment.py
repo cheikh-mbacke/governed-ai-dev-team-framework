@@ -699,25 +699,86 @@ def _remodel_backlog_findings(findings: list[Finding]) -> list[Finding]:
     return remodel
 
 
-def run_assessment(
+def _scan_member_exclusive(target: Path, member_id: str) -> list[Finding]:
+    findings: list[Finding] = []
+    record = target / INSTALLATION_RECORD_FILE
+    schemas = target / ".ai-team" / "schemas"
+    state = target / ".ai-team" / "state" / "project-state.yaml"
+    if record.is_file() or schemas.is_dir() or state.is_file():
+        findings.append(
+            _finding(
+                id="authority.second_governance_cycle",
+                category="authority",
+                severity="blocking",
+                summary=(
+                    f"Declared member {member_id!r} hosts a full framework payload; "
+                    "exclusive governance requires only the thin member-link overlay."
+                ),
+                evidence={
+                    "member_id": member_id,
+                    "installation_record": record.is_file(),
+                    "schemas": schemas.is_dir(),
+                    "project_state": state.is_file(),
+                },
+            )
+        )
+    link = target / ".ai-team" / "member-link.json"
+    if link.is_file():
+        findings.append(
+            _finding(
+                id="artifact.member_link_present",
+                category="artifact",
+                severity="info",
+                summary=f"Thin member-link present for {member_id!r}.",
+                evidence={"path": ".ai-team/member-link.json", "member_id": member_id},
+            )
+        )
+    return findings
+
+
+def _collect_findings(
     target: Path,
     *,
     source_root: Path | None = None,
-    resolutions: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    target = target.expanduser().resolve()
-    findings = (
-        _scan_engagement(target)
-        + _scan_authority(target)
-        + _scan_artifacts(target)
-        + _scan_prerequisites(target, source_root=source_root)
-        + _scan_baseline(target)
+    include_engagement: bool = True,
+    member_id: str | None = None,
+) -> list[Finding]:
+    findings: list[Finding] = []
+    if include_engagement:
+        findings.extend(_scan_engagement(target))
+    findings.extend(_scan_authority(target))
+    findings.extend(_scan_artifacts(target))
+    findings.extend(_scan_prerequisites(target, source_root=source_root))
+    findings.extend(_scan_baseline(target))
+    if member_id is not None:
+        findings.extend(_scan_member_exclusive(target, member_id))
+    return findings
+
+
+def _prefix_finding(finding: Finding, prefix: str) -> Finding:
+    evidence = dict(finding.evidence)
+    evidence.setdefault("tree", prefix)
+    return Finding(
+        id=f"{prefix}.{finding.id}",
+        category=finding.category,
+        severity=finding.severity,
+        summary=finding.summary,
+        evidence=evidence,
+        resolution_options=list(finding.resolution_options),
+        resolution_status=finding.resolution_status,
+        waiver_authorization_id=finding.waiver_authorization_id,
+        operator_confirmation_required=finding.operator_confirmation_required,
     )
-    findings = apply_resolutions(findings, resolutions)
+
+
+def _report_from_findings(
+    target: Path,
+    findings: list[Finding],
+    *,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     findings = findings + _remodel_backlog_findings(findings)
     findings = _ensure_category_coverage(findings)
-
-    # Verdict ignores informational remodel pointers (severity info).
     verdict = compute_verdict(findings)
     by_category: dict[str, Any] = {}
     for category in CATEGORIES:
@@ -726,7 +787,6 @@ def run_assessment(
             "empty": len(cat_findings) == 0,
             "findings": [f.to_dict() for f in cat_findings],
         }
-
     backlog = [
         f.to_dict()
         for f in findings
@@ -738,8 +798,7 @@ def run_assessment(
             )
         )
     ]
-
-    return {
+    report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "kind": REPORT_KIND,
         "target": str(target),
@@ -758,6 +817,53 @@ def run_assessment(
             "legacy_fingerprints_checked": sorted(LEGACY_FRAMEWORK_FINGERPRINTS),
         },
     }
+    if extra:
+        report.update(extra)
+    return report
+
+
+def run_assessment(
+    target: Path,
+    *,
+    source_root: Path | None = None,
+    resolutions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    target = target.expanduser().resolve()
+    findings = _collect_findings(target, source_root=source_root)
+    findings = apply_resolutions(findings, resolutions)
+    return _report_from_findings(target, findings)
+
+
+def run_ensemble_assessment(
+    instance: Path,
+    members: list[tuple[str, Path]],
+    *,
+    source_root: Path | None = None,
+    resolutions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    instance = instance.expanduser().resolve()
+    findings = [
+        _prefix_finding(finding, "instance")
+        for finding in _collect_findings(instance, source_root=source_root)
+    ]
+    member_entries: list[dict[str, str]] = []
+    for member_id, member_path in members:
+        resolved = member_path.expanduser().resolve()
+        member_entries.append({"id": member_id, "path": str(resolved)})
+        member_findings = _collect_findings(
+            resolved,
+            source_root=source_root,
+            include_engagement=False,
+            member_id=member_id,
+        )
+        prefix = f"member.{member_id}"
+        findings.extend(_prefix_finding(finding, prefix) for finding in member_findings)
+    findings = apply_resolutions(findings, resolutions)
+    return _report_from_findings(
+        instance,
+        findings,
+        extra={"instance": str(instance), "members": member_entries},
+    )
 
 
 def format_human_report(report: dict[str, Any]) -> str:

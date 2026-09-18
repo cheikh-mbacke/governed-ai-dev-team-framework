@@ -696,6 +696,20 @@ def _write_project_seeds(source_root: Path, target: Path, args: Namespace) -> No
         _yaml_module().safe_dump(profile, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
 
+    catalog_path = target / ".ai-team" / "catalog.yaml"
+    if not catalog_path.is_file():
+        catalog_path.write_text(
+            _yaml_module().safe_dump(
+                {
+                    "schema_version": 1,
+                    "instance_id": args.project_id,
+                    "ensembles": [],
+                },
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+
     # Per-install HMAC credentials (gitignored). Soft-fail if tunnel unreachable.
     secrets_dir = target / ".ai-team" / "secrets"
     secrets_dir.mkdir(parents=True, exist_ok=True)
@@ -815,6 +829,7 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
         source_root, target, project_id=args.project_id, active_adapter_id=active_adapter
     )
     seed_destinations = [target / dest_rel for _src_rel, dest_rel in FRESH_PROJECT_SEED_SOURCES]
+    seed_destinations.append(target / ".ai-team" / "catalog.yaml")
     copy_destinations = collect_changed_destinations(entries)
     collision_destinations = seed_destinations + copy_destinations
 

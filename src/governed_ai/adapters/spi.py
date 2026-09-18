@@ -161,6 +161,8 @@ class ExecutionRequest(TypedDict, total=False):
     approvals: list[object]
     requested_at: str
     execution_workspace: str
+    member_id: str
+    member_root: str
     work_unit_snapshot: dict[str, object]
     kill_switch_path: str
     run_state_path: str

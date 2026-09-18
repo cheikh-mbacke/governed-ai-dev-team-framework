@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MemberLink",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "instance_id",
+    "ensemble_id",
+    "member_id",
+    "instance_path"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "instance_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ensemble_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "member_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$"
+    },
+    "instance_path": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

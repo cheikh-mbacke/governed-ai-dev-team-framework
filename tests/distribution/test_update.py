@@ -178,3 +178,30 @@ def test_di009_incompatible_version_refused(tmp_path: Path) -> None:
     )
     assert proc.returncode == 2
     assert "9.9.9" in proc.stdout or "migration path" in proc.stdout.lower()
+
+
+def test_instance_update_does_not_touch_sibling_member_checkout(tmp_path: Path) -> None:
+    instance = tmp_path / "acme-ai-team"
+    member = tmp_path / "boutique-api"
+    member.mkdir()
+    (member / "api.py").write_text("print('product')\n", encoding="utf-8")
+    (member / ".ai-team").mkdir()
+    (member / ".ai-team" / "member-link.json").write_text('{"schema_version": 1}\n', encoding="utf-8")
+    (member / "AGENTS.md").write_text("member pointer\n", encoding="utf-8")
+    _install(instance)
+    _git_init(instance)
+
+    proc = subprocess.run(
+        [sys.executable, str(INSTALL), "--target", str(instance), "--update"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        timeout=180,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert (member / "api.py").read_text(encoding="utf-8") == "print('product')\n"
+    assert (member / "AGENTS.md").read_text(encoding="utf-8") == "member pointer\n"
+    assert (member / ".ai-team" / "member-link.json").read_text(encoding="utf-8") == (
+        '{"schema_version": 1}\n'
+    )

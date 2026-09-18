@@ -118,6 +118,29 @@ python scripts/ai-team/reconcile_project.py check
 Le contrôle doit réussir avant toute compilation. Détails :
 [project-reconciliation.md](project-reconciliation.md).
 
+## Instance hors-arbre (opt-in)
+
+Pour une instance séparée des dépôts produit (front / back / backoffice), voir
+[out-of-tree-instance.md](out-of-tree-instance.md). Résumé :
+
+```bash
+# Instance vide
+python tools/install.py --target ~/acme-ai-team --project-id acme-ai-team \
+  --project-name "Acme" --assessment-report assessment.json
+
+# Depuis l'instance : Ensemble + membres
+python scripts/ai-team/ensemble.py register-ensemble --id boutique
+python scripts/ai-team/ensemble.py register-member --ensemble boutique \
+  --id frontend --kind ui --path ../boutique-web
+python scripts/ai-team/ensemble.py set-active --id boutique
+
+# Migration depuis un standalone 0.7.x (jamais via --update)
+python tools/migrate_to_instance.py --source ~/boutique-api \
+  --instance ~/acme-ai-team --ensemble-id boutique --member-id backend
+```
+
+Ouvrir Cursor sur l’**instance** (ou le `.code-workspace` de l’Ensemble actif).
+
 ## Command Gateway (recommandé)
 
 Soumettre une Command Envelope JSON :

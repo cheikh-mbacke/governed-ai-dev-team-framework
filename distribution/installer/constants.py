@@ -54,6 +54,10 @@ PROJECT_OWNED_PATTERNS = [
     ".ai-team/observations/*",
     ".ai-team/retrospectives/*",
     ".ai-team/reconciliation/*",
+    ".ai-team/catalog.yaml",
+    ".ai-team/ensembles/*",
+    ".ai-team/member-link.json",
+    ".ai-team/active-ensemble.yaml",
     ".ai-team/runs/*",
     ".ai-team/runs/leases/*",
     ".ai-team/runs/execution-attempts/*",
@@ -71,6 +75,7 @@ FRESH_PROJECT_SEEDS = (
     ".ai-team/project-profile.yaml",
     ".ai-team/state/project-state.yaml",
     ".ai-team/sources/source-registry.yaml",
+    ".ai-team/catalog.yaml",
 )
 
 LEGACY_VERSION_REL = Path(".ai-team/framework-version.json")

@@ -6,6 +6,7 @@ from typing import Any
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
+from governed_ai.core.ensemble_composition import enforce_product_evidence_composition
 from governed_ai.core.persistence.transaction import Transaction
 
 
@@ -32,6 +33,7 @@ def handle_register_evidence(
         )
 
     validate_against_schema(workspace_root.ai_team, payload, "evidence.schema.json")
+    enforce_product_evidence_composition(workspace_root, payload)
 
     transaction.plan_yaml_write(path, payload)
     return {

@@ -9,6 +9,7 @@ Guides pratiques pour **décider d’adopter**, installer, migrer, valider et ex
 | [architecture.md](architecture.md) | Comprendre les composants et leurs responsabilités |
 | [security-model.md](security-model.md) | Autorité humaine, gates et frontières de confiance |
 | [operator-guide.md](operator-guide.md) | Commandes quotidiennes (install, update, validate, rollback) |
+| [out-of-tree-instance.md](out-of-tree-instance.md) | Instance hors-arbre, Ensembles, Membres, migration opt-in |
 | [asynchronous-ui-feedback.md](asynchronous-ui-feedback.md) | Tester une UI au bon moment et réinjecter un retour sans bloquer les modes autonomes |
 | [email-notifications.md](email-notifications.md) | Configurer SMTP, les destinataires, les alertes immédiates et les digests |
 | [upgrading.md](upgrading.md) | Passage `0.4.x` → `0.7.0` et Installation Record v3 |

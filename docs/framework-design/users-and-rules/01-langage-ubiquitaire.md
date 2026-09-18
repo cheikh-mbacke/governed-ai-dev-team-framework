@@ -1,12 +1,12 @@
 # Document 1 — Langage ubiquitaire
 
-**Statut** : version 1.1 corrigée. Une entrée est qualifiée **observée**, **règle** ou **cible** afin de ne pas confondre schéma, politique et conception future.
+**Statut** : version 1.2 — amendée pour Instance / Ensemble / Membre (Document 25). Une entrée est qualifiée **observée**, **règle** ou **cible** afin de ne pas confondre schéma, politique et conception future.
 
 ## 1. Gouvernance
 
 | Terme | Définition | Qualification |
 |---|---|---|
-| **Work Unit** | Unité de travail gouvernée portant scope, dépendances, risque, statut, vérifications, résultats et références de preuve. | Observé dans `work-unit.schema.json`. « Plus petite unité » est une règle de méthode, pas une propriété du schéma. |
+| **Work Unit** | Unité de travail gouvernée portant scope, dépendances, risque, statut, vérifications, résultats et références de preuve. | Observé dans `work-unit.schema.json`. « Plus petite unité » est une règle de méthode, pas une propriété du schéma. `member_id` est optionnel (Document 25). |
 | **Project State** | Enregistrement persistant de la phase, des gates, des Work Units et de différents compteurs ou références projet. | Observé. Il est directement modifié ; aucun projecteur complet ne permet aujourd’hui de le qualifier d’état entièrement dérivé. |
 | **Phase** | Une valeur parmi `not_compiled`, `readiness_blocked`, `awaiting_g1_approval`, `execution`, `verification`, `release_candidate`, `human_acceptance`, `completed`, `paused`. | Observé. |
 | **Gate** | Point d’approbation humaine G0 à G4. | Règle de Gouvernance soutenue par les scripts et politiques. |
@@ -21,6 +21,12 @@
 | **Acceptance** | Enregistrement d’une acceptation humaine. | Observé. |
 | **Human Checkpoint** | Notification non bloquante indiquant qu'une surface UI cohérente est testable sur un SHA précis avec un cahier court de scénarios manuels. | Règle. Ce n'est ni une gate, ni une acceptation. |
 | **HumanFeedback** | Retour humain formatif rattaché à une Work Unit, une surface et au SHA effectivement observé ; il doit être réconcilié avec l'état courant avant la prochaine exécution affectée. | Observé : `RecordHumanFeedback`, `ReconcileHumanFeedback`, schéma et stockage dédiés. |
+| **Instance** | Répertoire Git où le framework est installé chez l’adoptant ; distinct du dépôt source (`framework_source`) et des dépôts produit hors-arbre. | Cible (Document 25, **INS-ADR-001**). En 0.7.x l’instance **est** le dépôt produit (mode standalone, **INS-ADR-008**). |
+| **Catalogue** | Index des Ensembles gouvernés par une instance (`catalog.yaml`). | Cible (schéma livré ; **INS-ADR-010**). |
+| **Ensemble** | Produit gouverné (gates, compile, Work Units, composition). Un Project State par Ensemble. | Cible (Document 25, **INS-ADR-004**). |
+| **Membre** | Dépôt Git de code déclaré d’un Ensemble, dans un autre répertoire local. | Cible (**INS-ADR-002**, **INS-ADR-006**). |
+| **Révision de composition** | Jeton immuable `CR-*` : carte membre → SHA. | Cible (schéma livré ; **INS-ADR-007**). |
+| **Lien mince** | `member-link.json` sur un membre, pointant vers l’instance. | Cible (schéma + découverte `Workspace.discover` ; **INS-ADR-009**). |
 
 ## 2. Contrat publié et Adaptateur/Runtime
 

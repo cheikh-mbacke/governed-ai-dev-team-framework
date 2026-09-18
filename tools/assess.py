@@ -20,6 +20,7 @@ from distribution.installer.assessment import (
     format_human_report,
     load_resolutions_file,
     run_assessment,
+    run_ensemble_assessment,
 )
 
 
@@ -30,7 +31,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Not preflight, diagnose, or gate G0. Hybrid governance is not supported."
         )
     )
-    parser.add_argument("--target", required=True, help="Path to the candidate project root")
+    parser.add_argument(
+        "--target",
+        help="Path to a single candidate project root (standalone assessment)",
+    )
+    parser.add_argument(
+        "--instance",
+        help="Instance root for an ensemble assessment (Document 25)",
+    )
+    parser.add_argument(
+        "--member",
+        action="append",
+        default=[],
+        metavar="ID=PATH",
+        help="Declared member to include (repeatable). Requires --instance.",
+    )
     parser.add_argument(
         "--json",
         action="store_true",
@@ -50,7 +65,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "(eliminate|remap|waive+waiver_authorization_id|defer_blocks_adoption)"
         ),
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.member and not args.instance:
+        parser.error("--member requires --instance")
+    if args.instance and args.target:
+        parser.error("use --instance or --target, not both")
+    if not args.instance and not args.target:
+        parser.error("--target or --instance is required")
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -61,7 +83,6 @@ def main(argv: list[str] | None = None) -> int:
             sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         except Exception:
             pass
-    target = Path(args.target).expanduser().resolve()
     resolutions = None
     if args.resolutions:
         try:
@@ -69,9 +90,27 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             print(f"Invalid --resolutions file: {exc}", file=sys.stderr)
             return 1
-
     try:
-        report = run_assessment(target, source_root=SOURCE_ROOT, resolutions=resolutions)
+        if args.instance:
+            members: list[tuple[str, Path]] = []
+            for item in args.member:
+                if "=" not in item:
+                    print("each --member must be ID=PATH", file=sys.stderr)
+                    return 1
+                member_id, raw_path = item.split("=", 1)
+                members.append((member_id, Path(raw_path)))
+            report = run_ensemble_assessment(
+                Path(args.instance).expanduser().resolve(),
+                members,
+                source_root=SOURCE_ROOT,
+                resolutions=resolutions,
+            )
+        else:
+            report = run_assessment(
+                Path(args.target).expanduser().resolve(),
+                source_root=SOURCE_ROOT,
+                resolutions=resolutions,
+            )
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1

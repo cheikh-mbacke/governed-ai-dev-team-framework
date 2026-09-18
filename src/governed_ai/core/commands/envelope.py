@@ -145,6 +145,14 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         _validate_register_design_artifact(raw)
     elif raw["type"] == "SetDesignArtifactAuthority":
         _validate_set_design_artifact_authority(raw)
+    elif raw["type"] == "RegisterEnsemble":
+        _validate_register_ensemble(raw)
+    elif raw["type"] == "RegisterMember":
+        _validate_register_member(raw)
+    elif raw["type"] == "PinComposition":
+        _validate_pin_composition(raw)
+    elif raw["type"] == "SetActiveEnsemble":
+        _validate_set_active_ensemble(raw)
     if raw["type"] in COMMANDS_REQUIRING_HUMAN_AUTH and "human_authorization" not in raw:
         raise GatewayError(
             ErrorCode.HUMAN_AUTH_REQUIRED,
@@ -153,6 +161,96 @@ def parse_envelope(raw: Any) -> dict[str, Any]:
         )
 
     return raw
+
+
+def _validate_register_ensemble(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "ensemble":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "RegisterEnsemble target.kind must be ensemble",
+            "/target/kind",
+        )
+    if "expected_revision" in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision must not be set on create",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id is required",
+            "/payload/id",
+        )
+
+
+def _validate_register_member(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "ensemble":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "RegisterMember target.kind must be ensemble",
+            "/target/kind",
+        )
+    if "expected_revision" not in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision is required",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
+    if not payload.get("id"):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload.id is required", "/payload/id")
+    if not payload.get("kind"):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload.kind is required", "/payload/kind")
+    if not payload.get("path"):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload.path is required", "/payload/path")
+
+
+def _validate_pin_composition(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "composition":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "PinComposition target.kind must be composition",
+            "/target/kind",
+        )
+    if "expected_revision" in target:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "expected_revision must not be set on create",
+            "/target/expected_revision",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict) or not payload.get("id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.id is required",
+            "/payload/id",
+        )
+    if not payload.get("ensemble_id"):
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "payload.ensemble_id is required",
+            "/payload/ensemble_id",
+        )
+
+
+def _validate_set_active_ensemble(raw: dict[str, Any]) -> None:
+    target = raw["target"]
+    if target.get("kind") != "ensemble":
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            "SetActiveEnsemble target.kind must be ensemble",
+            "/target/kind",
+        )
+    payload = raw["payload"]
+    if not isinstance(payload, dict):
+        raise GatewayError(ErrorCode.INVALID_SCHEMA, "payload must be an object", "/payload")
 
 
 def _validate_update_project_profile(raw: dict[str, Any]) -> None:

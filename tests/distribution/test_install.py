@@ -69,6 +69,9 @@ def test_di001_fresh_install_writes_v2_record_last(tmp_path: Path) -> None:
     )
     assert source_registry == {"registry_version": "1.0", "sources": []}
 
+    catalog = yaml.safe_load((target / ".ai-team/catalog.yaml").read_text(encoding="utf-8"))
+    assert catalog == {"schema_version": 1, "instance_id": "di001-test", "ensembles": []}
+
     source_only_sync = subprocess.run(
         [sys.executable, "scripts/ai-team/sync_source_manifest.py", "--check"],
         cwd=target,

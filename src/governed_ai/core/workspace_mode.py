@@ -21,6 +21,14 @@ CLIENT_CYCLE_FORBIDDEN_MESSAGE = (
     f"or {FEEDBACK_REFERENCE_FIXTURE} to exercise installed-client behavior."
 )
 
+
+def member_cycle_forbidden_message(workspace: Workspace) -> str:
+    member_id = workspace.discovered_member_id or "unknown"
+    return (
+        f"Client governance commands must be run from the instance directory "
+        f"({workspace.root}), not from member {member_id!r}."
+    )
+
 CLIENT_CYCLE_DIRECTORIES = (
     "work-units",
     "events",
@@ -70,6 +78,14 @@ def ensure_client_cycle_allowed(workspace: Workspace) -> None:
         raise GatewayError(
             ErrorCode.UNSUPPORTED_CONTRACT,
             CLIENT_CYCLE_FORBIDDEN_MESSAGE,
+            "/workspace",
+        )
+    if workspace.discovered_member_id is not None:
+        from governed_ai.core.commands.errors import ErrorCode, GatewayError
+
+        raise GatewayError(
+            ErrorCode.UNSUPPORTED_CONTRACT,
+            member_cycle_forbidden_message(workspace),
             "/workspace",
         )
 

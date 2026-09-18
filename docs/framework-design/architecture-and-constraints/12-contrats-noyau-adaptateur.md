@@ -160,6 +160,8 @@ Un fallback n’est appliqué que s’il est déclaré par le contrat et testé.
 
 Le `bundle_hash` empêche l’exécution d’un bundle modifié sous la même version. Les références d’entrée sont résolues et validées avant lancement.
 
+Champs optionnels additifs (Document 25, protocole inchangé) : `execution_workspace` (cwd produit), `member_id`, `member_root`. Sur un Ensemble à ≥ 2 membres, une Work Unit produit DOIT porter `member_id` ; `execution_workspace` est alors le Git (ou worktree) de ce membre, jamais le root d’instance. Une Work Unit `kind: integration` omet `member_id`.
+
 ## 6. RuntimeResult
 
 ```json

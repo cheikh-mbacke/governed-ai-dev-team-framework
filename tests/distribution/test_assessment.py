@@ -393,3 +393,60 @@ def test_fresh_install_rejects_no_go_report(
     assert install.returncode == 2
     assert "no_go" in install.stdout
     assert not (target / ".ai-team" / "installation-record.json").exists()
+
+
+def test_ensemble_assessment_member_blocking_is_no_go_without_mutation(tmp_path: Path) -> None:
+    instance = tmp_path / "acme-ai-team"
+    instance.mkdir()
+    backend = tmp_path / "boutique-api"
+    backend.mkdir()
+    (backend / "README.md").write_text("# api\n", encoding="utf-8")
+    frontend = tmp_path / "boutique-web"
+    frontend.mkdir()
+    (frontend / ".cursor").mkdir()
+    (frontend / ".cursor" / "cli.json").write_text("{}\n", encoding="utf-8")
+    (frontend / "page.js").write_text("export default {}\n", encoding="utf-8")
+    before_backend = _tree_fingerprint(backend)
+    before_frontend = _tree_fingerprint(frontend)
+    before_instance = _tree_fingerprint(instance)
+
+    resolutions = tmp_path / "resolutions.json"
+    resolutions.write_text(
+        json.dumps(
+            {
+                "findings": {
+                    "instance.engagement.exclusive_governance": {"resolution_status": "remap"},
+                    "instance.engagement.human_authorities": {"resolution_status": "remap"},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ASSESS),
+            "--instance",
+            str(instance),
+            "--member",
+            f"backend={backend}",
+            "--member",
+            f"frontend={frontend}",
+            "--resolutions",
+            str(resolutions),
+            "--json",
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+    )
+    assert result.returncode == 2, result.stdout + result.stderr
+    report = json.loads(result.stdout)
+    assert report["verdict"] == "no_go"
+    ids = {item["id"] for item in report["findings"]}
+    assert "member.frontend.artifact.cursor_cli_json" in ids
+    assert before_backend == _tree_fingerprint(backend)
+    assert before_frontend == _tree_fingerprint(frontend)
+    assert before_instance == _tree_fingerprint(instance)

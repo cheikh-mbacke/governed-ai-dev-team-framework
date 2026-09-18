@@ -25,9 +25,14 @@ Résumé opérationnel de l'architecture refondue (`0.7.0`). Pour le détail nor
 
 ┌─────────────────────────────────────────────────────────┐
 │ DISTRIBUTION                                            │
-│ install │ migrate │ validate │ rollback │ record v3    │
+│ install │ update │ migrate-to-instance │ validate │ …  │
 └─────────────────────────────────────────────────────────┘
 ```
+
+Standalone (`.ai-team/` dans le dépôt produit) et instance hors-arbre
+(Document 25) coexistent ; le passage hors-arbre est opt-in via
+`tools/migrate_to_instance.py`, jamais via `--update`. Voir
+[out-of-tree-instance.md](out-of-tree-instance.md).
 
 ## Règles structurantes
 
