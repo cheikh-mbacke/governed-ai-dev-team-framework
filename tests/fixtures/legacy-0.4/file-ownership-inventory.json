@@ -261,8 +261,8 @@
     "distribution/payload/.ai-team/schemas/design-artifact.schema.json": "core",
     "distribution/payload/.ai-team/schemas/design-contract.schema.json": "core",
     "distribution/payload/.ai-team/schemas/design-reference-set.schema.json": "core",
-    "distribution/payload/.ai-team/schemas/event.schema.json": "core",
     "distribution/payload/.ai-team/schemas/ensemble-members.schema.json": "core",
+    "distribution/payload/.ai-team/schemas/event.schema.json": "core",
     "distribution/payload/.ai-team/schemas/evidence.schema.json": "core",
     "distribution/payload/.ai-team/schemas/execution-attempt.schema.json": "core",
     "distribution/payload/.ai-team/schemas/execution-ceiling-escalation.schema.json": "core",
@@ -621,6 +621,7 @@
     "tests/fixtures/legacy-0.4/objects/work-unit.yaml": "core",
     "tools/anonymize_feedback_fixtures.py": "core",
     "tools/assess.py": "core",
-    "tools/install.py": "distribution"
+    "tools/install.py": "distribution",
+    "tools/migrate_to_instance.py": "core"
   }
 }

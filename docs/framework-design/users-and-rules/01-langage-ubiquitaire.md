@@ -21,12 +21,12 @@
 | **Acceptance** | Enregistrement d’une acceptation humaine. | Observé. |
 | **Human Checkpoint** | Notification non bloquante indiquant qu'une surface UI cohérente est testable sur un SHA précis avec un cahier court de scénarios manuels. | Règle. Ce n'est ni une gate, ni une acceptation. |
 | **HumanFeedback** | Retour humain formatif rattaché à une Work Unit, une surface et au SHA effectivement observé ; il doit être réconcilié avec l'état courant avant la prochaine exécution affectée. | Observé : `RecordHumanFeedback`, `ReconcileHumanFeedback`, schéma et stockage dédiés. |
-| **Instance** | Répertoire Git où le framework est installé chez l’adoptant ; distinct du dépôt source (`framework_source`) et des dépôts produit hors-arbre. | Cible (Document 25). En 0.7.x l’instance **est** le dépôt produit (mode standalone). |
-| **Catalogue** | Index des Ensembles gouvernés par une instance (`catalog.yaml`). | Cible (schéma livré ; pas encore de commande d’écriture). |
-| **Ensemble** | Produit gouverné (gates, compile, Work Units, composition). Un Project State par Ensemble. | Cible (Document 25). |
-| **Membre** | Dépôt Git de code déclaré d’un Ensemble, dans un autre répertoire local. | Cible. |
-| **Révision de composition** | Jeton immuable `CR-*` : carte membre → SHA. | Cible (schéma livré). |
-| **Lien mince** | `member-link.json` sur un membre, pointant vers l’instance. | Cible (schéma + découverte `Workspace.discover`). |
+| **Instance** | Répertoire Git où le framework est installé chez l’adoptant ; distinct du dépôt source (`framework_source`) et des dépôts produit hors-arbre. | Cible (Document 25, **INS-ADR-001**). En 0.7.x l’instance **est** le dépôt produit (mode standalone, **INS-ADR-008**). |
+| **Catalogue** | Index des Ensembles gouvernés par une instance (`catalog.yaml`). | Cible (schéma livré ; **INS-ADR-010**). |
+| **Ensemble** | Produit gouverné (gates, compile, Work Units, composition). Un Project State par Ensemble. | Cible (Document 25, **INS-ADR-004**). |
+| **Membre** | Dépôt Git de code déclaré d’un Ensemble, dans un autre répertoire local. | Cible (**INS-ADR-002**, **INS-ADR-006**). |
+| **Révision de composition** | Jeton immuable `CR-*` : carte membre → SHA. | Cible (schéma livré ; **INS-ADR-007**). |
+| **Lien mince** | `member-link.json` sur un membre, pointant vers l’instance. | Cible (schéma + découverte `Workspace.discover` ; **INS-ADR-009**). |
 
 ## 2. Contrat publié et Adaptateur/Runtime
 

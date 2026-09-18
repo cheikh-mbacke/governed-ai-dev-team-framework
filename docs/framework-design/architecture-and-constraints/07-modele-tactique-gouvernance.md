@@ -1,6 +1,6 @@
 # Document 7 — Modèle tactique du domaine cœur Gouvernance
 
-**Statut** : version 1.2 — amendée pour l’instance hors-arbre (Document 25, schémas Phase 1). Les classifications sont indiquées comme observées, candidates ou cibles ; un fichier ou un champ `status` ne suffit pas à démontrer un Agrégat.
+**Statut** : version 1.3 — amendée pour l’instance hors-arbre (Document 25, **INS-ADR-***). Les classifications sont indiquées comme observées, candidates ou cibles ; un fichier ou un champ `status` ne suffit pas à démontrer un Agrégat.
 
 ## 1. Agrégats candidats
 

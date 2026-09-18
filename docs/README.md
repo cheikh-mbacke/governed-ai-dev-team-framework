@@ -38,17 +38,28 @@ Dépôt source du framework
 ├── src/                            noyau Python source
 └── adapters/                       adaptateurs source
 
-Projet client après installation
+Projet client — mode standalone (0.7.x, toujours valide)
 ├── docs/product/                   produit client, project-owned
 ├── .ai-team/                       framework installé + état projet
 ├── .cursor/                        adaptateur compilé
 └── scripts/ai-team/                wrappers installés
+
+Projet client — instance hors-arbre (Document 25, opt-in)
+├── <instance>/                     Git d’instance — ouvrir Cursor ici
+│   ├── .ai-team/                   autorité (catalogue, ensembles, runtime)
+│   ├── .cursor/                    adaptateur compilé
+│   └── <ensemble>.code-workspace   Ensemble actif seulement
+├── <membre-backend>/               autre Git produit
+│   └── .ai-team/member-link.json   lien mince → instance
+└── <membre-frontend>/              autre Git produit
 
 Projet externe
 ├── docs/product/                   exigences de ce projet externe
 ├── contracts/                      API qu’il expose
 └── infrastructure/                 déploiement et secrets propres
 ```
+
+Guide opérateur : [`adopter-guide/out-of-tree-instance.md`](adopter-guide/out-of-tree-instance.md).
 
 La source de vérité des chemins installés est l’Installation Record produit par
 l’installateur, jamais la présence d’un nom de dossier générique.

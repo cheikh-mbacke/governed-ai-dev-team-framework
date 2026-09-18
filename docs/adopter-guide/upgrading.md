@@ -96,6 +96,22 @@ Si la validation post-copie échoue (DI-010) :
 
 L'installation fraîche utilise le même mécanisme de rollback transactionnel.
 
+## Migration opt-in vers une instance hors-arbre
+
+Le passage standalone → instance séparée est une commande **explicite** :
+
+```bash
+python tools/migrate_to_instance.py \
+  --source . \
+  --instance ../acme-ai-team \
+  --ensemble-id mon-produit \
+  --member-id app \
+  --dry-run
+```
+
+`tools/install.py --update` **ne** déclenche **pas** cette migration (INS-AC-018).
+Détail : [out-of-tree-instance.md](out-of-tree-instance.md).
+
 ## Non rétrogradable
 
 - Les objets créés sous schémas v2/v3 (horodatages `revision`, champs gateway, hashes) **ne sont pas** automatiquement convertis vers v1.
