@@ -1,6 +1,6 @@
 # Document 1 — Langage ubiquitaire
 
-**Statut** : version 1.2 — amendée pour Instance / Ensemble / Membre (Document 25). Une entrée est qualifiée **observée**, **règle** ou **cible** afin de ne pas confondre schéma, politique et conception future.
+**Statut** : version 1.3 — amendée pour filtre d’aire sur grant (Document 27) et Instance / Ensemble / Membre (Document 25). Une entrée est qualifiée **observée**, **règle** ou **cible** afin de ne pas confondre schéma, politique et conception future.
 
 ## 1. Gouvernance
 
@@ -21,6 +21,8 @@
 | **Acceptance** | Enregistrement d’une acceptation humaine. | Observé. |
 | **Human Checkpoint** | Notification non bloquante indiquant qu'une surface UI cohérente est testable sur un SHA précis avec un cahier court de scénarios manuels. | Règle. Ce n'est ni une gate, ni une acceptation. |
 | **HumanFeedback** | Retour humain formatif rattaché à une Work Unit, une surface et au SHA effectivement observé ; il doit être réconcilié avec l'état courant avant la prochaine exécution affectée. | Observé : `RecordHumanFeedback`, `ReconcileHumanFeedback`, schéma et stockage dédiés. |
+| **Zone / aire** | Classification `WorkUnit.zone.area` (`frontend`, `backend`, `fullstack`, `mobile`, `infra`, `data`, `unknown`) servant au staffing et au dispatch. | Observé dans `work-unit.schema.json`. |
+| **Filtre d’aire (grant)** | Axe optionnel `allowed_areas` d’un `RunAuthorizationGrant` qui restreint l’éligibilité des Work Units du Run à un sous-ensemble d’aires, en complément de `work_unit_ids`. | Cible (Document 27). |
 | **Instance** | Répertoire Git où le framework est installé chez l’adoptant ; distinct du dépôt source (`framework_source`) et des dépôts produit hors-arbre. | Cible (Document 25, **INS-ADR-001**). En 0.7.x l’instance **est** le dépôt produit (mode standalone, **INS-ADR-008**). |
 | **Catalogue** | Index des Ensembles gouvernés par une instance (`catalog.yaml`). | Cible (schéma livré ; **INS-ADR-010**). |
 | **Ensemble** | Produit gouverné (gates, compile, Work Units, composition). Un Project State par Ensemble. | Cible (Document 25, **INS-ADR-004**). |

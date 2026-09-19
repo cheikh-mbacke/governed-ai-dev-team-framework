@@ -75,7 +75,7 @@ archivé, le statut reste **échec / non validé**.
 | Idle / orphans / attente humaine | #1 / #14 | recovery + `no_dispatchable_work` + `awaiting_human` + Supervisor Daemon | Redémarrage process hôte réel |
 | Liveness sans progrès | #1 / #3 / #12 | `stalled_no_progress` ignore les heartbeats seuls | Witness multi-heures post-fix |
 | Crash du process | #1 / #12 | fermeture `orchestrator_process_failure` + watchdog / daemon | Kill process hôte réel |
-| Rôle frontend ignoré | staffing | rôle dérivé staffing/contexte/zone | Dispatch Cursor réel post-fix |
+| Rôle frontend ignoré | staffing | rôle dérivé staffing/contexte/zone ; **cible** filtre `allowed_areas` (Document 27) | Dispatch Cursor réel post-fix |
 | Double vocabulaire de checks | qualité résultat | aliases bornés + `required_checks` explicites dans le prompt | Handoffs réels post-fix |
 | Grant/boundary contradictoires | #8 / #9 | chemins Control Plane filtrés à l'émission et au dispatch | Grant réel post-fix |
 
