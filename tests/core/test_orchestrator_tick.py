@@ -1,9 +1,9 @@
-"""Orchestrator Étape 1 — run_scheduling_tick (Document 6, orchestrator prerequisite).
+"""Orchestrator Étape 1 - run_scheduling_tick (Document 6, orchestrator prerequisite).
 
 One tick, one decision: start a ready Work Unit, reassign a stale lease,
 dispatch an execution attempt via a fake AdapterSPI, or stay idle. Real
 wall-clock looping lives only in scripts/ai-team/orchestrate.py and is
-deliberately not unit tested here — see
+deliberately not unit tested here - see
 docs/framework-design/requirements/mode-nuit-preuve-resilience-couverture.md.
 """
 
@@ -44,7 +44,14 @@ def _git(root: Path, *args: str) -> None:
     assert completed.returncode == 0, completed.stderr
 
 
-def _seed_grant(workspace: Workspace, grant_id: str, *, work_unit_ids: list[str]) -> None:
+def _seed_grant(
+    workspace: Workspace,
+    grant_id: str,
+    *,
+    work_unit_ids: list[str],
+    allowed_areas: list[str] | None = None,
+    area_filter_dependency_policy: str | None = None,
+) -> None:
     grants_dir = workspace.ai_team / "run-authorization-grants"
     grants_dir.mkdir(parents=True, exist_ok=True)
     document = {
@@ -70,6 +77,11 @@ def _seed_grant(workspace: Workspace, grant_id: str, *, work_unit_ids: list[str]
         "revoked_at": None,
         "revoked_reason": None,
     }
+    if allowed_areas is not None:
+        document["allowed_areas"] = allowed_areas
+        document["area_filter_dependency_policy"] = (
+            area_filter_dependency_policy or "skip_blocked"
+        )
     (grants_dir / f"{grant_id}.json").write_text(json.dumps(document, indent=2), encoding="utf-8")
 
 
@@ -85,7 +97,7 @@ def workspace(tmp_path: Path) -> Workspace:
     (ai_team / "state" / "project-state.yaml").write_text("phase: execution\n", encoding="utf-8")
     (ai_team / "work-units").mkdir(parents=True)
     # Orchestrator ticks exercise the Agent Execution Gateway's git-backed
-    # transactional path — seed a minimal repository like an installed client.
+    # transactional path - seed a minimal repository like an installed client.
     subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
         ["git", "config", "user.email", "tick-test@example.com"],
@@ -161,6 +173,7 @@ def _seed_work_unit(
     implementation_role: str = "backend-developer",
     area: str = "unknown",
     staffing_proposal: object | None = None,
+    dependencies: list | None = None,
 ) -> None:
     ctx_ref: str | None
     if context_package_ref is True:
@@ -185,7 +198,7 @@ def _seed_work_unit(
         "zone": {"area": area, "capabilities": [], "components": []},
         "expected_behavior": "test behavior",
         "acceptance_criteria": ["ok"],
-        "dependencies": [],
+        "dependencies": dependencies or [],
         "risk": {"class": "low", "reasons": []},
         "required_verification": {"unit_tests": True},
         "status": status,
@@ -702,7 +715,7 @@ def test_tick_reassigns_a_stale_lease(workspace: Workspace) -> None:
 
 
 def test_tick_dispatches_execution_and_advances_on_success(workspace: Workspace) -> None:
-    """Document 6 §9.3/orchestrator.json — a successful step always advances the Work Unit."""
+    """Document 6 §9.3/orchestrator.json - a successful step always advances the Work Unit."""
     gateway = CommandGateway(workspace)
     gateway.execute_command(_open_run("RUN-TICK-003", work_unit_ids=["WU-A"]))
     _seed_work_unit(workspace, "WU-A", status="in_progress")
@@ -756,7 +769,7 @@ def test_real_adapter_receives_compiled_multimodal_design_context(
 ) -> None:
     """The real Supervisor -> Gateway -> Adapter path (Document 6, Design
     Authority §2/§3) must carry the compiled Design Contract and a materialized
-    visual attachment through to the actual Cursor adapter's assembled prompt —
+    visual attachment through to the actual Cursor adapter's assembled prompt -
     not a FakeAdapter double, not an artificial descriptor built in the test.
     """
     from adapters.cursor.runtime import execute as cursor_execute
@@ -806,7 +819,7 @@ def test_real_adapter_receives_compiled_multimodal_design_context(
         states=["content_available"],
         viewports=[{"name": "desktop", "width": 1280, "height": 800}],
     )
-    # The dispatch step runs against an isolated git checkout of base_sha —
+    # The dispatch step runs against an isolated git checkout of base_sha -
     # the mockup must be committed so it exists in that checkout too.
     _git(workspace.root, "add", "-A")
     _git(workspace.root, "commit", "-m", "add design mockup + contract")
@@ -852,11 +865,11 @@ def test_real_adapter_receives_compiled_multimodal_design_context(
         gateway, workspace, run_id="RUN-DESIGN-TICK", adapter=adapter, worker_id="w1"
     )
     # The real Cursor runtime stub records "blocked" (no real agent launch is
-    # enabled in tests), which pauses the Work Unit — what matters here is
+    # enabled in tests), which pauses the Work Unit - what matters here is
     # that the real adapter was actually invoked with the compiled context.
     assert tick_result.action == "paused_work_unit", (tick_result.action, tick_result.details)
 
-    # The real adapter actually received the request — not a stand-in.
+    # The real adapter actually received the request - not a stand-in.
     prompt = cursor_execute.last_execution_prompt
     request = cursor_execute.last_execution_request
     assert prompt is not None, "real CursorAdapter.execute() never reached build_prompt"
@@ -867,7 +880,7 @@ def test_real_adapter_receives_compiled_multimodal_design_context(
     assert "design_mode: conform" in prompt
     assert "Sign in" in prompt
 
-    # A real, hash-verified, readable file — not just a path claimed in prose.
+    # A real, hash-verified, readable file - not just a path claimed in prose.
     context_package = request.get("context_package") or {}
     references = ((context_package.get("design") or {}).get("references")) or []
     assert references, "context_package.design.references was not populated"
@@ -881,7 +894,7 @@ def test_real_adapter_receives_compiled_multimodal_design_context(
 
 
 def test_out_of_scope_write_stops_the_whole_run(workspace: Workspace) -> None:
-    """Document 6 §9.5 — a write outside a Work Unit's declared scope is one of
+    """Document 6 §9.5 - a write outside a Work Unit's declared scope is one of
     the fixed conditions that stops the whole Run, not just this Work Unit.
     Before this fix, `_implementation_boundary_error` detected the violation
     but only failed the single attempt, leaving the Run active."""
@@ -1106,7 +1119,7 @@ def test_work_unit_yaml_write_stops_the_whole_run(workspace: Workspace) -> None:
 def test_tick_walks_a_work_unit_through_verification_review_audit_to_human_test(
     workspace: Workspace,
 ) -> None:
-    """The loop stops at human_test — done requires human acceptance, never auto-decided."""
+    """The loop stops at human_test - done requires human acceptance, never auto-decided."""
     gateway = CommandGateway(workspace)
     gateway.execute_command(_open_run("RUN-TICK-006", work_unit_ids=["WU-A"]))
     _seed_work_unit(workspace, "WU-A", status="in_progress")
@@ -1246,7 +1259,7 @@ def test_tick_demotes_work_unit_on_convergence_exhaustion(workspace: Workspace) 
     )
     assert wu_document["status"] == "blocked"
 
-    # blocked does not map to a dispatchable step — Lot 4 stops the Run when
+    # blocked does not map to a dispatchable step - Lot 4 stops the Run when
     # every Work Unit is stuck (no_dispatchable_work), rather than idling forever.
     third = run_scheduling_tick(
         gateway, workspace, run_id="RUN-TICK-004", adapter=FakeAdapter([]), worker_id="w1"
@@ -1340,7 +1353,7 @@ def test_tick_stops_active_run_that_is_alive_without_useful_progress(
 
 
 def test_tick_does_not_dispatch_on_another_workers_lease(workspace: Workspace) -> None:
-    """Document 6 §11 — with several workers ticking, one never picks up work it does
+    """Document 6 §11 - with several workers ticking, one never picks up work it does
     not hold the lease for, even if that work unit is otherwise dispatchable."""
     gateway = CommandGateway(workspace)
     gateway.execute_command(_open_run("RUN-TICK-007", work_unit_ids=["WU-A"]))
@@ -1371,7 +1384,7 @@ def test_tick_does_not_dispatch_on_another_workers_lease(workspace: Workspace) -
 
 
 def test_concurrent_ticks_respect_the_parallel_worker_cap(workspace: Workspace) -> None:
-    """Real threads, real file contention — Document 6 §11's cap must hold under an
+    """Real threads, real file contention - Document 6 §11's cap must hold under an
     actual race, not just a simulated one (see mode-nuit-preuve-resilience-couverture.md
     on why most of this codebase's races are simulated rather than real)."""
     import threading
@@ -1892,7 +1905,7 @@ def test_decision_proposal_from_adapter_is_validated_by_core(workspace: Workspac
 def test_risk_escalation_from_adapter_pauses_when_critical_wip_conflict(
     workspace: Workspace,
 ) -> None:
-    """Document 6 §7.3/§11 — adapter-reported escalation is Core-applied; WIP=1 pauses."""
+    """Document 6 §7.3/§11 - adapter-reported escalation is Core-applied; WIP=1 pauses."""
     _seed_grant(workspace, "GRANT-RISK-TICK", work_unit_ids=["WU-A", "WU-B"])
     gateway = CommandGateway(workspace)
     gateway.execute_command(
@@ -2199,7 +2212,7 @@ def test_orphan_started_attempt_recovers_when_lease_document_is_gone(
     (attempts_dir / "ATTEMPT-ORPHAN-GONE.yaml").write_text(
         yaml.safe_dump(attempt), encoding="utf-8"
     )
-    # No lease file and no leases_by_work_unit entry — the failure mode from audit.
+    # No lease file and no leases_by_work_unit entry - the failure mode from audit.
     run_path = workspace.ai_team / "runs" / "RUN-ORPHAN-GONE.yaml"
     run_document = yaml.safe_load(run_path.read_text(encoding="utf-8"))
     run_document["leases_by_work_unit"] = {}
@@ -2251,7 +2264,7 @@ def test_tick_blocks_when_context_package_fails_schema_or_role_mismatch(
     gateway.execute_command(_open_run("RUN-CTX-SCHEMA", work_unit_ids=["WU-A"]))
     _seed_work_unit(workspace, "WU-A", status="ready")
     packages = workspace.ai_team / "context-packages"
-    # Schema-invalid: only id — missing work_unit, role, items.
+    # Schema-invalid: only id - missing work_unit, role, items.
     (packages / "CTX-WU-A.yaml").write_text("id: CTX-WU-A\n", encoding="utf-8")
     adapter = FakeAdapter([_succeeded_result()])
 
@@ -2317,3 +2330,154 @@ def test_tick_blocks_when_context_package_id_mismatches_ref(
     assert attempt["status"] == "blocked"
     assert "CTX-WRONG" in str(attempt.get("summary") or "")
     assert "CTX-WU-A" in str(attempt.get("summary") or "")
+
+
+def test_tick_skips_frontend_when_grant_allows_backend_only(workspace: Workspace) -> None:
+    """Document 28 AREA-AC-005."""
+    _seed_grant(
+        workspace,
+        "GRANT-AREA-TICK",
+        work_unit_ids=["WU-FRONT", "WU-BACK"],
+        allowed_areas=["backend"],
+    )
+    gateway = CommandGateway(workspace)
+    _seed_work_unit(workspace, "WU-FRONT", status="ready", area="frontend")
+    _seed_work_unit(workspace, "WU-BACK", status="ready", area="backend")
+    # OpenRun would reject frontend under a live filter; seed Run after open
+    # with both ids to simulate area drift / seeded fixture.
+    gateway.execute_command(
+        _open_run("RUN-AREA-TICK", work_unit_ids=["WU-BACK"], grant_id="GRANT-AREA-TICK")
+    )
+    run_path = workspace.ai_team / "runs" / "RUN-AREA-TICK.yaml"
+    run_document = yaml.safe_load(run_path.read_text(encoding="utf-8"))
+    run_document["work_unit_ids"] = ["WU-FRONT", "WU-BACK"]
+    run_path.write_text(yaml.safe_dump(run_document), encoding="utf-8")
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AREA-TICK", adapter=FakeAdapter([]), worker_id="w1"
+    )
+
+    assert result.action == "started_work_unit"
+    assert result.work_unit_id == "WU-BACK"
+    front = yaml.safe_load(
+        (workspace.ai_team / "work-units" / "WU-FRONT.yaml").read_text(encoding="utf-8")
+    )
+    assert front["status"] == "ready"
+
+
+def test_tick_reports_area_filter_mismatch_when_only_frontend_ready(
+    workspace: Workspace,
+) -> None:
+    """Document 28 AREA-AC-005 - mismatch reason when nothing else is eligible."""
+    _seed_grant(
+        workspace,
+        "GRANT-AREA-MISMATCH",
+        work_unit_ids=["WU-PLACEHOLDER", "WU-FRONT-ONLY"],
+        allowed_areas=["backend"],
+    )
+    gateway = CommandGateway(workspace)
+    _seed_work_unit(workspace, "WU-PLACEHOLDER", status="done", area="backend")
+    _seed_work_unit(workspace, "WU-FRONT-ONLY", status="ready", area="frontend")
+    gateway.execute_command(
+        _open_run(
+            "RUN-AREA-MISMATCH",
+            work_unit_ids=["WU-PLACEHOLDER"],
+            grant_id="GRANT-AREA-MISMATCH",
+        )
+    )
+    run_path = workspace.ai_team / "runs" / "RUN-AREA-MISMATCH.yaml"
+    run_document = yaml.safe_load(run_path.read_text(encoding="utf-8"))
+    run_document["work_unit_ids"] = ["WU-FRONT-ONLY"]
+    run_path.write_text(yaml.safe_dump(run_document), encoding="utf-8")
+
+    result = run_scheduling_tick(
+        gateway,
+        workspace,
+        run_id="RUN-AREA-MISMATCH",
+        adapter=FakeAdapter([]),
+        worker_id="w1",
+    )
+    assert result.action == "area_filter_mismatch"
+    assert result.details["reason"] == "area_filter_mismatch"
+    front = yaml.safe_load(
+        (workspace.ai_team / "work-units" / "WU-FRONT-ONLY.yaml").read_text(encoding="utf-8")
+    )
+    assert front["status"] == "ready"
+
+
+def test_tick_skip_blocked_cross_area_dependency_continues_other_backend(
+    workspace: Workspace,
+) -> None:
+    """Document 28 AREA-AC-006."""
+    _seed_grant(
+        workspace,
+        "GRANT-AREA-SKIP",
+        work_unit_ids=["WU-B-DEP", "WU-B-FREE"],
+        allowed_areas=["backend"],
+        area_filter_dependency_policy="skip_blocked",
+    )
+    gateway = CommandGateway(workspace)
+    _seed_work_unit(workspace, "WU-F-DEP", status="ready", area="frontend")
+    _seed_work_unit(
+        workspace,
+        "WU-B-DEP",
+        status="ready",
+        area="backend",
+        dependencies=["WU-F-DEP"],
+    )
+    _seed_work_unit(workspace, "WU-B-FREE", status="ready", area="backend")
+    gateway.execute_command(
+        _open_run(
+            "RUN-AREA-SKIP",
+            work_unit_ids=["WU-B-DEP", "WU-B-FREE"],
+            grant_id="GRANT-AREA-SKIP",
+        )
+    )
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AREA-SKIP", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    assert result.action == "started_work_unit"
+    assert result.work_unit_id == "WU-B-FREE"
+    blocked = yaml.safe_load(
+        (workspace.ai_team / "work-units" / "WU-B-DEP.yaml").read_text(encoding="utf-8")
+    )
+    assert blocked["status"] == "ready"
+
+
+def test_tick_stops_on_cross_area_dependency_policy(workspace: Workspace) -> None:
+    """Document 28 AREA-AC-007."""
+    _seed_grant(
+        workspace,
+        "GRANT-AREA-STOP",
+        work_unit_ids=["WU-B-ONLY"],
+        allowed_areas=["backend"],
+        area_filter_dependency_policy="stop_on_cross_area_dependency",
+    )
+    gateway = CommandGateway(workspace)
+    _seed_work_unit(workspace, "WU-F-BLOCK", status="ready", area="frontend")
+    _seed_work_unit(
+        workspace,
+        "WU-B-ONLY",
+        status="ready",
+        area="backend",
+        dependencies=["WU-F-BLOCK"],
+    )
+    gateway.execute_command(
+        _open_run(
+            "RUN-AREA-STOP",
+            work_unit_ids=["WU-B-ONLY"],
+            grant_id="GRANT-AREA-STOP",
+        )
+    )
+
+    result = run_scheduling_tick(
+        gateway, workspace, run_id="RUN-AREA-STOP", adapter=FakeAdapter([]), worker_id="w1"
+    )
+    assert result.action == "run_stopped"
+    assert result.details["stop_condition"] == "cross_area_dependency"
+    run_document = yaml.safe_load(
+        (workspace.ai_team / "runs" / "RUN-AREA-STOP.yaml").read_text(encoding="utf-8")
+    )
+    assert run_document["status"] == "stopped"
+    assert run_document["stop_condition"] == "cross_area_dependency"

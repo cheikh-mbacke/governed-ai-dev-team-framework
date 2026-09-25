@@ -32,6 +32,8 @@ def _seed_grant(
     expires_at: str = "2099-01-01T00:00:00+00:00",
     excluded_actions: list[str] | None = None,
     revoked_at: str | None = None,
+    allowed_areas: list[str] | None = None,
+    area_filter_dependency_policy: str | None = None,
 ) -> None:
     grants_dir = workspace.ai_team / "run-authorization-grants"
     grants_dir.mkdir(parents=True, exist_ok=True)
@@ -59,6 +61,11 @@ def _seed_grant(
         "revoked_at": revoked_at,
         "revoked_reason": "test revocation" if revoked_at else None,
     }
+    if allowed_areas is not None:
+        document["allowed_areas"] = allowed_areas
+        document["area_filter_dependency_policy"] = (
+            area_filter_dependency_policy or "skip_blocked"
+        )
     (grants_dir / f"{grant_id}.json").write_text(json.dumps(document, indent=2), encoding="utf-8")
 
 
@@ -79,16 +86,23 @@ def run_workspace(tmp_path: Path) -> Workspace:
 
 
 def _seed_work_unit(
-    workspace: Workspace, work_unit_id: str, *, status: str, scope_include: list[str] | None = None
+    workspace: Workspace,
+    work_unit_id: str,
+    *,
+    status: str,
+    scope_include: list[str] | None = None,
+    area: str = "backend",
+    dependencies: list | None = None,
 ) -> None:
     document = {
         "id": work_unit_id,
         "title": "Test work unit",
         "objective": {"result": "test"},
         "scope": {"include": scope_include or [], "exclude": []},
+        "zone": {"area": area, "capabilities": [], "components": []},
         "expected_behavior": "test behavior",
         "acceptance_criteria": ["ok"],
-        "dependencies": [],
+        "dependencies": dependencies or [],
         "risk": {"class": "low", "reasons": []},
         "required_verification": {"unit_tests": True},
         "status": status,
@@ -354,6 +368,8 @@ def _issue_grant(
     mission_artifact_ids: list[str] | None = None,
     auth_id: str | None = None,
     autonomy_preset: str | None = None,
+    allowed_areas: list[str] | None = None,
+    area_filter_dependency_policy: str | None = None,
 ) -> dict:
     payload = {
         "id": grant_id,
@@ -374,6 +390,10 @@ def _issue_grant(
         payload["decision_menu"] = decision_menu
     if mission_artifact_ids is not None:
         payload["mission_artifact_ids"] = mission_artifact_ids
+    if allowed_areas is not None:
+        payload["allowed_areas"] = allowed_areas
+    if area_filter_dependency_policy is not None:
+        payload["area_filter_dependency_policy"] = area_filter_dependency_policy
     if autonomy_preset is not None:
         from governed_ai.core.commands.run_authorization import REQUIRED_UNATTENDED_COMMANDS
 
@@ -2503,3 +2523,137 @@ def test_unattended_readiness_extended_preset_requires_acceptance_oracle(
     assert any(
         "mission artifact of kind 'acceptance_oracle'" in gap for gap in report["gaps"]
     )
+
+def test_issue_grant_rejects_frontend_wu_when_allowed_areas_backend(
+    run_workspace: Workspace,
+) -> None:
+    """Document 28 AREA-AC-002."""
+    _seed_work_unit(run_workspace, "WU-FRONT", status="ready", area="frontend")
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _issue_grant(
+            "GRANT-AREA-002",
+            work_unit_ids=["WU-FRONT"],
+            allowed_areas=["backend"],
+        )
+    )
+    assert exit_code == 3
+    assert receipt["errors"][0]["code"] == ErrorCode.INVARIANT_VIOLATION.value
+    assert not (
+        run_workspace.ai_team / "run-authorization-grants" / "GRANT-AREA-002.json"
+    ).exists()
+
+
+def test_issue_grant_rejects_unknown_area_when_filter_active(
+    run_workspace: Workspace,
+) -> None:
+    """Document 28 AREA-AC-003."""
+    _seed_work_unit(run_workspace, "WU-UNK", status="ready", area="unknown")
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _issue_grant(
+            "GRANT-AREA-003",
+            work_unit_ids=["WU-UNK"],
+            allowed_areas=["backend"],
+        )
+    )
+    assert exit_code == 3
+    assert receipt["errors"][0]["code"] == ErrorCode.INVARIANT_VIOLATION.value
+
+
+def test_issue_grant_persists_allowed_areas(run_workspace: Workspace) -> None:
+    """Document 28 AREA-AC-001."""
+    _seed_work_unit(run_workspace, "WU-BACK", status="ready", area="backend")
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _issue_grant(
+            "GRANT-AREA-001",
+            work_unit_ids=["WU-BACK"],
+            allowed_areas=["backend"],
+            area_filter_dependency_policy="skip_blocked",
+        )
+    )
+    assert exit_code == 0, receipt
+    document = json.loads(
+        (run_workspace.ai_team / "run-authorization-grants" / "GRANT-AREA-001.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert document["allowed_areas"] == ["backend"]
+    assert document["area_filter_dependency_policy"] == "skip_blocked"
+
+
+def test_open_run_rejects_work_unit_outside_allowed_areas(
+    run_workspace: Workspace,
+) -> None:
+    """Document 28 AREA-AC-004."""
+    _seed_work_unit(run_workspace, "WU-FRONT-OPEN", status="ready", area="frontend")
+    _seed_grant(
+        run_workspace,
+        "GRANT-AREA-OPEN",
+        work_unit_ids=["WU-FRONT-OPEN"],
+        allowed_areas=["backend"],
+    )
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _open_run(
+            "RUN-AREA-OPEN",
+            work_unit_ids=["WU-FRONT-OPEN"],
+            grant_id="GRANT-AREA-OPEN",
+        )
+    )
+    assert exit_code == 4
+    assert receipt["errors"][0]["code"] == ErrorCode.UNAUTHORIZED.value
+
+
+def test_open_run_accepts_backend_under_backend_filter(
+    run_workspace: Workspace,
+) -> None:
+    """Document 28 AREA-AC-008 happy path."""
+    _seed_work_unit(run_workspace, "WU-BACK-OPEN", status="ready", area="backend")
+    _seed_grant(
+        run_workspace,
+        "GRANT-AREA-OK",
+        work_unit_ids=["WU-BACK-OPEN"],
+        allowed_areas=["backend"],
+    )
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _open_run(
+            "RUN-AREA-OK",
+            work_unit_ids=["WU-BACK-OPEN"],
+            grant_id="GRANT-AREA-OK",
+        )
+    )
+    assert exit_code == 0, receipt
+
+
+def test_issue_grant_rejects_empty_allowed_areas(run_workspace: Workspace) -> None:
+    _seed_work_unit(run_workspace, "WU-EMPTY-AREA", status="ready", area="backend")
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _issue_grant(
+            "GRANT-AREA-EMPTY",
+            work_unit_ids=["WU-EMPTY-AREA"],
+            allowed_areas=[],
+        )
+    )
+    assert exit_code == 3
+    assert receipt["errors"][0]["code"] == ErrorCode.INVALID_SCHEMA.value
+
+
+def test_issue_grant_rejects_fullstack_not_implied_by_backend(
+    run_workspace: Workspace,
+) -> None:
+    """Document 28 AREA-AC-009."""
+    _seed_work_unit(run_workspace, "WU-FULL", status="ready", area="fullstack")
+    gateway = CommandGateway(run_workspace)
+    receipt, exit_code = gateway.execute_command(
+        _issue_grant(
+            "GRANT-AREA-FULL",
+            work_unit_ids=["WU-FULL"],
+            allowed_areas=["backend"],
+        )
+    )
+    assert exit_code == 3
+    assert receipt["errors"][0]["code"] == ErrorCode.INVARIANT_VIOLATION.value

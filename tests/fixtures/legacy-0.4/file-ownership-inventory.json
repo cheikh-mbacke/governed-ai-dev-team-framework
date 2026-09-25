@@ -490,6 +490,7 @@
     "src/governed_ai/core/domain/gates/g4_preconditions.py": "core",
     "src/governed_ai/core/domain/gates/naming.py": "core",
     "src/governed_ai/core/domain/run/__init__.py": "core",
+    "src/governed_ai/core/domain/run/area_filter.py": "core",
     "src/governed_ai/core/domain/run/authorization_grant.py": "core",
     "src/governed_ai/core/domain/run/autonomy_policy.py": "core",
     "src/governed_ai/core/domain/run/convergence.py": "core",
