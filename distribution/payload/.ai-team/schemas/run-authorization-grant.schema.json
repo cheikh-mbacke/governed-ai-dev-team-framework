@@ -231,6 +231,31 @@
     },
     "effective_autonomy_policy_hash": {
       "type": ["string", "null"]
+    },
+    "allowed_areas": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Document 27 — optional area filter; absent/null means no area restriction. unknown is never allowed.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "frontend",
+          "backend",
+          "fullstack",
+          "mobile",
+          "infra",
+          "data"
+        ]
+      }
+    },
+    "area_filter_dependency_policy": {
+      "type": "string",
+      "description": "Document 27 §3.4 — how to treat area-eligible WUs blocked by out-of-filter dependencies. Only meaningful when allowed_areas is set.",
+      "enum": [
+        "skip_blocked",
+        "stop_on_cross_area_dependency"
+      ]
     }
   },
   "additionalProperties": true

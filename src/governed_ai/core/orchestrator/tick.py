@@ -28,6 +28,14 @@ import yaml
 from governed_ai.adapters.spi import AdapterSPI, ExecutionRequest
 from governed_ai.compat.datetime import UTC, datetime, timedelta
 from governed_ai.core.commands.gateway import CommandGateway
+from governed_ai.core.domain.run.area_filter import (
+    area_filter_active,
+    area_filter_dependency_policy,
+    area_ineligibility_reason,
+    blocked_solely_by_cross_area_dependency,
+    dependency_ids,
+    is_area_eligible,
+)
 from governed_ai.core.domain.run.autonomy_policy import (
     effective_policy_hash,
     is_unattended_preset,
@@ -726,6 +734,49 @@ def _dependencies_satisfied(
     return True
 
 
+def _load_bound_grant(workspace: Workspace, run_document: dict[str, Any]) -> dict[str, Any]:
+    grant_id = run_document.get("run_authorization_grant_id")
+    if not grant_id:
+        return {}
+    grant_path = workspace.ai_team / "run-authorization-grants" / f"{grant_id}.json"
+    if not grant_path.is_file():
+        return {}
+    try:
+        return json.loads(_read_text(grant_path))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _filter_area_eligible_documents(
+    work_unit_documents: dict[str, dict[str, Any] | None],
+    grant: dict[str, Any],
+) -> dict[str, dict[str, Any] | None]:
+    if not area_filter_active(grant):
+        return work_unit_documents
+    return {
+        work_unit_id: document
+        for work_unit_id, document in work_unit_documents.items()
+        if is_area_eligible(document, grant)
+    }
+
+
+def _dependency_documents_for_run(
+    workspace: Workspace,
+    work_unit_documents: dict[str, dict[str, Any] | None],
+) -> dict[str, dict[str, Any] | None]:
+    """Extend the Run's WU map with on-disk dependency documents (may be out of Run)."""
+    extended = dict(work_unit_documents)
+    for document in list(work_unit_documents.values()):
+        if document is None:
+            continue
+        for dependency_id in dependency_ids(document):
+            if dependency_id in extended:
+                continue
+            path = workspace.ai_team / "work-units" / f"{dependency_id}.yaml"
+            extended[dependency_id] = _read_yaml(path) if path.is_file() else None
+    return extended
+
+
 def _all_work_units_ready_for_morning_review(
     work_unit_ids: list[str],
     work_unit_documents: dict[str, dict[str, Any] | None],
@@ -1072,10 +1123,14 @@ def _run_has_dispatchable_work(
     work_unit_documents: dict[str, dict[str, Any] | None],
     *,
     now: datetime,
+    grant: dict[str, Any] | None = None,
 ) -> bool:
     """True when a future tick could still acquire or dispatch machine work."""
+    active_grant = grant if grant is not None else {}
     for _work_unit_id, wu_document in work_unit_documents.items():
         if wu_document is None:
+            continue
+        if not is_area_eligible(wu_document, active_grant):
             continue
         status = wu_document.get("status")
         if status in _MACHINE_DISPATCHABLE_STATUSES or status in STATUS_TO_STEP:
@@ -1176,6 +1231,11 @@ def run_scheduling_tick(
         work_unit_id: _read_yaml(workspace.ai_team / "work-units" / f"{work_unit_id}.yaml")
         for work_unit_id in work_unit_ids
     }
+    grant = _load_bound_grant(workspace, run_document)
+    eligible_documents = _filter_area_eligible_documents(work_unit_documents, grant)
+    eligible_work_unit_ids = list(eligible_documents.keys())
+    area_mismatched: list[str] = []
+    dependency_documents = _dependency_documents_for_run(workspace, work_unit_documents)
 
     recovered_orphans = _recover_orphan_started_attempts(
         gateway,
@@ -1187,6 +1247,60 @@ def run_scheduling_tick(
     if recovered_orphans:
         # Re-load run after authoritative attempt updates (budgets / events).
         run_document = _read_yaml(run_path) or run_document
+
+    # Document 27 §3.4 — stop when an eligible WU is blocked solely by an
+    # out-of-filter dependency and no other eligible work remains.
+    if (
+        area_filter_active(grant)
+        and area_filter_dependency_policy(grant) == "stop_on_cross_area_dependency"
+    ):
+        has_independent_eligible = False
+        has_cross_area_block = False
+        for work_unit_id, wu_document in eligible_documents.items():
+            if wu_document is None:
+                continue
+            status = wu_document.get("status")
+            if status not in {"ready", "in_progress", "remediation_required"}:
+                continue
+            if _dependencies_satisfied(wu_document, dependency_documents):
+                has_independent_eligible = True
+                continue
+            if blocked_solely_by_cross_area_dependency(
+                wu_document,
+                grant=grant,
+                work_unit_documents=dependency_documents,
+            ):
+                has_cross_area_block = True
+        if has_cross_area_block and not has_independent_eligible:
+            stop_receipt, stop_exit = gateway.execute_command(
+                _envelope(
+                    "CloseRun",
+                    target={
+                        "kind": "run",
+                        "id": run_id,
+                        "expected_revision": run_document["revision"],
+                    },
+                    payload={
+                        "status": "stopped",
+                        "reason": (
+                            "area-eligible work unit blocked solely by "
+                            "out-of-filter dependency"
+                        ),
+                        "stop_condition": "cross_area_dependency",
+                    },
+                )
+            )
+            return _terminal_run_result(
+                gateway,
+                close_exit=stop_exit,
+                action_ok="run_stopped",
+                action_fail="run_stop_failed",
+                work_unit_id=None,
+                details={
+                    "stop_condition": "cross_area_dependency",
+                    "errors": stop_receipt.get("errors"),
+                },
+            )
 
     # Priority 1: reassign any stale lease before anything else.
     for work_unit_id, lease_ref in leases_by_work_unit.items():
@@ -1238,7 +1352,13 @@ def run_scheduling_tick(
             "remediation_required",
         }:
             continue
-        if not _dependencies_satisfied(wu_document, work_unit_documents):
+        if area_ineligibility_reason(wu_document, grant) is not None:
+            area_mismatched.append(work_unit_id)
+            continue
+        if not _dependencies_satisfied(wu_document, dependency_documents):
+            # Document 27 §3.4 skip_blocked: out-of-filter deps leave the WU
+            # non-dispatchable without stopping the Run (unless policy says so,
+            # handled above).
             continue
         new_lease_id = f"LEASE-{work_unit_id}-{uuid.uuid4().hex[:8]}"
         lease_receipt, lease_exit = gateway.execute_command(
@@ -1321,6 +1441,11 @@ def run_scheduling_tick(
             continue
         wu_document = work_unit_documents.get(work_unit_id)
         if wu_document is None:
+            continue
+        if area_ineligibility_reason(wu_document, grant) is not None:
+            # Document 27 AREA-F-004 — never dispatch outside the area filter,
+            # even if a lease was acquired before the area changed.
+            area_mismatched.append(work_unit_id)
             continue
         current_status = wu_document.get("status")
         step = _dispatch_step(workspace, run_id, work_unit_id, current_status)
@@ -2471,7 +2596,10 @@ def run_scheduling_tick(
     # produces a candidate *ready for* G3 and never approves or releases it.
     if (
         is_unattended_preset(run_document.get("autonomy_preset"))
-        and _all_work_units_ready_for_morning_review(work_unit_ids, work_unit_documents)
+        and _all_work_units_ready_for_morning_review(
+            eligible_work_unit_ids or work_unit_ids,
+            eligible_documents if area_filter_active(grant) else work_unit_documents,
+        )
     ):
         if run_document.get("autonomy_preset") == "unattended_maximal":
             candidate_id = f"RC-{run_id}"
@@ -2561,13 +2689,17 @@ def run_scheduling_tick(
 
     if (
         not _run_has_dispatchable_work(
-            workspace, run_document, work_unit_documents, now=now
+            workspace, run_document, work_unit_documents, now=now, grant=grant
         )
-        and _run_awaits_human(work_unit_documents)
+        and _run_awaits_human(
+            eligible_documents if area_filter_active(grant) else work_unit_documents
+        )
     ):
         waiting = [
             work_unit_id
-            for work_unit_id, document in work_unit_documents.items()
+            for work_unit_id, document in (
+                eligible_documents if area_filter_active(grant) else work_unit_documents
+            ).items()
             if document is not None and document.get("status") in _HUMAN_WAIT_STATUSES
         ]
         return TickResult(
@@ -2579,11 +2711,25 @@ def run_scheduling_tick(
             },
         )
 
+    if area_mismatched and not _run_has_dispatchable_work(
+        workspace, run_document, work_unit_documents, now=now, grant=grant
+    ):
+        return TickResult(
+            action="area_filter_mismatch",
+            work_unit_id=area_mismatched[0],
+            details={
+                "reason": "area_filter_mismatch",
+                "work_unit_ids": area_mismatched,
+            },
+        )
+
     if (
         not _run_has_dispatchable_work(
-            workspace, run_document, work_unit_documents, now=now
+            workspace, run_document, work_unit_documents, now=now, grant=grant
         )
-        and _should_stop_for_no_dispatchable_work(work_unit_documents)
+        and _should_stop_for_no_dispatchable_work(
+            eligible_documents if area_filter_active(grant) else work_unit_documents
+        )
     ):
         stop_receipt, stop_exit = gateway.execute_command(
             _envelope(

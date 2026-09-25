@@ -1,6 +1,7 @@
 # Document 27 — Filtre d’aire sur RunAuthorizationGrant
 
-**Statut** : version 1.0 — exigence normative (cible d’implémentation).
+**Statut** : version 1.1 — exigence normative ; implémentée dans le noyau
+(`IssueRunAuthorizationGrant`, `OpenRun`, tick / dispatch).
 
 Les termes **DOIT**, **NE DOIT PAS**, **DEVRAIT** et **PEUT** expriment une
 obligation, une interdiction, une recommandation forte et une option.
