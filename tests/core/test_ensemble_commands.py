@@ -143,6 +143,12 @@ def test_register_ensemble_and_two_members_updates_catalog(
         (instance_workspace.ensembles_root / "boutique" / "members.yaml").read_text(encoding="utf-8")
     )
     assert [entry["id"] for entry in members["members"]] == ["backend", "frontend"]
+    assert not Path(members["members"][0]["path"]).is_absolute()
+    active = Workspace(
+        root=instance_workspace.root,
+        active_ensemble_id="boutique",
+    )
+    assert active.member_root("backend") == backend.resolve()
     catalog = yaml.safe_load(instance_workspace.catalog_path.read_text(encoding="utf-8"))
     assert catalog["instance_id"] == "acme-ai-team"
     assert catalog["ensembles"] == [

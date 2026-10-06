@@ -264,6 +264,19 @@ def test_ac_descriptive_and_ranges() -> None:
     assert not missing
 
 
+def test_absolute_artifact_path_is_not_stripped_to_workspace_relative(tmp_path: Path) -> None:
+    workspace, _sha = _workspace(tmp_path)
+    with pytest.raises(ExecutionGatewayError) as exc:
+        verify_artifact(
+            workspace.root,
+            path="/tmp/verify-run.log",
+            agent_reported_sha256=None,
+            max_bytes=1024,
+        )
+    assert exc.value.code == "absolute_path_outside_workspace"
+    assert "artifact not found: tmp/" not in str(exc.value)
+
+
 def test_artifact_hash_recalculated(tmp_path: Path) -> None:
     workspace, _sha = _workspace(tmp_path)
     path = workspace.root / "src" / "app.py"

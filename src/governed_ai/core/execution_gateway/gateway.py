@@ -545,12 +545,24 @@ class AgentExecutionGateway:
                 )
                 failed = [item for item in independent if item.get("status") != "passed"]
                 if failed:
+                    excerpts = [
+                        str(limitation)
+                        for item in failed
+                        for limitation in (item.get("limitations") or [])
+                        if limitation and limitation != "non-zero exit"
+                    ]
+                    message = "framework verification runner reported failures"
+                    if excerpts:
+                        message = f"{message}: {excerpts[0][:500]}"
                     raise ExecutionGatewayError(
                         StructuredError(
                             code="independent_verification_failed",
-                            message="framework verification runner reported failures",
+                            message=message,
                             path="verification",
-                            details={"failed": [item.get("canonical_id") for item in failed]},
+                            details={
+                                "failed": [item.get("canonical_id") for item in failed],
+                                "transcripts": excerpts[:4],
+                            },
                         )
                     )
                 events.append(

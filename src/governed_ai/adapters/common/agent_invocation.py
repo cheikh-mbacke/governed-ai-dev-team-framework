@@ -27,6 +27,7 @@ import yaml
 
 from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.domain.run.path_policy import sanitize_allowed_paths
+from governed_ai.core.execution_gateway.contracts import MAX_ARTIFACT_BYTES, MAX_ARTIFACTS
 
 DEFAULT_TIMEOUT_SECONDS = 600.0
 ENABLE_ENV_VAR = "GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH"
@@ -230,12 +231,24 @@ def build_prompt(project_root: Path, request: dict[str, Any]) -> str:
     attachments_section = _format_visual_attachments_section(request)
     allowed_paths = sanitize_allowed_paths(request.get("allowed_paths") or [])
     required_checks = [str(item) for item in request.get("required_checks") or []]
+    contract = request.get("contract") if isinstance(request.get("contract"), dict) else {}
+    write_envelope = request.get("resolved_scope") or contract.get("effective_scope") or []
+    evidence_dir = f".ai-team/evidence/{work_unit_id}/" if work_unit_id else ".ai-team/evidence/<work-unit>/"
     return (
         f"{wu_summary}\n"
         f"Role: {role_id}. Procedure: {procedure_id}.\n"
         f"Resolved scope: {request.get('resolved_scope', [])}.\n"
         f"Allowed shell commands: {request.get('allowed_shell_commands', [])}.\n"
         f"Allowed paths: {allowed_paths}.\n"
+        f"Write envelope: {write_envelope}. "
+        "The write envelope is the only set of product paths you may modify. "
+        "Grant allowed paths are an outer bound and do not authorize writes "
+        "outside the Work Unit scope.\n"
+        f"Put evidence only under {evidence_dir} as .txt or .json. "
+        "Do not declare host-absolute paths, generated build trees, "
+        "compiled packages, or more than "
+        f"{MAX_ARTIFACTS} artifacts. Each artifact must be at most "
+        f"{MAX_ARTIFACT_BYTES} bytes.\n"
         f"Required governed check names: {required_checks}.\n"
         f"{design_section}"
         f"{attachments_section}"

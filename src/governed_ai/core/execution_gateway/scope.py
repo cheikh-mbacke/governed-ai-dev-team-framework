@@ -240,3 +240,34 @@ def compute_effective_scope(
         "control_plane_blocked": list(CONTROL_PLANE_ONLY_PATH_PREFIXES),
         "axes": axis_snapshot,
     }
+
+
+def conflicting_grant_scopes(
+    work_units: list[dict[str, Any]],
+    *,
+    grant_allowed_paths: list[str] | None,
+    grant_axis_present: bool,
+) -> list[str]:
+    """Return one line per Work Unit the grant cannot authorize.
+
+    Role, adapter, and ceiling axes are left absent: this check only catches a
+    grant that does not meet the Work Unit include, before any agent starts.
+    """
+    if not grant_axis_present:
+        return []
+    conflicts: list[str] = []
+    for work_unit in work_units:
+        if not isinstance(work_unit, dict):
+            continue
+        try:
+            compute_effective_scope(
+                work_unit=work_unit,
+                grant_allowed_paths=grant_allowed_paths,
+                grant_axis_present=True,
+            )
+        except ExecutionGatewayError as exc:
+            if exc.code not in {"contradictory_path_policy", "empty_effective_scope"}:
+                raise
+            work_unit_id = str(work_unit.get("id") or "work-unit")
+            conflicts.append(f"{work_unit_id}: {exc.error.message}")
+    return conflicts

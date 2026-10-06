@@ -106,6 +106,15 @@ def choose_action(observation: dict[str, Any], entry: dict[str, Any]) -> dict[st
         }
 
     progress_state = (observation.get("progress") or {}).get("state")
+    if progress_state == "blocked_needs_human":
+        return {
+            "action": "needs_human",
+            "reason": (
+                "every Work Unit on the Run is blocked and requires human intervention"
+            ),
+            "wait_reason": "work_units_blocked",
+        }
+
     if progress_state == "stalled_no_progress":
         return {
             "action": "recover_stalled",
@@ -368,6 +377,13 @@ def execute_action(
         return {"outcome": "needs_human", "action": action, "recovery": recovery}
 
     if action == "needs_human":
+        if plan.get("wait_reason") == "work_units_blocked" and observation.get("process_alive"):
+            terminate_process(
+                workspace.ai_team,
+                run_id,
+                grace_seconds=2.0,
+                expected_epoch=(observation.get("process") or {}).get("lease_epoch"),
+            )
         registry.update_run_entry(
             workspace.ai_team,
             run_id,

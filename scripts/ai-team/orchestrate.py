@@ -36,9 +36,13 @@ import uuid
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-from install_paths import bootstrap_runtime
+from install_paths import bootstrap_runtime, import_adapters_cursor
 
 bootstrap_runtime(_REPO_ROOT)
+
+_write_active_ensemble_workspace = import_adapters_cursor(
+    "compiler.ensemble_workspace"
+).write_active_ensemble_workspace
 
 from governed_ai.adapters.common.agent_invocation import is_real_agent_launch_enabled
 from governed_ai.compat.datetime import UTC, datetime
@@ -50,7 +54,7 @@ from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.domain.run.autonomy_policy import is_unattended_preset
 from governed_ai.core.orchestrator.progress import evaluate_run_progress
 from governed_ai.core.orchestrator.tick import run_scheduling_tick
-from governed_ai.core.workspace import Workspace
+from governed_ai.core.workspace import Workspace, WorkspaceError
 from governed_ai.core.workspace_mode import (
     ensure_client_cycle_allowed,
     ensure_out_of_tree_ensemble_ready,
@@ -58,6 +62,54 @@ from governed_ai.core.workspace_mode import (
 from governed_ai.notifications.service import dispatch_notifications
 
 _print_lock = threading.Lock()
+
+
+def _grant_scope_blockers(workspace: Workspace, run_document: dict) -> list[str]:
+    """Refuse to start when every Work Unit on the run is outside the grant.
+
+    A partial overlap still starts: the gateway blocks only the Work Units
+    that cannot write. An empty intersection would otherwise launch agents
+    that stop immediately.
+    """
+    import json
+
+    import yaml
+
+    from governed_ai.core.domain.run.path_policy import sanitize_allowed_paths
+    from governed_ai.core.execution_gateway.scope import conflicting_grant_scopes
+
+    grant_id = run_document.get("run_authorization_grant_id")
+    if not grant_id:
+        return []
+    grant_path = workspace.ai_team / "run-authorization-grants" / f"{grant_id}.json"
+    if not grant_path.is_file():
+        return []
+    try:
+        grant = json.loads(grant_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if not isinstance(grant, dict) or "allowed_paths" not in grant:
+        return []
+    allowed = sanitize_allowed_paths(grant.get("allowed_paths") or [])
+    units: list[dict] = []
+    for work_unit_id in run_document.get("work_unit_ids") or []:
+        path = workspace.ai_team / "work-units" / f"{work_unit_id}.yaml"
+        if not path.is_file():
+            continue
+        try:
+            document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        if isinstance(document, dict):
+            units.append(document)
+    conflicts = conflicting_grant_scopes(
+        units,
+        grant_allowed_paths=allowed,
+        grant_axis_present=True,
+    )
+    if units and len(conflicts) == len(units):
+        return conflicts
+    return []
 
 
 def _active_adapter_id(workspace: Workspace) -> str:
@@ -309,6 +361,11 @@ def main(argv: list[str] | None = None) -> int:
     except GatewayError as exc:
         print(exc.message, file=sys.stderr)
         return exit_code_for(exc.code)
+    try:
+        _write_active_ensemble_workspace(workspace)
+    except WorkspaceError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
     from governed_ai.contracts.compatibility import resolve_active_bundle_dir
 
@@ -322,6 +379,15 @@ def main(argv: list[str] | None = None) -> int:
     import yaml
 
     run_document = yaml.safe_load(run_path.read_text(encoding="utf-8")) or {}
+    scope_blockers = _grant_scope_blockers(workspace, run_document)
+    if scope_blockers:
+        print(
+            "Run refused: grant allowed_paths and Work Unit scope.include do not intersect.",
+            file=sys.stderr,
+        )
+        for line in scope_blockers:
+            print(line, file=sys.stderr)
+        return 2
     if is_unattended_preset(run_document.get("autonomy_preset")) and not is_real_agent_launch_enabled():
         print(
             f"Unattended orchestration refused: native {active_adapter_id} agent launch is "

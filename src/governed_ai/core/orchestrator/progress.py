@@ -41,7 +41,11 @@ def evaluate_run_progress(
     *,
     now: datetime | None = None,
 ) -> dict[str, Any]:
-    """Return `working`, `progressing`, or `stalled_no_progress` for an active Run.
+    """Return progress for an active Run.
+
+    States: `working`, `progressing`, `stalled_no_progress`, or
+    `blocked_needs_human` when every Work Unit on the Run is `blocked` and
+    no attempt is still inside its step timeout.
 
     Lease heartbeats prove only that a process is alive and deliberately do not
     count as useful progress.  A currently started attempt is considered valid
@@ -67,13 +71,17 @@ def evaluate_run_progress(
         )
         if value is not None
     ]
-    work_unit_ids = {str(item) for item in run_document.get("work_unit_ids") or []}
+    work_unit_ids = [str(item) for item in run_document.get("work_unit_ids") or []]
+    statuses: list[str] = []
     for work_unit_id in work_unit_ids:
         path = ai_team / "work-units" / f"{work_unit_id}.yaml"
         try:
             document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         except (OSError, yaml.YAMLError):
             continue
+        if not isinstance(document, dict):
+            continue
+        statuses.append(str(document.get("status") or ""))
         updated = _timestamp(document.get("updated_at"))
         if updated is not None:
             candidates.append(updated)
@@ -112,7 +120,14 @@ def evaluate_run_progress(
             "stalled_after_minutes", 15
         )
     )
-    if active_deadlines and max(active_deadlines) > observed_at:
+    all_blocked = (
+        bool(work_unit_ids)
+        and len(statuses) == len(work_unit_ids)
+        and all(status == "blocked" for status in statuses)
+    )
+    if all_blocked and not active_attempt_ids:
+        state = "blocked_needs_human"
+    elif active_deadlines and max(active_deadlines) > observed_at:
         state = "working"
     elif minutes >= threshold:
         state = "stalled_no_progress"

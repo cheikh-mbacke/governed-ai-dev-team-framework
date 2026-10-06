@@ -141,11 +141,58 @@ def check_hooks_config(project_root: Path) -> tuple[bool, str]:
     ]
     if not commands:
         return False, "no hook commands configured"
-    expected_prefix = ".cursor/hooks/run_hook.cmd "
-    direct_python = [command for command in commands if not command.startswith(expected_prefix)]
+    direct_python = [
+        command for command in commands if not _uses_portable_hook_runner(command)
+    ]
     if direct_python:
         return False, "hooks bypass the portable runner: " + ", ".join(direct_python)
     return True, f"{len(commands)} hook commands use the portable runner"
+
+
+_PORTABLE_HOOK_PREFIXES = (
+    ".cursor/hooks/run_hook.cmd ",
+    "sh .cursor/hooks/run_hook.cmd ",
+    "/bin/sh .cursor/hooks/run_hook.cmd ",
+)
+
+
+def _uses_portable_hook_runner(command: str) -> bool:
+    return command.startswith(_PORTABLE_HOOK_PREFIXES)
+
+
+def prefix_posix_hook_command(command: str) -> str:
+    """Prefix a bare runner so POSIX exec does not require the +x bit."""
+    if command.startswith(("sh ", "/bin/sh ")):
+        return command
+    bare = ".cursor/hooks/run_hook.cmd "
+    if command.startswith(bare):
+        return f"sh {command}"
+    return command
+
+
+def rewrite_installed_hooks(path: Path, *, posix: bool | None = None) -> None:
+    """Rewrite ``hooks.json`` commands for the machine that is installing.
+
+    Windows keeps the bare ``run_hook.cmd`` form for cmd.exe. POSIX invokes
+    ``sh`` so a checkout without the executable bit still runs.
+    """
+    use_posix = os.name != "nt" if posix is None else posix
+    if not use_posix or not path.is_file():
+        return
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    hooks = config.get("hooks")
+    if not isinstance(hooks, dict):
+        return
+    for definitions in hooks.values():
+        if not isinstance(definitions, list):
+            continue
+        for item in definitions:
+            if isinstance(item, dict) and isinstance(item.get("command"), str):
+                item["command"] = prefix_posix_hook_command(item["command"])
+    path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
 
 _VALID_PREFLIGHT_APPROVAL_MODES = frozenset({"allowlist", "run_everything", "unknown"})

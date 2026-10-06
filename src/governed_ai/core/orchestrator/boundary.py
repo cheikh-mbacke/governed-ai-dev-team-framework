@@ -2,13 +2,17 @@
 
 Product paths must satisfy path-like ``scope.include`` and, when present, the
 grant ``allowed_paths``. Governance outputs for the active Work Unit are
-allowed on a narrow allowlist. Protected governance paths and ``scope.exclude``
-always dominate.
+allowed on a narrow allowlist and win over ``scope.exclude`` (a typical
+``.ai-team/**`` exclude must not reject runtime results or that Work Unit's
+evidence). Protected Control Plane paths still dominate. Generated tool trees are ignored so a local compile or package step cannot
+look like an out-of-scope write. The names are toolchain caches and output
+directories, not a particular application's layout.
 """
 
 from __future__ import annotations
 
 import fnmatch
+from pathlib import Path
 from typing import Any
 
 from governed_ai.core.domain.run.path_policy import (
@@ -49,6 +53,74 @@ def is_path_scope_pattern(pattern: str) -> bool:
 
 def path_scope_patterns(entries: list[str] | tuple[str, ...] | None) -> list[str]:
     return [str(item) for item in (entries or []) if is_path_scope_pattern(str(item))]
+
+
+_BUILD_OUTPUT_DIR_NAMES = frozenset(
+    {
+        "target",
+        "node_modules",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        "surefire-reports",
+        ".gradle",
+        ".next",
+        ".nuxt",
+        ".output",
+        ".turbo",
+        ".parcel-cache",
+        ".vite",
+        ".angular",
+        ".svelte-kit",
+        "coverage",
+        ".nyc_output",
+        "storybook-static",
+    }
+)
+
+# Compiled packages agents sometimes attach as "evidence". Never product source.
+_PACKAGED_BINARY_SUFFIXES = frozenset(
+    {
+        ".jar",
+        ".war",
+        ".ear",
+        ".whl",
+        ".egg",
+        ".nupkg",
+        ".apk",
+        ".aab",
+        ".wasm",
+        ".so",
+        ".dylib",
+        ".dll",
+        ".exe",
+        ".o",
+        ".a",
+        ".lib",
+        ".pyc",
+        ".pyo",
+        ".class",
+    }
+)
+
+
+def is_build_output_path(path: str) -> bool:
+    """Return True for generated compiler, package, or bundler trees.
+
+    These directory names appear after a successful local build on common
+    toolchains. They are not Work Unit writes. Ambiguous source names such as
+    ``build/`` or ``dist/`` stay in scope.
+    """
+    normalized = normalize_repo_path(path)
+    parts = [part for part in normalized.split("/") if part and part not in {".", ".."}]
+    return any(part in _BUILD_OUTPUT_DIR_NAMES for part in parts)
+
+
+def is_packaged_binary_path(path: str) -> bool:
+    """Return True for compiled packages that must not be handoff evidence."""
+    name = Path(normalize_repo_path(path)).name.lower()
+    return any(name.endswith(suffix) for suffix in _PACKAGED_BINARY_SUFFIXES)
 
 
 def governed_output_patterns(work_unit_id: str) -> list[str]:
@@ -99,10 +171,12 @@ def classify_changed_path(
 
     if is_forbidden_governance_mutation(path):
         return "forbidden_governance"
-    if exclude and path_is_allowed(path, exclude):
-        return "forbidden_exclude"
+    if is_build_output_path(path):
+        return "ignored_build_output"
     if is_governed_output(path, work_unit_id=work_unit_id):
         return "allowed_governed"
+    if exclude and path_is_allowed(path, exclude):
+        return "forbidden_exclude"
     if include and not path_is_allowed(path, include):
         return "forbidden_scope"
     if envelope and not path_is_allowed(path, envelope):

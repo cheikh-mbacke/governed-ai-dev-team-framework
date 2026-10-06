@@ -90,6 +90,8 @@ def inspect(workspace: Workspace, run_id: str) -> dict:
     progress = observation.get("progress") or {}
     if observation.get("run_status") != "active":
         action = "terminal"
+    elif progress.get("state") == "blocked_needs_human":
+        action = "needs_human"
     elif progress.get("state") == "stalled_no_progress":
         action = "recover"
     elif not process_alive:
@@ -125,6 +127,8 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"outcome": "needs_human", "reason": str(exc)}))
             return 2
         print(json.dumps(report, ensure_ascii=False), flush=True)
+        if report["action"] == "needs_human":
+            return 2
         if report["action"] == "terminal" and report.get("run_status") == "completed":
             return 0
         if report["action"] in {"recover", "terminal"}:
