@@ -9,6 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
 import yaml
 
 from adapters.cursor.runtime.execute import execute_runtime
@@ -111,7 +112,59 @@ def test_l3_fresh_install_preflight_validate_and_record_v2(tmp_path: Path) -> No
     assert not any((target / ".ai-team" / "work-units").glob("WU-*.yaml"))
 
 
-def test_l3_reference_journey_g1_runtime_observation_without_core_mutation(tmp_path: Path) -> None:
+def _git_member(root: Path) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
+    assert _run(["git", "init", "-q", "-b", "main"], cwd=root).returncode == 0
+    assert _run(["git", "config", "user.name", "Journey"], cwd=root).returncode == 0
+    assert _run(
+        ["git", "config", "user.email", "journey@example.invalid"], cwd=root
+    ).returncode == 0
+    (root / "app.py").write_text("print(1)\n", encoding="utf-8")
+    assert _run(["git", "add", "."], cwd=root).returncode == 0
+    assert _run(["git", "commit", "-qm", "fixture"], cwd=root).returncode == 0
+    return root
+
+
+def _register_out_of_tree_member(instance: Path, member: Path) -> None:
+    for command in (
+        [
+            sys.executable,
+            "scripts/ai-team/ensemble.py",
+            "register-ensemble",
+            "--id",
+            "journey",
+        ],
+        [
+            sys.executable,
+            "scripts/ai-team/ensemble.py",
+            "register-member",
+            "--ensemble",
+            "journey",
+            "--id",
+            "app",
+            "--kind",
+            "service",
+            "--path",
+            str(member),
+        ],
+        [
+            sys.executable,
+            "scripts/ai-team/ensemble.py",
+            "set-active",
+            "--id",
+            "journey",
+        ],
+    ):
+        result = _run(command, cwd=instance)
+        assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_l3_reference_journey_g1_runtime_observation_without_core_mutation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # L3 journey must stay on the harness stub (never spend Cursor agent credits).
+    monkeypatch.delenv("GOVERNED_AI_ENABLE_REAL_AGENT_LAUNCH", raising=False)
+
     target = tmp_path / "journey"
     install = _run(
         [
@@ -127,6 +180,9 @@ def test_l3_reference_journey_g1_runtime_observation_without_core_mutation(tmp_p
         cwd=REPO_ROOT,
     )
     assert install.returncode == 0, install.stderr
+
+    member = _git_member(tmp_path / "journey-app")
+    _register_out_of_tree_member(target, member)
 
     wu_dir = target / ".ai-team" / "work-units"
     wu_dir.mkdir(parents=True, exist_ok=True)

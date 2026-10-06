@@ -17,6 +17,7 @@ from typing import Any
 import yaml
 
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
+from governed_ai.core.domain.run.area_filter import is_area_eligible, work_unit_area
 from governed_ai.core.domain.run.authorization_grant import unusable_reason
 
 PROTECTED_ENVIRONMENTS = frozenset({"staging", "production"})
@@ -103,6 +104,26 @@ def _authorize_open_run(envelope: dict[str, Any], workspace_ai_team: Path, *, no
             f"work units not covered by grant {grant_id!r}: {uncovered}",
             "/payload/work_unit_ids",
         )
+    if grant.get("allowed_areas") is not None:
+        for work_unit_id in sorted(work_unit_ids):
+            work_unit_path = workspace_ai_team / "work-units" / f"{work_unit_id}.yaml"
+            if not work_unit_path.is_file():
+                raise GatewayError(
+                    ErrorCode.UNAUTHORIZED,
+                    f"work unit {work_unit_id!r} not found for area filter check",
+                    "/payload/work_unit_ids",
+                )
+            work_unit = yaml.safe_load(work_unit_path.read_text(encoding="utf-8")) or {}
+            if not is_area_eligible(work_unit, grant):
+                raise GatewayError(
+                    ErrorCode.UNAUTHORIZED,
+                    (
+                        f"work unit {work_unit_id!r} zone.area="
+                        f"{work_unit_area(work_unit)!r} is outside grant "
+                        f"{grant_id!r} allowed_areas"
+                    ),
+                    "/payload/work_unit_ids",
+                )
 
 
 def _authorize_existing_run_command(

@@ -1,4 +1,4 @@
-"""Standalone 0.7.x workspace behaviour — must stay green through 0.8.0."""
+"""Legacy standalone layout: discovery still works; product cycles are refused."""
 
 from __future__ import annotations
 
@@ -9,9 +9,14 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
+from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.orchestrator.git_workspace import head_sha
 from governed_ai.core.persistence.paths import resolve_under_root
 from governed_ai.core.workspace import Workspace
+from governed_ai.core.workspace_mode import (
+    OUT_OF_TREE_REQUIRED_MESSAGE,
+    ensure_out_of_tree_ensemble_ready,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CLEAN = REPO_ROOT / "tests" / "fixtures" / "projects" / "clean"
@@ -34,25 +39,29 @@ def _load_schema(name: str) -> dict:
     return json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
 
 
-def test_standalone_discover_from_nested_path_uses_ai_team_root() -> None:
+def test_clean_fixture_discovers_as_instance_without_ensemble() -> None:
     workspace = Workspace.discover(CLEAN / "scripts" / "ai-team")
     assert workspace.root == CLEAN.resolve()
     assert workspace.active_ensemble_id is None
     assert workspace.discovered_member_id is None
 
 
-def test_standalone_instance_root_equals_member_root() -> None:
+def test_clean_fixture_without_members_is_not_cycle_ready() -> None:
     workspace = Workspace.from_root(CLEAN)
     assert workspace.instance_root == workspace.root
+    # Setup fallback only — not a supported product mode.
     assert workspace.member_root() == workspace.root
-    assert workspace.member_root("frontend") == workspace.root
+    with pytest.raises(GatewayError) as exc:
+        ensure_out_of_tree_ensemble_ready(workspace)
+    assert exc.value.code == ErrorCode.UNSUPPORTED_CONTRACT
+    assert OUT_OF_TREE_REQUIRED_MESSAGE.splitlines()[0] in str(exc.value)
 
 
-def test_standalone_from_root_matches_discover() -> None:
+def test_clean_from_root_matches_discover() -> None:
     assert Workspace.from_root(CLEAN).root == Workspace.discover(CLEAN).root
 
 
-def test_standalone_resolve_under_root_keeps_paths_inside_project(tmp_path: Path) -> None:
+def test_resolve_under_root_keeps_paths_inside_project(tmp_path: Path) -> None:
     inside = resolve_under_root(tmp_path, "src/app.py")
     assert inside == (tmp_path / "src" / "app.py").resolve()
     with pytest.raises(Exception, match="absolute paths"):
@@ -61,10 +70,10 @@ def test_standalone_resolve_under_root_keeps_paths_inside_project(tmp_path: Path
         resolve_under_root(tmp_path, "../outside.py")
 
 
-def test_standalone_head_sha_is_single_git_revision(tmp_path: Path) -> None:
+def test_head_sha_is_single_git_revision(tmp_path: Path) -> None:
     _git(tmp_path, "init", "-b", "main")
-    _git(tmp_path, "config", "user.email", "standalone@example.test")
-    _git(tmp_path, "config", "user.name", "Standalone")
+    _git(tmp_path, "config", "user.email", "member@example.test")
+    _git(tmp_path, "config", "user.name", "Member")
     (tmp_path / "README").write_text("ok\n", encoding="utf-8")
     _git(tmp_path, "add", "README")
     _git(tmp_path, "commit", "-m", "test: base")
@@ -73,10 +82,10 @@ def test_standalone_head_sha_is_single_git_revision(tmp_path: Path) -> None:
     assert sha == sha.lower()
 
 
-def test_standalone_evidence_code_revision_string_remains_valid() -> None:
+def test_legacy_string_code_revision_remains_schema_valid() -> None:
     schema = _load_schema("evidence.schema.json")
     payload = {
-        "id": "EV-STANDALONE",
+        "id": "EV-LEGACY-STRING",
         "type": "command",
         "code_revision": "0" * 40,
         "command_or_observation": "pytest -q",
@@ -87,12 +96,12 @@ def test_standalone_evidence_code_revision_string_remains_valid() -> None:
     Draft202012Validator(schema).validate(payload)
 
 
-def test_standalone_work_unit_without_member_id_remains_valid() -> None:
+def test_work_unit_without_member_id_remains_schema_valid() -> None:
     schema = _load_schema("work-unit.schema.json")
     payload = {
-        "id": "WU-STANDALONE",
-        "title": "Standalone",
-        "objective": {"result": "keep 0.7 behaviour"},
+        "id": "WU-NO-MEMBER",
+        "title": "Schema compat",
+        "objective": {"result": "optional member_id"},
         "scope": {"include": ["src/**"], "exclude": []},
         "expected_behavior": "unchanged",
         "acceptance_criteria": ["no member_id required"],

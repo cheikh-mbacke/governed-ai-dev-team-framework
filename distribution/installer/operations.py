@@ -34,6 +34,10 @@ from distribution.installer.fabrication_layout import (
     source_constitution_path,
     source_version_file,
 )
+from distribution.installer.instance_mode import (
+    fresh_install_product_code_error,
+    update_standalone_refused_error,
+)
 from distribution.installer.migrate_layout import (
     apply_layout_migration,
     iter_legacy_migration_destination_files,
@@ -311,7 +315,15 @@ def build_update_plan(
     cursor_compile = (
         _can_compile_cursor(source_root, target) if compile_cursor is None else compile_cursor
     )
-    resolved_adapter_id = active_adapter_id or _active_adapter_id(target)
+    # Prefer a target/.venv (or other) interpreter that has PyYAML when the
+    # current process was started with ``-S`` / without site-packages.
+    profile_validator = validation_python(target)
+    try:
+        resolved_adapter_id = active_adapter_id or _active_adapter_id(
+            target, validator=profile_validator
+        )
+    except ModuleNotFoundError:
+        resolved_adapter_id = active_adapter_id or "cursor"
     entries, managed_files = build_copy_plan(
         source_root, target, compile_cursor=cursor_compile, active_adapter_id=resolved_adapter_id
     )
@@ -364,6 +376,11 @@ def run_update(source_root: Path, args: Namespace, target: Path) -> int:
     install_error = framework_source_install_error(source_root, target)
     if install_error:
         print(install_error)
+        return 2
+
+    standalone_error = update_standalone_refused_error(target)
+    if standalone_error:
+        print(standalone_error)
         return 2
 
     if not (target / ".ai-team" / "project-profile.yaml").exists():
@@ -823,6 +840,12 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
 
     _ = _yaml
     target.mkdir(parents=True, exist_ok=True)
+
+    product_error = fresh_install_product_code_error(target)
+    if product_error:
+        print(product_error)
+        return 2
+
     active_adapter = getattr(args, "adapter", None) or "cursor"
 
     entries, managed_files = build_copy_plan(
@@ -871,20 +894,16 @@ def install_fresh(source_root: Path, args: Namespace, target: Path) -> int:
 
     print(f"Installed governed AI team framework {version} into {target}")
     print("Next:")
-    if active_adapter == "cursor":
-        # Exact wording covered by the legacy-0.4 CLI golden fixture
-        # (tests/fixtures/legacy-0.4/cli/install-fresh.json) — do not reword
-        # this branch without regenerating that fixture.
-        print("  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)")
-        print("  2. Add and register authoritative product documents")
-        print("  3. Run: python scripts/ai-team/validate.py")
-        print("  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py")
-        print("  5. In Cursor UI or interactive CLI, invoke /reconcile-project")
-        print("  6. After reconciliation is ready, invoke /compile-project")
-    else:
-        print("  1. Fill .ai-team/project-profile.yaml (or ask the agent: /propose-profile)")
-        print("  2. Add and register authoritative product documents")
-        print("  3. Run: python scripts/ai-team/validate.py")
-        print("  4. Invoke /reconcile-project")
-        print("  5. After reconciliation is ready, invoke /compile-project")
+    print("  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)")
+    print("  2. Register an Ensemble and product members:")
+    print("       python scripts/ai-team/ensemble.py register-ensemble --id <ensemble>")
+    print(
+        "       python scripts/ai-team/ensemble.py register-member "
+        "--ensemble <ensemble> --id <member> --kind <kind> --path <git-checkout>"
+    )
+    print("       python scripts/ai-team/ensemble.py set-active --id <ensemble>")
+    print("  3. Run: python scripts/ai-team/validate.py")
+    print("  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py")
+    print("  5. Open Cursor on this instance; invoke /reconcile-project")
+    print("  6. After reconciliation is ready, invoke /compile-project")
     return 0

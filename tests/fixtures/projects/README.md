@@ -11,8 +11,11 @@ Projets témoins reproductibles pour les tests de migration et de distribution (
 
 ### Projet témoin propre (`clean/`)
 
-- Résultat d'une installation via `tools/install.py` dans une cible vide.
+- Résultat d'une installation via `tools/install.py` dans une cible vide
+  (répertoire d’**instance**, sans code produit).
 - `project-state.yaml` minimal (`phase: not_compiled`, aucune Work Unit).
+- Aucun Ensemble/membre enregistré : valide pour validate/preflight, **pas**
+  un cycle produit standalone (celui-ci n’est plus supporté).
 - Aucun événement, evidence, observation ou autre artefact runtime.
 - Profil projet personnalisé avec identifiants témoin uniquement.
 

@@ -117,12 +117,17 @@ class FnCaptureBackend:
         self._state = ""
         self._viewport: dict[str, Any] = {}
         self._dataset: dict[str, Any] | None = None
+        self._member_workspaces: dict[str, Path] = {}
 
     def ensure_ready(self) -> None:
         return None
 
     def configure_workspace(self, workspace: Path, commit_sha: str) -> None:
         self._workspace = workspace
+        self._commit_sha = commit_sha
+
+    def configure_member_workspaces(self, roots: dict[str, Path], commit_sha: str) -> None:
+        self._member_workspaces = dict(roots)
         self._commit_sha = commit_sha
 
     def start_application(self, command: list[str]) -> None:

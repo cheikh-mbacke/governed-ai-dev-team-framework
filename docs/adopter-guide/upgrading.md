@@ -96,9 +96,10 @@ Si la validation post-copie échoue (DI-010) :
 
 L'installation fraîche utilise le même mécanisme de rollback transactionnel.
 
-## Migration opt-in vers une instance hors-arbre
+## Migration obligatoire hors support standalone
 
-Le passage standalone → instance séparée est une commande **explicite** :
+Le mode standalone in-tree n’est plus supporté. Pour une install 0.7.x encore
+in-tree, migrer explicitement :
 
 ```bash
 python tools/migrate_to_instance.py \
@@ -109,7 +110,8 @@ python tools/migrate_to_instance.py \
   --dry-run
 ```
 
-`tools/install.py --update` **ne** déclenche **pas** cette migration (INS-AC-018).
+`tools/install.py --update` sur un standalone **refuse** et oriente vers cette
+commande (INS-AC-018). Après migration, `--update` s’applique à l’**instance**.
 Détail : [out-of-tree-instance.md](out-of-tree-instance.md).
 
 ## Non rétrogradable

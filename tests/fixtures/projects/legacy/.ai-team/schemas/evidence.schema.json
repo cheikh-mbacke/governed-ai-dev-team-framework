@@ -24,9 +24,61 @@
       "type": "string"
     },
     "code_revision": {
-      "type": [
-        "string",
-        "null"
+      "description": "Standalone persists a git SHA string. Ensemble product evidence uses kind composition. Both remain valid.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "sha"
+          ],
+          "properties": {
+            "kind": {
+              "const": "git_commit"
+            },
+            "sha": {
+              "type": "string",
+              "minLength": 1
+            },
+            "member_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9._-]*$"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "composition_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "composition"
+            },
+            "composition_id": {
+              "type": "string",
+              "pattern": "^CR-[A-Za-z0-9._-]+$"
+            },
+            "members": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{40}$"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
       ]
     },
     "command_or_observation": {

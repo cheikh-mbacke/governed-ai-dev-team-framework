@@ -71,16 +71,19 @@ def create_ephemeral_workspace(
     *,
     base_sha: str,
     execution_id: str,
+    worktree_home: Path | None = None,
 ) -> Path:
     """Create an ephemeral worktree; metadata lives outside the candidate git tree."""
+    git_root = Path(project_root).resolve()
+    home = Path(worktree_home or git_root).resolve()
     safe_id = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in execution_id)
-    path = project_root / ".ai-team" / "supervisor" / "ephemeral" / safe_id
+    path = home / ".ai-team" / "supervisor" / "ephemeral" / safe_id
     if path.exists():
         shutil.rmtree(path, ignore_errors=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     branch = f"ai-ephemeral/{safe_id}-{uuid.uuid4().hex[:8]}"
     _git(
-        project_root,
+        git_root,
         ["worktree", "add", "-b", branch, str(path), base_sha],
     )
     marker = {
@@ -93,7 +96,7 @@ def create_ephemeral_workspace(
         "resumable": False,
     }
     # Metadata is Control-Plane only — never inside the worktree candidate tree.
-    atomic_write_text(ephemeral_meta_path(project_root, execution_id), json.dumps(marker, indent=2) + "\n")
+    atomic_write_text(ephemeral_meta_path(home, execution_id), json.dumps(marker, indent=2) + "\n")
     return path
 
 

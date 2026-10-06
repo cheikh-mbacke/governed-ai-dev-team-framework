@@ -22,6 +22,7 @@ GLOBAL_STOP_CONDITIONS = frozenset(
         "repeated_systemic_failure",
         "worker_isolation_unguaranteed",
         "no_dispatchable_work",
+        "cross_area_dependency",
         "orchestrator_process_failure",
         "stalled_no_progress",
     }

@@ -16,7 +16,10 @@ from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.workspace import Workspace
 
-from tests.core.workspace_helpers import FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
+from tests.core.workspace_helpers import (
+    attach_minimal_out_of_tree_ensemble,
+    FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -80,6 +83,7 @@ def run_workspace(tmp_path: Path) -> Workspace:
     (ai_team / "state").mkdir(parents=True)
     (ai_team / "state" / "project-state.yaml").write_text("phase: execution\n", encoding="utf-8")
     (ai_team / "work-units").mkdir(parents=True)
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     workspace = Workspace.from_root(tmp_path)
     _seed_grant(workspace, DEFAULT_GRANT_ID, work_unit_ids=["WU-A", "WU-NIGHT-001"])
     return workspace

@@ -10,6 +10,8 @@ from typing import Any
 
 import pytest
 
+from tests.core.workspace_helpers import attach_minimal_out_of_tree_ensemble
+
 from governed_ai.core.execution_gateway.capabilities import (
     assert_capabilities,
     build_capability_descriptor,
@@ -92,6 +94,7 @@ def _workspace(tmp_path: Path) -> tuple[Workspace, str]:
         encoding="utf-8",
     )
     ensure_supervisor_layout(ai_team)
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     return Workspace.from_root(tmp_path), sha
 
 

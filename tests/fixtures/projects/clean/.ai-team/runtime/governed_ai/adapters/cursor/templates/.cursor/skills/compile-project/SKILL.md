@@ -17,6 +17,12 @@ here, do not update `.ai-team/state/project-state.yaml` for a client cycle, and 
 not create Work Units under `.ai-team/work-units/`. Framework work uses git branches,
 review, and tests — see `AGENTS.md` and `05-workspace-layout.mdc`.
 
+## Member checkout guard
+
+If `.ai-team/member-link.json` exists here, **stop immediately**. This checkout is
+an Ensemble member. Read `instance_path` from that file and run `/compile-project`
+from the instance directory — never from the member Git.
+
 This is a **planning-only** operation on installed client projects. Do not implement
 product code.
 
@@ -27,7 +33,11 @@ Read:
 - `.ai-team/project-profile.yaml`
 - `.ai-team/sources/source-registry.yaml`
 - registered authoritative product sources
-- `.ai-team/reconciliation/baseline.yaml`
+- `.ai-team/reconciliation/baseline.yaml` (standalone) or
+  `.ai-team/ensembles/<ensemble-id>/reconciliation/baseline.yaml` when an
+  Ensemble is active
+- on an Ensemble: product intent under `docs/product/<ensemble-id>/` on the
+  instance — never invent intent from a member Git
 - repository only as observed reality when relevant
 
 ## Procedure
@@ -47,7 +57,11 @@ Read:
 5. Build capabilities/features without inventing a new product structure.
 6. Decompose into small, observable, testable Work Units — including explicit
    remediation / alignment / cleanup units for inventoried as-built gaps when
-   humans have authorized that work in scope.
+   humans have authorized that work in scope. On an Ensemble with two or more
+   members, create one Work Unit per declared member with `member_id` set, plus
+   one integration Work Unit (`kind: integration`, empty `scope.include`, no
+   `member_id`) that depends on those member units and must not write product
+   code.
 7. Build explicit dependencies and identify the critical path.
 8. Assign risk class from policy and record reasons.
 9. Determine required verification from behavior + risk.

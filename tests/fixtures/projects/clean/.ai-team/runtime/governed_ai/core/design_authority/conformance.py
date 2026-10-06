@@ -35,6 +35,13 @@ from governed_ai.core.design_authority.paths import (
 )
 from governed_ai.core.design_authority.pixel_compare import compare_png_pixels
 from governed_ai.core.design_authority.registry import load_artifact
+from governed_ai.core.ensemble_composition import (
+    assert_composition_live,
+    ensure_frozen_composition_checkouts,
+    require_current_composition,
+    requires_product_composition,
+    ui_member_id,
+)
 from governed_ai.core.persistence.io import dump_yaml
 from governed_ai.core.workspace import Workspace
 
@@ -591,7 +598,44 @@ def run_visual_conformance(
             details={"expected": expected_epoch, "actual": epoch},
         )
 
-    verified_sha = validate_commit_sha(workspace, commit_sha)
+    frozen_roots: dict[str, Path] = {}
+    if requires_product_composition(workspace):
+        try:
+            composition = require_current_composition(workspace)
+            assert_composition_live(workspace, composition)
+            frozen_roots = ensure_frozen_composition_checkouts(workspace, composition)
+        except Exception as exc:
+            from governed_ai.core.commands.errors import GatewayError
+
+            if isinstance(exc, GatewayError):
+                raise ConformanceError(
+                    "composition_not_current",
+                    exc.message,
+                    details={"path": exc.path},
+                ) from exc
+            raise
+        ui_id = ui_member_id(workspace)
+        pins = composition.get("members") or {}
+        ui_pin = str(pins.get(ui_id) or "")
+        sha = str(commit_sha or "").strip().lower()
+        if sha.startswith("cr-"):
+            if sha != str(composition.get("id") or "").lower():
+                raise ConformanceError(
+                    "composition_id_mismatch",
+                    "commit_sha composition id does not match the current pin",
+                    details={"commit_sha": commit_sha, "current": composition.get("id")},
+                )
+            verified_sha = ui_pin
+        else:
+            if ui_pin and sha and not (ui_pin.startswith(sha) or sha.startswith(ui_pin)):
+                raise ConformanceError(
+                    "commit_sha_composition_mismatch",
+                    "frontend SHA does not match the pinned composition",
+                    details={"commit_sha": commit_sha, "pinned": ui_pin, "member_id": ui_id},
+                )
+            verified_sha = ui_pin or sha
+    else:
+        verified_sha = validate_commit_sha(workspace, commit_sha)
 
     # Reject implementer-supplied truth channels (strip; never use as evidence).
     sanitized_observations = [strip_forbidden_truth(o) for o in (observations or []) if isinstance(o, dict)]
@@ -695,8 +739,14 @@ def run_visual_conformance(
             )
     else:
         try:
-            isolated_root = _prepare_isolated_checkout(workspace, verified_sha)
+            if frozen_roots:
+                isolated_root = frozen_roots[ui_member_id(workspace)]
+            else:
+                isolated_root = _prepare_isolated_checkout(workspace, verified_sha)
             backend.configure_workspace(isolated_root, verified_sha)
+            configure_members = getattr(backend, "configure_member_workspaces", None)
+            if callable(configure_members) and frozen_roots:
+                configure_members(frozen_roots, verified_sha)
             profile = verification_profile or {}
             launch = profile.get("start_command")
             if launch is not None:
@@ -726,7 +776,8 @@ def run_visual_conformance(
         except ConformanceError:
             if application_started:
                 backend.stop_application()
-            _release_isolated_checkout(workspace, isolated_root)
+            if not frozen_roots:
+                _release_isolated_checkout(workspace, isolated_root)
             raise
         except Exception as exc:  # noqa: BLE001 — surface as unverifiable capture failure
             incomplete_evidence = True
@@ -1193,7 +1244,8 @@ def run_visual_conformance(
 
     if application_started and backend is not None:
         backend.stop_application()
-    _release_isolated_checkout(workspace, isolated_root)
+    if not frozen_roots:
+        _release_isolated_checkout(workspace, isolated_root)
 
     return {
         "report": report,

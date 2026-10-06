@@ -1,7 +1,8 @@
-"""Opt-in migration: standalone in-tree install → out-of-tree instance (Document 25).
+"""Migration: standalone in-tree install → out-of-tree instance (Document 25).
 
-``--update`` never calls this module (INS-AC-018 / INS-F-014). Operators must
-invoke ``tools/migrate_to_instance.py`` explicitly.
+Standalone in-tree is no longer supported. ``--update`` refuses those targets
+and points here (INS-AC-018 / INS-F-014). Operators must invoke
+``tools/migrate_to_instance.py`` explicitly.
 """
 
 from __future__ import annotations

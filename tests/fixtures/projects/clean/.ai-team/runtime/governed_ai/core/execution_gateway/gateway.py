@@ -389,10 +389,12 @@ class AgentExecutionGateway:
         persisted_evidence_paths: list[Path] = []
         try:
             if use_ephemeral_workspace:
+                git_root = Path(execution_workspace or self.workspace.root)
                 ephemeral = create_ephemeral_workspace(
-                    self.workspace.root,
+                    git_root,
                     base_sha=base_sha,
                     execution_id=execution_id,
+                    worktree_home=self.workspace.instance_root,
                 )
                 root = ephemeral
                 adapter_request = dict(request)

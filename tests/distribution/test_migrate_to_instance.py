@@ -1,4 +1,4 @@
-"""Phase 8: opt-in in-tree → instance migration and INS-AC-018 (--update stays standalone)."""
+"""Phase 8: standalone → instance migration and INS-AC-018 (--update refuses standalone)."""
 
 from __future__ import annotations
 
@@ -22,7 +22,18 @@ INSTALL = REPO_ROOT / "tools" / "install.py"
 MIGRATE = REPO_ROOT / "tools" / "migrate_to_instance.py"
 
 
+def _short_root(tmp_path: Path) -> Path:
+    """Windows MAX_PATH: keep migrate backup trees under a short prefix."""
+    root = Path("C:/g") / tmp_path.name[-12:]
+    if root.exists():
+        shutil.rmtree(root, ignore_errors=True)
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
 def _install(target: Path, project_id: str = "boutique") -> None:
+    """Fresh-install into an empty instance directory (no product markers yet)."""
+    target.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run(
         [
             sys.executable,
@@ -44,6 +55,13 @@ def _install(target: Path, project_id: str = "boutique") -> None:
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
+def _make_standalone_product(target: Path, *, relative: str, content: str) -> None:
+    """Add product files after install to simulate a legacy in-tree standalone."""
+    path = target / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
 def _git_init(target: Path) -> None:
     commands = [
         ["git", "init", "-q", "-b", "main"],
@@ -57,12 +75,11 @@ def _git_init(target: Path) -> None:
         assert result.returncode == 0, result.stderr + result.stdout
 
 
-def test_ins_ac_018_update_without_migrate_leaves_standalone(tmp_path: Path) -> None:
-    """``--update`` must not invent an out-of-tree layout (INS-AC-018 / INS-F-014)."""
-    source = tmp_path / "standalone-app"
-    source.mkdir()
-    (source / "app.py").write_text("print(1)\n", encoding="utf-8")
+def test_ins_ac_018_update_refuses_standalone(tmp_path: Path) -> None:
+    """``--update`` refuses standalone and points at migrate (INS-AC-018 / INS-F-014)."""
+    source = _short_root(tmp_path) / "s"
     _install(source)
+    _make_standalone_product(source, relative="app.py", content="print(1)\n")
     _git_init(source)
 
     proc = subprocess.run(
@@ -73,22 +90,21 @@ def test_ins_ac_018_update_without_migrate_leaves_standalone(tmp_path: Path) -> 
         timeout=180,
         check=False,
     )
-    assert proc.returncode == 0, proc.stdout + proc.stderr
-
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "Update refused" in proc.stdout
+    assert "migrate_to_instance" in proc.stdout
     assert not (source / ".ai-team" / "member-link.json").exists()
     assert (source / ".ai-team" / "installation-record.json").is_file()
-    workspace = Workspace.from_root(source)
-    assert workspace.instance_root == source.resolve()
-    assert workspace.member_root() == source.resolve()
-    assert workspace.active_ensemble_id is None
 
 
 def test_migrate_in_tree_to_instance_round_trip(tmp_path: Path) -> None:
-    source = tmp_path / "boutique-api"
-    instance = tmp_path / "acme-ai-team"
-    source.mkdir()
-    (source / "api.py").write_text("def ping():\n    return 1\n", encoding="utf-8")
+    base = _short_root(tmp_path)
+    source = base / "s"
+    instance = base / "i"
     _install(source, project_id="boutique")
+    _make_standalone_product(
+        source, relative="api.py", content="def ping():\n    return 1\n"
+    )
     _git_init(source)
     (source / ".ai-team" / "state" / "project-state.yaml").write_text(
         "project_id: boutique\nphase: execution\n",
@@ -135,11 +151,11 @@ def test_migrate_in_tree_to_instance_round_trip(tmp_path: Path) -> None:
 
 
 def test_migrate_rollback_on_failure(tmp_path: Path) -> None:
-    source = tmp_path / "app"
-    instance = tmp_path / "hub"
-    source.mkdir()
-    (source / "main.py").write_text("x = 1\n", encoding="utf-8")
+    base = _short_root(tmp_path)
+    source = base / "s"
+    instance = base / "i"
     _install(source, project_id="app")
+    _make_standalone_product(source, relative="main.py", content="x = 1\n")
     _git_init(source)
     before_record = (source / ".ai-team" / "installation-record.json").read_text(encoding="utf-8")
 
@@ -231,10 +247,11 @@ def test_migrate_legacy_fixture_round_trip_and_rollback(tmp_path: Path) -> None:
 
 
 def test_migrate_cli_dry_run(tmp_path: Path) -> None:
-    source = tmp_path / "app"
-    instance = tmp_path / "hub"
-    source.mkdir()
+    base = _short_root(tmp_path)
+    source = base / "s"
+    instance = base / "i"
     _install(source, project_id="app")
+    _make_standalone_product(source, relative="app.py", content="print(1)\n")
     _git_init(source)
 
     proc = subprocess.run(

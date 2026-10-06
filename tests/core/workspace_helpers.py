@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -47,3 +48,67 @@ def write_installed_client_profile(
         yaml.safe_dump(profile, sort_keys=False, allow_unicode=True),
         encoding="utf-8",
     )
+
+
+def attach_minimal_out_of_tree_ensemble(
+    instance_root: Path,
+    *,
+    ensemble_id: str = "test-ensemble",
+    member_id: str = "app",
+) -> Path:
+    """Declare one out-of-tree member so product Command Gateway cycles are allowed.
+
+    Ensemble registration commands remain testable on bare instances; call this
+    helper from fixtures that exercise CreateWorkUnit, gates, runs, etc.
+    """
+    member = instance_root.parent / f"{instance_root.name}-member"
+    if not (member / ".git").exists():
+        member.mkdir(parents=True, exist_ok=True)
+        for command in (
+            ["git", "init", "-q", "-b", "main"],
+            ["git", "config", "user.name", "Test Member"],
+            ["git", "config", "user.email", "member@example.invalid"],
+        ):
+            completed = subprocess.run(command, cwd=member, capture_output=True, text=True)
+            assert completed.returncode == 0, completed.stderr
+        (member / "README").write_text("member\n", encoding="utf-8")
+        for command in (
+            ["git", "add", "README"],
+            ["git", "commit", "-qm", "fixture"],
+        ):
+            completed = subprocess.run(command, cwd=member, capture_output=True, text=True)
+            assert completed.returncode == 0, completed.stderr
+
+    ai_team = instance_root / ".ai-team"
+    ai_team.mkdir(parents=True, exist_ok=True)
+    (ai_team / "active-ensemble.yaml").write_text(
+        f"ensemble_id: {ensemble_id}\n",
+        encoding="utf-8",
+    )
+    ensemble_dir = ai_team / "ensembles" / ensemble_id
+    ensemble_dir.mkdir(parents=True, exist_ok=True)
+    rel = Path(os_path_rel(member, instance_root)).as_posix()
+    (ensemble_dir / "members.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "ensemble_id": ensemble_id,
+                "revision": 1,
+                "members": [
+                    {
+                        "id": member_id,
+                        "kind": "service",
+                        "path": rel,
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    return member
+
+
+def os_path_rel(target: Path, start: Path) -> str:
+    import os
+
+    return os.path.relpath(target, start)

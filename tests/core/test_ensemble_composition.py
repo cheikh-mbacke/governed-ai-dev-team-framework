@@ -240,13 +240,17 @@ def test_g3_with_current_composition_is_accepted(
     assert receipt["details"]["composition_id"] == "CR-boutique-1"
 
 
-def test_standalone_g3_does_not_require_composition(instance_workspace: Workspace) -> None:
+def test_instance_without_out_of_tree_members_refuses_g3(
+    instance_workspace: Workspace,
+) -> None:
+    """Standalone-style instance (no out-of-tree members) is not a supported cycle mode."""
     receipt, code = _execute(
         instance_workspace,
         _gate_envelope(instance_workspace, gate="G3", status="approved", auth_id="HAUTH-g3-solo"),
     )
-    assert code == 0, receipt
-    assert "composition_id" not in (receipt.get("details") or {})
+    assert code != 0
+    assert receipt["errors"][0]["code"] == ErrorCode.UNSUPPORTED_CONTRACT.value
+    assert "Standalone in-tree mode is no longer supported" in receipt["errors"][0]["message"]
 
 
 def test_release_candidate_requires_current_composition(

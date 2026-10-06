@@ -12,6 +12,8 @@ from typing import Any
 import pytest
 from PIL import Image
 
+from tests.core.workspace_helpers import attach_minimal_out_of_tree_ensemble
+
 from governed_ai.core.design_authority.binding import (
     DesignBindingError,
     bind_design_to_work_unit,
@@ -64,6 +66,7 @@ def _workspace(tmp_path: Path) -> Workspace:
     shutil.copytree(PAYLOAD_SCHEMAS, ai / "schemas")
     shutil.copytree(PAYLOAD_CONTRACTS, ai / "contracts")
     (root / "designs").mkdir()
+    attach_minimal_out_of_tree_ensemble(root)
     return Workspace.from_root(root)
 
 

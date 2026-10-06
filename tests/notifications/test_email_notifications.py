@@ -9,6 +9,8 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
+from tests.core.workspace_helpers import attach_minimal_out_of_tree_ensemble
+
 from governed_ai.core.workspace import Workspace
 from governed_ai.notifications.config import (
     DEFAULT_SMTP_FROM,
@@ -71,6 +73,7 @@ def _workspace(tmp_path: Path, *, preset: str) -> Workspace:
     (ai_team / "project-profile.yaml").write_text(
         yaml.safe_dump(profile, sort_keys=False), encoding="utf-8"
     )
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     return Workspace.from_root(tmp_path)
 
 

@@ -22,6 +22,7 @@ from governed_ai.core.domain.gates.g4_preconditions import (
 )
 from governed_ai.core.domain.gates.naming import generate_gate_decision_id
 from governed_ai.core.domain.work_unit.paths import find_work_unit_path
+from governed_ai.core.ensemble_composition import enforce_product_gate_composition
 from governed_ai.core.persistence.transaction import Transaction
 from governed_ai.core.workspace import Workspace
 
@@ -67,6 +68,8 @@ def handle_record_gate_decision(
             workspace_root.root if hasattr(workspace_root, "root") else workspace_root
         )
     )
+
+    composition = enforce_product_gate_composition(workspace, gate)
 
     if gate == "G1" and status == "approved":
         from governed_ai.core.design_authority.binding import evaluate_g1_design_readiness
@@ -196,6 +199,11 @@ def handle_record_gate_decision(
             )
 
     result: dict[str, Any] = {"affected": affected}
+    details: dict[str, Any] = {}
     if preconditions_verified:
-        result["details"] = {"preconditions_verified": preconditions_verified}
+        details["preconditions_verified"] = preconditions_verified
+    if composition is not None:
+        details["composition_id"] = composition.get("id")
+    if details:
+        result["details"] = details
     return result, []

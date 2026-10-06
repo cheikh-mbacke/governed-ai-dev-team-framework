@@ -51,7 +51,10 @@ from governed_ai.core.domain.run.autonomy_policy import is_unattended_preset
 from governed_ai.core.orchestrator.progress import evaluate_run_progress
 from governed_ai.core.orchestrator.tick import run_scheduling_tick
 from governed_ai.core.workspace import Workspace
-from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+from governed_ai.core.workspace_mode import (
+    ensure_client_cycle_allowed,
+    ensure_out_of_tree_ensemble_ready,
+)
 from governed_ai.notifications.service import dispatch_notifications
 
 _print_lock = threading.Lock()
@@ -302,6 +305,7 @@ def main(argv: list[str] | None = None) -> int:
     workspace = Workspace.discover(Path.cwd())
     try:
         ensure_client_cycle_allowed(workspace)
+        ensure_out_of_tree_ensemble_ready(workspace)
     except GatewayError as exc:
         print(exc.message, file=sys.stderr)
         return exit_code_for(exc.code)

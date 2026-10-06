@@ -57,6 +57,11 @@ SUPPLEMENTAL_ROLE_COMMANDS: dict[str, frozenset[str]] = {
             "ReleaseWorkerLease",
             # Project configuration changes are human-authorized and audited.
             "UpdateProjectProfile",
+            # Document 25 — instance catalogue mutations (control-plane only).
+            "RegisterEnsemble",
+            "RegisterMember",
+            "PinComposition",
+            "SetActiveEnsemble",
             # Design Authority mutations (registry, contracts, conformance).
             "RegisterDesignArtifact",
             "SetDesignArtifactAuthority",
