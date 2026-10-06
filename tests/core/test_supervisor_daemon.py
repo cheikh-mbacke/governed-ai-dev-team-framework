@@ -528,6 +528,27 @@ def test_max_recoveries_dead_letter_via_reconcile(tmp_path: Path) -> None:
         )
 
 
+def test_blocked_work_units_need_human_without_waiting_for_stall(tmp_path: Path) -> None:
+    workspace = _workspace(tmp_path)
+    _write_run(workspace.ai_team, "RUN-BLOCKED", work_unit_ids=["WU-A", "WU-B"])
+    for work_unit_id in ("WU-A", "WU-B"):
+        (workspace.ai_team / "work-units" / f"{work_unit_id}.yaml").write_text(
+            yaml.safe_dump(
+                {
+                    "id": work_unit_id,
+                    "status": "blocked",
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
+            ),
+            encoding="utf-8",
+        )
+    observation = observe_run(workspace, "RUN-BLOCKED")
+    assert observation["progress"]["state"] == "blocked_needs_human"
+    plan = choose_action(observation, {"max_recoveries": 3})
+    assert plan["action"] == "needs_human"
+    assert plan["wait_reason"] == "work_units_blocked"
+
+
 def test_boundary_sha_extracted_for_recovery(tmp_path: Path) -> None:
     workspace = _workspace(tmp_path)
     attempts = workspace.ai_team / "runs" / "execution-attempts"
@@ -548,6 +569,24 @@ def test_boundary_sha_extracted_for_recovery(tmp_path: Path) -> None:
     )
     mapped = boundary_recovery_start_shas(workspace, "RUN-B")
     assert mapped == {"WU-A": sha}
+    (attempts / "ATT-2.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "id": "ATT-2",
+                "run_id": "RUN-B",
+                "work_unit_id": "WU-A",
+                "summary": (
+                    "execution gateway rejected: scope_violation: "
+                    "scope.exclude writes detected: ['.ai-team/runtime-results/EXE-1.json']"
+                ),
+                "ended_at": "2026-01-02T00:00:00+00:00",
+                "workspace": {"base_sha": "b" * 40},
+            }
+        ),
+        encoding="utf-8",
+    )
+    mapped = boundary_recovery_start_shas(workspace, "RUN-B")
+    assert mapped == {"WU-A": "b" * 40}
 
 
 def test_out_of_scope_recovery_without_sha_needs_human(tmp_path: Path) -> None:

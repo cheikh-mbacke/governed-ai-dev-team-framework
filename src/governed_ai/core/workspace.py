@@ -98,6 +98,12 @@ class Workspace:
         if not isinstance(raw_path, str) or not raw_path.strip():
             raise WorkspaceError(f"ensemble member {target_id!r} is missing path")
         resolved = _resolve_member_path(self.root, raw_path)
+        if not resolved.is_dir():
+            raise WorkspaceError(
+                f"ensemble member {target_id!r} path does not exist: {raw_path}. "
+                "A relative path is resolved from the instance root. "
+                "Re-register the member with a path that exists on this machine."
+            )
         if resolved == self.root:
             raise WorkspaceError(
                 f"ensemble member {target_id!r} path must not be the instance root"

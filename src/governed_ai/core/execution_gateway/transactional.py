@@ -24,7 +24,11 @@ from governed_ai.core.execution_gateway.security import (
     assert_not_control_plane,
     assert_relative_workspace_path,
 )
-from governed_ai.core.orchestrator.boundary import boundary_error_for_changed_files
+from governed_ai.core.orchestrator.boundary import (
+    boundary_error_for_changed_files,
+    is_build_output_path,
+    is_governed_output,
+)
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
     changed_files,
@@ -255,6 +259,8 @@ def inspect_changed_paths(
         normalized = path.replace("\\", "/").strip().rstrip("/")
         if _is_transaction_metadata(normalized):
             continue
+        if is_build_output_path(normalized):
+            continue
         if ignore_control_plane and _is_control_plane_path(normalized):
             continue
         absolute = workspace_root / normalized
@@ -264,6 +270,8 @@ def inspect_changed_paths(
                     continue
                 rel = child.relative_to(workspace_root).as_posix()
                 if _is_transaction_metadata(rel):
+                    continue
+                if is_build_output_path(rel):
                     continue
                 if ignore_control_plane and _is_control_plane_path(rel):
                     continue
@@ -390,6 +398,69 @@ def validate_paths_against_scope(
         )
 
 
+def _ignored_by_git(workspace_root: Path, paths: list[str]) -> set[str]:
+    """Return the subset of ``paths`` matched by a gitignore rule."""
+    if not paths:
+        return set()
+    # -z is only valid with --stdin on the Git versions used here.
+    completed = subprocess.run(
+        [
+            "git",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            f"safe.directory={workspace_root}",
+            "check-ignore",
+            "-z",
+            "--stdin",
+        ],
+        cwd=str(workspace_root),
+        input=("\0".join(paths) + "\0").encode(),
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    if completed.returncode not in {0, 1}:
+        detail = (completed.stderr or completed.stdout).decode("utf-8", errors="replace").strip()
+        raise GitWorkspaceError(detail)
+    ignored: set[str] = set()
+    for raw in completed.stdout.decode("utf-8", errors="replace").split("\0"):
+        path = raw.replace("\\", "/").strip()
+        if path:
+            ignored.add(path)
+    return ignored
+
+
+def _git_add_validated(
+    workspace_root: Path,
+    paths: list[str],
+    *,
+    work_unit_id: str,
+) -> None:
+    """Stage validated paths.
+
+    Product ``*.log`` rules must not block ``.ai-team/evidence/<WU>/`` or
+    runtime results. Those governed outputs are force-added. Other ignored
+    paths stay refused.
+    """
+    ignored = _ignored_by_git(workspace_root, paths)
+    force = [
+        path
+        for path in paths
+        if path in ignored and is_governed_output(path, work_unit_id=work_unit_id)
+    ]
+    normal = [path for path in paths if path not in ignored]
+    refused = [path for path in paths if path in ignored and path not in force]
+    if refused:
+        raise GitWorkspaceError(
+            "refusing to force-add ignored product paths: " + ", ".join(refused)
+        )
+    if normal:
+        _git(workspace_root, ["add", "--", *normal])
+    if force:
+        _git(workspace_root, ["add", "-f", "--", *force])
+
+
 def create_governed_commit(
     workspace_root: Path,
     *,
@@ -405,7 +476,7 @@ def create_governed_commit(
         if path and not _is_transaction_metadata(path.replace("\\", "/"))
     ]
     if validated:
-        _git(workspace_root, ["add", "--", *validated])
+        _git_add_validated(workspace_root, validated, work_unit_id=work_unit_id)
     staged = [
         line.strip().replace("\\", "/")
         for line in _git(workspace_root, ["diff", "--cached", "--name-only"]).stdout.splitlines()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import uuid
 from pathlib import Path
 from typing import Any, Literal
@@ -50,6 +51,18 @@ def normalize_digest(value: str | None) -> str | None:
     return text
 
 
+def is_host_absolute_path(path: str) -> bool:
+    """True for POSIX ``/tmp/...`` and Windows ``C:/...`` paths.
+
+    A leading slash must not be stripped: ``/tmp/log`` would otherwise become
+    the workspace-relative path ``tmp/log`` and fail as a missing artifact.
+    """
+    text = path.replace("\\", "/").strip()
+    if text.startswith("/"):
+        return True
+    return re.match(r"^[A-Za-z]:/", text) is not None
+
+
 def verify_artifact(
     workspace_root: Path,
     *,
@@ -58,7 +71,15 @@ def verify_artifact(
     max_bytes: int,
 ) -> ArtifactEvidence:
     """Recalculate artifact hash; refuse missing/oversized/tampered files."""
-    rel = path.replace("\\", "/").lstrip("/")
+    if is_host_absolute_path(path):
+        raise ExecutionGatewayError(
+            StructuredError(
+                code="absolute_path_outside_workspace",
+                message=f"artifact path outside workspace: {path}",
+                path="artifacts.path",
+            )
+        )
+    rel = path.replace("\\", "/")
     if ".." in Path(rel).parts:
         raise ExecutionGatewayError(
             StructuredError(

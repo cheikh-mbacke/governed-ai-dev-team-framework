@@ -68,6 +68,7 @@ from governed_ai.adapters.common.agent_invocation import (
 from governed_ai.adapters.common.agent_invocation import (
     run_agent_process as _shared_run_agent_process,
 )
+from governed_ai.adapters.common.handoff_artifacts import sanitize_handoff
 from governed_ai.compat.datetime import UTC, datetime
 
 from .results import HANDOFF_DIAGNOSTIC_MAX, HANDOFF_SUMMARY_MAX, extract_governed_handoff
@@ -269,5 +270,13 @@ def invoke_claude_cli(
 
     outcome = _parse_claude_stdout(completed.stdout, completed.stderr, completed.returncode)
     if outcome.status == "succeeded":
+        artifacts, checks = sanitize_handoff(
+            project_root,
+            str(request.get("work_unit_id") or ""),
+            artifacts=list(outcome.artifacts),
+            checks=list(outcome.checks),
+        )
+        object.__setattr__(outcome, "artifacts", artifacts)
+        object.__setattr__(outcome, "checks", checks)
         object.__setattr__(outcome, "result_sha", git_head(project_root))
     return _with_timing(outcome)

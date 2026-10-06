@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,23 @@ from governed_ai.core.workspace_mode import (
 )
 
 ENSEMBLE_ID_RE = re.compile(r"^[a-z][a-z0-9._-]*$")
+
+
+def _portable_member_path(instance_root: Path, resolved: Path) -> str:
+    """Store a member path relative to the instance when the layout allows it.
+
+    An absolute path recorded on one machine does not survive a move to
+    another computer. Relative paths stay valid when the instance and its
+    sibling repositories move together. Document 25 still requires a human
+    to declare the path; this only normalizes the stored form.
+    """
+    try:
+        relative = os.path.relpath(resolved.resolve(), instance_root.resolve())
+    except ValueError:
+        return str(resolved.resolve())
+    return Path(relative).as_posix()
+
+
 COMPOSITION_ID_RE = re.compile(r"^CR-[A-Za-z0-9._-]+$")
 SHA_RE = re.compile(r"^[a-f0-9]{40}$")
 ACTIVE_ENSEMBLE_FILE = "active-ensemble.yaml"
@@ -326,7 +344,7 @@ def handle_register_member(
     entry: dict[str, Any] = {
         "id": member_id,
         "kind": kind,
-        "path": raw_path.strip(),
+        "path": _portable_member_path(workspace_root.instance_root, resolved),
     }
     origin = payload.get("origin")
     if isinstance(origin, str) and origin.strip():

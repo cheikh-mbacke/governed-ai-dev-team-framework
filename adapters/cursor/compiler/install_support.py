@@ -67,6 +67,9 @@ def compile_cursor_tree(
         if destination_cursor.exists():
             shutil.rmtree(destination_cursor)
         shutil.copytree(staged_cursor, destination_cursor)
+    from adapters.cursor.runtime.checks import rewrite_installed_hooks
+
+    rewrite_installed_hooks(destination_cursor / "hooks.json")
     return manifest
 
 

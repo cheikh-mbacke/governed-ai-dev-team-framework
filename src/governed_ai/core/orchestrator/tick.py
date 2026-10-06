@@ -52,15 +52,21 @@ from governed_ai.core.domain.run.failure_taxonomy import (
 )
 from governed_ai.core.domain.run.mission_artifact import compute_artifact_hash
 from governed_ai.core.domain.run.path_policy import sanitize_allowed_paths
-from governed_ai.core.orchestrator.boundary import boundary_error_for_changed_files
-from governed_ai.core.orchestrator.context_package import (
-    completeness_error,
-    evaluate_context_package_completeness,
-)
 from governed_ai.core.ensemble_workspace import (
     apply_member_execution_fields,
     product_work_unit_missing_member_id,
     work_unit_member_id,
+)
+from governed_ai.core.execution_gateway.verification import (
+    verification_failure_outside_workspace,
+)
+from governed_ai.core.orchestrator.boundary import (
+    boundary_error_for_changed_files,
+    is_build_output_path,
+)
+from governed_ai.core.orchestrator.context_package import (
+    completeness_error,
+    evaluate_context_package_completeness,
 )
 from governed_ai.core.orchestrator.git_workspace import (
     GitWorkspaceError,
@@ -938,6 +944,7 @@ def _implementation_boundary_error(
         files = changed_files(execution_root, base_sha, actual_sha)
     except GitWorkspaceError as exc:
         return f"cannot inspect worker diff: {exc}", None
+    files = [path for path in files if not is_build_output_path(path)]
 
     work_unit_id = str(wu_document.get("id") or "")
     classification_error = boundary_error_for_changed_files(
@@ -1562,6 +1569,7 @@ def run_scheduling_tick(
         execution_member_id = work_unit_member_id(wu_document)
         member_missing = product_work_unit_missing_member_id(workspace, wu_document)
         execution_root = workspace.member_root(execution_member_id)
+        product_git_root = execution_root
         try:
             descriptor = adapter.describe()
         except (AttributeError, NotImplementedError):
@@ -1866,6 +1874,13 @@ def run_scheduling_tick(
                         continue_after_gateway_rejection = False
                     # Gateway rejection is a failed attempt, not a human-blocked pause,
                     # unless the error is an explicit pre-launch context/capability block.
+                    outside_workspace = (
+                        code == "independent_verification_failed"
+                        and error is not None
+                        and verification_failure_outside_workspace(
+                            error.message, execution_root
+                        )
+                    )
                     if not continue_after_gateway_rejection:
                         mapped = "blocked" if code in {
                             "unsupported_role",
@@ -1873,7 +1888,7 @@ def run_scheduling_tick(
                             "missing_adapter_capability",
                             "empty_effective_scope",
                             "contradictory_path_policy",
-                        } else "failed"
+                        } or outside_workspace else "failed"
                         result = {
                             "status": mapped,
                             "summary": (
@@ -2005,11 +2020,13 @@ def run_scheduling_tick(
                 )
             try:
                 integration_merge = merge_and_revalidate(
-                    workspace.root,
+                    product_git_root,
                     run_id=run_id,
                     work_unit_id=work_unit_id,
                     integration_branch=run_document["integration_branch"],
                     verification_command=_integration_verification_command(workspace),
+                    worktree_home=workspace.instance_root,
+                    ensemble_id=workspace.active_ensemble_id,
                 )
             except GitWorkspaceError as exc:
                 status = "failed"

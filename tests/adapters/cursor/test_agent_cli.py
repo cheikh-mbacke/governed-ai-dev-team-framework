@@ -85,6 +85,9 @@ def test_build_prompt_names_required_checks_and_reserves_control_plane_paths(
     ]
     prompt = agent_cli.build_prompt(tmp_path, request)
     assert "Required governed check name" in prompt
+    assert "Write envelope:" in prompt
+    assert "Do not declare host-absolute paths" in prompt
+    assert "compiled packages" in prompt
     assert "['tests']" in prompt
     assert "src/**" in prompt
     assert ".ai-team/work-units/**" not in prompt.split("Allowed paths:", 1)[1].split(

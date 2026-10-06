@@ -5,6 +5,7 @@ from __future__ import annotations
 from governed_ai.core.orchestrator.boundary import (
     boundary_error_for_changed_files,
     classify_changed_path,
+    is_packaged_binary_path,
     is_path_scope_pattern,
 )
 
@@ -101,6 +102,78 @@ def test_prose_only_scope_does_not_block_envelope_product_writes() -> None:
             allowed_paths=["site-vitrine/**"],
         )
         == "allowed_product"
+    )
+
+
+def test_governed_runtime_result_wins_over_ai_team_exclude() -> None:
+    """Regression: .ai-team/** exclude must not reject adapter runtime results."""
+    assert (
+        classify_changed_path(
+            ".ai-team/runtime-results/EXE-70101f07.json",
+            work_unit_id="WU-A",
+            scope_include=["src/**"],
+            scope_exclude=[".ai-team/**"],
+            allowed_paths=["src/**"],
+        )
+        == "allowed_governed"
+    )
+    assert (
+        classify_changed_path(
+            ".ai-team/evidence/WU-A/verify-run.txt",
+            work_unit_id="WU-A",
+            scope_include=["src/**"],
+            scope_exclude=[".ai-team/**"],
+            allowed_paths=["src/**"],
+        )
+        == "allowed_governed"
+    )
+
+
+def test_build_outputs_are_not_scope_violations() -> None:
+    assert (
+        classify_changed_path(
+            "target/app.jar",
+            work_unit_id="WU-A",
+            scope_include=["src/**"],
+            scope_exclude=[],
+            allowed_paths=["src/**"],
+        )
+        == "ignored_build_output"
+    )
+    error = boundary_error_for_changed_files(
+        [
+            "src/app.py",
+            "target/classes/App.class",
+            ".next/static/chunk.js",
+            "coverage/lcov.info",
+        ],
+        work_unit_id="WU-A",
+        wu_document={"scope": {"include": ["src/**"], "exclude": []}},
+        allowed_paths=["src/**"],
+    )
+    assert error is None
+    assert is_packaged_binary_path("vendor-cache/lib.whl")
+    assert is_packaged_binary_path("public/app.wasm")
+    assert not is_packaged_binary_path("src/app.py")
+    assert (
+        classify_changed_path(
+            "src/build_notes.md",
+            work_unit_id="WU-A",
+            scope_include=["src/**"],
+            scope_exclude=[],
+            allowed_paths=["src/**"],
+        )
+        == "allowed_product"
+    )
+    assert (
+        classify_changed_path(
+            "dist/app.js",
+            work_unit_id="WU-A",
+            scope_include=["src/**"],
+            scope_exclude=[],
+            allowed_paths=["src/**"],
+        )
+        == "forbidden_scope"
     )
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -24,9 +25,48 @@ PROFILE_COMMAND_FIELDS = (
 
 _MAX_TRANSCRIPT_CHARS = 32_000
 
+# A tool cache under a user profile (any toolchain) is not a product defect.
+_PERMISSION_MARKERS = (
+    "permission denied",
+    "access is denied",
+    "accessdenied",
+    "eacces",
+    "operation not permitted",
+)
+_USER_PROFILE_PATH = re.compile(
+    r"(?i)(?:~/[\w.@+-]+(?:/[\w.@+-]+)*"
+    r"|/(?:root|home|Users)/[\w.@+-]+(?:/[\w.@+-]+)*"
+    r"|[A-Za-z]:[/\\]Users[/\\][\w.@+-]+(?:[/\\][\w.@+-]+)*"
+    r"|[A-Za-z]:[/\\][\w.@+-]+[/\\]AppData(?:[/\\][\w.@+-]+)*)"
+)
+
 
 def _hash_transcript(text: str) -> str:
     return f"sha256:{hashlib.sha256(text.encode('utf-8', errors='replace')).hexdigest()}"
+
+
+def verification_failure_outside_workspace(transcript: str, workspace_root: Path) -> bool:
+    """True when a check failed because a user-profile tool cache is not writable.
+
+    The path must sit outside the workspace. A permission error on a product
+    file stays a product failure. No toolchain name is special-cased.
+    """
+    lowered = transcript.lower()
+    if not any(marker in lowered for marker in _PERMISSION_MARKERS):
+        return False
+    root = workspace_root.resolve()
+    for match in _USER_PROFILE_PATH.finditer(transcript):
+        raw = match.group(0).replace("\\", "/").rstrip(".,;:)")
+        if raw.startswith("~/"):
+            return True
+        candidate = Path(raw)
+        if not candidate.is_absolute():
+            return True
+        try:
+            candidate.resolve().relative_to(root)
+        except ValueError:
+            return True
+    return False
 
 
 def compile_command_argv(command: str) -> list[str]:
@@ -139,6 +179,12 @@ def run_verification_command(
         secrets_to_redact,
     )
     status = "passed" if completed.returncode == 0 else "failed"
+    limitations: list[str] = []
+    if status != "passed":
+        limitations.append("non-zero exit")
+        excerpt = transcript.strip()[-400:]
+        if excerpt:
+            limitations.append(excerpt)
     return CheckResult(
         schema_version=SCHEMA_VERSION,
         canonical_id=canonical_check_id,
@@ -151,7 +197,7 @@ def run_verification_command(
         exit_code=completed.returncode,
         duration_ms=duration_ms,
         transcript_hash=_hash_transcript(transcript),
-        limitations=[] if status == "passed" else ["non-zero exit"],
+        limitations=limitations,
     )
 
 

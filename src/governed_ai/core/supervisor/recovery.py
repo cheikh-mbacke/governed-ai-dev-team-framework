@@ -150,6 +150,26 @@ def _reset_recoverable_work_units(
     return errors
 
 
+_BOUNDARY_SUMMARY_MARKERS = (
+    "Execution boundary:",
+    "scope_violation",
+    "scope.exclude writes",
+    "out-of-scope writes",
+    "out-of-envelope writes",
+    "forbidden governance writes",
+)
+
+
+def _summary_records_boundary(summary: str) -> bool:
+    """True when an attempt summary is a workspace-boundary rejection.
+
+    The orchestrator prefixes its own check with ``Execution boundary:``.
+    The gateway records the same stop as ``scope_violation: scope.exclude
+    writes`` (and the other boundary messages) without that prefix.
+    """
+    return any(marker in summary for marker in _BOUNDARY_SUMMARY_MARKERS)
+
+
 def boundary_recovery_start_shas(
     workspace: Workspace, source_run_id: str
 ) -> dict[str, str]:
@@ -168,7 +188,7 @@ def boundary_recovery_start_shas(
             continue
         if attempt.get("run_id") != source_run_id:
             continue
-        if "Execution boundary:" not in str(attempt.get("summary") or ""):
+        if not _summary_records_boundary(str(attempt.get("summary") or "")):
             continue
         work_unit_id = str(attempt.get("work_unit_id") or "")
         base_sha = str((attempt.get("workspace") or {}).get("base_sha") or "").lower()
