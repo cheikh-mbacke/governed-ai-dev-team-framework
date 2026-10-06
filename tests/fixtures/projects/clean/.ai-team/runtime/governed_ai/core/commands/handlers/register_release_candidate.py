@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from governed_ai.compat.datetime import UTC, datetime
 from typing import Any
 
+from governed_ai.compat.datetime import UTC, datetime
 from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.validation import validate_against_schema
+from governed_ai.core.ensemble_composition import enforce_release_candidate_composition
 from governed_ai.core.persistence.transaction import Transaction
 
 
@@ -44,6 +45,7 @@ def handle_register_release_candidate(
     document["revision"] = 1
     document["created_at"] = now
     document["updated_at"] = now
+    enforce_release_candidate_composition(workspace_root, document)
 
     validate_against_schema(
         workspace_root.ai_team,

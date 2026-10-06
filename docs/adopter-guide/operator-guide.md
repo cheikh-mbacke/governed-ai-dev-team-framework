@@ -40,32 +40,41 @@ Détail et résolutions : [adoption-assessment.md](adoption-assessment.md).
 
 L’install fraîche exige `--assessment-report` (verdict `go` ou `go_with_backlog`), sauf contournement explicite `--skip-assessment-gate`.
 
-## Installation fraîche
+## Installation fraîche (instance uniquement)
 
-Installe les composants gérés, initialise le profil projet et écrit `installation-record.json` **en dernier**.
+Le seul mode supporté est l’**instance hors-arbre** : répertoire dédié sans
+code produit applicatif. Installer dans un dépôt produit (standalone) est
+**refusé**. Détail : [out-of-tree-instance.md](out-of-tree-instance.md).
 
 ```bash
-python tools/install.py \
-  --target /chemin/vers/mon-projet \
-  --project-id mon-projet \
-  --project-name "Mon Projet" \
+mkdir ~/mon-ai-team && cd ~/mon-ai-team && git init -b main
+python /chemin/vers/framework/tools/install.py \
+  --target . \
+  --project-id mon-ai-team \
+  --project-name "Mon AI Team" \
   --assessment-report assessment.json
+# Puis depuis l'instance :
+python scripts/ai-team/ensemble.py register-ensemble --id mon-produit
+python scripts/ai-team/ensemble.py register-member --ensemble mon-produit \
+  --id app --kind service --path ../mon-produit
+python scripts/ai-team/ensemble.py set-active --id mon-produit
 ```
 
 Effets principaux (layout Document 11 §4) :
 
 - Copie `.ai-team/` (constitution, schémas, contrats, templates), `.cursor/` (compilé), `scripts/ai-team/`, `AGENTS.md`.
 - Copie le runtime Python sous `.ai-team/runtime/governed_ai/` et l'adaptateur Cursor sous `.ai-team/runtime/governed_ai/adapters/cursor/`.
-- Copie les dépendances framework dans `.ai-team/requirements.txt` (plus à la racine du projet cible).
-- **Ne copie pas** le `README.md` ni les dossiers source `docs/framework-design/`, `docs/framework-maintenance/` et `docs/adopter-guide/`.
-- Ne crée ni n’écrase le `docs/product/` du projet cible : ce chemin est project-owned.
-- Détecte les collisions avec des répertoires projet existants (`src/`, `docs/`, …) **avant** toute écriture ; utilise `--force` pour outrepasser.
-- Si `AGENTS.md` existe déjà, fusionne un bloc `<!-- governed-ai:start -->` … `<!-- governed-ai:end -->` sans écraser le reste.
+- Copie les dépendances framework dans `.ai-team/requirements.txt`.
+- Initialise `catalog.yaml` (ensembles vides jusqu’à enregistrement).
+- Refuse une cible qui contient déjà des racines applicatives (`src/`, `app/`, …).
 
 ## Mise à jour transactionnelle
 
+Uniquement sur une **instance** déjà installée. Un standalone 0.7.x est refusé
+(utiliser `migrate_to_instance.py`).
+
 ```bash
-python tools/install.py --target /chemin/vers/mon-projet --update
+python tools/install.py --target /chemin/vers/mon-ai-team --update
 ```
 
 Étapes (automatiques) :
@@ -118,23 +127,12 @@ python scripts/ai-team/reconcile_project.py check
 Le contrôle doit réussir avant toute compilation. Détails :
 [project-reconciliation.md](project-reconciliation.md).
 
-## Instance hors-arbre (opt-in)
+## Instance hors-arbre (mode unique)
 
-Pour une instance séparée des dépôts produit (front / back / backoffice), voir
-[out-of-tree-instance.md](out-of-tree-instance.md). Résumé :
+Voir [out-of-tree-instance.md](out-of-tree-instance.md). Migration depuis un
+standalone 0.7.x :
 
 ```bash
-# Instance vide
-python tools/install.py --target ~/acme-ai-team --project-id acme-ai-team \
-  --project-name "Acme" --assessment-report assessment.json
-
-# Depuis l'instance : Ensemble + membres
-python scripts/ai-team/ensemble.py register-ensemble --id boutique
-python scripts/ai-team/ensemble.py register-member --ensemble boutique \
-  --id frontend --kind ui --path ../boutique-web
-python scripts/ai-team/ensemble.py set-active --id boutique
-
-# Migration depuis un standalone 0.7.x (jamais via --update)
 python tools/migrate_to_instance.py --source ~/boutique-api \
   --instance ~/acme-ai-team --ensemble-id boutique --member-id backend
 ```

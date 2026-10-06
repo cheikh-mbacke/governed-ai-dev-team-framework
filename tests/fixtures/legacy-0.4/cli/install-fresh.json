@@ -4,6 +4,6 @@
   "platform": "win32",
   "scenario": "install-fresh",
   "exit_code": 0,
-  "stdout": "WARNING: assessment gate skipped — exclusive governance still required; hybrid adoption is not supported.\nInstalled governed AI team framework 0.7.0 into <PATH>\nNext:\n  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)\n  2. Add and register authoritative product documents\n  3. Run: python scripts/ai-team/validate.py\n  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py\n  5. In Cursor UI or interactive CLI, invoke /reconcile-project\n  6. After reconciliation is ready, invoke /compile-project\n",
+  "stdout": "WARNING: assessment gate skipped â€” exclusive governance still required; hybrid adoption is not supported.\nInstalled governed AI team framework 0.7.0 into <PATH>\nNext:\n  1. Fill .ai-team/project-profile.yaml (or ask Cursor: /propose-profile)\n  2. Register an Ensemble and product members:\n       python scripts/ai-team/ensemble.py register-ensemble --id <ensemble>\n       python scripts/ai-team/ensemble.py register-member --ensemble <ensemble> --id <member> --kind <kind> --path <git-checkout>\n       python scripts/ai-team/ensemble.py set-active --id <ensemble>\n  3. Run: python scripts/ai-team/validate.py\n  4. Before Cursor CLI, run: python scripts/ai-team/preflight.py\n  5. Open Cursor on this instance; invoke /reconcile-project\n  6. After reconciliation is ready, invoke /compile-project\n",
   "stderr": ""
 }

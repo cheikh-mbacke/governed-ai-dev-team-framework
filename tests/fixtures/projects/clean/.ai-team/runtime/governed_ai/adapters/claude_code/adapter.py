@@ -33,6 +33,7 @@ from governed_ai.adapters.spi import (
     RoleDefinitionRevision,
     RuntimeResult,
 )
+from governed_ai.core.ensemble_workspace import execution_project_root
 
 _ADAPTER_DIR = Path(__file__).resolve().parent
 _COLOCATED_MANIFEST = _ADAPTER_DIR / "manifest.json"
@@ -138,12 +139,7 @@ class ClaudeCodeAdapter(AdapterSPIBase):
             raise UnsupportedContractError(code, message)
 
         validate_requested_commands(request, role)
-        execution_workspace = request.get("execution_workspace")
-        project_root = (
-            Path(str(execution_workspace)).resolve()
-            if execution_workspace
-            else self._project_root
-        )
+        project_root = execution_project_root(self._project_root, request)
         return execute_runtime(project_root, request)
 
     def collect(self, execution_id: str) -> RuntimeResult:

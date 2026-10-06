@@ -20,18 +20,24 @@ La gouvernance est **exclusive** : pas d’adoption à moitié. Inventaire des c
 - [ ] Python ≥ 3.10 et dépendances (`requirements.txt`) installés.
 - [ ] Structure produit prévue (`docs/product/` ou équivalent) identifiée.
 
-## 2. Installation
+## 2. Installation (instance hors-arbre uniquement)
 
-- [ ] Installation fraîche exécutée :
+Le mode standalone in-tree (`.ai-team/` dans le dépôt produit) n’est **plus
+supporté**. Voir [out-of-tree-instance.md](out-of-tree-instance.md).
+
+- [ ] Répertoire d’**instance** dédié (sans code produit applicatif), Git initié.
+- [ ] Installation fraîche sur l’instance :
 
   ```bash
-  python tools/install.py --target . --project-id <id> --project-name "<nom>" \
-    --assessment-report assessment.json
+  python tools/install.py --target ~/mon-ai-team --project-id <id> \
+    --project-name "<nom>" --assessment-report assessment.json
   ```
 
+- [ ] Ensemble + membres enregistrés (`ensemble.py register-ensemble` /
+      `register-member` / `set-active`).
 - [ ] `.ai-team/installation-record.json` présent (`schema_version: 3`).
 - [ ] `.ai-team/project-profile.yaml` complété (identité, commandes, `active_adapter_id`).
-- [ ] `.ai-team/sources/source-registry.yaml` renseigné (sources autoritaires).
+- [ ] Sources autoritaires enregistrées (registry sous l’Ensemble / instance).
 
 ## 2bis. Baseline avant première compile (surtout brownfield)
 
@@ -64,11 +70,10 @@ Ne pas lancer `/compile-project` tant que cette section n’est pas tenue. Le d�
 - [ ] Backup `migration-backups/` vérifié après update.
 - [ ] Aucun chemin non classable bloquant.
 
-## 5bis. Instance hors-arbre (opt-in, si applicable)
+## 5bis. Migration depuis standalone 0.7.x (si applicable)
 
 - [ ] [out-of-tree-instance.md](out-of-tree-instance.md) lu.
-- [ ] Soit install fraîche d’instance + `ensemble.py register-*`, soit
-      `tools/migrate_to_instance.py` (jamais via `--update` seul).
+- [ ] `tools/migrate_to_instance.py` exécuté (pas `--update` sur le standalone).
 - [ ] Cursor ouvert sur l’**instance** ; membres n’ont que le lien mince.
 
 ## 6. Exploitation courante

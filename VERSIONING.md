@@ -52,3 +52,10 @@ contrôles, traçabilité et autorité humaine conservés.
 ## Rupture historique 0.4.x
 
 Voir [`docs/framework-maintenance/history-cutover-0.4.md`](docs/framework-maintenance/history-cutover-0.4.md).
+
+## Retrait du mode standalone in-tree
+
+Le mode standalone (`.ai-team/` dans le dépôt produit) n’est plus un mode
+supporté. Install fraîche = instance hors-arbre uniquement ; les installs 0.7.x
+existantes migrent via `tools/migrate_to_instance.py`. Détail :
+[`docs/adopter-guide/deprecations.md`](docs/adopter-guide/deprecations.md).

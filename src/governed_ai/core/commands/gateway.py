@@ -14,7 +14,11 @@ from governed_ai.core.persistence.idempotency import IdempotencyStore, payload_f
 from governed_ai.core.persistence.lock import ProjectLock, acquire_project_lock
 from governed_ai.core.persistence.transaction import Transaction, recover_transactions
 from governed_ai.core.workspace import Workspace
-from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+from governed_ai.core.workspace_mode import (
+    GATEWAY_COMMANDS_WITHOUT_OUT_OF_TREE,
+    ensure_client_cycle_allowed,
+    ensure_out_of_tree_ensemble_ready,
+)
 
 
 class CommandGateway:
@@ -31,6 +35,8 @@ class CommandGateway:
             envelope = parse_envelope(raw_envelope)
             command_id = envelope["command_id"]
             ensure_client_cycle_allowed(self._workspace)
+            if envelope["type"] not in GATEWAY_COMMANDS_WITHOUT_OUT_OF_TREE:
+                ensure_out_of_tree_ensemble_ready(self._workspace)
             payload_hash = payload_fingerprint(envelope)
             lock: ProjectLock | None = None
             try:

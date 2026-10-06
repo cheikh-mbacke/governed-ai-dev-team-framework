@@ -10,6 +10,8 @@ from unittest.mock import MagicMock, patch
 
 import yaml
 
+from tests.core.workspace_helpers import attach_minimal_out_of_tree_ensemble
+
 from governed_ai.compat.datetime import UTC, datetime, timedelta
 from governed_ai.core.domain.run.autonomy_policy import is_unattended_preset
 from governed_ai.core.domain.run.path_policy import sanitize_allowed_paths
@@ -46,6 +48,7 @@ def _workspace(tmp_path: Path) -> Workspace:
         encoding="utf-8",
     )
     ensure_supervisor_layout(ai_team)
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     return Workspace.from_root(tmp_path)
 
 

@@ -2,7 +2,10 @@
 
 Guide opérateur pour installer une **instance** séparée des dépôts produit, enregistrer un **Ensemble**, déclarer des **Membres** (front / back / backoffice), et ouvrir Cursor sur l’instance (Document 25).
 
-Le mode **standalone** 0.7.x (framework installé dans le dépôt produit) reste valide. Le passage hors-arbre est **opt-in** : `tools/install.py --update` ne le déclenche jamais (INS-AC-018 / INS-F-014).
+C’est le **seul mode d’installation supporté**. L’ancien standalone 0.7.x
+(`.ai-team/` dans le dépôt produit) est retiré : une install fraîche in-tree
+est refusée ; un `--update` sur un standalone oriente vers
+`tools/migrate_to_instance.py` (INS-AC-018 / INS-F-014).
 
 ## Carte physique
 
@@ -59,9 +62,10 @@ Chaque `register-member` pose le lien mince sur le checkout membre. `set-active`
 2. Ne pas lancer `/compile-project` depuis un membre seul : le lien mince refuse le cycle.
 3. Les Work Units produit portent `member_id` ; le cwd d’exécution est le checkout (ou worktree) du membre.
 
-## Migrer un install standalone 0.7.x → instance
+## Migrer un install standalone 0.7.x → instance (obligatoire hors support)
 
-Commande **explicite** (snapshot + rollback) :
+Commande **explicite** (snapshot + rollback) — unique chemin supporté pour les
+installs in-tree existantes :
 
 ```bash
 python tools/migrate_to_instance.py \
@@ -92,4 +96,6 @@ Ensuite, enregistrer d’éventuels autres membres (`frontend`, `backoffice`) co
 python tools/install.py --target ~/code/mon-app --update
 ```
 
-Sur un standalone 0.7.x, la mise à jour rafraîchit les fichiers gérés **in-tree**. Elle ne crée pas d’instance, ne pose pas de lien mince, et ne déplace pas `.ai-team/`.
+Sur un standalone 0.7.x, `--update` **refuse** et oriente vers
+`tools/migrate_to_instance.py`. Il ne rafraîchit plus l’install in-tree, ne
+crée pas d’instance, et ne déplace pas `.ai-team/`.

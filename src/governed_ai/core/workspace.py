@@ -25,9 +25,10 @@ class WorkspaceError(RuntimeError):
 class Workspace:
     """Resolved instance root and derived governance paths.
 
-    Standalone (0.7.x): ``root`` is the installed product Git root, and
-    ``instance_root`` equals ``member_root()``. Hors-arbre (Document 25):
-    ``root`` is the instance directory; members live at other local paths.
+    Supported mode (Document 25): ``root`` is the instance directory; product
+    members live at other local Git paths. Unsupported legacy standalone
+    (``instance_root == member_root`` as the product mode) is refused by
+    ``ensure_out_of_tree_ensemble_ready`` before client cycles.
     """
 
     root: Path
@@ -81,11 +82,11 @@ class Workspace:
         return directory / MEMBERS_FILE_NAME
 
     def member_root(self, member_id: str | None = None) -> Path:
-        """Return the Git root to execute against.
+        """Return the Git root to execute against for a declared member.
 
-        Standalone (no ensemble / no members file): the instance root.
-        Hors-arbre: the declared ``path`` of ``member_id`` or
-        ``discovered_member_id``.
+        Without an active ensemble / member id, returns the instance root
+        (setup / validate only). Product execution must call
+        ``ensure_out_of_tree_ensemble_ready`` first.
         """
         target_id = member_id if member_id is not None else self.discovered_member_id
         if target_id is None or self.active_ensemble_id is None:
@@ -111,7 +112,7 @@ class Workspace:
         return resolved
 
     def declared_members(self) -> list[dict[str, Any]]:
-        """Return ensemble member records, or an empty list in standalone mode."""
+        """Return ensemble member records, or an empty list if none are declared."""
         path = self.ensemble_members_path
         if path is None or not path.is_file():
             return []
@@ -150,7 +151,8 @@ class Workspace:
         """Walk upward until a fabrication, member-link, or client root is found.
 
         A ``member-link.json`` is resolved to the instance directory (Document 25).
-        Standalone clients with a full `.ai-team/` and no link keep 0.7.x behavior.
+        A client `.ai-team/` without a link is treated as an instance root; product
+        cycles still require an out-of-tree Ensemble (see ``workspace_mode``).
         """
         current = Path(start).resolve()
         if current.is_file():

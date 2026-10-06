@@ -6,12 +6,13 @@ n’est **attendu et observé** qu’après la phase indiquée ; avant cela il e
 
 Les IDs `INS-AC-*` tracent `INS-F-*` et `INS-ADR-*` du Document 25.
 
-## Standalone (dès Phase 0, non régressif)
+## Install instance-only (dès Phase 0)
 
-### INS-AC-001 — Install in-tree inchangée
+### INS-AC-001 — Install in-tree refusée
 
-`tools/install.py --target <dépôt produit>` pose `.ai-team/` dans ce dépôt.
-Compile, WU, preuves à un SHA, G3/G4 se comportent comme en 0.7.x.
+`tools/install.py --target <dépôt produit avec code applicatif>` échoue
+explicitement et oriente vers une instance dédiée + membres. Aucun
+`.ai-team/` autoritaire n’est posé dans le dépôt produit.
 
 ### INS-AC-002 — Dépôt source refusé
 
@@ -88,10 +89,10 @@ Si le HEAD d’un membre ≠ SHA piné, une preuve `kind: composition` existante
 est invalide ; un e2e / G4 sur cette composition est rejeté jusqu’à nouveau
 pin et re-vérification.
 
-### INS-AC-015 — Standalone sans composition
+### INS-AC-015 — Ensemble à un membre sans composition multi-SHA
 
-Un Ensemble à 1 membre (in-tree) accepte encore `code_revision` string / SHA
-unique pour G3.
+Un Ensemble hors-arbre à exactement 1 membre accepte `code_revision` string /
+SHA unique (`git_commit`) pour G3.
 
 ## Adaptateur (Phase 7)
 
@@ -108,11 +109,12 @@ paths des membres de l’Ensemble **actif** seulement.
 
 ## Migration (Phase 8)
 
-### INS-AC-018 — Opt-in
+### INS-AC-018 — Migration obligatoire hors support standalone
 
-`--update` 0.7.x → 0.8.0 sans commande de migration laisse l’install
-in-tree standalone. La commande de migration hors-arbre snapshot, déplace
-l’état autoritaire vers l’instance, pose le lien mince, et se rollback.
+`--update` sur une install 0.7.x in-tree (standalone) **refuse** et oriente
+vers `tools/migrate_to_instance.py`. Cette commande snapshot, déplace l’état
+autoritaire vers l’instance, pose le lien mince, et se rollback en cas
+d’échec.
 
 ## Hors critères 0.8.0
 

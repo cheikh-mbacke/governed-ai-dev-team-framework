@@ -12,6 +12,8 @@ import pytest
 import yaml
 from tests.conftest import PAYLOAD_AI_TEAM
 
+from tests.core.workspace_helpers import attach_minimal_out_of_tree_ensemble
+
 from governed_ai.core.commands.errors import ErrorCode
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.workspace import Workspace
@@ -54,6 +56,7 @@ def profile_workspace(tmp_path: Path) -> Workspace:
         ),
         encoding="utf-8",
     )
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     return Workspace.from_root(tmp_path)
 
 

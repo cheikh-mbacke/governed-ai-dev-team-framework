@@ -22,9 +22,10 @@ from distribution.installer.migrate_to_instance import migrate_in_tree_to_instan
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Move an in-tree 0.7.x standalone install to a separate instance directory, "
-            "leaving a thin member-link on the product checkout. Opt-in — never implied "
-            "by tools/install.py --update (INS-AC-018)."
+            "Migrate an unsupported in-tree 0.7.x standalone install to a dedicated "
+            "instance directory, leaving a thin member-link on the product checkout. "
+            "Required for existing standalone trees; never implied by "
+            "tools/install.py --update (INS-AC-018)."
         )
     )
     parser.add_argument(
