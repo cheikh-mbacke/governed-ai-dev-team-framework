@@ -14,7 +14,10 @@ from governed_ai.core.commands.errors import ErrorCode
 from governed_ai.core.commands.gateway import CommandGateway
 from governed_ai.core.workspace import Workspace
 
-from tests.core.workspace_helpers import FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
+from tests.core.workspace_helpers import (
+    attach_minimal_out_of_tree_ensemble,
+    FABRIC_ROOT, PAYLOAD_AI_TEAM, write_installed_client_profile
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -91,6 +94,7 @@ def gate_workspace(tmp_path: Path) -> Workspace:
         ),
         encoding="utf-8",
     )
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     return Workspace.from_root(tmp_path)
 
 

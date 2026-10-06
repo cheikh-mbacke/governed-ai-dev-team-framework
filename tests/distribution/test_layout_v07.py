@@ -57,11 +57,8 @@ def _run_update(target: Path, *extra: str) -> subprocess.CompletedProcess:
     )
 
 
-def test_fresh_install_succeeds_on_ordinary_brownfield_project(tmp_path: Path) -> None:
-    # The Document 11 §4 copy map no longer writes into src/, docs/, README.md
-    # or root requirements.txt at all, so an ordinary project using those
-    # names (the common case this whole layout change targets) must install
-    # cleanly, with its own content left byte-for-byte untouched.
+def test_fresh_install_refuses_ordinary_brownfield_product_tree(tmp_path: Path) -> None:
+    # Standalone in-tree is no longer supported (Document 25 INS-F-002).
     target = tmp_path / "brownfield"
     target.mkdir()
     (target / "README.md").write_text("# My App\n", encoding="utf-8")
@@ -72,12 +69,11 @@ def test_fresh_install_succeeds_on_ordinary_brownfield_project(tmp_path: Path) -
     (target / "docs" / "guide.md").write_text("guide\n", encoding="utf-8")
 
     result = _run_install(target)
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert (target / "README.md").read_text(encoding="utf-8") == "# My App\n"
-    assert (target / "requirements.txt").read_text(encoding="utf-8") == "flask\n"
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "Fresh install refused" in result.stdout
+    assert "migrate_to_instance" in result.stdout
     assert (target / "src" / "app.py").read_text(encoding="utf-8") == "print('app')\n"
-    assert (target / "docs" / "guide.md").read_text(encoding="utf-8") == "guide\n"
-    assert (target / ".ai-team" / "installation-record.json").exists()
+    assert not (target / ".ai-team" / "installation-record.json").exists()
 
 
 def test_fresh_install_aborts_on_real_file_collision(tmp_path: Path) -> None:
@@ -101,8 +97,8 @@ def test_fresh_install_aborts_on_legacy_framework_fingerprint(tmp_path: Path) ->
 
     result = _run_install(target)
     assert result.returncode == 2
-    assert "Collision report" in result.stdout
-    assert "use --update" in result.stdout
+    # Product marker src/ is refused before legacy collision reporting.
+    assert "Fresh install refused" in result.stdout or "Collision report" in result.stdout
     assert not (target / ".ai-team" / "installation-record.json").exists()
 
 
@@ -149,6 +145,7 @@ def test_fresh_install_delivers_reconciliation_command_and_compile_fence(tmp_pat
     assert (target / ".ai-team" / "schemas" / "reconciliation.schema.json").is_file()
     assert (target / ".cursor" / "skills" / "reconcile-project" / "SKILL.md").is_file()
 
+    # Without out-of-tree members, reconcile is refused (standalone removed).
     check = subprocess.run(
         [sys.executable, "scripts/ai-team/reconcile_project.py", "check"],
         cwd=target,
@@ -157,124 +154,8 @@ def test_fresh_install_delivers_reconciliation_command_and_compile_fence(tmp_pat
         timeout=60,
         check=False,
     )
-    assert check.returncode == 1
-    assert "Run /reconcile-project first" in check.stdout
-
-    init = subprocess.run(
-        [sys.executable, "scripts/ai-team/reconcile_project.py", "init"],
-        cwd=target,
-        text=True,
-        capture_output=True,
-        timeout=60,
-        check=False,
-    )
-    assert init.returncode == 0, init.stdout + init.stderr
-    report_path = target / ".ai-team" / "reconciliation" / "baseline.yaml"
-    assert report_path.is_file()
-
-    product_doc = target / "docs" / "product" / "baseline.md"
-    product_doc.parent.mkdir(parents=True)
-    product_doc.write_text("# Human baseline\n", encoding="utf-8")
-    registry_path = target / ".ai-team" / "sources" / "source-registry.yaml"
-    registry_path.write_text(
-        yaml.safe_dump(
-            {
-                "registry_version": "1.0",
-                "sources": [
-                    {
-                        "id": "SRC-BASELINE",
-                        "type": "human_construction_material",
-                        "path": "docs/product/baseline.md",
-                        "authority": "human",
-                        "scope": "initial",
-                        "version": "1",
-                        "status": "active",
-                    }
-                ],
-            },
-            sort_keys=False,
-        ),
-        encoding="utf-8",
-    )
-    report = yaml.safe_load(report_path.read_text(encoding="utf-8"))
-    report["status"] = "approved"
-    for entry in report["human_material"].values():
-        entry.update(
-            {
-                "status": "sufficient",
-                "source_refs": ["SRC-BASELINE"],
-                "note": "Covered by the approved baseline.",
-            }
-        )
-    report["verification"] = {
-        "commands": [
-            {
-                "command": "project verification",
-                "status": "not_applicable",
-                "evidence": "No application code exists yet.",
-            }
-        ],
-        "blocking_conflicts": 0,
-    }
-    report["convergence"] = [
-        {
-            "id": "REC-DOCS-001",
-            "subject": "docs",
-            "classification": "conformant",
-            "intent_refs": ["SRC-BASELINE"],
-            "evidence": "The baseline document is the registered human source.",
-            "action": "keep",
-            "resolution_status": "completed",
-            "verification": "Registered source exists and was reviewed.",
-        }
-    ]
-    report_path.write_text(
-        yaml.safe_dump(report, sort_keys=False, allow_unicode=True),
-        encoding="utf-8",
-    )
-
-    finalize = subprocess.run(
-        [sys.executable, "scripts/ai-team/reconcile_project.py", "finalize"],
-        cwd=target,
-        text=True,
-        capture_output=True,
-        timeout=60,
-        check=False,
-    )
-    assert finalize.returncode == 0, finalize.stdout + finalize.stderr
-
-    current = subprocess.run(
-        [sys.executable, "scripts/ai-team/reconcile_project.py", "check"],
-        cwd=target,
-        text=True,
-        capture_output=True,
-        timeout=60,
-        check=False,
-    )
-    assert current.returncode == 0, current.stdout + current.stderr
-
-    (target / "README.md").write_text("changed after reconciliation\n", encoding="utf-8")
-    stale = subprocess.run(
-        [sys.executable, "scripts/ai-team/reconcile_project.py", "check"],
-        cwd=target,
-        text=True,
-        capture_output=True,
-        timeout=60,
-        check=False,
-    )
-    assert stale.returncode == 1
-    assert "baseline is stale" in stale.stdout
-
-    restamp = subprocess.run(
-        [sys.executable, "scripts/ai-team/reconcile_project.py", "finalize"],
-        cwd=target,
-        text=True,
-        capture_output=True,
-        timeout=60,
-        check=False,
-    )
-    assert restamp.returncode == 1
-    assert "status must be 'approved' or 'applying'" in restamp.stdout
+    assert check.returncode == 6
+    assert "Standalone in-tree mode is no longer supported" in check.stdout
 
 
 def test_dry_run_legacy_v1_writes_nothing(tmp_path: Path) -> None:
@@ -294,10 +175,9 @@ def test_dry_run_legacy_v1_writes_nothing(tmp_path: Path) -> None:
 
 
 def test_install_rollback_on_interrupted_copy(tmp_path: Path, monkeypatch) -> None:
+    # Empty instance directory (product trees are refused on fresh install).
     target = tmp_path / "rollback-install"
     target.mkdir()
-    (target / "src").mkdir()
-    (target / "src" / "app.py").write_text("print('app')\n", encoding="utf-8")
 
     from argparse import Namespace
 
@@ -314,6 +194,7 @@ def test_install_rollback_on_interrupted_copy(tmp_path: Path, monkeypatch) -> No
         project_id="rollback-test",
         project_name="Rollback Test",
         force=True,
+        adapter=None,
     )
     result = install_fresh(REPO_ROOT, args, target)
     assert result == 1

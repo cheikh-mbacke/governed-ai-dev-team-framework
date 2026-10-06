@@ -58,4 +58,12 @@ runtime Claude Code réel.
 - Sécurité ou qualité du modèle IA sous-jacent.
 - `workspace_readonly` sur Windows natif dans tous les scénarios.
 
+## Mode standalone in-tree (retiré)
+
+| Élément | Statut | Remplacement |
+|---|---|---|
+| Install fraîche `.ai-team/` **dans** le dépôt produit | **Retiré du support** | Instance dédiée (`tools/install.py` sur répertoire sans code produit) + `ensemble.py register-*` |
+| `--update` sur un standalone 0.7.x | **Refuse** | `tools/migrate_to_instance.py` puis `--update` sur l’instance |
+| Runtime `instance_root == member_root` comme mode produit | **Retiré du support** | Membres hors-arbre déclarés ; mono-repo produit = un seul membre Git |
+
 Signaler toute friction via `python scripts/ai-team/feedback.py record`.

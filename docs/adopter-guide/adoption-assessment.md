@@ -7,8 +7,12 @@ Guide opérateur pour la **porte d’entrée** du framework : inventaire des con
 Le framework revendique une **gouvernance exclusive**. L’adopter, c’est accepter d’aligner outils, process et artefacts — pas de mode hybride. Le coût est volontairement élevé. Pour que cet engagement soit responsable, un **assessment** (lecture seule) révèle les conflits avant toute mutation.
 
 ```text
-Assessment (lecture seule) → Décision → Install → /reconcile-project → G0 / compile → …
+Assessment (lecture seule) → Décision → Install instance vide
+  → ensemble register-* → /reconcile-project → G0 / compile → …
 ```
+
+L’install fraîche cible un **répertoire d’instance dédié** (pas le dépôt produit).
+Les checkouts produit sont enregistrés ensuite comme membres hors-arbre.
 
 - **Assessment** ≠ `preflight.py` (avant un Run) ≠ `diagnose.py` (après install).
 - **Assessment** ≠ gate **G0** (G0 suppose le framework déjà installé).
@@ -83,7 +87,7 @@ Codes de sortie : `0` = `go` ou `go_with_backlog` ; `2` = `no_go` ; `1` = erreur
 Install ensuite :
 
 ```bash
-python tools/install.py --target /chemin/vers/mon-projet \
+python tools/install.py --target /chemin/vers/mon-instance \
   --project-id <id> --project-name "<nom>" \
   --assessment-report /tmp/assessment.json
 ```
@@ -152,12 +156,13 @@ Ces constats sont en général des `warning` : l’install peut passer en `go_wi
 2. Installer avec le rapport :
 
    ```bash
-   python tools/install.py --target /chemin/vers/mon-projet \
+   python tools/install.py --target /chemin/vers/mon-instance \
      --project-id <id> --project-name "<nom>" \
      --assessment-report /chemin/vers/assessment.json
    ```
 
-3. **Avant** G0 / `/compile-project` (surtout brownfield) :
+3. Enregistrer l’Ensemble et les membres produit (`ensemble.py register-*`),
+   puis **avant** G0 / `/compile-project` (surtout brownfield) :
    - compléter `project-profile.yaml` et `source-registry.yaml` ;
    - produire ou aligner la matière humaine autoritaire pour le premier périmètre ;
    - rédiger l’inventaire as-built (écarts, hors-scope, nettoyage) si du code existait déjà ;

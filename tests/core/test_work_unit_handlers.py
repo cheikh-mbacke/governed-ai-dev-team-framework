@@ -11,6 +11,7 @@ import pytest
 import yaml
 from PIL import Image
 from tests.core.workspace_helpers import (
+    attach_minimal_out_of_tree_ensemble,
     FABRIC_ROOT,
     PAYLOAD_AI_TEAM,
     write_installed_client_profile,
@@ -59,6 +60,7 @@ def wu_workspace(tmp_path: Path) -> Workspace:
     (ai_team / "work-units").mkdir(parents=True)
     (ai_team / "state").mkdir(parents=True)
     (ai_team / "state" / "project-state.yaml").write_text("phase: execution\n", encoding="utf-8")
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     return Workspace.from_root(tmp_path)
 
 

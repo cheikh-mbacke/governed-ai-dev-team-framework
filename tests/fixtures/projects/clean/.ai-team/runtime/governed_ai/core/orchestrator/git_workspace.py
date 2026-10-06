@@ -147,16 +147,54 @@ def _latest_resume_sha(project_root: Path, work_unit_id: str) -> str | None:
     return None
 
 
+def _worktree_checkout_path(
+    home: Path,
+    run_id: str,
+    leaf: str,
+    *,
+    ensemble_id: str | None = None,
+) -> Path:
+    base = home / ".ai-team" / "worktrees"
+    if ensemble_id:
+        base = base / _safe(ensemble_id)
+    return base / _safe(run_id) / leaf
+
+
+def ensure_detached_worktree(git_root: Path, checkout: Path, sha: str) -> Path:
+    """Create or reuse a detached worktree at ``sha``; git cwd is ``git_root``."""
+    git_root = Path(git_root).resolve()
+    checkout = Path(checkout).resolve()
+    sha = sha.lower()
+    if (checkout / ".git").exists() or (
+        checkout.is_dir() and any(checkout.iterdir())
+    ):
+        try:
+            observed = head_sha(checkout)
+        except GitWorkspaceError:
+            observed = ""
+        if observed == sha:
+            return checkout
+        _run(git_root, ["worktree", "remove", "--force", str(checkout)])
+    checkout.parent.mkdir(parents=True, exist_ok=True)
+    _run(git_root, ["cat-file", "-e", f"{sha}^{{commit}}"])
+    _run(git_root, ["worktree", "add", "--detach", str(checkout), sha])
+    return checkout
+
+
 def ensure_work_unit_worktree(
     project_root: Path,
     run_id: str,
     work_unit_id: str,
     *,
     start_sha: str | None = None,
+    worktree_home: Path | None = None,
+    ensemble_id: str | None = None,
 ) -> Path:
+    git_root = Path(project_root).resolve()
+    home = Path(worktree_home or git_root).resolve()
     run_key = _safe(run_id)
     wu_key = _safe(work_unit_id)
-    path = project_root / ".ai-team" / "worktrees" / run_key / wu_key
+    path = _worktree_checkout_path(home, run_id, wu_key, ensemble_id=ensemble_id)
     if (path / ".git").exists():
         return path
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -165,33 +203,41 @@ def ensure_work_unit_worktree(
         [
             "git",
             "-c",
-            f"safe.directory={project_root}",
+            f"safe.directory={git_root}",
             "show-ref",
             "--verify",
             "--quiet",
             f"refs/heads/{branch}",
         ],
-        cwd=str(project_root),
+        cwd=str(git_root),
         capture_output=True,
         timeout=10,
         check=False,
     ).returncode == 0
     args = ["worktree", "add"]
     if not exists:
-        start_point = start_sha or _latest_resume_sha(project_root, work_unit_id) or "HEAD"
+        start_point = start_sha or _latest_resume_sha(git_root, work_unit_id) or "HEAD"
         if start_sha:
             # Ensure the SHA is known locally before branching from it.
-            _run(project_root, ["cat-file", "-e", f"{start_sha}^{{commit}}"])
+            _run(git_root, ["cat-file", "-e", f"{start_sha}^{{commit}}"])
         args.extend(["-b", branch, str(path), start_point])
     else:
         args.extend([str(path), branch])
-    _run(project_root, args)
+    _run(git_root, args)
     return path
 
 
-def ensure_integration_worktree(project_root: Path, run_id: str, branch: str) -> Path:
-    run_key = _safe(run_id)
-    path = project_root / ".ai-team" / "worktrees" / run_key / "_integration"
+def ensure_integration_worktree(
+    project_root: Path,
+    run_id: str,
+    branch: str,
+    *,
+    worktree_home: Path | None = None,
+    ensemble_id: str | None = None,
+) -> Path:
+    git_root = Path(project_root).resolve()
+    home = Path(worktree_home or git_root).resolve()
+    path = _worktree_checkout_path(home, run_id, "_integration", ensemble_id=ensemble_id)
     if (path / ".git").exists():
         return path
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -199,13 +245,13 @@ def ensure_integration_worktree(project_root: Path, run_id: str, branch: str) ->
         [
             "git",
             "-c",
-            f"safe.directory={project_root}",
+            f"safe.directory={git_root}",
             "show-ref",
             "--verify",
             "--quiet",
             f"refs/heads/{branch}",
         ],
-        cwd=str(project_root),
+        cwd=str(git_root),
         capture_output=True,
         timeout=10,
         check=False,
@@ -214,7 +260,7 @@ def ensure_integration_worktree(project_root: Path, run_id: str, branch: str) ->
     if not exists:
         args.extend(["-b", branch])
     args.extend([str(path), branch if exists else "HEAD"])
-    _run(project_root, args)
+    _run(git_root, args)
     return path
 
 
@@ -225,9 +271,17 @@ def merge_and_revalidate(
     work_unit_id: str,
     integration_branch: str,
     verification_command: str,
+    worktree_home: Path | None = None,
+    ensemble_id: str | None = None,
 ) -> tuple[str, str]:
     """Merge the isolated WU branch and return (merge_sha, evidence_digest)."""
-    integration_root = ensure_integration_worktree(project_root, run_id, integration_branch)
+    integration_root = ensure_integration_worktree(
+        project_root,
+        run_id,
+        integration_branch,
+        worktree_home=worktree_home,
+        ensemble_id=ensemble_id,
+    )
     candidate_branch = f"ai-run/{_safe(run_id)}/{_safe(work_unit_id)}"
     completed = subprocess.run(
         [

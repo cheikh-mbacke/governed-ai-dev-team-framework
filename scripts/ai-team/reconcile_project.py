@@ -24,7 +24,10 @@ from governed_ai.core.reconciliation import (
     semantic_issues,
 )
 from governed_ai.core.workspace import Workspace
-from governed_ai.core.workspace_mode import ensure_client_cycle_allowed
+from governed_ai.core.workspace_mode import (
+    ensure_client_cycle_allowed,
+    ensure_out_of_tree_ensemble_ready,
+)
 
 
 def _now() -> str:
@@ -206,6 +209,7 @@ def main() -> int:
     try:
         workspace = Workspace.discover(Path.cwd())
         ensure_client_cycle_allowed(workspace)
+        ensure_out_of_tree_ensemble_ready(workspace)
     except GatewayError as exc:
         print(exc.message)
         return exit_code_for(exc.code)

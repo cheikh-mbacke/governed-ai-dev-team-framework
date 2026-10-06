@@ -38,7 +38,8 @@ def _repository(root: Path, filename: str, content: str) -> Path:
     return root
 
 
-def test_standalone_worktree_path_unchanged(tmp_path: Path) -> None:
+def test_default_worktree_path_without_worktree_home(tmp_path: Path) -> None:
+    """When no instance worktree_home is supplied, path stays under the checkout."""
     root = _repository(tmp_path / "app", "app.py", "print(1)\n")
     worker = ensure_work_unit_worktree(root, "RUN-S", "WU-A")
     assert worker == root / ".ai-team" / "worktrees" / "RUN-S" / "WU-A"

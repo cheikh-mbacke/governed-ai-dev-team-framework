@@ -21,7 +21,10 @@ from distribution.installer.operations import install_fresh, run_update
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Install Governed AI Dev Team framework into an existing repository"
+        description=(
+            "Install Governed AI Dev Team framework into a dedicated instance directory "
+            "(out-of-tree). Standalone in-tree installs are not supported."
+        )
     )
     parser.add_argument("--target", required=True)
     parser.add_argument("--project-id")

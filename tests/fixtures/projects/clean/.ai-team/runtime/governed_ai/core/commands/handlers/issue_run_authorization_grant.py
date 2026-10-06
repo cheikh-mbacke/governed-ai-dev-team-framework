@@ -12,6 +12,12 @@ from governed_ai.core.commands.errors import ErrorCode, GatewayError
 from governed_ai.core.commands.human_authorization import consume_human_authorization
 from governed_ai.core.commands.run_authorization import REQUIRED_UNATTENDED_COMMANDS
 from governed_ai.core.commands.validation import validate_against_schema
+from governed_ai.core.domain.run.area_filter import (
+    is_area_eligible,
+    normalize_allowed_areas_payload,
+    normalize_dependency_policy_payload,
+    work_unit_area,
+)
 from governed_ai.core.domain.run.authorization_grant import MINIMUM_EXCLUDED_ACTIONS
 from governed_ai.core.domain.run.autonomy_policy import (
     UNATTENDED_PRESETS,
@@ -221,6 +227,42 @@ def handle_issue_run_authorization_grant(
                 "/payload/maximum_spend",
             )
 
+    try:
+        allowed_areas = normalize_allowed_areas_payload(payload.get("allowed_areas"))
+        area_policy = normalize_dependency_policy_payload(
+            payload.get("area_filter_dependency_policy"),
+            filter_active=allowed_areas is not None,
+        )
+    except ValueError as exc:
+        raise GatewayError(
+            ErrorCode.INVALID_SCHEMA,
+            str(exc),
+            "/payload/allowed_areas",
+        ) from exc
+
+    if allowed_areas is not None:
+        import yaml
+
+        for work_unit_id in payload["work_unit_ids"]:
+            work_unit_path = workspace_root.ai_team / "work-units" / f"{work_unit_id}.yaml"
+            if not work_unit_path.is_file():
+                raise GatewayError(
+                    ErrorCode.NOT_FOUND,
+                    f"work unit {work_unit_id!r} not found for area filter validation",
+                    "/payload/work_unit_ids",
+                )
+            work_unit = yaml.safe_load(work_unit_path.read_text(encoding="utf-8")) or {}
+            if not is_area_eligible(work_unit, {"allowed_areas": allowed_areas}):
+                raise GatewayError(
+                    ErrorCode.INVARIANT_VIOLATION,
+                    (
+                        f"work unit {work_unit_id!r} zone.area="
+                        f"{work_unit_area(work_unit)!r} is outside allowed_areas "
+                        f"{allowed_areas}"
+                    ),
+                    "/payload/work_unit_ids",
+                )
+
     now = datetime.now(UTC).isoformat()
     document = {
         "id": grant_id,
@@ -273,6 +315,9 @@ def handle_issue_run_authorization_grant(
         "effective_autonomy_policy": effective_policy,
         "effective_autonomy_policy_hash": policy_hash,
     }
+    if allowed_areas is not None:
+        document["allowed_areas"] = allowed_areas
+        document["area_filter_dependency_policy"] = area_policy
     validate_against_schema(
         workspace_root.ai_team,
         document,

@@ -21,6 +21,49 @@ CLIENT_CYCLE_FORBIDDEN_MESSAGE = (
     f"or {FEEDBACK_REFERENCE_FIXTURE} to exercise installed-client behavior."
 )
 
+OUT_OF_TREE_REQUIRED_MESSAGE = (
+    "Standalone in-tree mode is no longer supported. Configure an out-of-tree Ensemble "
+    "with at least one member Git checkout distinct from this instance:\n"
+    "  python scripts/ai-team/ensemble.py register-ensemble --id <ensemble>\n"
+    "  python scripts/ai-team/ensemble.py register-member --ensemble <ensemble> "
+    "--id <member> --kind <kind> --path <product-git>\n"
+    "  python scripts/ai-team/ensemble.py set-active --id <ensemble>"
+)
+
+# Commands allowed on an instance before members are registered.
+ENSEMBLE_SETUP_COMMAND_TYPES = frozenset(
+    {
+        "RegisterEnsemble",
+        "RegisterMember",
+        "SetActiveEnsemble",
+        "PinComposition",
+        "ApplyProfilePatch",
+        "SetAutonomyPreset",
+    }
+)
+
+# Feedback loop may run on a fresh instance before members exist (ADR-009).
+FEEDBACK_COMMAND_TYPES = frozenset(
+    {
+        "RecordObservation",
+        "GenerateRetrospective",
+        "ExportFeedback",
+        "SubmitFeedback",
+    }
+)
+
+GATEWAY_COMMANDS_WITHOUT_OUT_OF_TREE = (
+    ENSEMBLE_SETUP_COMMAND_TYPES | FEEDBACK_COMMAND_TYPES
+)
+
+
+def member_cycle_forbidden_message(workspace: Workspace) -> str:
+    member_id = workspace.discovered_member_id or "unknown"
+    return (
+        f"Client governance commands must be run from the instance directory "
+        f"({workspace.root}), not from member {member_id!r}."
+    )
+
 CLIENT_CYCLE_DIRECTORIES = (
     "work-units",
     "events",
@@ -70,6 +113,52 @@ def ensure_client_cycle_allowed(workspace: Workspace) -> None:
         raise GatewayError(
             ErrorCode.UNSUPPORTED_CONTRACT,
             CLIENT_CYCLE_FORBIDDEN_MESSAGE,
+            "/workspace",
+        )
+    if workspace.discovered_member_id is not None:
+        from governed_ai.core.commands.errors import ErrorCode, GatewayError
+
+        raise GatewayError(
+            ErrorCode.UNSUPPORTED_CONTRACT,
+            member_cycle_forbidden_message(workspace),
+            "/workspace",
+        )
+
+
+def ensure_out_of_tree_ensemble_ready(workspace: Workspace) -> None:
+    """Reject product cycles that still behave like unsupported standalone mode."""
+    from governed_ai.core.commands.errors import ErrorCode, GatewayError
+
+    if workspace.active_ensemble_id is None:
+        raise GatewayError(
+            ErrorCode.UNSUPPORTED_CONTRACT,
+            OUT_OF_TREE_REQUIRED_MESSAGE,
+            "/workspace",
+        )
+    members = workspace.declared_members()
+    if not members:
+        raise GatewayError(
+            ErrorCode.UNSUPPORTED_CONTRACT,
+            OUT_OF_TREE_REQUIRED_MESSAGE,
+            "/workspace",
+        )
+    out_of_tree = False
+    for entry in members:
+        member_id = entry.get("id")
+        if not isinstance(member_id, str) or not member_id:
+            continue
+        try:
+            if workspace.member_root(member_id) != workspace.root:
+                out_of_tree = True
+                break
+        except Exception:
+            # Missing path / invalid member is still "configured"; other layers report it.
+            out_of_tree = True
+            break
+    if not out_of_tree:
+        raise GatewayError(
+            ErrorCode.UNSUPPORTED_CONTRACT,
+            OUT_OF_TREE_REQUIRED_MESSAGE,
             "/workspace",
         )
 

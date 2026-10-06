@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 from tests.core.workspace_helpers import (
+    attach_minimal_out_of_tree_ensemble,
     FABRIC_ROOT,
     PAYLOAD_AI_TEAM,
     write_installed_client_profile,
@@ -127,6 +128,7 @@ def workspace(tmp_path: Path) -> Workspace:
         check=True,
         capture_output=True,
     )
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     ws = Workspace.from_root(tmp_path)
     _seed_grant(ws, DEFAULT_GRANT_ID, work_unit_ids=["WU-A", "WU-B"])
     return ws

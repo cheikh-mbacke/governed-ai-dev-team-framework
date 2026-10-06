@@ -38,13 +38,7 @@ Dépôt source du framework
 ├── src/                            noyau Python source
 └── adapters/                       adaptateurs source
 
-Projet client — mode standalone (0.7.x, toujours valide)
-├── docs/product/                   produit client, project-owned
-├── .ai-team/                       framework installé + état projet
-├── .cursor/                        adaptateur compilé
-└── scripts/ai-team/                wrappers installés
-
-Projet client — instance hors-arbre (Document 25, opt-in)
+Projet client — instance hors-arbre (Document 25, seul mode supporté)
 ├── <instance>/                     Git d’instance — ouvrir Cursor ici
 │   ├── .ai-team/                   autorité (catalogue, ensembles, runtime)
 │   ├── .cursor/                    adaptateur compilé
@@ -52,6 +46,9 @@ Projet client — instance hors-arbre (Document 25, opt-in)
 ├── <membre-backend>/               autre Git produit
 │   └── .ai-team/member-link.json   lien mince → instance
 └── <membre-frontend>/              autre Git produit
+
+(Ancien mode standalone 0.7.x in-tree : retiré — migrer via
+`tools/migrate_to_instance.py`.)
 
 Projet externe
 ├── docs/product/                   exigences de ce projet externe

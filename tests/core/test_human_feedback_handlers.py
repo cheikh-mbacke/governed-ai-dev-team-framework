@@ -7,7 +7,10 @@ from pathlib import Path
 
 import pytest
 import yaml
-from tests.core.workspace_helpers import PAYLOAD_AI_TEAM, write_installed_client_profile
+from tests.core.workspace_helpers import (
+    attach_minimal_out_of_tree_ensemble,
+    PAYLOAD_AI_TEAM, write_installed_client_profile
+)
 
 from governed_ai.core.commands.errors import ErrorCode
 from governed_ai.core.commands.gateway import CommandGateway
@@ -95,6 +98,7 @@ def feedback_workspace(tmp_path: Path) -> Workspace:
         ),
         encoding="utf-8",
     )
+    attach_minimal_out_of_tree_ensemble(tmp_path)
     return Workspace.from_root(tmp_path)
 
 
