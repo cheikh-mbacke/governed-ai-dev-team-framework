@@ -36,9 +36,13 @@ import uuid
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-from install_paths import bootstrap_runtime
+from install_paths import bootstrap_runtime, import_adapters_cursor
 
 bootstrap_runtime(_REPO_ROOT)
+
+_write_active_ensemble_workspace = import_adapters_cursor(
+    "compiler.ensemble_workspace"
+).write_active_ensemble_workspace
 
 from governed_ai.adapters.common.agent_invocation import is_real_agent_launch_enabled
 from governed_ai.compat.datetime import UTC, datetime
@@ -354,11 +358,7 @@ def main(argv: list[str] | None = None) -> int:
         print(exc.message, file=sys.stderr)
         return exit_code_for(exc.code)
     try:
-        from adapters.cursor.compiler.ensemble_workspace import (
-            write_active_ensemble_workspace,
-        )
-
-        write_active_ensemble_workspace(workspace)
+        _write_active_ensemble_workspace(workspace)
     except WorkspaceError as exc:
         print(str(exc), file=sys.stderr)
         return 2

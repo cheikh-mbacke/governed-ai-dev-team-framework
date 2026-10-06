@@ -50,11 +50,18 @@ class InstallCompilerTests(unittest.TestCase):
 
             golden = json.loads(GOLDEN_PATH.read_text(encoding="utf-8"))
             expected = {entry["path"]: entry["sha256"] for entry in golden["artifacts"]}
+            from adapters.cursor.compiler.staging import sha256_bytes
+            from adapters.cursor.runtime.checks import check_hooks_config
+
             for rel, digest in expected.items():
                 path = target / rel
                 self.assertTrue(path.is_file(), rel)
-                from adapters.cursor.compiler.staging import sha256_bytes
-
+                # Install rewrites hooks.json for POSIX (sh prefix). The golden
+                # captures the portable template form used on Windows.
+                if rel.replace("\\", "/") == ".cursor/hooks.json":
+                    ok, detail = check_hooks_config(target)
+                    self.assertTrue(ok, detail)
+                    continue
                 self.assertEqual(
                     sha256_bytes(path.read_bytes()),
                     digest,
